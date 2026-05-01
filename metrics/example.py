@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Collect hpc queue state via qstat and push to the dashboard.
+"""Example metric collector: push `uptime` output to the dashboard.
 
-Run from cron on a hpc login node:
+Run from cron on any target host:
 
     */5 * * * * DASHBOARD_URL=http://dashboard.lan:3000 \
-        WRITE_TOKEN=xxxxxxxx /home/me/web-dashboard/metrics/hpc.py
+        WRITE_TOKEN=xxxxxxxx /home/me/web-dashboard/metrics/example.py
+
+Copy and adapt this file (HOST / COMMAND / CATEGORY / ARGV) to add another
+collector — e.g. `df.py` for `df -h /`, or `vmstat.py` for `vmstat 1 5`.
 """
 from __future__ import annotations
 
@@ -12,14 +15,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Allow running this file directly without `python -m metrics.hpc`.
+# Allow running this file directly without `python -m metrics.example`.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from db import push  # noqa: E402
 
-HOST = "hpc"
-COMMAND = "qstat"
-CATEGORY = "ジョブ一覧"
-ARGV = ["qstat", "-a"]
+HOST = "example"
+COMMAND = "uptime"
+CATEGORY = "load"
+ARGV = ["uptime"]
 
 
 def main() -> int:
