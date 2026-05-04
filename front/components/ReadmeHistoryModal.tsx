@@ -75,7 +75,7 @@ export function ReadmeHistoryModal({ connId, bucket, prefix, currentBody, onClos
       >
         <header className="flex items-center gap-3 pb-3">
           <h3 id="readme-history-title" className="m-0 flex-1">
-            README 履歴 — {prefix || '(root)'}
+            S3 README 履歴 — {prefix || '(root)'}
           </h3>
           <button
             type="button"
