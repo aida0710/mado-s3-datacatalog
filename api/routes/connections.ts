@@ -39,8 +39,8 @@ const endpointSchema = z.string().url().max(512).refine(isAllowedEndpoint, {
 })
 
 // listObjectsVersion: 'v2' は AWS S3 / Cloudflare R2 / MinIO 等の新しい実装向け。
-// 'v1' は 社内ストレージ (s3.example.jp) や古い NetApp StorageGRID のように V2 を理解しない
-// (= ?start-after= を無視して毎回先頭ページを返す) サーバ向け。
+// 'v1' は 一部のオブジェクトストレージや古い NetApp StorageGRID のように
+// V2 を理解しない (= ?start-after= を無視して毎回先頭ページを返す) サーバ向け。
 const ListObjectsVersionEnum = z.enum(['v1', 'v2'])
 
 const CreateBody = z.object({

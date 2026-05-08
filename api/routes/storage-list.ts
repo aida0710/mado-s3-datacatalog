@@ -10,7 +10,8 @@ import type { ConnectionConfig } from '../storage.js'
 export interface StorageListDeps {
   getStorage: GetStorage
   /** 接続ごとの API 設定 (list_objects_version 等) を返す。
-   *  V1 only サーバ (一部の S3 互換) には v1、それ以外 (AWS/R2/MinIO) は v2 を使う。 */
+   *  V1 only サーバ (一部のオブジェクトストレージ等) には v1、
+   *  それ以外 (AWS/R2/MinIO) は v2 を使う。 */
   getConnectionConfig: (connId: string) => Promise<ConnectionConfig>
 }
 
@@ -61,7 +62,7 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
     const useV1 = config.listObjectsVersion === 'v1'
 
     // V1 / V2 で送るパラメータも応答の cursor フィールドも違うので、ここで分岐する。
-    // V1 (?marker=…&prefix=…&delimiter=/): 社内ストレージ や古い NetApp 等の V1 only サーバ。
+    // V1 (?marker=…&prefix=…&delimiter=/): 一部の実装や古い NetApp 等の V1 only サーバ。
     //   応答に <NextMarker> が入る (Delimiter 指定時)。Delimiter 無しでは
     //   IsTruncated=true でも NextMarker 無しになることがあり、その場合は
     //   最後のキーで marker フォールバックする (s3cmd と同じ手法)。
@@ -112,13 +113,13 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
       StartAfter: continuation ? undefined : startAfter,
       MaxKeys: 100,
     }))
-    // 一部の S3 互換 は IsTruncated=true を返すのに
+    // 一部の S3 互換は IsTruncated=true を返すのに
     // NextContinuationToken を返さないことがある。その場合に最終キーで
     // フォールバック。AWS 公式 S3 では NextContinuationToken が常に入る
     // ので nextStartAfter は null のままになる。
-    // ★ ただしこの fallback は 社内ストレージ のように V2 自体を理解しないサーバには
-    //   効かない (start-after parameter を無視するため)。そういうサーバは
-    //   接続設定で list_objects_version='v1' を選んでもらう。
+    // ★ ただしこの fallback は V2 自体を理解しないサーバには効かない
+    //   (start-after parameter を無視するため)。そういうサーバは接続設定で
+    //   list_objects_version='v1' を選んでもらう。
     const realToken = out.NextContinuationToken ?? null
     const truncated = out.IsTruncated === true
     const rawContents = out.Contents ?? []

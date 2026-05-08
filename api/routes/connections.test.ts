@@ -175,13 +175,13 @@ describe('POST /connections', () => {
   })
 
   it('accepts listObjectsVersion=v1 and round-trips it through GET', async () => {
-    // V1 only サーバ (社内ストレージ 等) のために v1 を明示できる。
-    const created = await createOne({ name: 'onprem', listObjectsVersion: 'v1' })
+    // V1 only サーバ (一部のオブジェクトストレージ等) のために v1 を明示できる。
+    const created = await createOne({ name: 'v1-storage', listObjectsVersion: 'v1' })
     expect(created.listObjectsVersion).toBe('v1')
 
     const res = await app.request('/connections')
     const list = (await res.json()) as MaskedConnection[]
-    const got = list.find(c => c.name === 'onprem')
+    const got = list.find(c => c.name === 'v1-storage')
     expect(got?.listObjectsVersion).toBe('v1')
   })
 
