@@ -23,10 +23,15 @@ export const StorageFile = z.object({
   size: z.number(),
   lastModified: z.string().nullable(),
 })
+// nextContinuation: AWS 公式 S3 等で次ページ取得用の opaque トークン。
+// nextStartAfter:   一部の S3 互換 が NextContinuationToken を返さない
+//                   ときのフォールバック。最終キーを次ページの StartAfter に使う。
+// 同時に両方 set されることはない (server 側で前者を優先)。
 export const StorageList = z.object({
   directories: z.array(z.string()),
   files: z.array(StorageFile),
   nextContinuation: z.string().nullable(),
+  nextStartAfter: z.string().nullable(),
 })
 
 export const ReadmeAbsent = z.object({ exists: z.literal(false) })
