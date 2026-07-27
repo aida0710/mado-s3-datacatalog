@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { encPath, fileLinkToDirRedirect, parseS3Path, tarEntryWebUrl } from './route'
+import { absoluteUrl, encPath, fileLinkToDirRedirect, parseS3Path, tarEntryWebUrl } from './route'
 
 describe('encPath', () => {
   it('スラッシュ構造を保ったままセグメント単位で encode する', () => {
@@ -87,6 +87,23 @@ describe('tarEntryWebUrl', () => {
       '?preview=corpus-a-unlabeled-v2-asr-restore%2Fcorpus-a-unlabeled-part_01-restore-0002.tar.xz' +
       '&entry=part_01%2Fsample-0001.wav',
     )
+  })
+})
+
+describe('absoluteUrl', () => {
+  it('サイト内の絶対パスに origin を付ける', () => {
+    expect(absoluteUrl('/storage/c/b/')).toBe(`${window.location.origin}/storage/c/b/`)
+  })
+
+  it('API のパスにも使える (生データ URL のコピー用)', () => {
+    expect(absoluteUrl('/api/internal/storage/c/preview/tar-entry?bucket=b'))
+      .toBe(`${window.location.origin}/api/internal/storage/c/preview/tar-entry?bucket=b`)
+  })
+
+  it('返す値は必ずホスト付きでパースできる', () => {
+    const u = new URL(absoluteUrl('/a/b?x=1'))
+    expect(u.host).toBe(new URL(window.location.origin).host)
+    expect(u.pathname).toBe('/a/b')
   })
 })
 
