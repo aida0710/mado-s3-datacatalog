@@ -47,11 +47,37 @@ describe('Registry client', () => {
       results: [], totalCount: 0,
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const client = createRegistryClient({ baseUrl: 'http://registry', token: 'secret', fetch })
-    await client.searchDatasets({ q: 'raw audio', namespace: 'speech/jp', limit: 10 })
+    await client.searchDatasets({ q: 'raw audio', namespace: 'speech/jp', limit: 10, offset: 20 })
     const url = new URL(String(fetch.mock.calls[0][0]))
     expect(url.pathname).toBe('/v1/search/datasets')
     expect(url.searchParams.get('q')).toBe('raw audio')
     expect(url.searchParams.get('namespace')).toBe('speech/jp')
+    expect(url.searchParams.get('offset')).toBe('20')
+  })
+
+  it('StorageSystemとURIをDataset Versionへ解決する', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify({
+      uri: 's3://example-bucket/lecture/a.tar',
+      totalCount: 1,
+      matches: [{
+        dataset_id: 'd1', dataset_key: 'lecture', namespace: 'speech', name: 'lecture/raw',
+        display_name: 'Lecture 原本', aliases: ['lecture'], version_count: 1,
+        version_id: 'v1', version: '1', version_created_at: '2026-08-26T00:00:00Z',
+        location_id: 'l1', location_uri: 's3://example-bucket/lecture/', status: 'available',
+        is_primary: true, observed_at: '2026-08-26T00:00:00Z', match_type: 'prefix',
+      }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const client = createRegistryClient({ baseUrl: 'http://registry', token: 'secret', fetch })
+
+    const resolved = await client.resolveStorageLocation(
+      'onprem-s3', 's3://example-bucket/lecture/a.tar', 10,
+    )
+
+    expect(resolved.matches[0].displayName).toBe('Lecture 原本')
+    expect(resolved.matches[0].versionId).toBe('v1')
+    const url = new URL(String(fetch.mock.calls[0][0]))
+    expect(url.searchParams.get('storage_system_key')).toBe('onprem-s3')
+    expect(url.searchParams.get('uri')).toBe('s3://example-bucket/lecture/a.tar')
   })
 
   it('既存Registryのsnake_caseをbrowser向けDTOへ正規化する', async () => {
