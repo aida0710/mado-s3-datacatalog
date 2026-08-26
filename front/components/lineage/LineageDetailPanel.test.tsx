@@ -63,4 +63,66 @@ describe('LineageDetailPanel', () => {
     )
     expect(screen.queryByRole('link', { name: /Storageで開く/ })).toBeNull()
   })
+
+  it('shows README evidence, runtime settings, and acquisition sources', () => {
+    const run = {
+      id: '44444444-4444-4444-8444-444444444444',
+      runKey: 'backfill-corpus-c',
+      jobNamespace: 'catalog-backfill',
+      jobName: 'SPHからPCM WAVへの変換',
+      status: 'COMPLETE' as const,
+      startedAt: '2026-08-27T00:00:00Z',
+      endedAt: '2026-08-27T00:00:01Z',
+      gitSha: null,
+      containerDigest: null,
+      configUri: null,
+      configHash: null,
+      modelRefs: [],
+      runtime: { recordKind: 'historical-lineage-assertion' },
+      metrics: { conversations: 11699 },
+      errorMessage: null,
+      inputs: [],
+      outputs: [],
+      sources: [{ name: 'Corpus C', uri: 'vendor://ldc/corpus-c' }],
+    }
+    render(
+      <MemoryRouter>
+        <LineageDetailPanel
+          node={{ id: run.id, kind: 'run', label: run.jobName, summary: {}, data: {} }}
+          detail={run}
+          loading={false}
+          error={null}
+          onClose={vi.fn()}
+          onOpenVersion={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText(/historical-lineage-assertion/)).toBeInTheDocument()
+    expect(screen.getByText(/vendor:\/\/ldc\/corpus-c/)).toBeInTheDocument()
+    expect(screen.getByText(/11699/)).toBeInTheDocument()
+  })
+
+  it('shows embedded source provenance in version graphs', () => {
+    render(
+      <MemoryRouter>
+        <LineageDetailPanel
+          node={{
+            id: 'source-1', kind: 'source', label: 'Corpus C', summary: {},
+            data: {
+              sourceKind: 'purchased', uri: 'vendor://ldc/corpus-c',
+              vendor: 'Linguistic Data Consortium', licenseRef: 'license://pending',
+            },
+          }}
+          detail={null}
+          loading={false}
+          error={null}
+          onClose={vi.fn()}
+          onOpenVersion={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('purchased')).toBeInTheDocument()
+    expect(screen.getByText('Linguistic Data Consortium')).toBeInTheDocument()
+    expect(screen.getByText('license://pending')).toBeInTheDocument()
+  })
 })
