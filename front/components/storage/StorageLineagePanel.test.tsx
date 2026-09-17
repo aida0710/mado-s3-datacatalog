@@ -28,7 +28,7 @@ describe('StorageLineagePanel', () => {
 
     render(
       <MemoryRouter>
-        <StorageLineagePanel connId="conn1" bucket="example-bucket" path="lecture/a.tar" />
+        <StorageLineagePanel connectionId="conn1" bucket="example-bucket" path="lecture/a.tar" />
       </MemoryRouter>,
     )
 
@@ -58,7 +58,7 @@ describe('StorageLineagePanel', () => {
 
     render(
       <MemoryRouter>
-        <StorageLineagePanel connId="conn1" bucket="example-bucket" path="lecture/" />
+        <StorageLineagePanel connectionId="conn1" bucket="example-bucket" path="lecture/" />
       </MemoryRouter>,
     )
 
@@ -72,7 +72,7 @@ describe('StorageLineagePanel', () => {
     })
     render(
       <MemoryRouter>
-        <StorageLineagePanel connId="conn1" bucket="example-bucket" path="unknown/" />
+        <StorageLineagePanel connectionId="conn1" bucket="example-bucket" path="unknown/" />
       </MemoryRouter>,
     )
     await waitFor(() => expect(api.lineageResolveLocation).toHaveBeenCalled())
