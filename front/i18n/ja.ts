@@ -13,6 +13,8 @@ export const japaneseMessages = {
   "adminPage.adminFullAdministration": "Admin — すべて管理",
   "adminPage.allStatuses": "すべての状態",
   "adminPage.allowedNamespaces": "許可するNamespace",
+  'adminPage.readDatasetsLineageRead': 'データセット参照（lineage:read）',
+  'adminPage.canReadDatasetsInAllowedNamespaces': '許可したNamespaceのデータセットとバージョン・保存先URIをAPIから読み取れます。接続を限定したStorageのURIも含まれます。オブジェクト本文や認証情報は取得できません。',
   "adminPage.applyOpenLineageEvent": "OpenLineageイベントを反映",
   "adminPage.assignTag": "タグを付与",
   "adminPage.authentication": "認証",

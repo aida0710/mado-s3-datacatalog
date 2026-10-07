@@ -117,6 +117,7 @@ type RoleId = (typeof ROLE_OPTIONS)[number]['id']
 // Service Account keyの用途。Madoのデータへは読み取りのscopeだけを開く。
 const KEY_SCOPE_OPTIONS = [
   { scope: 'lineage:write', get label() { return translate('adminPage.sendOpenLineageLineageWrite') }, get help() { return translate('adminPage.canWriteLineageOnlyToAllowedNamespaces') } },
+  { scope: 'lineage:read', get label() { return translate('adminPage.readDatasetsLineageRead') }, get help() { return translate('adminPage.canReadDatasetsInAllowedNamespaces') } },
   { scope: 'metrics:read', get label() { return translate('adminPage.prometheusCollectionMetricsRead') }, get help() { return translate('adminPage.canReadBucketNamesAndCapacitiesForEvery') } },
 ] as const
 
@@ -595,8 +596,8 @@ function ServiceAccountsPage() {
     const formElement = event.currentTarget
     const form = new FormData(formElement)
     const accountId = String(form.get('accountId') ?? '')
-    // namespaceはOpenLineageの書き込み先を絞るもので、読み取り用keyには送らない。
-    const namespaces = keyScope === 'lineage:write'
+    // Lineageの参照・送信先をNamespaceで制限する。容量metricsにはNamespaceがない。
+    const namespaces = keyScope !== 'metrics:read'
       ? String(form.get('namespaces') ?? '').split(',').map(value => value.trim()).filter(Boolean)
       : []
     setError(null)
@@ -670,7 +671,7 @@ function ServiceAccountsPage() {
               <small className="muted">{KEY_SCOPE_OPTIONS.find(option => option.scope === keyScope)?.help}</small>
             </label>
             <label className="field"><span>{translate('adminPage.keyName')}</span><input name="name" placeholder={translate('adminPage.eGProduction202608')} required /></label>
-            {keyScope === 'lineage:write' && (
+            {keyScope !== 'metrics:read' && (
               <label className="field"><span>{translate('adminPage.allowedNamespaces')}</span><input name="namespaces" placeholder={translate('adminPage.speechPodcastCommaSeparated')} required /></label>
             )}
             <button type="submit" className="button primary">{translate('adminPage.showKeyOnce')}</button>
