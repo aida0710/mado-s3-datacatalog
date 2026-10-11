@@ -102,7 +102,9 @@ body {
 .VPNavBar .divider-line {
   background: var(--header-border) !important;
 }
-.VPNavBar .title {
+/* 名前の欄。.VPNavBar .title と書くと、言語のメニューの見出し (p.title) にも当たってしまう。 */
+.VPNavBar .container > .title,
+.VPNavBarTitle .title {
   color: var(--header-text);
   border-bottom: 0 !important;
 }
@@ -110,7 +112,8 @@ body {
    サイドバー自身の上端は上部バーの裏に隠れるので、線はこちらに置く。サイドバーが出るのは
    960px 以上だけなので、それより狭いときはロゴの下に線を引かない。 */
 @media (min-width: 960px) {
-  .VPNavBar.has-sidebar .title {
+  .VPNavBar.has-sidebar .container > .title,
+  .VPNavBarTitle.has-sidebar .title {
     border-bottom: 1px solid var(--header-border) !important;
   }
 }
