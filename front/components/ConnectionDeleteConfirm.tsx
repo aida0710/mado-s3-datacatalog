@@ -1,3 +1,6 @@
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 
 interface Props {
@@ -7,14 +10,15 @@ interface Props {
 }
 
 export function ConnectionDeleteConfirm({ name, onConfirm, onCancel }: Props) {
+  useLocale()
   return (
     <DeleteConfirmDialog
       titleId="connection-delete-title"
-      title="接続を削除"
+      title={translate("common.deleteConnection")}
       onConfirm={onConfirm}
       onCancel={onCancel}
     >
-      接続 <strong className="mono">{name}</strong> を削除します。よろしいですか?
+      <TranslatedMessage message="connectionDeleteConfirm.confirm" values={{ value0: <strong className="mono">{name}</strong> }} />
     </DeleteConfirmDialog>
   )
 }

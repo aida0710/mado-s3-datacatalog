@@ -1,3 +1,10 @@
+import { setLocale } from './i18n/locale'
+import { afterEach } from 'vitest'
+
+// Existing screen tests explicitly exercise Japanese, independently of the test browser locale.
+setLocale('ja')
+afterEach(() => setLocale('ja'))
+
 import '@testing-library/jest-dom/vitest'
 
 // jsdom には matchMedia が無い。テストはすべて desktop (>= sm) 想定で書かれて

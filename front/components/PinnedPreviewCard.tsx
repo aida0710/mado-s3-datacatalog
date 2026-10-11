@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { Download, X } from 'lucide-react'
 import { api } from '../lib/api/client'
 import { classify, classifyEntry } from '../lib/api/mime'
@@ -20,21 +22,24 @@ import { UnsupportedPreview } from './UnsupportedPreview'
 // (音声カードのスペクトログラム相当) にして縦横スクロールで読ませる。name は拡張子
 // 判定用のファイル名 (単体は key、tar エントリは entryPath)。
 function PinnedTextBody({ name, url }: { name: string; url: string }) {
+  useLocale()
   const sniffed = useSniffedText(url)
 
   if (sniffed.status === 'error') return <p className="notice error">{sniffed.message}</p>
-  if (sniffed.status === 'loading') return <p className="muted">読み込み中…</p>
+  if (sniffed.status === 'loading') return <p className="muted">{translate("common.loading")}</p>
   if (sniffed.status === 'binary') return <UnsupportedPreview />
   return <PinnedText name={name} text={prettyPrintJson(name, sniffed.text)} />
 }
 
 // カードは狭いので選択欄は置かず、推測した形式か、プレビューでこの拡張子に選んだ形式で色を付ける。
 function PinnedText({ name, text }: { name: string; text: string }) {
+  useLocale()
   const code = useCodeLanguage(name, text)
   return <CodeView text={text} language={code.language} className="preview-code pinned-text" />
 }
 
 function PinnedPreviewBody({ item }: { item: PinnedItem }) {
+  useLocale()
   const { connectionId, bucket, key, entryPath } = item
   if (entryPath != null) {
     const kind = classifyEntry(entryPath)
@@ -74,6 +79,7 @@ function PinnedPreviewBody({ item }: { item: PinnedItem }) {
 
 /** 画面下のドックに並べる、ピン留めしたプレビューのカード。上の帯にファイル名と操作。 */
 export function PinnedPreviewCard({ item }: { item: PinnedItem }) {
+  useLocale()
   const { removePin } = usePinnedPreviews()
   const { connectionId, bucket, key, entryPath } = item
   // ピンカードは <Routes> の外 (BottomDock) に居るので connectionId を明示して引く。
@@ -94,8 +100,8 @@ export function PinnedPreviewCard({ item }: { item: PinnedItem }) {
             className="icon-button"
             href={downloadUrl}
             download={filename}
-            aria-label={`${filename} をダウンロード`}
-            title="ダウンロード"
+            aria-label={translate("common.download", { value0: filename })}
+            title={translate("common.download2")}
           >
             <Download size={16} aria-hidden="true" />
           </a>
@@ -104,8 +110,8 @@ export function PinnedPreviewCard({ item }: { item: PinnedItem }) {
           type="button"
           className="icon-button"
           onClick={() => removePin(item.id)}
-          aria-label={`${filename} のピン留めを解除`}
-          title="ピン留めを解除"
+          aria-label={translate("pinnedPreviewCard.unpin", { value0: filename })}
+          title={translate("pinnedPreviewCard.unpin2")}
         >
           <X size={16} aria-hidden="true" />
         </button>

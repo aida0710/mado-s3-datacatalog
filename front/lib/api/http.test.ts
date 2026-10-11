@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from './client'
-import { SESSION_EXPIRED_MESSAGE, fetchOk } from './http'
+import { getSessionExpiredMessage, fetchOk } from './http'
 import { subscribeUnauthorized } from './unauthorized-events'
 
 function respondWith(status: number, body: unknown = { error: 'unauthorized' }) {
@@ -27,7 +27,7 @@ describe('API の 401 の通知', () => {
     respondWith(401)
     const listener = listenUnauthorized()
 
-    await expect(fetchOk('/api/internal/notes/home')).rejects.toThrow(SESSION_EXPIRED_MESSAGE)
+    await expect(fetchOk('/api/internal/notes/home')).rejects.toThrow(getSessionExpiredMessage())
 
     expect(listener).toHaveBeenCalledOnce()
   })
@@ -58,8 +58,8 @@ describe('API の 401 の通知', () => {
     respondWith(401)
     const listener = listenUnauthorized()
 
-    await expect(api.latestScan('c', 'b', 'p/')).rejects.toThrow(SESSION_EXPIRED_MESSAGE)
-    await expect(api.estimate('c', 'b', 'p/')).rejects.toThrow(SESSION_EXPIRED_MESSAGE)
+    await expect(api.latestScan('c', 'b', 'p/')).rejects.toThrow(getSessionExpiredMessage())
+    await expect(api.estimate('c', 'b', 'p/')).rejects.toThrow(getSessionExpiredMessage())
 
     expect(listener).toHaveBeenCalledTimes(2)
   })

@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useMemo, useState } from 'react'
 import { CODE_LANGUAGES, detectLanguage, isCodeLanguage, type CodeLanguage } from '@mado/design-system/code'
 
@@ -22,10 +24,10 @@ export function codeLanguageKey(fileName: string): string {
   return UNREMEMBERED_EXTENSIONS.has(extension) ? '' : extension
 }
 
-/** 選択欄に出す形式の名前。テキストとログだけ日本語にする。 */
+/** 形式の名前。テキストとログは表示言語に合わせ、言語名は共通の表記を使う。 */
 export function codeLanguageName(language: CodeLanguage): string {
-  if (language === 'plaintext') return 'テキスト'
-  if (language === 'log') return 'ログ'
+  if (language === 'plaintext') return translate("useCodeLanguage.text")
+  if (language === 'log') return translate("useCodeLanguage.log")
   return CODE_LANGUAGES.find(item => item.id === language)?.name ?? language
 }
 
@@ -70,6 +72,7 @@ export interface CodeLanguageState {
  * 利用者がこの拡張子で選んだ形式があればそちらを使う。
  */
 export function useCodeLanguage(fileName: string, text: string): CodeLanguageState {
+  useLocale()
   const detected = useMemo(() => detectLanguage({ fileName, text }), [fileName, text])
   const key = codeLanguageKey(fileName)
   // このプレビューで選んだ形式。別のファイル (別の鍵) は保存から自分の形式を読む。

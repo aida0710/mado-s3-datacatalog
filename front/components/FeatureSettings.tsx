@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useReducer } from 'react'
 import { api } from '../lib/api/client'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
@@ -7,8 +10,8 @@ import { SettingsSectionHeader } from './SettingsSectionHeader'
 const FEATURES = [
   {
     key: 'tags_enabled',
-    label: 'タグを表示する',
-    help: 'オフにするとタグバッジ・絞り込み・タグ検索と、この画面のタグ管理が消えます。登録済みのタグと割り当ては削除されません。',
+    get label() { return translate("featureSettings.showTags") },
+    get help() { return translate("featureSettings.disablingThisHidesTagBadgesFiltersSearchAnd") },
   },
 ] as const
 
@@ -51,6 +54,7 @@ const ALL_ENABLED = Object.fromEntries(
 // 接続ごとの権限 (ConnectionForm の「この接続で許可する操作」) とは別物 —
 // あちらは S3 への操作を止めるもので、こちらは単なる画面の出し分け。
 export function FeatureSettings() {
+  useLocale()
   const [state, dispatch] = useReducer(reducer, {
     enabled: ALL_ENABLED, loading: true, error: null,
   })
@@ -84,9 +88,9 @@ export function FeatureSettings() {
 
   return (
     <section className="settings-column">
-      <SettingsSectionHeader title="機能" />
+      <SettingsSectionHeader title={translate("featureSettings.features")} />
 
-      {state.error && <p className="notice error">{state.error}</p>}
+      {state.error && <p className="notice error">{localizeMessage(state.error)}</p>}
 
       <div className="choice-list">
         {FEATURES.map(({ key, label, help }) => (

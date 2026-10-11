@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { lazy, Suspense, useLayoutEffect, useRef } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { About } from '../components/About'
@@ -12,14 +14,15 @@ import ConnectionsPage from './ConnectionsPage'
 const AdminPage = lazy(() => import('./AdminPage'))
 
 const NAV_ITEMS = [
-  { to: '/settings/account', label: 'Account' },
-  { to: '/settings/connections', label: 'Connections' },
-  { to: '/settings/features', label: 'Features' },
+  { to: '/settings/account', get label() { return translate('settingsPage.account') } },
+  { to: '/settings/connections', get label() { return translate('settingsPage.connections') } },
+  { to: '/settings/features', get label() { return translate('settingsPage.features') } },
 ] as const
 
 // 見出しの下の横並びのタブ。左にはアプリのサイドバーがあるので、二本目の列は作らない。
 // 選択中の見た目は NavLink が付ける aria-current="page" で共通の .tab が受け持つ。
 function SettingsNav() {
+  useLocale()
   const { user } = useAuth()
   const { pathname } = useLocation()
   const navRef = useRef<HTMLElement>(null)
@@ -40,19 +43,20 @@ function SettingsNav() {
   }, [pathname])
 
   return (
-    <nav ref={navRef} className="tabs" aria-label="Settings">
+    <nav ref={navRef} className="tabs" aria-label={translate('common.settings')}>
       {NAV_ITEMS.map(item => (
         <NavLink key={item.to} to={item.to} className="tab">
           {item.label}
         </NavLink>
       ))}
-      {canAccess && <NavLink to="/settings/access" className="tab">Access</NavLink>}
-      <NavLink to="/settings/about" className="tab">About</NavLink>
+      {canAccess && <NavLink to="/settings/access" className="tab">{translate("settingsPage.access")}</NavLink>}
+      <NavLink to="/settings/about" className="tab">{translate("settingsPage.about")}</NavLink>
     </nav>
   )
 }
 
 function FeaturesPage() {
+  useLocale()
   const tagsEnabled = useTagsEnabled()
   return (
     <div className="settings-stack">
@@ -63,10 +67,11 @@ function FeaturesPage() {
 }
 
 export default function SettingsPage() {
+  useLocale()
   return (
     <div className="settings-page">
       <header className="page-header">
-        <div><h1>Settings</h1></div>
+        <div><h1>{translate("common.settings")}</h1></div>
       </header>
       <SettingsNav />
       <Routes>
@@ -77,7 +82,7 @@ export default function SettingsPage() {
         <Route path="connections/:connectionId" element={<ConnectionEditorPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="access/*" element={
-          <Suspense fallback={<p className="state-message">読み込み中…</p>}>
+          <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
             <AdminPage />
           </Suspense>
         } />

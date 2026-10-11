@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react'
 import { AuthOverlay } from '../components/AuthOverlay'
 import { AUTH_TITLE_ID, ChangePasswordPage, LoginPage } from '../pages/LoginPage'
@@ -15,7 +18,7 @@ interface AuthConfig {
 async function fetchCurrentUser(): Promise<AuthUser | null> {
   const response = await fetch('/api/auth/me', { headers: { Accept: 'application/json' } })
   if (response.status === 401) return null
-  if (!response.ok) throw new Error('認証状態を確認できませんでした')
+  if (!response.ok) throw new Error(translate("auth.couldNotCheckAuthenticationStatus"))
   const body = await response.json() as { user: AuthUser }
   return body.user
 }
@@ -42,6 +45,7 @@ function authPageFor({ config, session, onSessionChanged }: {
 }
 
 export function AuthGate({ children }: { children: ReactNode }) {
+  useLocale()
   const [config, setConfig] = useState<AuthConfig | null>(null)
   const [disabled, setDisabled] = useState(false)
   const [session, dispatchSession] = useReducer(nextAuthSession, SIGNED_OUT)
@@ -115,13 +119,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
           setDisabled(true)
           return
         }
-        if (!response.ok) throw new Error('認証設定を取得できませんでした')
+        if (!response.ok) throw new Error(translate("auth.couldNotLoadAuthenticationSettings"))
         const next = await response.json() as AuthConfig
         if (!current) return
         setConfig(next)
         await reload()
       } catch (cause) {
-        if (current) setError(cause instanceof Error ? cause.message : '認証の初期化に失敗しました')
+        if (current) setError(cause instanceof Error ? cause.message : translate("auth.couldNotInitializeAuthentication"))
       } finally {
         if (current) setLoading(false)
       }
@@ -138,7 +142,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     } catch {
       // 要求がサーバーに届いて session を失効させたあとで通信が切れた可能性もあるので、
       // 「ログイン状態のまま」とは言い切らない。
-      throw new Error('サーバーに接続できず、サインアウトできたか確認できませんでした。もう一度お試しください。')
+      throw new Error(translate("auth.couldNotConnectToTheServerToConfirm"))
     }
     // /logout は sessionGuard の後ろにあるので、401 は session がもう無いことを表す。
     if (response.status === 401) {
@@ -148,7 +152,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     // /logout は session を失効させられれば、IdP の logout URL を作れなくても 200 を返す。
     // したがってそれ以外の失敗は、session が残っていることを表す。
     if (!response.ok) {
-      throw new Error(`サインアウトできませんでした（HTTP ${response.status}）。ログイン状態のままです。時間をおいてもう一度お試しください。`)
+      throw new Error(translate("auth.couldNotSignOutHttpYouAreStill", { value0: response.status }))
     }
     const body = await response.json().catch(() => null) as {
       logoutUrl?: string | null
@@ -162,8 +166,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const screenUser = session.screenUser
   const value = useMemo(() => ({ enabled: !disabled, user: screenUser, logout, reload }), [disabled, screenUser, logout, reload])
 
-  if (loading) return <div className="auth-splash" role="status">読み込み中…</div>
-  if (error) return <div className="auth-splash error" role="alert">{error}</div>
+  if (loading) return <div className="auth-splash" role="status">{translate("common.loading")}</div>
+  if (error) return <div className="auth-splash error" role="alert">{localizeMessage(error)}</div>
   const authPage = !disabled && config ? authPageFor({ config, session, onSessionChanged: reload }) : null
   // 残す画面が無ければ（起動時やサインアウトのあと）、ログイン画面だけを出す。
   if (authPage && !screenUser) return authPage

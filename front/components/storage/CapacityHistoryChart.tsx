@@ -1,3 +1,6 @@
+import { getIntlLocale } from '../../i18n/locale'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import {
   CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer,
   Tooltip, XAxis, YAxis,
@@ -32,13 +35,14 @@ function CapacityTooltip({ active, payload, label }: {
   payload?: Array<{ payload?: CapacityChartPoint }>
   label?: number | string
 }) {
+  useLocale()
   const point = payload?.[0]?.payload
   if (!active || !point || point.totalBytes == null) return null
   return (
     <div className="capacity-tooltip">
-      <p className="muted">{new Date(Number(label)).toLocaleString('ja-JP')}</p>
+      <p className="muted">{new Date(Number(label)).toLocaleString(getIntlLocale())}</p>
       <p className="capacity-tooltip-value">{fmtCapacityBytes(point.totalBytes, CHART_FRACTION_DIGITS)}</p>
-      <p className="muted">{point.objectCount?.toLocaleString('ja-JP')} objects</p>
+      <p className="muted">{point.objectCount?.toLocaleString(getIntlLocale())} {" " + translate("capacityHistoryChart.objects", { count: point.objectCount ?? 0 })}</p>
     </div>
   )
 }
@@ -50,6 +54,7 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
   capacityBytes: number | null
   label: string
 }) {
+  useLocale()
   // テーマが切り替わったら描き直す (下で色を読み直す)。
   useDocumentTheme()
   const colors = readChartColors()
@@ -57,14 +62,14 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
   const latest = points.at(-1)?.totalBytes
   return (
     <div>
-      <div className="capacity-chart-plot" role="img" aria-label={`${label}の容量推移グラフ`}>
+      <div className="capacity-chart-plot" role="img" aria-label={translate("capacityHistoryChart.capacityHistoryOf", { value0: label })}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, bottom: 2, left: 2 }} accessibilityLayer>
             <CartesianGrid stroke={colors.grid} vertical={false} />
             <XAxis
               dataKey="collectedAt"
               type="number" scale="time" domain={['dataMin', 'dataMax']}
-              tickFormatter={value => new Date(Number(value)).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+              tickFormatter={value => new Date(Number(value)).toLocaleDateString(getIntlLocale(), { month: 'numeric', day: 'numeric' })}
               tick={{ fontSize: 11, fill: colors.tick }}
               axisLine={{ stroke: colors.axis }} tickLine={false}
             />
@@ -75,10 +80,10 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
             />
             <Tooltip content={<CapacityTooltip />} cursor={{ stroke: colors.axis }} />
             {capacityBytes !== null
-              ? <ReferenceLine y={capacityBytes} stroke={colors.limit} strokeDasharray="4 4" label="上限" />
+              ? <ReferenceLine y={capacityBytes} stroke={colors.limit} strokeDasharray="4 4" label={translate("capacityHistoryChart.limit")} />
               : latest !== undefined && <ReferenceLine y={latest} stroke={colors.latest} strokeDasharray="3 4" />}
             <Line
-              type="linear" dataKey="totalBytes" name="容量" connectNulls={false} isAnimationActive={false}
+              type="linear" dataKey="totalBytes" name={translate("common.capacity")} connectNulls={false} isAnimationActive={false}
               stroke={colors.line} strokeWidth={1.75} dot={false}
               activeDot={{ r: 3.5, fill: colors.line, stroke: colors.background }}
             />
@@ -86,13 +91,13 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
         </ResponsiveContainer>
       </div>
       <table className="sr-only">
-        <caption>{label}の容量の履歴</caption>
-        <thead><tr><th>取得日時</th><th>容量</th><th>オブジェクト数</th></tr></thead>
+        <caption>{translate("capacityHistoryChart.capacityHistory", { value0: label })}</caption>
+        <thead><tr><th>{translate("capacityHistoryChart.retrievedAt")}</th><th>{translate("common.capacity")}</th><th>{translate("common.objectCount")}</th></tr></thead>
         <tbody>{points.map(point => (
           <tr key={point.collectedAt}>
-            <td>{new Date(point.collectedAt).toLocaleString('ja-JP')}</td>
+            <td>{new Date(point.collectedAt).toLocaleString(getIntlLocale())}</td>
             <td>{fmtCapacityBytes(point.totalBytes, CHART_FRACTION_DIGITS)}</td>
-            <td>{point.objectCount.toLocaleString('ja-JP')}</td>
+            <td>{point.objectCount.toLocaleString(getIntlLocale())}</td>
           </tr>
         ))}</tbody>
       </table>

@@ -1,7 +1,13 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useId, useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { readJsonFile, summaryText, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { Dialog } from './Dialog'
+
+// The compact result row shows a few causes; the summary carries the total failure count.
+const MAX_IMPORT_FAILURE_MESSAGES = 3
 
 interface Props {
   /** 対象名 (例: 接続 / タグ)。隠し input の aria-label に使う。
@@ -24,13 +30,14 @@ interface Props {
 // 結果はボタンの下に一行で出す (見出しの右に置かれるので、重い通知の枠は使わない)。
 export function ImportExportButtons({
   what, onExport, onImport, onDone, replaceWarning,
-  exportLabel = 'エクスポート', importLabel = 'インポート',
+  exportLabel = translate("importExportButtons.export"), importLabel = translate("importExportButtons.import"),
 }: Props) {
+  useLocale()
   const inputId = useId()
   const titleId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // ファイルを読んだ時点では実行せず、取り込み方法を選んでもらう。
@@ -38,7 +45,7 @@ export function ImportExportButtons({
   const [picked, setPicked] = useState<unknown | null>(null)
 
   const handleFile = async (file: File) => {
-    setMessage(null)
+    setImportSummary(null)
     setError(null)
     try {
       setPicked(await readJsonFile(file))
@@ -53,13 +60,11 @@ export function ImportExportButtons({
     const data = picked
     setPicked(null)
     setBusy(true)
-    setMessage(null)
+    setImportSummary(null)
     setError(null)
     try {
       const summary = await onImport(data, mode)
-      setMessage(summaryText(summary))
-      // 失敗が出たときだけ理由を見せる (全部は出さない — 件数で足りる)。
-      if (summary.failed.length > 0) setError(summary.failed.slice(0, 3).join(' / '))
+      setImportSummary(summary)
       onDone?.()
     } catch (e) {
       setError((e as Error).message)
@@ -67,6 +72,9 @@ export function ImportExportButtons({
       setBusy(false)
     }
   }
+
+  const importError = error ? localizeMessage(error)
+    : importSummary?.failed.slice(0, MAX_IMPORT_FAILURE_MESSAGES).map(message => localizeMessage(message)).join(' / ')
 
   return (
     <div className="import-export">
@@ -81,7 +89,7 @@ export function ImportExportButtons({
         disabled={busy}
       >
         <Upload size={14} aria-hidden="true" />
-        {busy ? '取り込み中…' : importLabel}
+        {busy ? translate("importExportButtons.importing") : importLabel}
       </button>
       <input
         ref={inputRef}
@@ -89,42 +97,39 @@ export function ImportExportButtons({
         type="file"
         accept="application/json,.json"
         hidden
-        aria-label={`${what}をインポート`}
+        aria-label={translate("importExportButtons.import2", { value0: what })}
         onChange={e => {
           const f = e.target.files?.[0]
           if (f) void handleFile(f)
         }}
       />
-      {(message || error) && (
+      {(importSummary || error) && (
         <p className="import-export__result">
-          {message && <span className="muted">{message}</span>}
-          {error && <span className="import-export__error" role="alert">{error}</span>}
+          {importSummary && <span className="muted">{summaryText(importSummary)}</span>}
+          {importError && <span className="import-export__error" role="alert">{importError}</span>}
         </p>
       )}
 
       {picked !== null && (
         <Dialog
           titleId={titleId}
-          title={`${what}の取り込み方法`}
+          title={translate("importExportButtons.howToImport", { value0: what })}
           onClose={() => setPicked(null)}
           narrowLayout="sheet"
           footer={
             <>
-              <button type="button" className="button" onClick={() => setPicked(null)}>キャンセル</button>
-              <button type="button" className="button primary" onClick={() => void run('append')}>追記</button>
-              <button type="button" className="button danger" onClick={() => void run('replace')}>置き換え</button>
+              <button type="button" className="button" onClick={() => setPicked(null)}>{translate("common.cancel")}</button>
+              <button type="button" className="button primary" onClick={() => void run('append')}>{translate("importExportButtons.append")}</button>
+              <button type="button" className="button danger" onClick={() => void run('replace')}>{translate("importExportButtons.replace")}</button>
             </>
           }
         >
           <div className="dialog-body import-export__choices">
             <p>
-              <strong>追記</strong> — ファイルにあるものを足します。既存はそのまま残ります。
-            </p>
+              <strong>{translate("importExportButtons.append")}</strong> {" " + translate("importExportButtons.addItemsFromTheFileExistingItemsAre")}</p>
             <p>
-              <strong>置き換え</strong> — ファイルの内容に揃えます。
-              <strong>ファイルに無い既存は削除されます。</strong>
-              両方にあるものは作り直さずそのまま残ります。
-            </p>
+              <strong>{translate("importExportButtons.replace")}</strong> {" " + translate("importExportButtons.matchTheContentsOfTheFile")}<strong>{translate("importExportButtons.existingItemsMissingFromTheFileWillBe")}</strong>
+              {translate("importExportButtons.itemsPresentInBothAreKeptWithoutBeing")}</p>
             {replaceWarning && <p className="import-export__warning">{replaceWarning}</p>}
           </div>
         </Dialog>

@@ -70,7 +70,7 @@ describe('PreviewDrawer の権限による出し分け', () => {
   it('archive が無効なら圧縮ファイルは開けない', () => {
     renderDrawer({ archive: false }, 'a/shard.tar')
     expect(screen.queryByText('archive-preview')).not.toBeInTheDocument()
-    expect(screen.getByText(/圧縮ファイルを開くこと/)).toBeInTheDocument()
+    expect(screen.getByText(/圧縮ファイルを開く機能/)).toBeInTheDocument()
   })
 
   it('接続の情報が無い (context 外) なら既定の全許可で描く', async () => {

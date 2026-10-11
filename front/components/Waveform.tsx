@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useRef } from 'react'
 import { useDocumentTheme } from '../lib/useDocumentTheme'
 
@@ -25,6 +27,7 @@ function cssColor(el: HTMLElement, name: string): string {
  * --error (Mado Model Tracking の音声プレビューと同じ配色)。テーマを切り替えたら描き直す。
  */
 export function Waveform({ peaks, progress, onSeek, height = 64, durationRatio = 1 }: Props) {
+  useLocale()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const theme = useDocumentTheme()
 
@@ -92,7 +95,7 @@ export function Waveform({ peaks, progress, onSeek, height = 64, durationRatio =
     <canvas
       ref={canvasRef}
       role="slider"
-      aria-label="再生位置"
+      aria-label={translate("waveform.playbackPosition")}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(progress * 100)}

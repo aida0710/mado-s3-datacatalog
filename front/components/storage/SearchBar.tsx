@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { Search, X } from 'lucide-react'
 
 interface Props {
@@ -13,6 +15,7 @@ interface Props {
 // 帯そのものは StorageBrowser が持ち、タグの絞り込みも同じ帯に並べる。
 // debounce は親 (StorageBrowser) の onChangeQ ハンドラ内で setTimeout / useRef<timer> 管理。
 export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecursive, onClear }: Props) {
+  useLocale()
   return (
     <>
       <div className="storage-search">
@@ -20,19 +23,19 @@ export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecurs
         <input
           type="search"
           placeholder={recursive
-            ? 'このディレクトリ配下を検索 (前方一致・再帰)'
-            : 'このディレクトリ内を検索 (前方一致)'}
+            ? translate("searchBar.searchThisDirectoryRecursivelyPrefixMatch")
+            : translate("searchBar.searchThisDirectoryPrefixMatch")}
           value={q}
           onChange={e => onChangeQ(e.target.value)}
-          aria-label="ディレクトリ内検索"
+          aria-label={translate("searchBar.searchDirectory")}
         />
         {isSearching && (
           <button
             type="button"
             className="icon-button"
             onClick={onClear}
-            aria-label="検索をクリア"
-            title="検索をクリア"
+            aria-label={translate("searchBar.clearSearch")}
+            title={translate("searchBar.clearSearch")}
           >
             <X size={15} aria-hidden="true" />
           </button>
@@ -44,8 +47,7 @@ export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecurs
           checked={recursive}
           onChange={e => onToggleRecursive(e.target.checked)}
         />
-        再帰検索
-      </label>
+        {translate("searchBar.recursiveSearch")}</label>
     </>
   )
 }

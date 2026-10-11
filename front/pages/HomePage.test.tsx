@@ -23,7 +23,7 @@ describe('HomePage — Team note の取得失敗', () => {
     noteMock.mockRejectedValue(new Error('Internal Server Error'))
     renderHome()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Team noteを読み込めませんでした（Internal Server Error）')
+    expect(await screen.findByRole('alert')).toHaveTextContent('共有ノートを読み込めませんでした（Internal Server Error）')
     expect(screen.getByRole('button', { name: '再試行' })).toBeInTheDocument()
     expect(screen.queryByText('まだ何も書かれていません')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /作成|編集|最初のノートを書く/ })).not.toBeInTheDocument()

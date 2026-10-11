@@ -1,3 +1,4 @@
+import { initializeLocale } from './i18n/locale'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
@@ -19,6 +20,7 @@ import { initialTheme } from './lib/useTheme'
 
 // ログイン画面も含め、最初の描画から保存したテーマ (無ければ OS の設定) で出す。
 document.documentElement.dataset.theme = initialTheme()
+initializeLocale()
 
 // React Router v7 の data router を使う (createBrowserRouter + RouterProvider)。
 // 単純な BrowserRouter だと useBlocker (編集ページの離脱警告) が動かないため。
