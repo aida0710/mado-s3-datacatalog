@@ -1,3 +1,4 @@
+import { createCssVariablesTheme } from 'shiki'
 import { defineConfig } from 'vitepress'
 
 const repository = 'https://github.com/aida0710/mado-s3-datacatalog'
@@ -76,4 +77,16 @@ export default defineConfig({
   },
   appearance: false,
   srcExclude: ['README.md'],
+  markdown: {
+    // コードの色はアプリと同じデザインシステムの --code-* で塗る。色そのものは theme/style.css で
+    // --shiki-* の変数に割り当てる (暗い地に対して、どの色も 4.5:1 以上)。
+    theme: createCssVariablesTheme({ name: 'mado-code', variablePrefix: '--shiki-', fontStyle: true }),
+    config(md) {
+      // 表は、はみ出すときだけ表の枠の中で横にスクロールさせる (スマホで本文全体が横にずれないように)。
+      md.renderer.rules.table_open = (tokens, index, options, _env, self) =>
+        `<div class="table-scroll">${self.renderToken(tokens, index, options)}`
+      md.renderer.rules.table_close = (tokens, index, options, _env, self) =>
+        `${self.renderToken(tokens, index, options)}</div>\n`
+    },
+  },
 })
