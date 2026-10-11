@@ -1,3 +1,6 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
+import { localizeMessage } from '../i18n/localizeMessage'
 import type { ReactNode } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
@@ -13,17 +16,17 @@ interface Props {
 
 // 取得の失敗を「まだ無い」と区別して知らせ、取り直せるようにする。
 export function LoadFailedNotice({ subject, reason, onRetry, children }: Props) {
+  useLocale()
   return (
     <div className="notice error" role="alert">
       <AlertCircle size={16} aria-hidden="true" />
       <span>
-        {subject}を読み込めませんでした{reason && `（${reason}）`}
+        {translate("loadFailedNotice.loadFailed", { value0: subject })}{reason && `（${localizeMessage(reason)}）`}
         {children && <span className="load-failed__note">{children}</span>}
       </span>
       <button type="button" className="button small" onClick={onRetry}>
         <RefreshCw size={14} aria-hidden="true" />
-        再試行
-      </button>
+        {translate("loadFailedNotice.retry")}</button>
     </div>
   )
 }

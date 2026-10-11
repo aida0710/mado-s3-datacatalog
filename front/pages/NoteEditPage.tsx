@@ -4,6 +4,9 @@
 // 保存後は navigate('/') でホームに戻る。ホームを開き直すと useRetryableLoad が取り直すので、
 // 明示的な refresh コールは不要。
 
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -17,10 +20,8 @@ import {
 
 const loadHomeNote = () => api.note('home')
 
-const TITLE = 'ノートを編集'
-const DESCRIPTION = 'Team note'
-
 export default function NoteEditPage() {
+  useLocale()
   const navigate = useNavigate()
   const { state, retry } = useRetryableLoad(loadHomeNote)
   const editorRef = useRef<MonacoMarkdownEditorHandle>(null)
@@ -28,18 +29,17 @@ export default function NoteEditPage() {
   if (state.status === 'loading') {
     return (
       <>
-        <EditorPageHeader title={TITLE} description={DESCRIPTION} />
-        <p className="state-message">読み込み中…</p>
+        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
+        <p className="state-message">{translate("common.loading")}</p>
       </>
     )
   }
   if (state.status === 'failed') {
     return (
       <>
-        <EditorPageHeader title={TITLE} description={DESCRIPTION} />
-        <LoadFailedNotice subject="Team note" reason={state.reason} onRetry={retry}>
-          既存の本文を上書きしないよう、読み込めるまで編集できません。
-        </LoadFailedNotice>
+        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
+        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry}>
+          {translate("common.editingIsDisabledUntilTheContentLoadsTo")}</LoadFailedNotice>
       </>
     )
   }
@@ -49,8 +49,8 @@ export default function NoteEditPage() {
 
   return (
     <EditorShell
-      title={TITLE}
-      description={DESCRIPTION}
+      title={translate("noteEditPage.editNote")}
+      description={translate("homePage.teamNote")}
       initialBody={data.exists ? data.body : ''}
       onSave={(body, editor) =>
         api.putNote('home', body, editor).then(() => undefined)
@@ -64,7 +64,7 @@ export default function NoteEditPage() {
           value={body}
           onChange={setBody}
           height="100%"
-          ariaLabel="ノート本文 (Markdown)"
+          ariaLabel={translate("noteEditPage.noteContentMarkdown")}
         />
       )}
     </EditorShell>

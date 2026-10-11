@@ -91,7 +91,7 @@ describe('PreviewDrawer - ピン留めボタン', () => {
   it('✕ で閉じると onClose を呼ぶ', () => {
     const onClose = vi.fn()
     render(<Wrapper k="file.xyz" onClose={onClose} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Close preview' }))
+    fireEvent.click(screen.getByRole('button', { name: 'プレビューを閉じる' }))
     expect(onClose).toHaveBeenCalledOnce()
   })
 

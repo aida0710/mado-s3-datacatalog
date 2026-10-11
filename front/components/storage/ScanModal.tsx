@@ -10,6 +10,9 @@
 // 走査中と結果で骨格 (.scan-figures) を保つ。完了時に「走査済み」が
 // 「オブジェクト / 合計サイズ」へ置き換わるだけで、レイアウトが飛ばない。
 
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api/client'
@@ -34,6 +37,7 @@ function Breakdown({ title, rows }: {
   title: string
   rows: Array<{ label: string; objectCount: number; totalBytes: number }>
 }) {
+  useLocale()
   if (rows.length === 0) return null
   const max = Math.max(...rows.map(r => r.totalBytes), 1)
   return (
@@ -42,9 +46,9 @@ function Breakdown({ title, rows }: {
         <thead>
           <tr>
             <th scope="col">{title}</th>
-            <th scope="col" className="numeric scan-col-count">件数</th>
-            <th scope="col" className="numeric scan-col-size">サイズ</th>
-            <th scope="col" className="scan-col-meter"><span className="sr-only">サイズの割合</span></th>
+            <th scope="col" className="numeric scan-col-count">{translate("scanModal.count")}</th>
+            <th scope="col" className="numeric scan-col-size">{translate("scanModal.size")}</th>
+            <th scope="col" className="scan-col-meter"><span className="sr-only">{translate("scanModal.shareOfTotalSize")}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -67,6 +71,7 @@ function Breakdown({ title, rows }: {
 }
 
 export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: Props) {
+  useLocale()
   const titleId = useId()
   const [result, setResult] = useState<ScanResult | null>(null)
   const [scannedAt, setScannedAt] = useState<string | null>(null)
@@ -117,7 +122,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
           setRunning(false)
           onResult?.(r)
         } else if (job.status === 'error') {
-          setError(job.error ?? '走査に失敗しました')
+          setError(job.error ?? translate("scanModal.scanFailed"))
           setRunning(false)
         } else if (job.status === 'canceled') {
           setCanceled(true)
@@ -151,22 +156,20 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
       <>
         <span className="scan-dialog-status">
           <span className="storage-pulse-dot" aria-hidden="true" />
-          走査中…
-        </span>
-        <button type="button" className="button" onClick={cancel}>中止</button>
+          {translate("scanModal.scanning")}</span>
+        <button type="button" className="button" onClick={cancel}>{translate("scanModal.cancel")}</button>
       </>
     ) : (
       <>
         {scannedAt && (
-          <span className="scan-dialog-status">{fmtCacheAge(new Date(scannedAt))} に走査</span>
+          <span className="scan-dialog-status">{translate("scanModal.scannedAt", { value0: fmtCacheAge(new Date(scannedAt)) })}</span>
         )}
         {result ? (
           <button type="button" className="button" onClick={start}>
             <RefreshCw size={14} aria-hidden="true" />
-            再走査
-          </button>
+            {translate("scanModal.scanAgain")}</button>
         ) : (
-          <button type="button" className="button primary" onClick={start}>走査する</button>
+          <button type="button" className="button primary" onClick={start}>{translate("common.scan")}</button>
         )}
       </>
     )
@@ -175,8 +178,8 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
   return (
     <Dialog
       titleId={titleId}
-      title="配下の集計"
-      subtitle={`${bucket} / ${prefix || '(バケット直下)'}`}
+      title={translate("scanModal.directorySummary")}
+      subtitle={`${bucket} / ${prefix || translate("scanModal.bucketRoot")}`}
       onClose={onClose}
       size="wide"
       footer={footer}
@@ -195,8 +198,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             className="tab"
             onClick={() => setTab('breakdown')}
           >
-            内訳
-          </button>
+            {translate("common.breakdown")}</button>
           <button
             type="button"
             role="tab"
@@ -206,8 +208,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             className="tab"
             onClick={() => setTab('estimate')}
           >
-            移送の見積もり
-          </button>
+            {translate("scanModal.transferEstimate")}</button>
         </div>
 
         {tab === 'estimate' ? (
@@ -233,21 +234,21 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               <div className="scan-figures">
                 {running ? (
                   <div className="scan-figure">
-                    <span className="muted">走査済み</span>
+                    <span className="muted">{translate("scanModal.scanned")}</span>
                     <span className="scan-figure-value">
-                      {scanned.toLocaleString()}<small>件</small>
+                      {scanned.toLocaleString()}<small>{translate("common.items")}</small>
                     </span>
                   </div>
                 ) : result && (
                   <>
                     <div className="scan-figure">
-                      <span className="muted">オブジェクト</span>
+                      <span className="muted">{translate("scanModal.objects")}</span>
                       <span className="scan-figure-value">
-                        {result.objectCount.toLocaleString()}<small>件</small>
+                        {result.objectCount.toLocaleString()}<small>{translate("common.items")}</small>
                       </span>
                     </div>
                     <div className="scan-figure">
-                      <span className="muted">合計サイズ</span>
+                      <span className="muted">{translate("scanModal.totalSize")}</span>
                       <span className="scan-figure-value">{fmtSize(result.totalBytes)}</span>
                     </div>
                   </>
@@ -257,7 +258,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
 
             {running && (
               <div className="storage-busy-track">
-                <div role="progressbar" aria-label="走査中" className="storage-busy-bar" />
+                <div role="progressbar" aria-label={translate("scanModal.scanning2")} className="storage-busy-bar" />
               </div>
             )}
 
@@ -265,17 +266,16 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               <>
                 {result.partial && (
                   <p className="notice storage-warning">
-                    走査中にエラーが出たため、集計は途中までです。
-                  </p>
+                    {translate("scanModal.anErrorOccurredDuringTheScanTheSummary")}</p>
                 )}
                 <Breakdown
-                  title="サブディレクトリ"
+                  title={translate("scanModal.subdirectories")}
                   rows={result.children.map(c => ({
                     label: c.name, objectCount: c.objectCount, totalBytes: c.totalBytes,
                   }))}
                 />
                 <Breakdown
-                  title="拡張子"
+                  title={translate("scanModal.extensions")}
                   rows={result.extensions.map(e => ({
                     label: e.ext, objectCount: e.objectCount, totalBytes: e.totalBytes,
                   }))}
@@ -283,10 +283,10 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               </>
             )}
 
-            {canceled && <p className="muted">中止しました。</p>}
-            {error && <p className="notice error">{error}</p>}
+            {canceled && <p className="muted">{translate("scanModal.canceled")}</p>}
+            {error && <p className="notice error">{localizeMessage(error)}</p>}
             {loaded && !result && !running && !error && (
-              <p className="state-message">まだ走査していません。</p>
+              <p className="state-message">{translate("scanModal.notScannedYet")}</p>
             )}
           </div>
         )}

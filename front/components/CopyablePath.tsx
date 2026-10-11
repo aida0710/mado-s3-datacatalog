@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { copyToClipboard } from '../lib/clipboard'
@@ -19,6 +21,7 @@ interface Props {
 // 枠は付けない — 密なドックの中でファイル名がボタンの箱に見えてしまう。
 // hover の下線だけを手掛かりにする (見た目は preview.css の .copyable-path)。
 export function CopyablePath({ text, fullPath, className }: Props) {
+  useLocale()
   const [copied, setCopied] = useState<boolean | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -39,12 +42,12 @@ export function CopyablePath({ text, fullPath, className }: Props) {
       type="button"
       className={className ? `copyable-path ${className}` : 'copyable-path'}
       title={fullPath}
-      aria-label={`パスをコピー: ${fullPath}`}
+      aria-label={translate("copyablePath.copyPath", { value0: fullPath })}
       onClick={() => void onCopy()}
     >
       {copied && <Check size={14} aria-hidden="true" />}
       <span className="copyable-path-text">
-        {copied == null ? text : copied ? 'コピーしました' : 'コピー失敗'}
+        {copied == null ? text : copied ? translate("common.copied") : translate("common.copyFailed")}
       </span>
     </button>
   )

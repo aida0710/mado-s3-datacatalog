@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useReducer } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConnectionForm } from '../components/ConnectionForm'
@@ -21,6 +24,7 @@ function reducer(state: State, action: Action): State {
 }
 
 export default function ConnectionEditorPage() {
+  useLocale()
   const { connectionId } = useParams<{ connectionId: string }>()
   const navigate = useNavigate()
   const creating = connectionId === undefined
@@ -37,7 +41,7 @@ export default function ConnectionEditorPage() {
       .then(connections => {
         if (!current) return
         const connection = connections.find(row => row.id === connectionId)
-        if (!connection) throw new Error('接続が見つかりません')
+        if (!connection) throw new Error(translate("connectionEditorPage.connectionNotFound"))
         dispatch({ type: 'loaded', connection })
       })
       .catch((cause: Error) => {
@@ -51,11 +55,11 @@ export default function ConnectionEditorPage() {
     navigate('/settings/connections')
   }
 
-  if (state.loading) return <p className="state-message">読み込み中…</p>
+  if (state.loading) return <p className="state-message">{translate("common.loading")}</p>
   if (state.error) return (
     <div>
-      <p className="notice error" role="alert">{state.error}</p>
-      <Link className="button" to="/settings/connections">接続一覧へ戻る</Link>
+      <p className="notice error" role="alert">{localizeMessage(state.error)}</p>
+      <Link className="button" to="/settings/connections">{translate("connectionEditorPage.backToConnections")}</Link>
     </div>
   )
 

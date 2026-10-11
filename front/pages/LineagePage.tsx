@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { LoaderCircle, Plus } from 'lucide-react'
@@ -62,6 +65,7 @@ function hasDetailRequest(node: LineageNodeSummary): boolean {
 }
 
 export default function LineagePage() {
+  useLocale()
   const [searchParams, setSearchParams] = useSearchParams()
   const route = parseLineageRoute(searchParams)
   const [graphState, dispatchGraph] = useReducer(graphReducer, initialGraph)
@@ -151,14 +155,13 @@ export default function LineagePage() {
     <section className="lineage-page touch-targets">
       <header className="page-header">
         <div>
-          <h1>DataLineage</h1>
+          <h1>{translate("common.dataLineage")}</h1>
         </div>
         {canCurate && (
           <div className="page-actions">
             <Link className="button primary" to="/lineage/register">
               <Plus size={16} aria-hidden="true" />
-              手動で登録
-            </Link>
+              {translate("lineagePage.registerManually")}</Link>
           </div>
         )}
       </header>
@@ -186,14 +189,14 @@ export default function LineagePage() {
       {projectionProblem && (
         <div className="notice lineage-warning" role="status">
           <span>
-            <strong>グラフ反映状態: {projectionStateLabel(projection.state)}</strong>
-            {' '}{projection.message ?? `${projection.pendingEvents ?? 0}件のイベントが反映待ちです。`}
+            <strong>{translate("lineagePage.graphSynchronization") + " "}{projectionStateLabel(projection.state)}</strong>
+            {' '}{projection.message ?? translate("lineagePage.eventsArePendingSynchronization", { value0: projection.pendingEvents ?? 0 })}
           </span>
         </div>
       )}
       {graphState.data?.truncated && (
         <div className="notice lineage-warning" role="status">
-          <span>グラフの一部のみ表示しています。表示範囲を広げるか、起点を絞ってください。</span>
+          <span>{translate("lineagePage.onlyPartOfTheGraphIsShownExpand")}</span>
         </div>
       )}
       {graphState.data?.warnings.map((warning, index) => (
@@ -202,23 +205,22 @@ export default function LineagePage() {
 
       {!ready && (
         <div className="empty-state">
-          <h2>{route.mode === 'logical' ? '登録一覧からデータセットを選んでください' : 'データのバージョンを指定してください'}</h2>
+          <h2>{route.mode === 'logical' ? translate("lineagePage.selectADatasetFromTheRegistry") : translate("lineagePage.specifyADataVersion")}</h2>
           <p>{route.mode === 'logical'
-            ? '名前、説明、S3 URIから検索できます。名前空間と技術名は詳細指定に残しています。'
-            : 'データセットを選んで「入出力と処理履歴」へ切り替えるか、バージョンIDを入力してください。'}</p>
+            ? translate("lineagePage.searchByNameDescriptionOrS3UriNamespace")
+            : translate("lineagePage.selectADatasetAndSwitchToInputsOutputs")}</p>
         </div>
       )}
       {graphState.loading && (
         <p className="state-message">
           <LoaderCircle className="spin" size={18} aria-hidden="true" />
-          グラフを読み込み中…
-        </p>
+          {translate("common.loadingGraph")}</p>
       )}
-      {graphState.error && <p className="notice error" role="alert">{graphState.error}</p>}
+      {graphState.error && <p className="notice error" role="alert">{localizeMessage(graphState.error)}</p>}
       {graphState.data && graphState.data.nodes.length === 0 && (
         <div className="empty-state">
-          <h2>処理のつながりがまだありません</h2>
-          <p>処理履歴が登録されると、入力から出力への流れがここに表示されます。</p>
+          <h2>{translate("lineagePage.noProcessingRelationshipsYet")}</h2>
+          <p>{translate("lineagePage.onceProcessingHistoryIsRegisteredTheFlowFrom")}</p>
         </div>
       )}
 
@@ -234,7 +236,7 @@ export default function LineagePage() {
             node={selectedNode}
             detail={detailForSelection.data}
             loading={detailLoading}
-            error={detailForSelection.error}
+            error={localizeMessage(detailForSelection.error)}
             onClose={() => patchRoute({ selectedId: '' })}
             onOpenVersion={versionId => patchRoute({ mode: 'versions', versionId, selectedId: versionId })}
             canEdit={canCurate}

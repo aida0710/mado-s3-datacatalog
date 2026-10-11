@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/translate'
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { LineageGraph, LineageNodeKind, LineageNodeSummary } from '../api/types'
 import { lineageStatusLabel, lineageStatusTone, type LineageStatusTone } from './labels'
@@ -40,8 +41,8 @@ function rawStatusOf(node: LineageNodeSummary): string | null {
 function metaOf(node: LineageNodeSummary): string | null {
   if (node.kind === 'dataset' || node.kind === 'source') {
     const versions = node.registry?.versionCount
-    if (versions != null) return `バージョン ${versions}件`
-    return node.completeness === 'unregistered' ? '台帳未登録' : null
+    if (versions != null) return translate("graphModel.versions", { value0: versions })
+    return node.completeness === 'unregistered' ? translate("common.notRegistered") : null
   }
   if (node.kind === 'version') return stringData(node, 'version')
   return null

@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import type { Tag } from '../../lib/api/types'
 import { TagToggleChips } from '../TagToggleChips'
 
@@ -11,10 +13,11 @@ interface Props {
 // 一覧の上の帯に並べる、タグの絞り込み。選んだタグのいずれかを含む行だけに絞る (OR)。
 // クライアント側フィルタ — 取得済みの一覧データに対して行う。
 export function TagFilterBar({ tags, selected, onToggle, onClear }: Props) {
+  useLocale()
   if (tags.length === 0) return null
   return (
     <div className="storage-toolbar-item">
-      <span className="muted">タグで絞り込み</span>
+      <span className="muted">{translate("tagFilterBar.filterByTag")}</span>
       <TagToggleChips tags={tags} selected={selected} onToggle={onToggle} onClear={onClear} />
     </div>
   )

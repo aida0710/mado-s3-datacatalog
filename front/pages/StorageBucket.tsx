@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Gauge } from 'lucide-react'
@@ -12,6 +14,7 @@ import { useDrawerResize } from '../lib/useDrawerResize'
 interface Props { connectionId: string }
 
 export default function StorageBucket({ connectionId }: Props) {
+  useLocale()
   const params = useParams<{ bucket: string; '*': string }>()
   const bucket = decodeURIComponent(params.bucket ?? '')
   const prefix = params['*'] ?? ''
@@ -86,8 +89,7 @@ export default function StorageBucket({ connectionId }: Props) {
             to={`/storage/${encodeURIComponent(connectionId)}/?view=capacity&bucket=${encodeURIComponent(bucket)}`}
           >
             <Gauge size={14} aria-hidden="true" />
-            バケットの容量メトリクスを見る
-          </Link>
+            {translate("storageBucket.viewBucketCapacityMetrics")}</Link>
         )}
       />
       {/* README はリスト幅に依存させない (常に full width)。identity を key にして、

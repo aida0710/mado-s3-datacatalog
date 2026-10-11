@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { StorageFileEntry, Tag } from '../../lib/api/types'
@@ -42,6 +44,7 @@ interface FileEntryProps extends EntryTagProps, RowLayout {
 // エントリが変わらない既存行は描画をスキップできる。各行は items: MenuItem[] を
 // 内部で useMemo して CopyMenu の memo を活かす。
 const DirectoryRow = memo(function DirectoryRow(props: DirectoryEntryProps) {
+  useLocale()
   const { directory, connectionId, bucket, allTags, tagIds, onTagsChange, compact } = props
   const entry = useDirectoryEntryActions(props)
   const navigate = useNavigate()
@@ -72,6 +75,7 @@ const DirectoryRow = memo(function DirectoryRow(props: DirectoryEntryProps) {
 })
 
 const FileRow = memo(function FileRow(props: FileEntryProps) {
+  useLocale()
   const { file, connectionId, bucket, allTags, tagIds, onTagsChange, compact, selected } = props
   const entry = useFileEntryActions(props)
   const size = fmtSize(file.size)
@@ -130,6 +134,7 @@ export function EntryTable({
   dirs, files, prefix, connectionId, bucket, onSelectFile, selectedKey = null,
   allTags = [], tagsByPath = {}, onTagsChange, tagsEnabled = true,
 }: Props) {
+  useLocale()
   const compact = useIsCompact()
   const shared = { prefix, connectionId, bucket, allTags, onTagsChange, tagsEnabled, compact }
   return (
@@ -137,10 +142,10 @@ export function EntryTable({
       <table>
         <thead>
           <tr>
-            <th scope="col">Name</th>
-            {!compact && <th scope="col" className="numeric entry-col-size">Size</th>}
-            {!compact && <th scope="col" className="entry-col-modified">Modified</th>}
-            <th scope="col" className="entry-col-actions"><span className="sr-only">操作</span></th>
+            <th scope="col">{translate("common.name")}</th>
+            {!compact && <th scope="col" className="numeric entry-col-size">{translate("common.size")}</th>}
+            {!compact && <th scope="col" className="entry-col-modified">{translate("entryTable.modified")}</th>}
+            <th scope="col" className="entry-col-actions"><span className="sr-only">{translate("common.actions")}</span></th>
           </tr>
         </thead>
         <tbody>

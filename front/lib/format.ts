@@ -1,5 +1,7 @@
 // 複数コンポーネントで共有する表示フォーマッター。
 
+import { getIntlLocale, getLocale } from '../i18n/locale'
+import { translate } from '../i18n/translate'
 export function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`
   if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`
@@ -17,7 +19,7 @@ export function fmtCapacityBytes(bytes: number, maximumFractionDigits = 2): stri
   if (bytes === 0) return '0 B'
   const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
   const unit = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
-  return `${(bytes / 1024 ** unit).toLocaleString('ja-JP', { maximumFractionDigits })} ${units[unit]}`
+  return `${(bytes / 1024 ** unit).toLocaleString(getIntlLocale(), { maximumFractionDigits })} ${units[unit]}`
 }
 
 // 前回の計測からの増減。「+1.5 GiB (+3.2%)」。前回が 0 バイトなら率は出さない。
@@ -42,10 +44,10 @@ export function fmtUsd(n: number): string {
 
 /** 所要時間の単位。上振れ側の大きさで決め、両端で単位を揃える。 */
 function durationUnit(sec: number): { div: number; unit: string } {
-  if (sec < 90) return { div: 1, unit: '秒' }
-  if (sec < 90 * 60) return { div: 60, unit: '分' }
-  if (sec < 48 * 3600) return { div: 3600, unit: '時間' }
-  return { div: 86400, unit: '日' }
+  if (sec < 90) return { div: 1, unit: translate("format.seconds") }
+  if (sec < 90 * 60) return { div: 60, unit: translate("format.minutes") }
+  if (sec < 48 * 3600) return { div: 3600, unit: translate("format.hours") }
+  return { div: 86400, unit: translate("format.days") }
 }
 
 function fmtDurationNum(v: number): string {
@@ -79,22 +81,36 @@ export function basename(path: string): string {
 export function fmtDateTime(value: string | Date): string {
   const d = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(d.getTime())) return typeof value === 'string' ? value : ''
-  return d.toLocaleString('ja-JP', {
+  return d.toLocaleString(getIntlLocale(), {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hour12: false,
   })
 }
 
+const RELATIVE_MESSAGES = {
+  second: 'relativeTime.secondsAgo',
+  minute: 'format.minutesAgo',
+  hour: 'format.hoursAgo',
+  day: 'format.daysAgo',
+} as const
+
+function formatTimeAgo(amount: number, unit: keyof typeof RELATIVE_MESSAGES): string {
+  if (getLocale() === 'en') {
+    return new Intl.RelativeTimeFormat(getIntlLocale(), { numeric: 'always' }).format(-amount, unit)
+  }
+  return translate(RELATIVE_MESSAGES[unit], { value0: amount })
+}
+
 export function fmtAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
   const s = Math.max(0, Math.floor(ms / 1000))
-  if (s < 60) return `${s}s ago`
+  if (s < 60) return formatTimeAgo(s, 'second')
   const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
+  if (m < 60) return formatTimeAgo(m, 'minute')
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
+  if (h < 24) return formatTimeAgo(h, 'hour')
   const d = Math.floor(h / 24)
-  return `${d}d ago`
+  return formatTimeAgo(d, 'day')
 }
 
 // 一覧ヘッダ上の CacheBanner 用。「2026/08/18 16:14(2時間前)」のように
@@ -117,18 +133,18 @@ export function fmtCacheAge(d: Date, now: Date = new Date(), opts: CacheAgeOptio
   // 区別が付かず、古いデータを新しいと誤読させてしまう。
   const abs = opts.compact
     ? (sameDay
-        ? d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })
-        : d.toLocaleString('ja-JP', {
+        ? d.toLocaleTimeString(getIntlLocale(), { hour: '2-digit', minute: '2-digit', hour12: false })
+        : d.toLocaleString(getIntlLocale(), {
             month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
           }))
     : fmtDateTime(d)
 
   const min = Math.floor((now.getTime() - d.getTime()) / 60_000)
   const rel =
-    min < 1  ? 'たった今'
-    : min < 60 ? `${min}分前`
-    : min < 60 * 24 ? `${Math.floor(min / 60)}時間前`
-    : `${Math.floor(min / (60 * 24))}日前`
+    min < 1  ? translate("format.justNow")
+    : min < 60 ? formatTimeAgo(min, 'minute')
+    : min < 60 * 24 ? formatTimeAgo(Math.floor(min / 60), 'hour')
+    : formatTimeAgo(Math.floor(min / (60 * 24)), 'day')
   return `${abs}(${rel})`
 }
 

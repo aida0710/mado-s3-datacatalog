@@ -29,12 +29,12 @@ describe('SettingsPage', () => {
       </AuthContext.Provider>,
     )
 
-    const nav = screen.getByRole('navigation', { name: 'Settings' })
-    expect(nav).toHaveTextContent('Account')
-    expect(nav).toHaveTextContent('Connections')
-    expect(nav).toHaveTextContent('Features')
-    expect(nav).toHaveTextContent('Access')
-    expect(nav).toHaveTextContent('About')
+    const nav = screen.getByRole('navigation', { name: '設定' })
+    expect(nav).toHaveTextContent('アカウント')
+    expect(nav).toHaveTextContent('接続')
+    expect(nav).toHaveTextContent('機能')
+    expect(nav).toHaveTextContent('アクセス管理')
+    expect(nav).toHaveTextContent('アプリケーション情報')
     expect(screen.getByLabelText('署名名')).toBeInTheDocument()
   })
 

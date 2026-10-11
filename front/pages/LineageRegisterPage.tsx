@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, CircleCheck, Info } from 'lucide-react'
@@ -21,9 +24,9 @@ import {
 type RegistrationKind = 'dataset' | 'location' | 'run'
 
 const REGISTRATION_KINDS: Array<{ value: RegistrationKind; label: string }> = [
-  { value: 'dataset', label: 'データセット' },
-  { value: 'location', label: '保存場所' },
-  { value: 'run', label: '処理履歴' },
+  { value: 'dataset', get label() { return translate("common.dataset") } },
+  { value: 'location', get label() { return translate("common.storageLocations") } },
+  { value: 'run', get label() { return translate("lineageRegisterPage.processingHistory") } },
 ]
 
 function text(form: FormData, name: string): string {
@@ -68,48 +71,51 @@ function occurredAt(form: FormData): string | undefined {
 }
 
 function ConnectionLocationFields({ connections }: { connections: Connection[] }) {
+  useLocale()
   return (
     <div className="lineage-form-grid lineage-form-grid--3">
       <label className="field">
-        <span>接続</span>
+        <span>{translate("common.connection")}</span>
         <select name="connectionId" required defaultValue="">
-          <option value="" disabled>接続を選択</option>
+          <option value="" disabled>{translate("lineageRegisterPage.selectAConnection")}</option>
           {connections.map(connection => <option key={connection.id} value={connection.id}>{connection.name}</option>)}
         </select>
       </label>
       <label className="field">
-        <span>バケット</span>
+        <span>{translate("common.bucket")}</span>
         <input name="bucket" required placeholder="dataset" />
       </label>
       <label className="field">
-        <span>パス</span>
+        <span>{translate("lineageRegisterPage.path")}</span>
         <input name="key" placeholder="podcast/raw/" />
       </label>
       <label className="field">
-        <span>状態</span>
+        <span>{translate("common.status")}</span>
         <select name="status" defaultValue="available">
-          <option value="available">利用可能</option>
-          <option value="archived">アーカイブ済み</option>
-          <option value="missing">見つからない</option>
-          <option value="unknown">不明</option>
+          <option value="available">{translate("common.available")}</option>
+          <option value="archived">{translate("common.archived")}</option>
+          <option value="missing">{translate("lineageRegisterPage.notFound")}</option>
+          <option value="unknown">{translate("common.unknown")}</option>
         </select>
       </label>
-      <label className="checkbox-field lineage-form-wide"><input name="isPrimary" type="checkbox" /> 主な保存場所にする</label>
+      <label className="checkbox-field lineage-form-wide"><input name="isPrimary" type="checkbox" /> {" " + translate("lineageRegisterPage.setAsPrimaryStorageLocation")}</label>
     </div>
   )
 }
 
 function EvidenceField() {
+  useLocale()
   return (
     <label className="field">
-      <span>根拠URL</span>
-      <textarea name="evidenceRefs" rows={3} placeholder={'READMEやNotion、購入記録などを1行に1件'} />
+      <span>{translate("lineageRegisterPage.evidenceUrls")}</span>
+      <textarea name="evidenceRefs" rows={3} placeholder={translate("lineageRegisterPage.readmesNotionPagesOrPurchaseRecordsOnePer")} />
     </label>
   )
 }
 
 // 登録の種類ごとの使いどころ。フォームの先頭に出す。
 function Guidance({ title, children }: { title: string; children: string }) {
+  useLocale()
   return (
     <div className="notice lineage-guidance">
       <Info size={16} aria-hidden="true" />
@@ -119,16 +125,18 @@ function Guidance({ title, children }: { title: string; children: string }) {
 }
 
 function ResultNotice({ message, to }: { message: string; to?: string }) {
+  useLocale()
   return (
     <div className="notice success" role="status">
       <CircleCheck size={16} aria-hidden="true" />
       <span>{message}</span>
-      {to && <Link to={to}>登録内容を見る</Link>}
+      {to && <Link to={to}>{translate("lineageRegisterPage.viewRegistrationDetails")}</Link>}
     </div>
   )
 }
 
 function DatasetRegistrationForm({ connections }: { connections: Connection[] }) {
+  useLocale()
   const [target, setTarget] = useState<'new' | 'existing'>('new')
   const [dataset, setDataset] = useState<RegistryDatasetSummary | null>(null)
   const [withLocation, setWithLocation] = useState(true)
@@ -143,7 +151,7 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (target === 'existing' && !dataset?.datasetId) {
-      setError('既存のデータセットを選択してください。')
+      setError(translate("lineageRegisterPage.selectAnExistingDataset"))
       return
     }
     const form = new FormData(event.currentTarget)
@@ -181,7 +189,7 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
       const version = result.version as Record<string, unknown> | undefined
       setResultVersionId(typeof version?.id === 'string' ? version.id : null)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '登録できませんでした。')
+      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
     } finally {
       setSaving(false)
     }
@@ -190,76 +198,76 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
   return (
     <form className="lineage-register-form" onSubmit={submit}>
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>データセット</h2></div>
-        <div className="lineage-segmented lineage-form-switch" role="group" aria-label="データセットの登録方法">
-          <button type="button" aria-pressed={target === 'new'} onClick={() => { setTarget('new'); setDataset(null) }}>新しく作る</button>
-          <button type="button" aria-pressed={target === 'existing'} onClick={() => setTarget('existing')}>既存にバージョンを追加</button>
+        <div className="section-heading"><h2>{translate("common.dataset")}</h2></div>
+        <div className="lineage-segmented lineage-form-switch" role="group" aria-label={translate("lineageRegisterPage.datasetRegistrationMethod")}>
+          <button type="button" aria-pressed={target === 'new'} onClick={() => { setTarget('new'); setDataset(null) }}>{translate("lineageRegisterPage.createNew")}</button>
+          <button type="button" aria-pressed={target === 'existing'} onClick={() => setTarget('existing')}>{translate("lineageRegisterPage.addAVersionToAnExistingDataset")}</button>
         </div>
         {target === 'existing' ? <DatasetPicker value={dataset} onChange={setDataset} /> : (
           <div className="lineage-form-grid">
-            <label className="field"><span>表示名</span><input name="displayName" required placeholder="Podcast 日本語 原本" /></label>
-            <label className="field"><span>データセットキー</span><input name="datasetKey" required placeholder="podcast/ja/raw" /></label>
-            <label className="field"><span>名前空間</span><input name="namespace" required placeholder="mdx-speech" /></label>
-            <label className="field"><span>技術名</span><input name="name" required placeholder="podcast/ja/raw" /></label>
-            <label className="field"><span>データ形式</span><input name="mediaType" placeholder="audio" /></label>
-            <label className="field"><span>管理者</span><input name="owner" /></label>
-            <label className="field lineage-form-wide"><span>別名</span><input name="aliases" placeholder="Podcast JA, 日本語Podcast" /></label>
-            <label className="field lineage-form-wide"><span>説明</span><textarea name="description" rows={3} /></label>
+            <label className="field"><span>{translate("common.displayName")}</span><input name="displayName" required placeholder={translate("lineageRegisterPage.japanesePodcastSource")} /></label>
+            <label className="field"><span>{translate("common.datasetKey")}</span><input name="datasetKey" required placeholder="podcast/ja/raw" /></label>
+            <label className="field"><span>{translate("common.namespace")}</span><input name="namespace" required placeholder="mdx-speech" /></label>
+            <label className="field"><span>{translate("common.technicalName")}</span><input name="name" required placeholder="podcast/ja/raw" /></label>
+            <label className="field"><span>{translate("common.dataFormat")}</span><input name="mediaType" placeholder="audio" /></label>
+            <label className="field"><span>{translate("common.administrator")}</span><input name="owner" /></label>
+            <label className="field lineage-form-wide"><span>{translate("common.aliases")}</span><input name="aliases" placeholder={translate("lineageRegisterPage.podcastJaJapanesePodcast")} /></label>
+            <label className="field lineage-form-wide"><span>{translate("common.description")}</span><textarea name="description" rows={3} /></label>
           </div>
         )}
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>バージョン</h2></div>
+        <div className="section-heading"><h2>{translate("common.version")}</h2></div>
         <div className="lineage-form-grid">
-          <label className="field"><span>バージョン</span><input name="version" required placeholder="2026-08-27" /></label>
-          <label className="field"><span>内容のハッシュ</span><input name="contentHash" placeholder="sha256:..." /></label>
-          <label className="field"><span>ファイル一覧URI</span><input name="manifestUri" placeholder="s3://.../manifest.jsonl" /></label>
-          <label className="field"><span>ファイル一覧のハッシュ</span><input name="manifestHash" placeholder="sha256:..." /></label>
-          <label className="field lineage-form-wide"><span>スキーマURI</span><input name="schemaUri" /></label>
+          <label className="field"><span>{translate("common.version")}</span><input name="version" required placeholder="2026-08-27" /></label>
+          <label className="field"><span>{translate("common.contentHash")}</span><input name="contentHash" placeholder="sha256:..." /></label>
+          <label className="field"><span>{translate("common.fileManifestUri")}</span><input name="manifestUri" placeholder="s3://.../manifest.jsonl" /></label>
+          <label className="field"><span>{translate("common.fileManifestHash")}</span><input name="manifestHash" placeholder="sha256:..." /></label>
+          <label className="field lineage-form-wide"><span>{translate("common.schemaUri")}</span><input name="schemaUri" /></label>
         </div>
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>保存場所</h2></div>
-        <label className="checkbox-field"><input type="checkbox" checked={withLocation} onChange={event => setWithLocation(event.target.checked)} /> 保存場所も登録する</label>
+        <div className="section-heading"><h2>{translate("common.storageLocations")}</h2></div>
+        <label className="checkbox-field"><input type="checkbox" checked={withLocation} onChange={event => setWithLocation(event.target.checked)} /> {" " + translate("lineageRegisterPage.alsoRegisterAStorageLocation")}</label>
         {withLocation && <div className="lineage-form-subsection"><ConnectionLocationFields connections={connections} /></div>}
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>由来と処理</h2></div>
-        <label className="checkbox-field"><input type="checkbox" checked={withSource} onChange={event => setWithSource(event.target.checked)} /> 購入元・収集元を記録する</label>
+        <div className="section-heading"><h2>{translate("lineageRegisterPage.provenanceAndProcessing")}</h2></div>
+        <label className="checkbox-field"><input type="checkbox" checked={withSource} onChange={event => setWithSource(event.target.checked)} /> {" " + translate("lineageRegisterPage.recordPurchaseOrCollectionSource")}</label>
         {withSource && (
           <div className="lineage-form-subsection">
             <div className="lineage-form-grid">
-              <label className="field"><span>入手元キー</span><input name="sourceKey" required placeholder="vendor/corpus-name" /></label>
-              <label className="field"><span>種類</span><select name="sourceKind" defaultValue="purchased"><option value="purchased">購入</option><option value="crawled">収集</option><option value="provided">提供</option><option value="database">データベース</option><option value="generated">生成</option><option value="other">その他</option></select></label>
-              <label className="field"><span>名称</span><input name="sourceName" required /></label>
-              <label className="field"><span>URI</span><input name="sourceUri" placeholder="https://..." /></label>
-              <label className="field"><span>提供元</span><input name="vendor" /></label>
-              <label className="field"><span>製品名</span><input name="product" /></label>
-              <label className="field"><span>ライセンス参照</span><input name="licenseRef" /></label>
-              <label className="field"><span>契約参照</span><input name="contractRef" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.sourceKey")}</span><input name="sourceKey" required placeholder="vendor/corpus-name" /></label>
+              <label className="field"><span>{translate("common.type")}</span><select name="sourceKind" defaultValue="purchased"><option value="purchased">{translate("common.purchased")}</option><option value="crawled">{translate("common.collected")}</option><option value="provided">{translate("common.provided")}</option><option value="database">{translate("common.database")}</option><option value="generated">{translate("common.generated")}</option><option value="other">{translate("common.other")}</option></select></label>
+              <label className="field"><span>{translate("lineageRegisterPage.name")}</span><input name="sourceName" required /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.uri")}</span><input name="sourceUri" placeholder="https://..." /></label>
+              <label className="field"><span>{translate("common.provider")}</span><input name="vendor" /></label>
+              <label className="field"><span>{translate("common.productName")}</span><input name="product" /></label>
+              <label className="field"><span>{translate("common.licenseReference")}</span><input name="licenseRef" /></label>
+              <label className="field"><span>{translate("common.contractReference")}</span><input name="contractRef" /></label>
             </div>
           </div>
         )}
-        <label className="checkbox-field"><input type="checkbox" checked={withProcessing} onChange={event => setWithProcessing(event.target.checked)} /> このバージョンを作った処理を記録する</label>
+        <label className="checkbox-field"><input type="checkbox" checked={withProcessing} onChange={event => setWithProcessing(event.target.checked)} /> {" " + translate("lineageRegisterPage.recordTheProcessThatProducedThisVersion")}</label>
         {withProcessing && (
           <div className="lineage-form-subsection">
-            <VersionListPicker values={inputs} onChange={setInputs} label="入力データ" />
+            <VersionListPicker values={inputs} onChange={setInputs} label={translate("lineageRegisterPage.inputData")} />
             <div className="lineage-form-grid">
-              <label className="field"><span>処理名</span><input name="transformationName" required placeholder="NeMo Curator 品質フィルタ" /></label>
-              <label className="field"><span>処理キー</span><input name="transformationKey" required placeholder="nemo-curator-quality-filter" /></label>
-              <label className="field"><span>処理の名前空間</span><input name="jobNamespace" required placeholder="mdx-speech" /></label>
-              <label className="field"><span>処理の技術名</span><input name="jobName" required placeholder="nemo-curator-quality-filter" /></label>
-              <label className="field"><span>コード置き場</span><input name="codeRepository" placeholder="https://github.com/..." /></label>
-              <label className="field"><span>既定のコード参照</span><input name="defaultCodeRef" placeholder="commit / tag" /></label>
-              <label className="field"><span>Git SHA</span><input name="gitSha" /></label>
-              <label className="field"><span>コンテナイメージ</span><input name="containerDigest" /></label>
-              <label className="field"><span>設定ファイルURI</span><input name="configUri" /></label>
-              <label className="field"><span>設定ファイルのハッシュ</span><input name="configHash" /></label>
-              <label className="field"><span>実行日時</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">不明</option><option value="known">判明している</option></select></label>
-              {timeStatus === 'known' && <label className="field"><span>日時</span><input name="occurredAt" type="datetime-local" required /></label>}
+              <label className="field"><span>{translate("lineageRegisterPage.processingName")}</span><input name="transformationName" required placeholder={translate("lineageRegisterPage.neMoCuratorQualityFilter")} /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.processingKey")}</span><input name="transformationKey" required placeholder="nemo-curator-quality-filter" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.processingNamespace")}</span><input name="jobNamespace" required placeholder="mdx-speech" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.processingTechnicalName")}</span><input name="jobName" required placeholder="nemo-curator-quality-filter" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.codeRepository")}</span><input name="codeRepository" placeholder="https://github.com/..." /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.defaultCodeReference")}</span><input name="defaultCodeRef" placeholder="commit / tag" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.gitSha")}</span><input name="gitSha" /></label>
+              <label className="field"><span>{translate("common.containerImage")}</span><input name="containerDigest" /></label>
+              <label className="field"><span>{translate("common.configurationFileUri")}</span><input name="configUri" /></label>
+              <label className="field"><span>{translate("common.configurationFileHash")}</span><input name="configHash" /></label>
+              <label className="field"><span>{translate("lineageRegisterPage.executionTime")}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate("common.unknown")}</option><option value="known">{translate("lineageRegisterPage.known")}</option></select></label>
+              {timeStatus === 'known' && <label className="field"><span>{translate("lineageRegisterPage.dateAndTime")}</span><input name="occurredAt" type="datetime-local" required /></label>}
             </div>
           </div>
         )}
@@ -267,49 +275,51 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>確認</h2></div>
-        <p className="muted">保存するとデータ台帳へ登録され、処理履歴がある場合はグラフにも反映されます。</p>
-        {error && <p className="notice error" role="alert">{error}</p>}
-        {resultVersionId && <ResultNotice message="データのバージョンを登録しました。" to={`/lineage?mode=versions&versionId=${encodeURIComponent(resultVersionId)}`} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? '登録中…' : '登録する'}</button>
+        <div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
+        <p className="muted">{translate("lineageRegisterPage.savingRegistersTheDataInTheRegistryIf")}</p>
+        {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
+        {resultVersionId && <ResultNotice message={translate("lineageRegisterPage.dataVersionRegistered")} to={`/lineage?mode=versions&versionId=${encodeURIComponent(resultVersionId)}`} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("lineageRegisterPage.register")}</button>
       </section>
     </form>
   )
 }
 
 function LocationRegistrationForm({ connections }: { connections: Connection[] }) {
+  useLocale()
   const [version, setVersion] = useState<VersionChoice | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!version) return setError('データのバージョンを選択してください。')
+    if (!version) return setError(translate("lineageRegisterPage.selectADataVersion"))
     const form = new FormData(event.currentTarget)
     setSaving(true); setError(null); setDone(false)
     try {
       await api.registerManualLocation({ versionId: version.id, location: storageInput(form), evidenceRefs: evidence(form) })
       setDone(true)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '登録できませんでした。')
+      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
     } finally { setSaving(false) }
   }
   return (
     <form className="lineage-register-form" onSubmit={submit}>
-      <Guidance title="同じ内容を別の場所へコピーした場合はこちら">新しいバージョンや処理履歴は作らず、同じバージョンへ保存場所だけを追加します。</Guidance>
-      <section className="lineage-form-section"><div className="section-heading"><h2>バージョン</h2></div><VersionPicker value={version} onChange={setVersion} /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>保存場所</h2></div><ConnectionLocationFields connections={connections} /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>根拠</h2></div><EvidenceField /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>確認</h2></div>
-        {error && <p className="notice error" role="alert">{error}</p>}
-        {done && <ResultNotice message="保存場所を追加しました。" to={version ? `/lineage?mode=versions&versionId=${encodeURIComponent(version.id)}` : undefined} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? '登録中…' : '保存場所を追加'}</button>
+      <Guidance title={translate("lineageRegisterPage.useThisWhenCopyingTheSameContentTo")}>{translate("lineageRegisterPage.addsAStorageLocationToTheSameVersion")}</Guidance>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.version")}</h2></div><VersionPicker value={version} onChange={setVersion} /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.storageLocations")}</h2></div><ConnectionLocationFields connections={connections} /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.evidence")}</h2></div><EvidenceField /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
+        {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
+        {done && <ResultNotice message={translate("lineageRegisterPage.storageLocationAdded")} to={version ? `/lineage?mode=versions&versionId=${encodeURIComponent(version.id)}` : undefined} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("lineageRegisterPage.addStorageLocation")}</button>
       </section>
     </form>
   )
 }
 
 function RunRegistrationForm() {
+  useLocale()
   const [inputs, setInputs] = useState<VersionChoice[]>([])
   const [outputs, setOutputs] = useState<VersionChoice[]>([])
   const [timeStatus, setTimeStatus] = useState<'known' | 'unknown'>('unknown')
@@ -318,8 +328,8 @@ function RunRegistrationForm() {
   const [runId, setRunId] = useState<string | null>(null)
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (inputs.length === 0 || outputs.length === 0) return setError('入力と出力を1件以上選択してください。')
-    if (inputs.some(input => outputs.some(output => output.id === input.id))) return setError('同じバージョンを入力と出力の両方には指定できません。コピーは「保存場所」を使ってください。')
+    if (inputs.length === 0 || outputs.length === 0) return setError(translate("lineageRegisterPage.selectAtLeastOneInputAndOneOutput"))
+    if (inputs.some(input => outputs.some(output => output.id === input.id))) return setError(translate("lineageRegisterPage.theSameVersionCannotBeBothAnInput"))
     const form = new FormData(event.currentTarget)
     const input: ManualLineageRegistrationInput = {
       transformation: transformation(form), inputVersionIds: inputs.map(item => item.id), outputVersionIds: outputs.map(item => item.id),
@@ -332,43 +342,44 @@ function RunRegistrationForm() {
       const result = await api.registerManualLineage(input)
       setRunId(typeof result.id === 'string' ? result.id : 'registered')
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '登録できませんでした。')
+      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
     } finally { setSaving(false) }
   }
   const outputLink = outputs[0] ? `/lineage?mode=versions&versionId=${encodeURIComponent(outputs[0].id)}` : undefined
   return (
     <form className="lineage-register-form" onSubmit={submit}>
-      <Guidance title="既存データ同士の処理履歴を補完します">不明な実行時刻は不明のまま保存し、根拠のない親子関係は登録しないでください。</Guidance>
-      <section className="lineage-form-section"><div className="section-heading"><h2>入出力</h2></div>
-        <div className="lineage-form-grid lineage-form-grid--top"><VersionListPicker values={inputs} onChange={setInputs} label="入力データ" /><VersionListPicker values={outputs} onChange={setOutputs} label="出力データ" /></div>
+      <Guidance title={translate("lineageRegisterPage.addProcessingHistoryBetweenExistingDatasets")}>{translate("lineageRegisterPage.leaveUnknownExecutionTimesUnknownDoNotRegister")}</Guidance>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.inputsAndOutputs")}</h2></div>
+        <div className="lineage-form-grid lineage-form-grid--top"><VersionListPicker values={inputs} onChange={setInputs} label={translate("lineageRegisterPage.inputData")} /><VersionListPicker values={outputs} onChange={setOutputs} label={translate("lineageRegisterPage.outputData")} /></div>
       </section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>処理</h2></div>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.processing")}</h2></div>
         <div className="lineage-form-grid">
-          <label className="field"><span>処理名</span><input name="transformationName" required /></label>
-          <label className="field"><span>処理キー</span><input name="transformationKey" required /></label>
-          <label className="field"><span>処理の名前空間</span><input name="jobNamespace" required /></label>
-          <label className="field"><span>処理の技術名</span><input name="jobName" required /></label>
-          <label className="field"><span>コード置き場</span><input name="codeRepository" /></label>
-          <label className="field"><span>既定のコード参照</span><input name="defaultCodeRef" /></label>
-          <label className="field"><span>Git SHA</span><input name="gitSha" /></label>
-          <label className="field"><span>コンテナイメージ</span><input name="containerDigest" /></label>
-          <label className="field"><span>設定ファイルURI</span><input name="configUri" /></label>
-          <label className="field"><span>設定ファイルのハッシュ</span><input name="configHash" /></label>
-          <label className="field"><span>実行日時</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">不明</option><option value="known">判明している</option></select></label>
-          {timeStatus === 'known' && <label className="field"><span>日時</span><input name="occurredAt" type="datetime-local" required /></label>}
+          <label className="field"><span>{translate("lineageRegisterPage.processingName")}</span><input name="transformationName" required /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.processingKey")}</span><input name="transformationKey" required /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.processingNamespace")}</span><input name="jobNamespace" required /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.processingTechnicalName")}</span><input name="jobName" required /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.codeRepository")}</span><input name="codeRepository" /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.defaultCodeReference")}</span><input name="defaultCodeRef" /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.gitSha")}</span><input name="gitSha" /></label>
+          <label className="field"><span>{translate("common.containerImage")}</span><input name="containerDigest" /></label>
+          <label className="field"><span>{translate("common.configurationFileUri")}</span><input name="configUri" /></label>
+          <label className="field"><span>{translate("common.configurationFileHash")}</span><input name="configHash" /></label>
+          <label className="field"><span>{translate("lineageRegisterPage.executionTime")}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate("common.unknown")}</option><option value="known">{translate("lineageRegisterPage.known")}</option></select></label>
+          {timeStatus === 'known' && <label className="field"><span>{translate("lineageRegisterPage.dateAndTime")}</span><input name="occurredAt" type="datetime-local" required /></label>}
         </div>
       </section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>根拠</h2></div><EvidenceField /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>確認</h2></div>
-        {error && <p className="notice error" role="alert">{error}</p>}
-        {runId && <ResultNotice message="処理履歴を登録しました。" to={outputLink} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? '登録中…' : '処理履歴を登録'}</button>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.evidence")}</h2></div><EvidenceField /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
+        {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
+        {runId && <ResultNotice message={translate("lineageRegisterPage.processingHistoryRegistered")} to={outputLink} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("common.registerProcessingHistory")}</button>
       </section>
     </form>
   )
 }
 
 export default function LineageRegisterPage() {
+  useLocale()
   const { user } = useAuth()
   const [kind, setKind] = useState<RegistrationKind>('dataset')
   const [connections, setConnections] = useState<Connection[]>([])
@@ -383,8 +394,8 @@ export default function LineageRegisterPage() {
   if (!allowed) {
     return (
       <section className="lineage-register-page">
-        <header className="page-header"><div><h1>DataLineage</h1></div></header>
-        <p className="notice error">手動登録の権限がありません。</p>
+        <header className="page-header"><div><h1>{translate("common.dataLineage")}</h1></div></header>
+        <p className="notice error">{translate("lineageRegisterPage.youDoNotHavePermissionToRegisterManually")}</p>
       </section>
     )
   }
@@ -392,15 +403,14 @@ export default function LineageRegisterPage() {
   return (
     <section className="lineage-register-page touch-targets">
       <header className="page-header">
-        <div><h1>DataLineage</h1></div>
+        <div><h1>{translate("common.dataLineage")}</h1></div>
         <div className="page-actions">
           <Link className="button" to="/lineage">
             <ArrowLeft size={16} aria-hidden="true" />
-            一覧に戻る
-          </Link>
+            {translate("lineageRegisterPage.backToList")}</Link>
         </div>
       </header>
-      <nav className="tabs" aria-label="登録種別">
+      <nav className="tabs" aria-label={translate("lineageRegisterPage.registrationType")}>
         {REGISTRATION_KINDS.map(item => (
           <button
             key={item.value}

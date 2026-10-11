@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useState, type FormEvent } from 'react'
 import { LogOut } from 'lucide-react'
 import { fetchApi } from '../lib/api/http'
@@ -6,6 +9,7 @@ import { useAuth } from '../lib/auth-context'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
 
 export function SignatureSettings() {
+  useLocale()
   const auth = useAuth()
   const [displayName, setDisplayName] = useState(() => auth.user?.displayName ?? '')
   const [username, setUsername] = useState(() => auth.user?.username ?? '')
@@ -37,7 +41,7 @@ export function SignatureSettings() {
           }),
         })
         const body = await response.json().catch(() => null) as { error?: string } | null
-        if (!response.ok) throw new Error(body?.error ?? 'アカウントを保存できませんでした')
+        if (!response.ok) throw new Error(body?.error ?? translate("signatureSettings.couldNotSaveAccount"))
         await auth.reload()
       } else {
         setEditorName(nextSignatureName)
@@ -47,7 +51,7 @@ export function SignatureSettings() {
       setSignatureName(nextSignatureName)
       setSaved(true)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'アカウントを保存できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("signatureSettings.couldNotSaveAccount"))
     } finally {
       setSaving(false)
     }
@@ -61,7 +65,7 @@ export function SignatureSettings() {
     const newPassword = String(data.get('newPassword') ?? '')
     const confirmation = String(data.get('confirmation') ?? '')
     if (newPassword !== confirmation) {
-      setError('新しいパスワードが一致しません')
+      setError(translate("common.theNewPasswordsDoNotMatch"))
       return
     }
     setPasswordBusy(true)
@@ -73,12 +77,12 @@ export function SignatureSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
-      if (!response.ok) throw new Error('パスワードを変更できませんでした')
+      if (!response.ok) throw new Error(translate("common.couldNotChangePassword"))
       form.reset()
       await auth.reload()
-      setPasswordNotice('パスワードを変更しました')
+      setPasswordNotice(translate("signatureSettings.passwordChanged"))
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'パスワードを変更できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("common.couldNotChangePassword"))
     } finally {
       setPasswordBusy(false)
     }
@@ -90,7 +94,7 @@ export function SignatureSettings() {
     try {
       await auth.logout()
     } catch (cause) {
-      setLogoutError(cause instanceof Error ? cause.message : 'サインアウトできませんでした')
+      setLogoutError(cause instanceof Error ? cause.message : translate("common.couldNotSignOut"))
     } finally {
       setLoggingOut(false)
     }
@@ -100,53 +104,53 @@ export function SignatureSettings() {
 
   return (
     <section className="account-settings settings-column">
-      <SettingsSectionHeader title="アカウントと署名の管理" />
+      <SettingsSectionHeader title={translate("signatureSettings.manageAccountAndSignature")} />
 
       <form className="account-form" onSubmit={event => { event.preventDefault(); void commit() }}>
         {auth.enabled && (
           <>
             <label className="field">
-              <span>表示名</span>
+              <span>{translate("common.displayName")}</span>
               <input value={displayName} onChange={event => { setDisplayName(event.target.value); setSaved(false) }} maxLength={128} autoComplete="name" required />
             </label>
             <label className="field">
-              <span>ユーザーID（ログインID）</span>
+              <span>{translate("common.userIdLoginId")}</span>
               <input value={username} onChange={event => { setUsername(event.target.value); setSaved(false) }} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" autoComplete="username" required />
             </label>
             {auth.user?.email && (
               <div className="field readonly-field">
-                <span>メールアドレス</span>
+                <span>{translate("common.emailAddress")}</span>
                 <strong className="mono">{auth.user.email}</strong>
                 <small className="muted">
-                  {auth.user.authMethods?.includes('sso') ? 'SSO側で管理されるため、Madoからは変更できません。' : '認証識別子のため、Madoからは変更できません。'}
+                  {auth.user.authMethods?.includes('sso') ? translate("common.managedByYourSsoProviderAndCannotBe") : translate("common.thisAuthenticationIdentifierCannotBeChangedInMado")}
                 </small>
               </div>
             )}
           </>
         )}
         <label className="field">
-          <span>署名</span>
-          <input value={signatureName} onChange={event => { setSignatureName(event.target.value); setSaved(false) }} maxLength={128} placeholder="e.g. tanaka" autoComplete="nickname" aria-label="署名名" required />
-          <small className="muted">README・共有ノートの編集者として、このアカウントの履歴に記録されます。</small>
+          <span>{translate("signatureSettings.signature")}</span>
+          <input value={signatureName} onChange={event => { setSignatureName(event.target.value); setSaved(false) }} maxLength={128} placeholder={translate("common.exampleEditor")} autoComplete="nickname" aria-label={translate("signatureSettings.signatureName")} required />
+          <small className="muted">{translate("signatureSettings.recordedInThisAccountSHistoryWhenEditing")}</small>
         </label>
         <div className="form-submit-row">
-          <button type="submit" className="button primary" disabled={!canSave}>{saving ? '保存中…' : '保存'}</button>
-          {saved && <span className="form-submit-row__status" role="status">保存しました</span>}
+          <button type="submit" className="button primary" disabled={!canSave}>{saving ? translate("common.saving") : translate("common.save")}</button>
+          {saved && <span className="form-submit-row__status" role="status">{translate("signatureSettings.saved")}</span>}
         </div>
       </form>
-      {error && <p className="notice error" role="alert">{error}</p>}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
 
       {auth.enabled && (
         <>
           {auth.user?.authMethods?.includes('local') !== false && (
             <details className="account-password">
-              <summary>パスワードを変更</summary>
+              <summary>{translate("common.changePassword")}</summary>
               <form className="account-form" onSubmit={changePassword}>
-                <label className="field"><span>現在のパスワード</span><input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-                <label className="field"><span>新しいパスワード（12文字以上）</span><input name="newPassword" type="password" autoComplete="new-password" minLength={12} required /></label>
-                <label className="field"><span>新しいパスワード（確認）</span><input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
+                <label className="field"><span>{translate("common.currentPassword")}</span><input name="currentPassword" type="password" autoComplete="current-password" required /></label>
+                <label className="field"><span>{translate("common.newPasswordAtLeast12Characters")}</span><input name="newPassword" type="password" autoComplete="new-password" minLength={12} required /></label>
+                <label className="field"><span>{translate("common.confirmNewPassword")}</span><input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
                 <div className="form-submit-row">
-                  <button type="submit" className="button primary" disabled={passwordBusy}>{passwordBusy ? '変更中…' : '変更'}</button>
+                  <button type="submit" className="button primary" disabled={passwordBusy}>{passwordBusy ? translate("signatureSettings.changing") : translate("common.change")}</button>
                   {passwordNotice && <span className="form-submit-row__status" role="status">{passwordNotice}</span>}
                 </div>
               </form>
@@ -155,7 +159,7 @@ export function SignatureSettings() {
           <div className="account-signout">
             <button type="button" className="button" onClick={() => void logout()} disabled={loggingOut}>
               <LogOut size={14} aria-hidden="true" />
-              {loggingOut ? 'サインアウト中…' : 'サインアウト'}
+              {loggingOut ? translate("signatureSettings.signingOut") : translate("common.signOut")}
             </button>
             {logoutError && <p className="notice error" role="alert">{logoutError}</p>}
           </div>

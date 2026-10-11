@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { useEscapeToClose } from '../lib/useEscapeToClose'
@@ -36,7 +38,7 @@ export function Dialog({
   title,
   subtitle,
   onClose,
-  closeLabel = '閉じる',
+  closeLabel = translate("common.close"),
   dismissible = true,
   size = 'default',
   narrowLayout = 'fullscreen',
@@ -44,6 +46,7 @@ export function Dialog({
   footer,
   children,
 }: Props) {
+  useLocale()
   const dialogRef = useRef<HTMLDivElement>(null)
   const close = onClose && dismissible ? onClose : undefined
   useEscapeToClose(close ?? ignoreEscape)

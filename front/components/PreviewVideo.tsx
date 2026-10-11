@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { api } from '../lib/api/client'
 import { useMediaSrc } from '../lib/useMediaSrc'
 
@@ -10,6 +13,7 @@ interface Props {
 }
 
 export function PreviewVideo({ connectionId, bucket, k, entryPath }: Props) {
+  useLocale()
   const directUrl = entryPath ? null : api.videoUrl(connectionId, bucket, k)
   const archiveEntryUrl = entryPath ? api.tarEntryUrl({ connectionId, bucket, key: k, entry: entryPath }) : null
   const { src, loading, error } = useMediaSrc({ directUrl, archiveEntryUrl, archiveKey: k })
@@ -17,11 +21,11 @@ export function PreviewVideo({ connectionId, bucket, k, entryPath }: Props) {
 
   return (
     <div className="preview-stack">
-      {loading && <p className="muted">動画を取得中…</p>}
-      {error && <p className="notice error">動画を取得できません: {error}</p>}
+      {loading && <p className="muted">{translate("previewVideo.fetchingVideo")}</p>}
+      {error && <p className="notice error">{translate("previewVideo.couldNotFetchVideo") + " "}{localizeMessage(error)}</p>}
       {src && (
         <video
-          aria-label={`${label} の動画プレビュー`}
+          aria-label={translate("previewVideo.videoPreviewOf", { value0: label })}
           className="preview-video"
           src={src}
           controls

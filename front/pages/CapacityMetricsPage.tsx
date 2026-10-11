@@ -1,3 +1,7 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, RefreshCw } from 'lucide-react'
@@ -14,6 +18,7 @@ const CapacityHistoryChart = lazy(() => import('../components/storage/CapacityHi
 const DAYS = [7, 30, 90, 400] as const
 
 export default function CapacityMetricsPage({ connectionId }: { connectionId: string }) {
+  useLocale()
   const [params, setParams] = useSearchParams()
   const parsedDays = Number(params.get('days'))
   const days = DAYS.includes(parsedDays as typeof DAYS[number]) ? parsedDays : 90
@@ -94,7 +99,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
     setNotice(null)
     try {
       const result = await api.startCapacityScan(connectionId)
-      setNotice(`${result.jobs.length.toLocaleString('ja-JP')}バケットの計測を開始しました。完了すると順次反映されます。`)
+      setNotice(translate("capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement", { value0: result.jobs.length.toLocaleString(getIntlLocale()) }))
       setOverview(await api.capacityOverview(connectionId, days))
       setClock(Date.now())
       setError(null)
@@ -117,28 +122,28 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
     <section>
       <ViewBreadcrumb
         connectionId={connectionId}
-        label="バケット容量メトリクス"
+        label={translate("capacityMetricsPage.bucketCapacityMetrics")}
         href={`/storage/${encodeURIComponent(connectionId)}/?view=capacity`}
-        description="このコネクションにある全バケットの完全走査結果をまとめて表示します。"
+        description={translate("capacityMetricsPage.displaysCompleteScanResultsForEveryBucketIn")}
       />
 
       {scanActive && <ScanActivity jobs={scanJobs} now={clock} />}
 
       {overview && (
         <dl className="capacity-summary">
-          <Metric label="全バケットの容量" value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
-          <Metric label="全バケットのオブジェクト数" value={measuredCount ? totalObjects.toLocaleString('ja-JP') : '—'} />
-          <Metric label="集計範囲" value={`${measuredCount.toLocaleString('ja-JP')} / ${bucketCount.toLocaleString('ja-JP')} バケット`} />
+          <Metric label={translate("capacityMetricsPage.totalBucketCapacity")} value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
+          <Metric label={translate("capacityMetricsPage.totalBucketObjectCount")} value={measuredCount ? totalObjects.toLocaleString(getIntlLocale()) : '—'} />
+          <Metric label={translate("capacityMetricsPage.measurementCoverage")} value={translate("capacityMetricsPage.buckets", { value0: measuredCount.toLocaleString(getIntlLocale()), value1: bucketCount.toLocaleString(getIntlLocale()) })} />
         </dl>
       )}
 
       {/* 期間の切り替えと、計測の予定・今すぐ計測・表示の更新。一覧の上の帯と同じ形。
           見出しの右はどの Storage の画面でも同じ (接続先・コピー・上へ) にしておく。 */}
       <div className="capacity-toolbar">
-        <div className="capacity-period" role="group" aria-label="表示する期間">
+        <div className="capacity-period" role="group" aria-label={translate("capacityMetricsPage.timeRange")}>
           {DAYS.map(value => (
             <button key={value} type="button" className="button small" aria-pressed={days === value} onClick={() => updateDays(value)}>
-              {value === 400 ? '全期間' : `${value}日`}
+              {value === 400 ? translate("capacityMetricsPage.allTime") : translate("capacityMetricsPage.days", { value0: value })}
             </button>
           ))}
         </div>
@@ -146,9 +151,9 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
           {overview && (
             <p className="muted">
               {overview.tracking.enabled
-                ? `${Math.round(overview.tracking.intervalSeconds / 3600)}時間ごとに全バケットを計測`
-                : '定期計測は停止中'}
-              {canManage && <> · <Link to={`/settings/connections/${encodeURIComponent(connectionId)}`}>コネクション設定</Link></>}
+                ? translate("capacityMetricsPage.measureAllBucketsEveryHours", { value0: Math.round(overview.tracking.intervalSeconds / 3600) })
+                : translate("capacityMetricsPage.periodicMeasurementsStopped")}
+              {canManage && <> · <Link to={`/settings/connections/${encodeURIComponent(connectionId)}`}>{translate("capacityMetricsPage.connectionSettings")}</Link></>}
             </p>
           )}
           {canManage && (
@@ -158,7 +163,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
               disabled={scanning || scanActive || !connection.scanEnabled || connection.capacityMetricsEnabled === false}
               onClick={() => void scanAll()}
             >
-              {scanning ? '開始中…' : scanActive ? '計測中…' : '今すぐ全バケットを計測'}
+              {scanning ? translate("capacityMetricsPage.starting") : scanActive ? translate("capacityMetricsPage.measuring") : translate("capacityMetricsPage.measureAllBucketsNow")}
             </button>
           )}
           <button
@@ -166,18 +171,18 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
             className="icon-button"
             disabled={loading}
             onClick={() => void refresh()}
-            aria-label="表示を更新"
-            title="表示を更新"
+            aria-label={translate("capacityMetricsPage.refreshView")}
+            title={translate("capacityMetricsPage.refreshView")}
           >
             <RefreshCw size={16} aria-hidden="true" className={loading ? 'spin' : undefined} />
           </button>
         </div>
       </div>
 
-      {notice && <p className="notice">{notice}</p>}
-      {error && <p className="notice error">{error}</p>}
-      {loading && !overview && <p className="state-message">読み込み中…</p>}
-      {!loading && overview?.buckets.length === 0 && <p className="state-message">バケットが見つかりません。</p>}
+      {notice && <p className="notice">{localizeMessage(notice)}</p>}
+      {error && <p className="notice error">{localizeMessage(error)}</p>}
+      {loading && !overview && <p className="state-message">{translate("common.loading")}</p>}
+      {!loading && overview?.buckets.length === 0 && <p className="state-message">{translate("common.noBucketsFound")}</p>}
 
       {overview && (
         <div className="capacity-buckets" aria-busy={loading}>
@@ -208,10 +213,11 @@ function compareBucketCapacity(a: CapacityBucketHistory, b: CapacityBucketHistor
 
 function elapsedMinute(startedAt: string, now: number): string {
   const elapsed = Math.max(0, now - new Date(startedAt).getTime())
-  return `${Math.floor(elapsed / 60_000) + 1}分目`
+  return translate("capacityMetricsPage.minutesElapsed", { value0: Math.floor(elapsed / 60_000) + 1 })
 }
 
 function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
+  useLocale()
   const running = jobs.find(job => job.status === 'running')
   const queuedCount = jobs.filter(job => job.status === 'queued').length
   if (!running) {
@@ -219,8 +225,8 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
       <div className="notice capacity-activity" role="status" aria-live="polite">
         <span className="storage-pulse-dot" aria-hidden="true" />
         <div>
-          <p className="capacity-activity-title">計測の開始を待っています…</p>
-          <p className="muted">{queuedCount.toLocaleString('ja-JP')}バケットが待機中です。</p>
+          <p className="capacity-activity-title">{translate("capacityMetricsPage.waitingForMeasurementToStart")}</p>
+          <p className="muted">{translate("capacityMetricsPage.bucketsQueued", { value0: queuedCount.toLocaleString(getIntlLocale()) })}</p>
         </div>
       </div>
     )
@@ -229,9 +235,13 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
     <div className="notice capacity-activity" role="status" aria-live="polite">
       <span className="storage-pulse-dot" aria-hidden="true" />
       <div>
-        <p className="capacity-activity-title" title={running.bucket}>{running.bucket} を走査中…</p>
+        <p className="capacity-activity-title" title={running.bucket}>{translate("capacityMetricsPage.scanning", { value0: running.bucket })}</p>
         <p className="muted mono">
-          現在 {elapsedMinute(running.startedAt ?? running.createdAt, now)} · {running.objectCount.toLocaleString('ja-JP')} オブジェクト目 · 残り {queuedCount.toLocaleString('ja-JP')} バケット
+          {translate("capacityMetricsPage.scanProgress", {
+            value0: elapsedMinute(running.startedAt ?? running.createdAt, now),
+            value1: running.objectCount.toLocaleString(getIntlLocale()),
+            value2: queuedCount.toLocaleString(getIntlLocale()),
+          })}
         </p>
       </div>
     </div>
@@ -245,6 +255,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
   intervalSeconds: number
   scanJob?: CapacityScanJob
 }) {
+  useLocale()
   const latest = history.points.at(-1)
   const previous = history.points.at(-2)
   return (
@@ -254,29 +265,28 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <div className="capacity-bucket-actions">
           {scanJob && (
             <span className={`status-badge ${scanJob.status === 'running' ? 'status-running' : 'status-queued'}`}>
-              {scanJob.status === 'running' ? `走査中 · ${scanJob.objectCount.toLocaleString('ja-JP')}件` : '計測待ち'}
+              {scanJob.status === 'running' ? translate("capacityMetricsPage.scanningItems", { value0: scanJob.objectCount.toLocaleString(getIntlLocale()) }) : translate("capacityMetricsPage.waitingForMeasurement")}
             </span>
           )}
           <Link className="capacity-open-link" to={storageDirectoryHref(connectionId, history.bucket, '')}>
-            開く
-            <ArrowRight size={12} aria-hidden="true" />
+            {translate("common.open")}<ArrowRight size={12} aria-hidden="true" />
           </Link>
         </div>
       </div>
       <dl className="capacity-metrics">
-        <CompactMetric label="現在の容量" value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
-        <CompactMetric label="前回から" value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
-        <CompactMetric label="オブジェクト数" value={latest ? latest.objectCount.toLocaleString('ja-JP') : '—'} />
-        <CompactMetric label="最終取得" value={latest ? new Date(latest.collectedAt).toLocaleString('ja-JP') : '—'} />
+        <CompactMetric label={translate("capacityMetricsPage.currentCapacity")} value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
+        <CompactMetric label={translate("common.changeSincePrevious")} value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
+        <CompactMetric label={translate("common.objectCount")} value={latest ? latest.objectCount.toLocaleString(getIntlLocale()) : '—'} />
+        <CompactMetric label={translate("capacityMetricsPage.lastRetrieved")} value={latest ? new Date(latest.collectedAt).toLocaleString(getIntlLocale()) : '—'} />
       </dl>
       {history.lastError && !scanJob && <p className="notice error">{history.lastError}</p>}
       <div className="capacity-chart">
         {history.points.length >= 2 ? (
-          <Suspense fallback={<p className="capacity-chart-placeholder">グラフを読み込み中…</p>}>
+          <Suspense fallback={<p className="capacity-chart-placeholder">{translate("common.loadingGraph")}</p>}>
             <CapacityHistoryChart points={history.points} intervalSeconds={intervalSeconds} capacityBytes={null} label={history.bucket} />
           </Suspense>
         ) : (
-          <p className="capacity-chart-empty">2回計測するとグラフを表示します</p>
+          <p className="capacity-chart-empty">{translate("common.aGraphIsAvailableAfterTwoMeasurements")}</p>
         )}
       </div>
       {latest && (
@@ -296,6 +306,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
 
 /** 見出しの下の合計。数字は h2 程度の大きさで出す。 */
 function Metric({ label, value }: { label: string; value: string }) {
+  useLocale()
   return (
     <div>
       <dt>{label}</dt>
@@ -306,6 +317,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 /** バケットごとの値。幅が狭いときは 1 行に収まらない分を省略し、title で全部を見せる。 */
 function CompactMetric({ label, value }: { label: string; value: string }) {
+  useLocale()
   return (
     <div>
       <dt>{label}</dt>

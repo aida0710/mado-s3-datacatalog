@@ -1,4 +1,7 @@
-import { Fragment, useMemo, type ReactNode } from 'react'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
+import { Fragment, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUp, ChevronRight, Copy } from 'lucide-react'
 import { useConnection } from '../lib/connectionContext'
@@ -35,10 +38,11 @@ interface StorageHeaderProps {
 export function StorageHeader({
   crumbs, title, description, copyItems, copyLabel, upHref, upLabel,
 }: StorageHeaderProps) {
+  useLocale()
   return (
     <header className="page-header">
       <div>
-        <nav className="eyebrow storage-crumbs" aria-label="パンくず">
+        <nav className="eyebrow storage-crumbs" aria-label={translate("breadcrumb.breadcrumbs")}>
           {crumbs.map((crumb, index) => (
             <Fragment key={crumb.to}>
               {index > 0 && (
@@ -83,6 +87,7 @@ function parentPath(connectionId: string, bucket: string, prefix: string): strin
 export function Breadcrumb({
   connectionId, bucket, prefix, description,
 }: { connectionId: string; bucket: string; prefix: string; description?: ReactNode }) {
+  useLocale()
   const connection = useConnection()
   const segments = prefix.split('/').filter(Boolean)
   const indexHref = `/storage/${encodeURIComponent(connectionId)}/`
@@ -101,9 +106,9 @@ export function Breadcrumb({
   // 常に bucket を持つので、最浅でも s3://<bucket>/ (= bucket 直下、prefix='') になり、
   // 接続ルート (バケット一覧) には出ない。深い階層ではそのディレクトリ URL をコピーできる。
   const dirHref = `${bucketHref}${encPath(prefix)}`
-  const copyItems = useMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: 'Web URL をコピー', value: absoluteUrl(dirHref) },
-    { kind: 'copy', label: 'S3 URL をコピー',  value: `s3://${bucket}/${prefix}` },
+  const copyItems = useLocalizedMemo<MenuItem[]>(() => [
+    { kind: 'copy', label: translate("common.copyWebUrl"), value: absoluteUrl(dirHref) },
+    { kind: 'copy', label: translate("common.copyS3Url"),  value: `s3://${bucket}/${prefix}` },
   ], [dirHref, bucket, prefix])
 
   return (
@@ -112,9 +117,9 @@ export function Breadcrumb({
       title={segments.at(-1) ?? bucket}
       description={description}
       copyItems={copyItems}
-      copyLabel="このディレクトリの URL をコピー"
+      copyLabel={translate("breadcrumb.copyThisDirectorySUrl")}
       upHref={parentPath(connectionId, bucket, prefix)}
-      upLabel="親階層へ"
+      upLabel={translate("breadcrumb.goToParentDirectory")}
     />
   )
 }

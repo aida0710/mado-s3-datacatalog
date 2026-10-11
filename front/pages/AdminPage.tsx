@@ -1,3 +1,7 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-react'
@@ -46,52 +50,52 @@ interface AuditPage {
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  'auth.password.change': 'パスワード変更',
-  'auth.profile.update': 'アカウント設定変更',
-  'auth.bootstrap_admin': '初期管理者を作成',
-  'auth.oidc.session_revoke': 'SSOセッションを失効',
-  'auth.oidc.sync': 'SSOアカウント情報を同期',
-  'connection.create': '接続を追加',
-  'connection.update': '接続を変更',
-  'connection.delete': '接続を削除',
-  'connection.default.set': 'デフォルト接続を変更',
-  'note.update': '共有ノートを保存',
-  'note.read': '共有ノートを閲覧',
-  'storage.readme.update': 'READMEを保存',
-  'storage.readme.read': 'READMEを閲覧',
-  'storage.scan.start': '走査を開始',
-  'storage.tag.assign': 'タグを付与',
-  'storage.tag.remove': 'タグを解除',
-  'storage.favorite.add': 'お気に入りへ追加',
-  'storage.favorite.remove': 'お気に入りから削除',
-  'storage.download.raw': 'ファイルをダウンロード',
-  'storage.download.tar': 'アーカイブをダウンロード',
-  'storage.download.tar-entry': 'アーカイブ内をダウンロード',
-  'storage.preview.text': 'テキストを閲覧',
-  'storage.preview.image': '画像を閲覧',
-  'tag.create': 'タグを作成',
-  'tag.update': 'タグを変更',
-  'tag.delete': 'タグを削除',
-  'setting.update': '設定を変更',
-  'pricing.refresh': '料金を更新',
-  'job.cancel': 'ジョブを中断',
-  'lineage.read': 'DataLineageを閲覧',
-  'lineage.dataset.update': 'データセット情報を変更',
-  'lineage.dataset.register': 'データセットを登録',
-  'lineage.location.register': '保存場所を登録',
-  'lineage.run.register': '処理履歴を登録',
-  'lineage.ingest': 'OpenLineageイベントを反映',
-  'service_account.create': 'Service Accountを作成',
-  'service_account.update': 'Service Accountを変更',
-  'service_account.key.issue': 'API keyを発行',
-  'service_account.key.revoke': 'API keyを失効',
-  'user.create': 'ユーザーを作成',
-  'user.update': 'ユーザーを変更',
-  'user.roles.update': 'ユーザー権限を変更',
-  'user.password.reset': 'パスワードを再発行',
-  'user.delete': 'ユーザーを削除',
-  'user.manage': 'ユーザー操作',
-  'service_account.manage': 'Service Account操作',
+  get 'auth.password.change'() { return translate("adminPage.changePassword") },
+  get 'auth.profile.update'() { return translate("adminPage.updateAccountSettings") },
+  get 'auth.bootstrap_admin'() { return translate("adminPage.createInitialAdministrator") },
+  get 'auth.oidc.session_revoke'() { return translate("adminPage.revokeSsoSession") },
+  get 'auth.oidc.sync'() { return translate("adminPage.syncSsoAccountInformation") },
+  get 'connection.create'() { return translate("common.addConnection") },
+  get 'connection.update'() { return translate("adminPage.updateConnection") },
+  get 'connection.delete'() { return translate("common.deleteConnection") },
+  get 'connection.default.set'() { return translate("adminPage.changeDefaultConnection") },
+  get 'note.update'() { return translate("adminPage.saveSharedNote") },
+  get 'note.read'() { return translate("adminPage.viewSharedNote") },
+  get 'storage.readme.update'() { return translate("adminPage.saveReadme") },
+  get 'storage.readme.read'() { return translate("adminPage.viewReadme") },
+  get 'storage.scan.start'() { return translate("adminPage.startScan") },
+  get 'storage.tag.assign'() { return translate("adminPage.assignTag") },
+  get 'storage.tag.remove'() { return translate("adminPage.removeTag") },
+  get 'storage.favorite.add'() { return translate("adminPage.addToFavorites") },
+  get 'storage.favorite.remove'() { return translate("adminPage.removeFromFavorites") },
+  get 'storage.download.raw'() { return translate("adminPage.downloadFile") },
+  get 'storage.download.tar'() { return translate("adminPage.downloadArchive") },
+  get 'storage.download.tar-entry'() { return translate("adminPage.downloadArchiveEntry") },
+  get 'storage.preview.text'() { return translate("adminPage.viewText") },
+  get 'storage.preview.image'() { return translate("adminPage.viewImage") },
+  get 'tag.create'() { return translate("adminPage.createTag") },
+  get 'tag.update'() { return translate("adminPage.updateTag") },
+  get 'tag.delete'() { return translate("common.deleteTag") },
+  get 'setting.update'() { return translate("adminPage.updateSettings") },
+  get 'pricing.refresh'() { return translate("adminPage.updatePricing") },
+  get 'job.cancel'() { return translate("adminPage.abortJob") },
+  get 'lineage.read'() { return translate("adminPage.viewDataLineage") },
+  get 'lineage.dataset.update'() { return translate("adminPage.updateDatasetInformation") },
+  get 'lineage.dataset.register'() { return translate("adminPage.registerDataset") },
+  get 'lineage.location.register'() { return translate("adminPage.registerStorageLocation") },
+  get 'lineage.run.register'() { return translate("common.registerProcessingHistory") },
+  get 'lineage.ingest'() { return translate("adminPage.applyOpenLineageEvent") },
+  get 'service_account.create'() { return translate("adminPage.createServiceAccount") },
+  get 'service_account.update'() { return translate("adminPage.updateServiceAccount") },
+  get 'service_account.key.issue'() { return translate("adminPage.issueApiKey") },
+  get 'service_account.key.revoke'() { return translate("adminPage.revokeApiKey") },
+  get 'user.create'() { return translate("adminPage.createUser") },
+  get 'user.update'() { return translate("adminPage.updateUser") },
+  get 'user.roles.update'() { return translate("adminPage.updateUserPermissions") },
+  get 'user.password.reset'() { return translate("adminPage.resetPassword") },
+  get 'user.delete'() { return translate("adminPage.deleteUser") },
+  get 'user.manage'() { return translate("adminPage.userOperations") },
+  get 'service_account.manage'() { return translate("adminPage.serviceAccountOperations") },
 }
 
 const OUTCOME_LABELS: Record<AuditEventRow['outcome'], string> = {
@@ -102,18 +106,18 @@ const OUTCOME_LABELS: Record<AuditEventRow['outcome'], string> = {
 }
 
 const ROLE_OPTIONS = [
-  { id: 'viewer', label: 'Viewer — 閲覧のみ', help: 'StorageとDataLineageを閲覧できます。' },
-  { id: 'curator', label: 'Curator — 内容編集', help: '閲覧に加え、README・ノート・タグなどを編集できます。' },
-  { id: 'operator', label: 'Operator — ジョブ実行', help: '閲覧に加え、走査・料金更新・ジョブ中断を実行できます。' },
-  { id: 'admin', label: 'Admin — すべて管理', help: '接続・設定・ユーザー・API key・監査ログを含む全操作ができます。' },
+  { id: 'viewer', get label() { return translate("adminPage.viewerReadOnly") }, get help() { return translate("adminPage.canBrowseStorageAndDataLineage") } },
+  { id: 'curator', get label() { return translate("adminPage.curatorEditContent") }, get help() { return translate("adminPage.canBrowseAndEditReadmesNotesAndTags") } },
+  { id: 'operator', get label() { return translate("adminPage.operatorRunJobs") }, get help() { return translate("adminPage.canBrowseRunScansUpdatePricingAndAbort") } },
+  { id: 'admin', get label() { return translate("adminPage.adminFullAdministration") }, get help() { return translate("adminPage.canManageEverythingIncludingConnectionsSettingsUsersApi") } },
 ] as const
 
 type RoleId = (typeof ROLE_OPTIONS)[number]['id']
 
 // Service Account keyの用途。Madoのデータへは読み取りのscopeだけを開く。
 const KEY_SCOPE_OPTIONS = [
-  { scope: 'lineage:write', label: 'OpenLineage送信（lineage:write）', help: '許可したNamespaceへだけLineageを書き込めます。' },
-  { scope: 'metrics:read', label: 'Prometheus収集（metrics:read）', help: '/api/mado/metrics/capacity（容量メトリクス）から、利用者を限定した接続も含めて全接続のバケット名・容量を読み取れます。書き込みはできません。' },
+  { scope: 'lineage:write', get label() { return translate("adminPage.sendOpenLineageLineageWrite") }, get help() { return translate("adminPage.canWriteLineageOnlyToAllowedNamespaces") } },
+  { scope: 'metrics:read', get label() { return translate("adminPage.prometheusCollectionMetricsRead") }, get help() { return translate("adminPage.canReadBucketNamesAndCapacitiesForEvery") } },
 ] as const
 
 type KeyScope = (typeof KEY_SCOPE_OPTIONS)[number]['scope']
@@ -170,6 +174,7 @@ function isFromControl(event: MouseEvent<HTMLElement>) {
 
 /** 開いている行の key の集合と、その開け閉め。 */
 function useOpenRows<K>() {
+  useLocale()
   const [open, setOpen] = useState<ReadonlySet<K>>(() => new Set())
   const toggle = useCallback((key: K) => setOpen(current => {
     const next = new Set(current)
@@ -181,7 +186,8 @@ function useOpenRows<K>() {
 
 /** 表の右端の、行の下に詳細を開くボタン。 */
 function RowToggle({ open, controls, onToggle }: { open: boolean; controls: string; onToggle: () => void }) {
-  const label = open ? '詳細を閉じる' : '詳細を表示'
+  useLocale()
+  const label = open ? translate("common.hideDetails") : translate("common.showDetails")
   return (
     <button
       type="button"
@@ -203,6 +209,7 @@ function SecretNotice({ secret, note, onClose }: {
   note: string
   onClose: () => void
 }) {
+  useLocale()
   const ref = useRef<HTMLDivElement>(null)
   // 一覧の下の行やフォームから発行すると、ここは画面の外にあることが多い。見えるところまで送る。
   useEffect(() => {
@@ -215,19 +222,20 @@ function SecretNotice({ secret, note, onClose }: {
       <span className="secret-notice__actions">
         <button type="button" className="button small" onClick={() => void navigator.clipboard.writeText(secret.value)}>
           <Copy size={14} aria-hidden="true" />
-          コピー
-        </button>
-        <button type="button" className="button small" onClick={onClose}>閉じる</button>
+          {translate("adminPage.copy")}</button>
+        <button type="button" className="button small" onClick={onClose}>{translate("common.close")}</button>
       </span>
     </div>
   )
 }
 
 function StatusBadge({ status }: { status: 'active' | 'disabled' }) {
+  useLocale()
   return <span className={`status-badge ${STATUS_BADGES[status]}`}>{status}</span>
 }
 
 function UsersPage() {
+  useLocale()
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<UserRow[]>([])
   const [ssoRoleMappings, setSsoRoleMappings] = useState<Array<{ group: string; role: RoleId }>>([])
@@ -249,7 +257,7 @@ function UsersPage() {
       setUsers(body.users)
       setSsoRoleMappings(normalizeSsoRoleMapping(body.ssoRoleMapping))
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'ユーザーを取得できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("common.couldNotLoadUsers"))
     }
   }, [])
 
@@ -262,7 +270,7 @@ function UsersPage() {
         setSsoRoleMappings(normalizeSsoRoleMapping(body.ssoRoleMapping))
       })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : 'ユーザーを取得できませんでした')
+        if (current) setError(cause instanceof Error ? cause.message : translate("common.couldNotLoadUsers"))
       })
     return () => { current = false }
   }, [])
@@ -282,10 +290,10 @@ function UsersPage() {
       })
       formElement.reset()
       setRole('viewer')
-      setNotice('Local Userを作成しました。初回ログイン時にパスワード変更が必要です。')
+      setNotice(translate("adminPage.localUserCreatedAPasswordChangeIsRequired"))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '作成できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotCreate"))
     }
   }
 
@@ -314,10 +322,10 @@ function UsersPage() {
           })
         }
       }
-      setNotice(`${String(form.get('displayName'))}を更新しました。`)
+      setNotice(translate("adminPage.updated", { value0: String(form.get('displayName')) }))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '更新できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotUpdate"))
     }
   }
 
@@ -328,9 +336,9 @@ function UsersPage() {
       const body = await jsonRequest<{ temporaryPassword: string }>(`/api/internal/users/${encodeURIComponent(user.id)}/reset-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
       })
-      setSecret({ label: `${user.displayName}の一時パスワード`, value: body.temporaryPassword })
+      setSecret({ label: translate("adminPage.temporaryPasswordFor", { value0: user.displayName }), value: body.temporaryPassword })
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'パスワードを再発行できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotResetPassword"))
     }
   }
 
@@ -340,7 +348,7 @@ function UsersPage() {
     setNotice(null)
     await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}`, { method: 'DELETE' })
     setDeleting(null)
-    setNotice(`${user.displayName}を削除しました。`)
+    setNotice(translate("adminPage.deleted", { value0: user.displayName }))
     await reload()
   }
 
@@ -353,42 +361,42 @@ function UsersPage() {
 
   return (
     <section className="admin-users">
-      {error && <p className="notice error" role="alert">{error}</p>}
-      {notice && <p className="notice success" role="status">{notice}</p>}
-      {secret && <SecretNotice secret={secret} note="今だけ表示されます" onClose={() => setSecret(null)} />}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
+      {notice && <p className="notice success" role="status">{localizeMessage(notice)}</p>}
+      {secret && <SecretNotice secret={secret} note={translate("adminPage.shownOnlyOnce")} onClose={() => setSecret(null)} />}
       {users.length > 0 && (
         <>
           <div className="admin-toolbar" role="search">
             <input
               type="search"
-              aria-label="ユーザーを検索"
-              placeholder="表示名・ユーザーID・メールアドレス"
+              aria-label={translate("adminPage.searchUsers")}
+              placeholder={translate("adminPage.displayNameUserIdOrEmailAddress")}
               value={query}
               onChange={event => setQuery(event.target.value)}
             />
             <select
-              aria-label="状態で絞り込む"
+              aria-label={translate("adminPage.filterByStatus")}
               value={statusFilter}
               onChange={event => setStatusFilter(event.target.value as '' | UserRow['status'])}
             >
-              <option value="">すべての状態</option>
-              <option value="active">Active</option>
-              <option value="disabled">Disabled</option>
+              <option value="">{translate("adminPage.allStatuses")}</option>
+              <option value="active">{translate("adminPage.active")}</option>
+              <option value="disabled">{translate("adminPage.disabled")}</option>
             </select>
           </div>
           {visibleUsers.length === 0 ? (
-            <p className="state-message">条件に合うユーザーはいません。</p>
+            <p className="state-message">{translate("adminPage.noUsersMatchTheseConditions")}</p>
           ) : (
             <div className="table-scroll">
               <table className="responsive-table admin-users-table">
                 <thead>
                   <tr>
-                    <th scope="col">表示名</th>
-                    {!isNarrow && <th scope="col">メールアドレス</th>}
-                    {!isNarrow && <th scope="col">権限</th>}
-                    {!isNarrow && <th scope="col">認証</th>}
-                    <th scope="col">状態</th>
-                    <th scope="col" className="responsive-table-toggle"><span className="sr-only">詳細を表示</span></th>
+                    <th scope="col">{translate("common.displayName")}</th>
+                    {!isNarrow && <th scope="col">{translate("common.emailAddress")}</th>}
+                    {!isNarrow && <th scope="col">{translate("adminPage.permissions")}</th>}
+                    {!isNarrow && <th scope="col">{translate("adminPage.authentication")}</th>}
+                    <th scope="col">{translate("common.status")}</th>
+                    <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate("common.showDetails")}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -405,12 +413,12 @@ function UsersPage() {
                         <td>
                           <span className="user-name">
                             <strong>{user.displayName}</strong>
-                            <span className="muted mono">{user.username ?? 'ユーザーID未設定'}</span>
+                            <span className="muted mono">{user.username ?? translate("adminPage.userIdNotSet")}</span>
                           </span>
                         </td>
                         {!isNarrow && <td className="break-word">{user.email ?? '—'}</td>}
                         {!isNarrow && <td>{user.roles.join(', ') || '—'}</td>}
-                        {!isNarrow && <td>{user.authMethods.join(' + ') || '未設定'}</td>}
+                        {!isNarrow && <td>{user.authMethods.join(' + ') || translate("common.notSet")}</td>}
                         <td><StatusBadge status={user.status} /></td>
                         <td className="responsive-table-toggle">
                           <RowToggle open={isOpen} controls={detailId} onToggle={() => toggleRow(user.id)} />
@@ -421,28 +429,28 @@ function UsersPage() {
                           <td colSpan={columnCount}>
                             <form
                               className="admin-user-form"
-                              aria-label={`${user.displayName}を編集`}
+                              aria-label={translate("adminPage.edit", { value0: user.displayName })}
                               onSubmit={event => void updateUser(event, user)}
                             >
                               <label className="field">
-                                <span>表示名</span>
+                                <span>{translate("common.displayName")}</span>
                                 <input name="displayName" defaultValue={user.displayName} maxLength={128} required />
                               </label>
                               <label className="field">
-                                <span>ユーザーID（ログインID）</span>
+                                <span>{translate("common.userIdLoginId")}</span>
                                 <input name="username" defaultValue={user.username ?? ''} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required />
                               </label>
                               {user.email && (
                                 <div className="field readonly-field admin-user-form__wide">
-                                  <span>メールアドレス</span>
+                                  <span>{translate("common.emailAddress")}</span>
                                   <strong className="mono">{user.email}</strong>
                                   <small className="muted">
-                                    {sso ? 'SSO側を正本とし、Madoからは変更できません。' : '認証識別子のため、Madoからは変更できません。'}
+                                    {sso ? translate("adminPage.managedByTheSsoProviderAndCannotBe") : translate("common.thisAuthenticationIdentifierCannotBeChangedInMado")}
                                   </small>
                                 </div>
                               )}
                               <label className="field">
-                                <span>権限</span>
+                                <span>{translate("adminPage.permissions")}</span>
                                 <select
                                   name="role"
                                   defaultValue={user.roles[0] ?? 'viewer'}
@@ -453,28 +461,27 @@ function UsersPage() {
                                 </select>
                                 {sso && (
                                   <small id={`sso-role-help-${user.id}`} className="muted">
-                                    SSO側で管理されるため、Madoからは変更できません。
-                                  </small>
+                                    {translate("common.managedByYourSsoProviderAndCannotBe")}</small>
                                 )}
                               </label>
                               <label className="field">
-                                <span>状態</span>
+                                <span>{translate("common.status")}</span>
                                 <select name="status" defaultValue={user.status}>
-                                  <option value="active">Active</option>
-                                  <option value="disabled">Disabled</option>
+                                  <option value="active">{translate("adminPage.active")}</option>
+                                  <option value="disabled">{translate("adminPage.disabled")}</option>
                                 </select>
                               </label>
                               <dl className="admin-user-meta admin-user-form__wide">
-                                <div><dt>内部ID</dt><dd className="mono">{user.id}</dd></div>
-                                <div><dt>認証</dt><dd>{user.authMethods.join(' + ') || '未設定'}</dd></div>
+                                <div><dt>{translate("adminPage.internalId")}</dt><dd className="mono">{user.id}</dd></div>
+                                <div><dt>{translate("adminPage.authentication")}</dt><dd>{user.authMethods.join(' + ') || translate("common.notSet")}</dd></div>
                               </dl>
                               <div className="admin-user-form__actions admin-user-form__wide">
-                                <button type="submit" className="button primary">保存</button>
+                                <button type="submit" className="button primary">{translate("common.save")}</button>
                                 {!(sso && !user.authMethods.includes('local')) && (
-                                  <button type="button" className="button" onClick={() => void resetPassword(user)}>パスワードを再発行</button>
+                                  <button type="button" className="button" onClick={() => void resetPassword(user)}>{translate("adminPage.resetPassword")}</button>
                                 )}
                                 {user.id !== currentUser?.id && (
-                                  <button type="button" className="button danger" onClick={() => setDeleting(user)}>削除</button>
+                                  <button type="button" className="button danger" onClick={() => setDeleting(user)}>{translate("common.delete")}</button>
                                 )}
                               </div>
                             </form>
@@ -492,24 +499,24 @@ function UsersPage() {
 
       <section className="admin-section">
         <form className="admin-create-form" onSubmit={createUser} aria-labelledby="admin-create-user-title">
-          <div className="section-heading"><h2 id="admin-create-user-title">ユーザーを追加</h2></div>
+          <div className="section-heading"><h2 id="admin-create-user-title">{translate("adminPage.addUser")}</h2></div>
           <div className="admin-form-grid">
-            <label className="field"><span>表示名</span><input name="displayName" placeholder="例: Mado Curator" required /></label>
-            <label className="field"><span>ユーザーID（ログインID）</span><input name="username" placeholder="例: curator" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required /></label>
-            <label className="field"><span>メールアドレス（任意）</span><input name="email" type="email" placeholder="email@example.jp" /></label>
-            <label className="field"><span>初回パスワード（12文字以上）</span><input name="password" type="password" minLength={12} autoComplete="new-password" required /></label>
+            <label className="field"><span>{translate("common.displayName")}</span><input name="displayName" placeholder={translate("adminPage.eGMadoCurator")} required /></label>
+            <label className="field"><span>{translate("common.userIdLoginId")}</span><input name="username" placeholder={translate("adminPage.eGCurator")} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required /></label>
+            <label className="field"><span>{translate("adminPage.emailAddressOptional")}</span><input name="email" type="email" placeholder="email@example.jp" /></label>
+            <label className="field"><span>{translate("adminPage.initialPasswordAtLeast12Characters")}</span><input name="password" type="password" minLength={12} autoComplete="new-password" required /></label>
             <label className="field admin-form-grid__wide">
-              <span>権限</span>
+              <span>{translate("adminPage.permissions")}</span>
               <select name="role" value={role} onChange={event => setRole(event.target.value as RoleId)}>
                 {ROLE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
               </select>
               <small className="muted">{ROLE_OPTIONS.find(option => option.id === role)?.help}</small>
             </label>
           </div>
-          <button type="submit" className="button primary">作成</button>
+          <button type="submit" className="button primary">{translate("common.create")}</button>
         </form>
         <blockquote className="sso-guidance">
-          <p>SSOの場合、以下のAuthentikグループがMadoの権限と対応しています。権限はログイン時に同期されます。</p>
+          <p>{translate("adminPage.forSsoTheFollowingAuthentikGroupsMapTo")}</p>
           <ul>
             {ssoRoleMappings.map(({ group, role }) => (
               <li key={group}>
@@ -518,7 +525,7 @@ function UsersPage() {
                 <strong>{ROLE_OPTIONS.find(option => option.id === role)?.label}</strong>
               </li>
             ))}
-            {ssoRoleMappings.length === 0 && <li className="sso-guidance__empty">SSO権限マッピングは設定されていません。</li>}
+            {ssoRoleMappings.length === 0 && <li className="sso-guidance__empty">{translate("adminPage.noSsoPermissionMappingsAreConfigured")}</li>}
           </ul>
         </blockquote>
       </section>
@@ -526,11 +533,11 @@ function UsersPage() {
       {deleting && (
         <DeleteConfirmDialog
           titleId="admin-user-delete-title"
-          title="ユーザーを削除"
+          title={translate("adminPage.deleteUser")}
           onConfirm={() => deleteUser(deleting)}
           onCancel={() => setDeleting(null)}
         >
-          {deleting.displayName}を削除しますか？この操作は取り消せません。
+          {translate("adminPage.confirmUserDeletion", { value0: deleting.displayName })}
         </DeleteConfirmDialog>
       )}
     </section>
@@ -538,6 +545,7 @@ function UsersPage() {
 }
 
 function ServiceAccountsPage() {
+  useLocale()
   const [accounts, setAccounts] = useState<ServiceAccountRow[]>([])
   const [notice, setNotice] = useState<string | null>(null)
   const [secret, setSecret] = useState<{ label: string; value: string } | null>(null)
@@ -550,7 +558,7 @@ function ServiceAccountsPage() {
       const body = await jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
       setAccounts(body.accounts)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Service Accountを取得できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadServiceAccounts"))
     }
   }, [])
 
@@ -559,7 +567,7 @@ function ServiceAccountsPage() {
     jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
       .then(body => { if (current) setAccounts(body.accounts) })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : 'Service Accountを取得できませんでした')
+        if (current) setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadServiceAccounts"))
       })
     return () => { current = false }
   }, [])
@@ -575,10 +583,10 @@ function ServiceAccountsPage() {
         body: JSON.stringify({ name: form.get('name'), description: form.get('description') }),
       })
       formElement.reset()
-      setNotice('Service Accountを作成しました。')
+      setNotice(translate("adminPage.serviceAccountCreated"))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '作成できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotCreate"))
     }
   }
 
@@ -604,30 +612,30 @@ function ServiceAccountsPage() {
       formElement.reset()
       setNotice(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'keyを発行できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotIssueKey"))
     }
   }
 
   return (
     <section className="admin-accounts">
-      {error && <p className="notice error" role="alert">{error}</p>}
-      {notice && <p className="notice success" role="status">{notice}</p>}
-      {secret && <SecretNotice secret={secret} note="このkeyは今だけ表示されます" onClose={() => setSecret(null)} />}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
+      {notice && <p className="notice success" role="status">{localizeMessage(notice)}</p>}
+      {secret && <SecretNotice secret={secret} note={translate("adminPage.thisKeyIsShownOnlyOnce")} onClose={() => setSecret(null)} />}
       {accounts.length > 0 && (
         <div className="table-scroll">
           <table className="admin-accounts-table">
             <thead>
               <tr>
-                <th scope="col">名前</th>
-                <th scope="col">用途</th>
-                <th scope="col">状態</th>
+                <th scope="col">{translate("common.name")}</th>
+                <th scope="col">{translate("adminPage.purpose")}</th>
+                <th scope="col">{translate("common.status")}</th>
               </tr>
             </thead>
             <tbody>
               {accounts.map(account => (
                 <tr key={account.id}>
                   <td className="break-word"><strong>{account.name}</strong></td>
-                  <td className={account.description ? undefined : 'muted'}>{account.description || '説明なし'}</td>
+                  <td className={account.description ? undefined : 'muted'}>{account.description || translate("adminPage.noDescription")}</td>
                   <td><StatusBadge status={account.status} /></td>
                 </tr>
               ))}
@@ -638,34 +646,34 @@ function ServiceAccountsPage() {
       <div className="admin-forms">
         <section className="admin-section">
           <form onSubmit={createAccount} aria-labelledby="admin-create-account-title">
-            <div className="section-heading"><h2 id="admin-create-account-title">Service Accountを追加</h2></div>
-            <label className="field"><span>Service Account名</span><input name="name" placeholder="例: nemo-curator-production" required /></label>
-            <label className="field"><span>用途（任意）</span><input name="description" placeholder="例: 音声前処理の本番Pipeline" /></label>
-            <button type="submit" className="button primary">作成</button>
+            <div className="section-heading"><h2 id="admin-create-account-title">{translate("adminPage.addServiceAccount")}</h2></div>
+            <label className="field"><span>{translate("adminPage.serviceAccountName")}</span><input name="name" placeholder={translate("adminPage.eGNemoCuratorProduction")} required /></label>
+            <label className="field"><span>{translate("adminPage.purposeOptional")}</span><input name="description" placeholder={translate("adminPage.eGProductionAudioPreprocessingPipeline")} /></label>
+            <button type="submit" className="button primary">{translate("common.create")}</button>
           </form>
         </section>
         <section className="admin-section">
           <form onSubmit={issueKey} aria-labelledby="admin-issue-key-title">
-            <div className="section-heading"><h2 id="admin-issue-key-title">APIキーを発行</h2></div>
+            <div className="section-heading"><h2 id="admin-issue-key-title">{translate("adminPage.issueApiKey2")}</h2></div>
             <label className="field">
-              <span>Service Account</span>
+              <span>{translate("adminPage.serviceAccount")}</span>
               <select name="accountId" required defaultValue="">
-                <option value="" disabled>選択してください</option>
+                <option value="" disabled>{translate("adminPage.selectAnOption")}</option>
                 {accounts.filter(a => a.status === 'active').map(account => <option key={account.id} value={account.id}>{account.name}</option>)}
               </select>
             </label>
             <label className="field">
-              <span>用途</span>
+              <span>{translate("adminPage.purpose")}</span>
               <select name="scope" value={keyScope} onChange={event => setKeyScope(event.target.value as KeyScope)}>
                 {KEY_SCOPE_OPTIONS.map(option => <option key={option.scope} value={option.scope}>{option.label}</option>)}
               </select>
               <small className="muted">{KEY_SCOPE_OPTIONS.find(option => option.scope === keyScope)?.help}</small>
             </label>
-            <label className="field"><span>Key名</span><input name="name" placeholder="例: production-2026-08" required /></label>
+            <label className="field"><span>{translate("adminPage.keyName")}</span><input name="name" placeholder={translate("adminPage.eGProduction202608")} required /></label>
             {keyScope === 'lineage:write' && (
-              <label className="field"><span>許可するNamespace</span><input name="namespaces" placeholder="speech,podcast（カンマ区切り）" required /></label>
+              <label className="field"><span>{translate("adminPage.allowedNamespaces")}</span><input name="namespaces" placeholder={translate("adminPage.speechPodcastCommaSeparated")} required /></label>
             )}
-            <button type="submit" className="button primary">一度だけkeyを表示</button>
+            <button type="submit" className="button primary">{translate("adminPage.showKeyOnce")}</button>
           </form>
         </section>
       </div>
@@ -674,10 +682,12 @@ function ServiceAccountsPage() {
 }
 
 function AuditTarget({ event }: { event: AuditEventRow }) {
+  useLocale()
   return <>{event.details?.target?.displayName ?? event.resource_id ?? event.resource_type ?? '—'}</>
 }
 
 function AuditPageView() {
+  useLocale()
   const [auditEvents, setAuditEvents] = useState<AuditEventRow[]>([])
   const [nextBeforeId, setNextBeforeId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
@@ -693,7 +703,7 @@ function AuditPageView() {
       setAuditEvents(body.events)
       setNextBeforeId(body.nextBeforeId)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '監査ログを取得できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
     }
   }, [])
 
@@ -706,7 +716,7 @@ function AuditPageView() {
         setNextBeforeId(body.nextBeforeId)
       })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : '監査ログを取得できませんでした')
+        if (current) setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
       })
     return () => { current = false }
   }, [])
@@ -719,7 +729,7 @@ function AuditPageView() {
       setAuditEvents(current => [...current, ...body.events])
       setNextBeforeId(body.nextBeforeId)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '監査ログを取得できませんでした')
+      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
     } finally {
       setLoading(false)
     }
@@ -732,23 +742,22 @@ function AuditPageView() {
       <div className="admin-toolbar admin-toolbar--end">
         <button type="button" className="button small" onClick={() => void reload()}>
           <RefreshCw size={14} aria-hidden="true" />
-          更新
-        </button>
+          {translate("common.update")}</button>
       </div>
-      {error && <p className="notice error" role="alert">{error}</p>}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {auditEvents.length === 0 ? (
-        <p className="state-message">記録はまだありません。</p>
+        <p className="state-message">{translate("adminPage.noRecordsYet")}</p>
       ) : (
         <div className="table-scroll">
           <table className="responsive-table audit-table">
             <thead>
               <tr>
-                <th scope="col">時刻</th>
-                {!isNarrow && <th scope="col">操作者</th>}
-                <th scope="col">操作</th>
-                {!isNarrow && <th scope="col">対象</th>}
-                <th scope="col">結果</th>
-                <th scope="col" className="responsive-table-toggle"><span className="sr-only">詳細を表示</span></th>
+                <th scope="col">{translate("adminPage.time")}</th>
+                {!isNarrow && <th scope="col">{translate("adminPage.actor")}</th>}
+                <th scope="col">{translate("common.actions")}</th>
+                {!isNarrow && <th scope="col">{translate("adminPage.resource")}</th>}
+                <th scope="col">{translate("adminPage.outcome")}</th>
+                <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate("common.showDetails")}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -763,7 +772,7 @@ function AuditPageView() {
                     onClick={clickEvent => { if (!isFromControl(clickEvent)) toggleRow(event.id) }}
                   >
                     <td>
-                      <time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString('ja-JP', { hour12: false })}</time>
+                      <time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString(getIntlLocale(), { hour12: false })}</time>
                     </td>
                     {!isNarrow && <td className="audit-label">{event.actor_label}</td>}
                     <td><span title={event.action}>{ACTION_LABELS[event.action] ?? event.action}</span></td>
@@ -779,8 +788,8 @@ function AuditPageView() {
                         <dl className="audit-detail">
                           {isNarrow && (
                             <>
-                              <div><dt>操作者</dt><dd>{event.actor_label}</dd></div>
-                              <div><dt>対象</dt><dd className="mono"><AuditTarget event={event} /></dd></div>
+                              <div><dt>{translate("adminPage.actor")}</dt><dd>{event.actor_label}</dd></div>
+                              <div><dt>{translate("adminPage.resource")}</dt><dd className="mono"><AuditTarget event={event} /></dd></div>
                             </>
                           )}
                           {changes.map((change, index) => (
@@ -800,7 +809,7 @@ function AuditPageView() {
                             ))}
                         </dl>
                         {(!event.details || Object.keys(event.details).length === 0) && (
-                          <p className="muted audit-detail__empty">詳細はありません。</p>
+                          <p className="muted audit-detail__empty">{translate("adminPage.noDetails")}</p>
                         )}
                       </td>
                     </tr>
@@ -814,7 +823,7 @@ function AuditPageView() {
       {nextBeforeId && (
         <div className="admin-more">
           <button type="button" className="button small" disabled={loading} onClick={() => void loadMore()}>
-            {loading ? '読み込み中…' : 'さらに表示'}
+            {loading ? translate("common.loading") : translate("adminPage.showMore")}
           </button>
         </div>
       )}
@@ -823,6 +832,7 @@ function AuditPageView() {
 }
 
 export default function AdminPage() {
+  useLocale()
   const { user } = useAuth()
   const canUsers = user?.permissions.includes('users:manage') ?? false
   const canAccounts = user?.permissions.includes('service_accounts:manage') ?? false
@@ -835,10 +845,10 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page">
-      <nav className="tabs access-tabs" aria-label="Access">
-        {canUsers && <NavLink to="/settings/access/users" className="tab">Users</NavLink>}
-        {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">Service Accounts</NavLink>}
-        {canAudit && <NavLink to="/settings/access/audit" className="tab">Audit</NavLink>}
+      <nav className="tabs access-tabs" aria-label={translate('settingsPage.access')}>
+        {canUsers && <NavLink to="/settings/access/users" className="tab">{translate("adminPage.users")}</NavLink>}
+        {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">{translate("adminPage.serviceAccounts")}</NavLink>}
+        {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate("adminPage.audit")}</NavLink>}
       </nav>
       <Routes>
         <Route index element={<Navigate to={defaultPath} replace />} />

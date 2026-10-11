@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { lazy, Suspense, useEffect, useReducer } from 'react'
 import { Route, Routes, Link, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -12,6 +14,7 @@ const ReadmeEditPage = lazy(() => import('./ReadmeEditPage'))
 const CapacityMetricsPage = lazy(() => import('./CapacityMetricsPage'))
 
 function StorageIndexRoute({ connectionId }: Props) {
+  useLocale()
   const [params] = useSearchParams()
   return params.get('view') === 'capacity'
     ? <CapacityMetricsPage connectionId={connectionId} />
@@ -43,11 +46,12 @@ function reducer(s: State, a: Action): State {
     case 'loadErr':
       return { ...s, error: a.error, loading: false }
     case 'notFound':
-      return { connection: null, error: `接続が見つかりません: ${a.connectionId}`, loading: false }
+      return { connection: null, error: translate("storagePage.connectionNotFound", { value0: a.connectionId }), loading: false }
   }
 }
 
 export default function StoragePage({ connectionId }: Props) {
+  useLocale()
   const [state, dispatch] = useReducer(reducer, initial)
   const { connection, error, loading } = state
 
@@ -63,24 +67,24 @@ export default function StoragePage({ connectionId }: Props) {
   }, [connectionId])
 
   if (loading) {
-    return <p className="state-message">読み込み中…</p>
+    return <p className="state-message">{translate("common.loading")}</p>
   }
   if (error || !connection) {
     return (
       <>
         <header className="page-header">
-          <div><h1>Storage</h1></div>
+          <div><h1>{translate("common.storage")}</h1></div>
         </header>
         <div className="empty-state">
           <h2>{error ?? 'unknown'}</h2>
-          <Link className="button primary" to="/storage">接続一覧へ</Link>
+          <Link className="button primary" to="/storage">{translate("storagePage.backToConnections")}</Link>
         </div>
       </>
     )
   }
   return (
     <ConnectionContext.Provider value={connection}>
-      <Suspense fallback={<p className="state-message">読み込み中…</p>}>
+      <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
         <Routes>
           <Route path="/"                       element={<StorageIndexRoute connectionId={connectionId} />} />
           {/* edit-readme は固定セグメントから始まるので :bucket/* より specificity が高く、

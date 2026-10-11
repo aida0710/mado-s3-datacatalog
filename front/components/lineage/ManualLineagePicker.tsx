@@ -1,3 +1,6 @@
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { api } from '../../lib/api/client'
@@ -20,6 +23,7 @@ function PickedValue({ label, title, identity, onChange }: {
   identity: string
   onChange: () => void
 }) {
+  useLocale()
   return (
     <div className="field lineage-picker">
       <span>{label}</span>
@@ -28,7 +32,7 @@ function PickedValue({ label, title, identity, onChange }: {
           <strong>{title}</strong>
           <span className="muted mono break-word">{identity}</span>
         </div>
-        <button type="button" className="button small" onClick={onChange}>変更</button>
+        <button type="button" className="button small" onClick={onChange}>{translate("common.change")}</button>
       </div>
     </div>
   )
@@ -40,7 +44,8 @@ interface DatasetPickerProps {
   label?: string
 }
 
-export function DatasetPicker({ value, onChange, label = 'データセット' }: DatasetPickerProps) {
+export function DatasetPicker({ value, onChange, label = translate("common.dataset") }: DatasetPickerProps) {
+  useLocale()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<RegistryDatasetSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -97,19 +102,19 @@ export function DatasetPicker({ value, onChange, label = 'データセット' }:
             setResults([])
             setLoading(next.trim().length > 0)
           }}
-          placeholder="名前、説明、S3 URIで検索"
+          placeholder={translate("manualLineagePicker.searchByNameDescriptionOrS3Uri")}
           autoComplete="off"
         />
       </label>
-      {loading && <p className="muted lineage-picker__status">検索中…</p>}
-      {error && <p className="notice error" role="alert">{error}</p>}
+      {loading && <p className="muted lineage-picker__status">{translate("common.searching")}</p>}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {results.length > 0 && (
         <div className="table-scroll lineage-picker__results">
           <table className="responsive-table">
             <thead>
               <tr>
-                <th scope="col">データセット</th>
-                <th scope="col" className="numeric">バージョン</th>
+                <th scope="col">{translate("common.dataset")}</th>
+                <th scope="col" className="numeric">{translate("common.version")}</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +130,7 @@ export function DatasetPicker({ value, onChange, label = 'データセット' }:
                     </button>
                     <small className="mono break-word">{item.namespace} / {item.name}</small>
                   </td>
-                  <td className="numeric nowrap">{item.versionCount}件</td>
+                  <td className="numeric nowrap">{item.versionCount}{translate("common.items")}</td>
                 </tr>
               ))}
             </tbody>
@@ -142,7 +147,8 @@ interface VersionPickerProps {
   label?: string
 }
 
-export function VersionPicker({ value, onChange, label = 'データのバージョン' }: VersionPickerProps) {
+export function VersionPicker({ value, onChange, label = translate("manualLineagePicker.dataVersions") }: VersionPickerProps) {
+  useLocale()
   const [dataset, setDataset] = useState<RegistryDatasetSummary | null>(null)
   const [versions, setVersions] = useState<Array<{ id: string; version: string }>>([])
   const [loading, setLoading] = useState(false)
@@ -187,7 +193,7 @@ export function VersionPicker({ value, onChange, label = 'データのバージ�
       }} label={label} />
       {dataset && (
         <label className="field">
-          <span>バージョン</span>
+          <span>{translate("common.version")}</span>
           <select
             value=""
             disabled={loading || versions.length === 0}
@@ -204,12 +210,12 @@ export function VersionPicker({ value, onChange, label = 'データのバージ�
               })
             }}
           >
-            <option value="">{loading ? '読み込み中…' : versions.length === 0 ? 'バージョンがありません' : 'バージョンを選択'}</option>
+            <option value="">{loading ? translate("common.loading") : versions.length === 0 ? translate("manualLineagePicker.noVersions") : translate("manualLineagePicker.selectAVersion")}</option>
             {versions.map(version => <option key={version.id} value={version.id}>{version.version}</option>)}
           </select>
         </label>
       )}
-      {error && <p className="notice error" role="alert">{error}</p>}
+      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
     </div>
   )
 }
@@ -221,6 +227,7 @@ interface VersionListPickerProps {
 }
 
 export function VersionListPicker({ values, onChange, label }: VersionListPickerProps) {
+  useLocale()
   const [candidate, setCandidate] = useState<VersionChoice | null>(null)
   const [pickerKey, setPickerKey] = useState(0)
   return (
@@ -238,8 +245,7 @@ export function VersionListPicker({ values, onChange, label }: VersionListPicker
           }}
         >
           <Plus size={14} aria-hidden="true" />
-          追加
-        </button>
+          {translate("common.add")}</button>
       )}
       {values.length > 0 && (
         <ul className="lineage-version-list__selected">
@@ -249,8 +255,8 @@ export function VersionListPicker({ values, onChange, label }: VersionListPicker
               <button
                 type="button"
                 className="icon-button"
-                aria-label="外す"
-                title="外す"
+                aria-label={translate("common.remove")}
+                title={translate("common.remove")}
                 onClick={() => onChange(values.filter(item => item.id !== value.id))}
               >
                 <X size={16} aria-hidden="true" />

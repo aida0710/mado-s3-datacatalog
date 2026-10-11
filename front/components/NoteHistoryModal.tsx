@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { api } from '../lib/api/client'
 import { HistoryModal } from './HistoryModal'
@@ -12,11 +14,12 @@ interface Props {
 // Team note (postgres notes テーブル) の編集履歴ダイアログ。
 // 取得元と見出しだけがここの責務で、表示は HistoryModal と共通。
 export function NoteHistoryModal({ slug, currentBody, onClose }: Props) {
+  useLocale()
   const loadVersions = useCallback(() => api.noteHistory(slug).then(r => r.versions), [slug])
   const loadVersion = useCallback((id: number) => api.noteHistoryVersion(slug, id), [slug])
   return (
     <HistoryModal
-      title="Team note の履歴"
+      title={translate("noteHistoryModal.teamNoteHistory")}
       titleId="note-history-title"
       subtitle={slug}
       currentBody={currentBody}

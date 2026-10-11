@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useRef, type FormEvent } from 'react'
 import { ChevronDown, RefreshCw } from 'lucide-react'
 import type { LineageProjection } from '../../lib/api/types'
@@ -22,6 +24,7 @@ interface Props {
 // グラフの表示の切り替え (表示方法・表示範囲・更新) と、技術 ID での起点の指定。
 // 技術 ID の入力欄はツールバーの下に重ねて開き、表示したら閉じる。
 export function LineageToolbar({ route, loading, onModeChange, onApply, onDepthChange, onRefresh }: Props) {
+  useLocale()
   const technicalRef = useRef<HTMLDetailsElement>(null)
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -39,38 +42,35 @@ export function LineageToolbar({ route, loading, onModeChange, onApply, onDepthC
 
   return (
     <div className="lineage-toolbar">
-      <div className="lineage-segmented" role="group" aria-label="DataLineageの表示方法">
+      <div className="lineage-segmented" role="group" aria-label={translate("lineageToolbar.dataLineageView")}>
         <button
           type="button"
           aria-pressed={route.mode === 'logical'}
           onClick={() => onModeChange('logical')}
         >
-          データセット全体
-        </button>
+          {translate("lineageToolbar.allDatasets")}</button>
         <button
           type="button"
           aria-pressed={route.mode === 'versions'}
           onClick={() => onModeChange('versions')}
         >
-          入出力と処理履歴
-        </button>
+          {translate("lineageToolbar.inputsOutputsAndProcessingHistory")}</button>
       </div>
 
       <label className="lineage-toolbar__item">
-        <span>表示範囲</span>
+        <span>{translate("lineageToolbar.viewRange")}</span>
         <select value={route.depth} onChange={event => onDepthChange(Number(event.target.value))}>
           {[1, 2, 3, 4, 5, 6].map(depth => <option key={depth} value={depth}>{depth}</option>)}
         </select>
       </label>
       <button type="button" className="button small lineage-toolbar__button" onClick={onRefresh} disabled={loading}>
         <RefreshCw size={14} aria-hidden="true" className={loading ? 'spin' : undefined} />
-        {loading ? '更新中…' : '更新'}
+        {loading ? translate("common.updating") : translate("common.update")}
       </button>
 
       <details ref={technicalRef} className="lineage-toolbar__menu">
         <summary>
-          技術IDで指定
-          <ChevronDown size={14} aria-hidden="true" />
+          {translate("lineageToolbar.specifyTechnicalId")}<ChevronDown size={14} aria-hidden="true" />
         </summary>
         <form
           key={`${route.mode}|${route.rootKind}|${route.namespace}|${route.name}|${route.versionId}`}
@@ -80,28 +80,28 @@ export function LineageToolbar({ route, loading, onModeChange, onApply, onDepthC
           {route.mode === 'logical' ? (
             <>
               <label className="field">
-                <span>種類</span>
+                <span>{translate("common.type")}</span>
                 <select name="rootKind" defaultValue={route.rootKind}>
-                  <option value="dataset">データセット</option>
-                  <option value="job">処理</option>
+                  <option value="dataset">{translate("common.dataset")}</option>
+                  <option value="job">{translate("common.processing")}</option>
                 </select>
               </label>
               <label className="field">
-                <span>名前空間</span>
+                <span>{translate("common.namespace")}</span>
                 <input name="namespace" className="mono" defaultValue={route.namespace} placeholder="speech" />
               </label>
               <label className="field">
-                <span>技術名</span>
+                <span>{translate("common.technicalName")}</span>
                 <input name="name" className="mono" defaultValue={route.name} placeholder="callhome-raw" />
               </label>
             </>
           ) : (
             <label className="field">
-              <span>バージョンID</span>
-              <input name="versionId" className="mono" defaultValue={route.versionId} placeholder="バージョンのUUID" />
+              <span>{translate("lineageToolbar.versionId")}</span>
+              <input name="versionId" className="mono" defaultValue={route.versionId} placeholder={translate("lineageToolbar.versionUuid")} />
             </label>
           )}
-          <button type="submit" className="button primary">表示</button>
+          <button type="submit" className="button primary">{translate("common.show")}</button>
         </form>
       </details>
     </div>

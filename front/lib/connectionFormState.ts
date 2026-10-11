@@ -1,4 +1,6 @@
-import { ALL_CAPABILITIES_ON, CAPABILITY_UI } from './api/types'
+import { translate } from '../i18n/translate'
+import { ALL_CAPABILITIES_ON } from './api/types'
+import { CAPABILITY_UI } from '../i18n/connectionOptions'
 import type {
   Capabilities,
   Capability,
@@ -135,12 +137,12 @@ export function initialState(current: Connection | null): FormState {
 
 /** 送信前に画面側で弾く不足項目。null なら送ってよい。 */
 export function validateForm(state: FormState, isEdit: boolean): string | null {
-  if (!state.name.trim()) return '名前を入力してください'
-  if (!state.endpoint.trim()) return 'エンドポイントを入力してください'
-  if (!state.region.trim()) return 'リージョンを入力してください'
+  if (!state.name.trim()) return translate("common.enterAName")
+  if (!state.endpoint.trim()) return translate("connectionFormState.enterAnEndpoint")
+  if (!state.region.trim()) return translate("connectionFormState.enterARegion")
   if (!isEdit) {
-    if (!state.accessKeyId.trim()) return 'アクセスキー ID を入力してください'
-    if (!state.secretAccessKey) return 'シークレットアクセスキーを入力してください'
+    if (!state.accessKeyId.trim()) return translate("connectionFormState.enterAnAccessKeyId")
+    if (!state.secretAccessKey) return translate("connectionFormState.enterASecretAccessKey")
   }
   return null
 }

@@ -31,10 +31,10 @@ describe('AdminPage', () => {
       </AuthContext.Provider>,
     )
 
-    const nav = screen.getByRole('navigation', { name: 'Access' })
-    expect(nav).toHaveTextContent('Users')
+    const nav = screen.getByRole('navigation', { name: 'アクセス管理' })
+    expect(nav).toHaveTextContent('ユーザー')
     expect(nav).toHaveTextContent('Service Accounts')
-    expect(nav).toHaveTextContent('Audit')
+    expect(nav).toHaveTextContent('監査ログ')
     expect(screen.queryByRole('heading', { name: 'ユーザーとAPIアクセスの管理' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Access' })).not.toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'ユーザーを追加' })).toBeInTheDocument()

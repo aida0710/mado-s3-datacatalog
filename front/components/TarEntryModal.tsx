@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, Link, Pin } from 'lucide-react'
@@ -37,6 +39,7 @@ interface Props {
  * それらの重なりの中に閉じ込められ、ドックがダイアログの上に出てしまうため。
  */
 export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose }: Props) {
+  useLocale()
   const kind = classifyEntry(entry.name)
   // <img src> / DL / 生データ URL は本体を全部要る。
   const url = api.tarEntryUrl({ connectionId, bucket, key: archiveKey, entry: entry.name })
@@ -49,10 +52,10 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
   const copyItems: MenuItem[] = [
     {
       kind: 'copy',
-      label: 'Web URL をコピー',
+      label: translate("common.copyWebUrl"),
       value: absoluteUrl(tarEntryWebUrl({ connectionId, bucket, tarKey: archiveKey, entryPath: entry.name })),
     },
-    { kind: 'copy', label: '生データ URL をコピー', value: absoluteUrl(url) },
+    { kind: 'copy', label: translate("common.copyRawDataUrl"), value: absoluteUrl(url) },
   ]
   // エントリの操作。本文の種別によらず、本文の上の帯の右端に並べる。
   const actions = (
@@ -61,18 +64,18 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
         type="button"
         className="icon-button"
         onClick={() => addPin({ connectionId, bucket, key: archiveKey, entryPath: entry.name })}
-        aria-label="ピン留め"
-        title="ピン留め"
+        aria-label={translate("common.pin")}
+        title={translate("common.pin")}
       >
         <Pin size={16} aria-hidden="true" />
       </button>
-      <CopyMenu items={copyItems} trigger={<Link size={16} aria-hidden="true" />} ariaLabel="URL をコピー" />
+      <CopyMenu items={copyItems} trigger={<Link size={16} aria-hidden="true" />} ariaLabel={translate("tarEntryModal.copyUrl")} />
       <a
         className="icon-button"
         href={url}
         download={entry.name.split('/').pop()}
-        aria-label={`${entry.name} をダウンロード`}
-        title="ダウンロード"
+        aria-label={translate("common.download", { value0: entry.name })}
+        title={translate("common.download2")}
       >
         <Download size={16} aria-hidden="true" />
       </a>
@@ -131,6 +134,7 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
 
 /** 本文の上の帯。左に行数などの情報と表示形式、右に操作。 */
 function EntryToolbar({ info, children }: { info?: ReactNode; children: ReactNode }) {
+  useLocale()
   return (
     <div className="preview-toolbar">
       {info != null && <div className="preview-info">{info}</div>}
@@ -140,6 +144,7 @@ function EntryToolbar({ info, children }: { info?: ReactNode; children: ReactNod
 }
 
 function TextBody({ url, name, actions }: { url: string; name: string; actions: ReactNode }) {
+  useLocale()
   const sniffed = useSniffedText(url)
 
   // 読み込み中・失敗・バイナリでも、ピン留めとダウンロードは使えるよう帯は出す。
@@ -148,7 +153,7 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
       <>
         <EntryToolbar>{actions}</EntryToolbar>
         {sniffed.status === 'error' && <p className="notice error">{sniffed.message}</p>}
-        {sniffed.status === 'loading' && <p className="muted">読み込み中…</p>}
+        {sniffed.status === 'loading' && <p className="muted">{translate("common.loading")}</p>}
         {sniffed.status === 'binary' && <UnsupportedPreview />}
       </>
     )
@@ -158,6 +163,7 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
 
 /** 読み込んだテキスト。形式を推測して色を付け、帯の選択欄で形式を選び直せる。 */
 function LoadedText({ name, text, actions }: { name: string; text: string; actions: ReactNode }) {
+  useLocale()
   const [copied, setCopied] = useState<boolean | null>(null)
   const code = useCodeLanguage(name, text)
 
@@ -175,7 +181,7 @@ function LoadedText({ name, text, actions }: { name: string; text: string; actio
       <EntryToolbar
         info={
           <>
-            <span className="muted mono">{`${lines} 行`}</span>
+            <span className="muted mono">{translate("tarEntryModal.rows", { value0: lines })}</span>
             <CodeFormatSelect code={code} />
           </>
         }

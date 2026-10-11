@@ -13,6 +13,9 @@
 //     useBlocker で confirm ダイアログを挟む
 //   - 保存成功直後は justSavedRef で 1 度だけ素通しさせる (保存→ホーム遷移を阻害しない)
 
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, ChevronUp, Folder } from 'lucide-react'
 import { getEditorName, setEditorName } from '../lib/editorName'
@@ -34,6 +37,7 @@ interface Props {
 
 /** 編集ページの見出し。読み込み中や取得の失敗で EditorShell を出せない間も、同じ見出しを出すのに使う。 */
 export function EditorPageHeader({ title, description }: { title: string; description?: ReactNode }) {
+  useLocale()
   return (
     <header className="page-header">
       <div>
@@ -49,6 +53,7 @@ export function EditorShell({
   onSave, onSaved, onCancel,
   leftPane, children,
 }: Props) {
+  useLocale()
   const auth = useAuth()
   const [body, setBody] = useState(() => initialBody)
   // 認証時はアカウント署名が正本。認証disabledの開発環境だけ従来の端末署名を使う。
@@ -90,7 +95,7 @@ export function EditorShell({
 
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      const ok = window.confirm('未保存の変更があります。本当に離れますか？')
+      const ok = window.confirm(translate("editorShell.youHaveUnsavedChangesLeaveThisPage"))
       if (ok) blocker.proceed()
       else blocker.reset()
     }
@@ -112,7 +117,7 @@ export function EditorShell({
   }
 
   const handleCancel = () => {
-    if (dirty && !window.confirm('未保存の変更があります。本当に離れますか？')) return
+    if (dirty && !window.confirm(translate("editorShell.youHaveUnsavedChangesLeaveThisPage"))) return
     justSavedRef.current = true  // confirm 済みなので blocker は素通し
     onCancel()
   }
@@ -132,7 +137,7 @@ export function EditorShell({
             aria-controls="editpage-sidebar"
           >
             <Folder size={14} aria-hidden="true" />
-            {sidebarOpen ? '閉じる' : 'ファイル参照'}
+            {sidebarOpen ? translate("common.close") : translate("editorShell.browseFiles")}
             {sidebarOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
           </button>
         )}
@@ -152,31 +157,30 @@ export function EditorShell({
         </div>
       </div>
 
-      {error && <p className="notice error editpage__error" role="alert">{error}</p>}
+      {error && <p className="notice error editpage__error" role="alert">{localizeMessage(error)}</p>}
       <footer className="editpage__bar">
         <label className="field editpage__name">
-          <span>編集者名</span>
+          <span>{translate("editorShell.editorName")}</span>
           <input
             value={editor}
             onChange={e => setLocalEditor(e.target.value)}
             readOnly={auth.enabled}
-            placeholder="e.g. tanaka"
+            placeholder={translate("common.exampleEditor")}
             autoComplete="nickname"
             spellCheck={false}
-            aria-label="編集者名"
+            aria-label={translate("editorShell.editorName")}
           />
         </label>
         <div className="editpage__actions">
           <button type="button" onClick={handleCancel} disabled={saving} className="button">
-            キャンセル
-          </button>
+            {translate("common.cancel")}</button>
           <button
             type="button"
             onClick={save}
             disabled={saving || !editor}
             className="button primary"
           >
-            {saving ? '保存中…' : '保存'}
+            {saving ? translate("common.saving") : translate("common.save")}
           </button>
         </div>
       </footer>

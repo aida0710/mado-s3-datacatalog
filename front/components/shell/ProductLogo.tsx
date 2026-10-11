@@ -21,11 +21,11 @@ export function MadoMark() {
   )
 }
 
-export function ProductLogo() {
+export function ProductLogo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="product-logo">
       <MadoMark />
-      <span>
+      <span className={compact ? 'sr-only' : undefined}>
         <span className="product-prefix">{PRODUCT_PREFIX}</span> <strong>{PRODUCT_NAME}</strong>
       </span>
     </span>

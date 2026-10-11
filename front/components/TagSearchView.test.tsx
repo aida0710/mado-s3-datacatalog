@@ -77,7 +77,7 @@ describe('TagSearchView', () => {
     renderView()
 
     expect(await screen.findByText(/タグがまだありません/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings/features')
+    expect(screen.getByRole('link', { name: '設定' })).toHaveAttribute('href', '/settings/features')
   })
 })
 

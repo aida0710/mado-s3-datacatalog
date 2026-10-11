@@ -1,3 +1,6 @@
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background, BackgroundVariant, Controls, MarkerType, MiniMap, ReactFlow, ReactFlowProvider,
@@ -31,11 +34,11 @@ const NARROW_FIT_VIEW = { ...WIDE_FIT_VIEW, minZoom: 0.5 }
 
 // グラフの操作ボタンとミニマップの名前 (ツールチップにも出る)。React Flow の既定は英語。
 const ARIA_LABELS = {
-  'controls.ariaLabel': 'グラフの表示の操作',
-  'controls.zoomIn.ariaLabel': '拡大',
-  'controls.zoomOut.ariaLabel': '縮小',
-  'controls.fitView.ariaLabel': '全体を表示',
-  'minimap.ariaLabel': 'グラフの全体図',
+  get 'controls.ariaLabel'() { return translate("lineageGraph.graphControls") },
+  get 'controls.zoomIn.ariaLabel'() { return translate("lineageGraph.zoomIn") },
+  get 'controls.zoomOut.ariaLabel'() { return translate("lineageGraph.zoomOut") },
+  get 'controls.fitView.ariaLabel'() { return translate("lineageGraph.fitToView") },
+  get 'minimap.ariaLabel'() { return translate("lineageGraph.graphOverview") },
 }
 
 interface Props {
@@ -50,16 +53,17 @@ interface CanvasProps extends Props {
 }
 
 const DIRECTIONS: Array<{ value: LineageDirection; label: string }> = [
-  { value: 'both', label: '両方' },
-  { value: 'upstream', label: '上流' },
-  { value: 'downstream', label: '下流' },
+  { value: 'both', get label() { return translate("lineageGraph.both") } },
+  { value: 'upstream', get label() { return translate("lineageGraph.upstream") } },
+  { value: 'downstream', get label() { return translate("lineageGraph.downstream") } },
 ]
 
 function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: CanvasProps) {
+  useLocale()
   const { fitView } = useReactFlow<LineageFlowNode>()
   const narrow = useMediaQuery(narrowerThan('md'))
   const focusedSelection = useRef('')
-  const { nodes, edges } = useMemo(() => {
+  const { nodes, edges } = useLocalizedMemo(() => {
     const elements = toFlowElements(graph)
     const traced = selectedId
       ? traceLineagePath({ nodes: elements.nodes, edges: elements.edges, selectedId, direction })
@@ -114,7 +118,7 @@ function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: Ca
   }, [fitView, graphKey, nodes, selectedId])
 
   return (
-    <div className="lineage-canvas" aria-label="DataLineageグラフ">
+    <div className="lineage-canvas" aria-label={translate("lineageGraph.dataLineageGraph")}>
       <ReactFlow
         key={graphKey}
         nodes={nodes}
@@ -143,9 +147,10 @@ function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: Ca
 }
 
 export function LineageGraph(props: Props) {
+  useLocale()
   const [direction, setDirection] = useState<LineageDirection>('both')
   const [query, setQuery] = useState('')
-  const results = useMemo(() => searchLineageNodes(props.graph.nodes, query), [props.graph.nodes, query])
+  const results = useLocalizedMemo(() => searchLineageNodes(props.graph.nodes, query), [props.graph.nodes, query])
   const visibleResults = results.slice(0, 8)
   const searching = query.trim() !== ''
 
@@ -155,19 +160,19 @@ export function LineageGraph(props: Props) {
         <div className="lineage-graph__search">
           <label className="lineage-search-field">
             <Search size={16} aria-hidden="true" />
-            <span className="sr-only">グラフ内検索</span>
+            <span className="sr-only">{translate("lineageGraph.searchGraph")}</span>
             <input
               type="search"
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder="データセット名、処理名…"
+              placeholder={translate("lineageGraph.datasetOrProcessingName")}
               autoComplete="off"
             />
           </label>
           {searching && (
             <div className="popover lineage-graph__results">
               {visibleResults.length === 0 ? (
-                <p className="muted">該当する項目はありません。</p>
+                <p className="muted">{translate("lineageGraph.noMatchingItems")}</p>
               ) : (
                 <ul>
                   {visibleResults.map(node => (
@@ -183,14 +188,14 @@ export function LineageGraph(props: Props) {
                 </ul>
               )}
               {results.length > visibleResults.length && (
-                <p className="muted">ほか{results.length - visibleResults.length}件</p>
+                <p className="muted">{translate("common.additionalItems", { value0: results.length - visibleResults.length })}</p>
               )}
             </div>
           )}
         </div>
         <div className="lineage-toolbar__item">
-          <span>たどる方向</span>
-          <div className="lineage-segmented" role="group" aria-label="選択項目から辿る方向">
+          <span>{translate("lineageGraph.traversalDirection")}</span>
+          <div className="lineage-segmented" role="group" aria-label={translate("lineageGraph.traversalDirectionFromTheSelectedItem")}>
             {DIRECTIONS.map(option => (
               <button
                 key={option.value}
