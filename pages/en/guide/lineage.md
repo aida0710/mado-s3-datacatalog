@@ -6,7 +6,7 @@ description: Trace Datasets and Jobs, and DatasetVersions and Runs, in a graph t
 
 In DataLineage, you can see how source data, processing, and generated data connect. The source of truth for metadata is Dataset Registry, and mado shows OpenLineage events and manually registered information.
 
-<Screenshot src="/screenshots/lineage.png" alt="Dataset Lineage connecting the source audio, noise removal, and the processed audio" caption="From left to right: source data, processing, and generated data. Select a node to open its details." />
+<Screenshot src="/screenshots/en/lineage.png" alt="Dataset Lineage connecting the source audio, noise removal, and the processed audio" caption="From left to right: source data, processing, and generated data. Select a node to open its details." />
 
 ## Choose a dataset from the catalog
 
@@ -18,8 +18,8 @@ You can drag the graph to move it, and zoom in and out. Select a node to see its
 
 | View | Relationship |
 | --- | --- |
-| **データセット全体** (Whole dataset) | Dataset → Job → Dataset. The overall picture of data and processing |
-| **入出力と処理履歴** (Inputs, outputs, and run history) | DatasetVersion → Run → DatasetVersion. Specific generated results and runs |
+| **All datasets** | Dataset → Job → Dataset. The overall picture of data and processing |
+| **Inputs, outputs, and processing history** | DatasetVersion → Run → DatasetVersion. Specific generated results and runs |
 
 In a version's details, you can check registered information such as the content hash, the storage location, and the Run that generated it. If the storage location is linked to a mado connection, you can go to it in Storage. From Storage, you can also see the Lineage linked to the same storage location.
 

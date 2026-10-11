@@ -19,7 +19,7 @@ const sidebarSections: Array<{ text: Record<Language, string>; items: Array<{ te
   { text: { ja: 'ファイルの中身を見る', en: 'View file contents' }, items: [
     { text: { ja: 'テキスト・画像・動画', en: 'Text, images, and video' }, link: '/guide/preview' },
     { text: { ja: 'tarの中身を開く', en: 'Open tar archives' }, link: '/guide/archives' },
-    { text: { ja: '音声と同期プレイヤー', en: 'Audio and the sync player' }, link: '/guide/audio' },
+    { text: { ja: '音声と同期プレイヤー', en: 'Audio and the synchronized player' }, link: '/guide/audio' },
   ] },
   { text: { ja: 'データを整理する', en: 'Organize data' }, items: [
     { text: { ja: 'READMEとTeam note', en: 'README and Team note' }, link: '/guide/notes' },

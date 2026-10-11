@@ -6,13 +6,13 @@ description: List the entries in tar, tar.gz, and tar.xz files and open individu
 
 Click a `.tar`, `.tar.gz`, or `.tar.xz` file in Storage to open a list of the files inside the archive. You do not need to extract it and upload the files to S3 again.
 
-<Screenshot src="/screenshots/tar-list.png" alt="List of MP4 and JSON files inside dataset-00001.tar" caption="Check entry names and sizes to choose a file to open." />
+<Screenshot src="/screenshots/en/tar-list.png" alt="List of MP4 and JSON files inside dataset-00001.tar" caption="Check entry names and sizes to choose a file to open." />
 
 ## Select an entry to preview it
 
-Select a file in the list to open text, images, audio, or video individually. For JSON, you can copy the contents. For audio, you can add it to the sync player. An entry's **⋯** menu also includes pin and download.
+Select a file in the list to open text, images, audio, or video individually. For JSON, you can copy the contents. For audio, you can add it to the synchronized player. An entry's **Actions** menu (**⋯**) also includes pin and download.
 
-<Screenshot src="/screenshots/tar-entry.png" alt="sample-001.json inside a tar file opened in the preview" caption="Check JSON inside an archive on its own. The share URL also includes the entry name." />
+<Screenshot src="/screenshots/en/tar-entry.png" alt="sample-001.json inside a tar file opened in the preview" caption="Check JSON inside an archive on its own. The share URL also includes the entry name." />
 
 ## Fetch large videos partially from uncompressed tar files
 

@@ -1,10 +1,10 @@
 ---
-description: Local Users and OIDC SSO, built-in roles, connection whitelists, and disabling users.
+description: Local Users and OIDC SSO, built-in roles, connection allowlists, and disabling users.
 ---
 
 # Set up authentication and access permissions
 
-mado supports Local Users and OIDC SSO. You combine RBAC, which sets each user's role, with per-connection operation restrictions and whitelists.
+mado supports Local Users and OIDC SSO. You combine RBAC, which sets each user's role, with per-connection operation restrictions and allowlists.
 
 ## Choose between Local Users and SSO
 
@@ -28,7 +28,7 @@ For SSO, set `OIDC_SCOPES=openid email profile offline_access`. In Authentik, go
 
 Manage users in **Settings → Access → Users**.
 
-<Screenshot src="/screenshots/access-users.png" alt="User management screen with an Admin and a Viewer registered" caption="Add users, change roles, and disable users from Access." />
+<Screenshot src="/screenshots/en/access-users.png" alt="User management screen with an Admin and a Viewer registered" caption="Add users, change roles, and disable users from Access." />
 
 | Role | Main permissions |
 | --- | --- |

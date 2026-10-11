@@ -75,7 +75,7 @@ At `New admin password:`, enter an initial password, and enter the same value at
 
 Open `http://localhost:5173` in your browser and log in with the username `admin` and the password you set. If you are asked to change your password on first login, complete that step, then [register a connection](./connections.md).
 
-<Screenshot src="/screenshots/connections.png" alt="Settings → Connections screen, where you register connections after the initial setup" caption="After you log in, add S3-compatible storage from Settings." />
+<Screenshot src="/screenshots/en/connections.png" alt="Settings → Connections screen, where you register connections after the initial setup" caption="After you log in, add S3-compatible storage from Settings." />
 
 ## Use a dedicated configuration and a TLS proxy in production
 

@@ -6,7 +6,7 @@ description: Service Account key scopes and namespaces, sending OpenLineage even
 
 Sending OpenLineage events from pipelines and fetching metrics from Prometheus both use Service Account keys. You don't need to pass anyone's login credentials to scripts.
 
-<Screenshot src="/screenshots/service-accounts.png" alt="Screen for managing the audio-pipeline Service Account" caption="Manage accounts and keys in Settings → Access → Service Accounts." />
+<Screenshot src="/screenshots/en/service-accounts.png" alt="Screen for managing the audio-pipeline Service Account" caption="Manage accounts and keys in Settings → Access → Service Accounts." />
 
 ## Issue a key for each purpose
 
@@ -17,7 +17,7 @@ An Admin creates a Service Account and issues a key with the required scopes and
 | `lineage:write` | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
 | `metrics:read` | Get capacity metrics for all connections | `GET /api/mado/metrics/capacity` |
 
-`/api/mado/`, which returns mado's own data, accepts GET only. Use keys with separate scopes for sending OpenLineage events and for fetching metrics. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by a whitelist.
+`/api/mado/`, which returns mado's own data, accepts GET only. Use keys with separate scopes for sending OpenLineage events and for fetching metrics. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by an allowlist.
 
 ## Send OpenLineage events
 

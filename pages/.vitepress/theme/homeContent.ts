@@ -4,7 +4,7 @@ export interface Feature {
   label: string
   title: string
   description: string
-  /** public/screenshots/ の画像名 (拡張子なし)。 */
+  /** 画像名 (拡張子なし)。HomeContent.screenshotDirectory の中のファイル。 */
   image: string
   alt: string
   link: string
@@ -19,6 +19,8 @@ export interface Entry {
 }
 
 export interface HomeContent {
+  /** その言語の画面を撮った画像の置き場所。日本語は public/screenshots/、英語は public/screenshots/en/。 */
+  screenshotDirectory: string
   eyebrow: string
   title: string
   lead: string
@@ -32,6 +34,7 @@ export interface HomeContent {
 }
 
 const ja: HomeContent = {
+  screenshotDirectory: '/screenshots',
   eyebrow: 'S3互換ストレージのデータカタログ',
   title: 'S3を見て、データを辿る。',
   lead: '複数のS3互換ストレージを、ひとつの画面から。ファイルの中身、音声、容量、データの来歴を確認するWebツールです。',
@@ -53,11 +56,12 @@ const ja: HomeContent = {
     { label: 'Audio', title: '音声を聴き比べる', description: '波形とスペクトログラムで音声を確認。同期プレイヤーに複数の音声を並べ、同じ位置から再生できます。', image: 'audio-deck', alt: '波形と複数トラックを並べた同期プレイヤー', link: '/guide/audio', action: '音声と同期プレイヤー' },
     { label: 'Capacity', title: '容量の変化を追う', description: 'バケットの容量と件数を定期計測。ディレクトリ別の内訳や推移を見て、移送先の費用と時間を比べられます。', image: 'capacity', alt: 'バケットの容量推移とディレクトリ別の内訳', link: '/guide/capacity', action: '容量と移送の見積もり' },
     { label: 'Dataset lineage', title: 'データの来歴を辿る', description: 'どのデータから、どの処理を経て作られたか。Dataset、Job、Runをグラフで確認し、保存先へ行き来できます。', image: 'lineage', alt: '元データから処理後のデータへつながるDataset Lineageのグラフ', link: '/guide/lineage', action: 'Dataset Lineageを見る' },
-    { label: 'Team note & README', title: 'データのそばに説明を残す', description: 'ディレクトリごとのREADMEと、チーム全体の共有ノート。Markdownで書いて、編集履歴から変更を確認できます。', image: 'home', alt: 'Markdownで書かれたTeam note', link: '/guide/notes', action: 'READMEとTeam note' },
+    { label: 'Team note & README', title: 'データのそばに説明を残す', description: 'ディレクトリごとのREADMEと、チームで共有するTeam note。Markdownで書いて、編集履歴から変更を確認できます。', image: 'home', alt: 'Markdownで書かれたTeam note', link: '/guide/notes', action: 'READMEとTeam note' },
   ],
 }
 
 const en: HomeContent = {
+  screenshotDirectory: '/screenshots/en',
   eyebrow: 'A data catalog for S3-compatible storage',
   title: 'See your S3 data and trace where it came from.',
   lead: 'Browse several S3-compatible storages from one screen. A web tool for checking file contents, audio, capacity, and data lineage.',
@@ -76,10 +80,10 @@ const en: HomeContent = {
   featuresHeading: 'mado at a glance',
   features: [
     { label: 'Preview', title: 'View file contents', description: 'Check text, images, video, and audio in place. Files inside a tar open one by one, and text is colored by its format.', image: 'text-preview', alt: 'The file list with a JSON preview', link: '/en/guide/preview', action: 'Using previews' },
-    { label: 'Audio', title: 'Compare audio side by side', description: 'Inspect audio with its waveform and spectrogram. Put several tracks in the sync player and play them from the same position.', image: 'audio-deck', alt: 'The sync player with waveforms of several tracks', link: '/en/guide/audio', action: 'Audio and the sync player' },
+    { label: 'Audio', title: 'Compare audio side by side', description: 'Inspect audio with its waveform and spectrogram. Put several tracks in the synchronized player and play them from the same position.', image: 'audio-deck', alt: 'The synchronized player with waveforms of several tracks', link: '/en/guide/audio', action: 'Audio and the synchronized player' },
     { label: 'Capacity', title: 'Track capacity over time', description: 'Size and object counts of each bucket are measured on a schedule. See the breakdown by directory and the trend, and compare the cost and time of moving data.', image: 'capacity', alt: 'Bucket capacity over time and the breakdown by directory', link: '/en/guide/capacity', action: 'Capacity and transfer estimates' },
     { label: 'Dataset lineage', title: 'Trace data lineage', description: 'Which data was it made from, and by which processing? See Datasets, Jobs, and Runs as a graph and jump to where they are stored.', image: 'lineage', alt: 'A Dataset Lineage graph from source data to processed data', link: '/en/guide/lineage', action: 'Dataset Lineage' },
-    { label: 'Team note & README', title: 'Keep notes next to the data', description: 'A README for each directory and one shared note for the team. Write them in Markdown and review changes in the edit history.', image: 'home', alt: 'A Team note written in Markdown', link: '/en/guide/notes', action: 'README and Team note' },
+    { label: 'Team note & README', title: 'Keep notes next to the data', description: 'A README for each directory and one Team note shared across the team. Write them in Markdown and review changes in the edit history.', image: 'home', alt: 'A Team note written in Markdown', link: '/en/guide/notes', action: 'README and Team note' },
   ],
 }
 
