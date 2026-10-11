@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { closePools, createPools } from '../db.js'
+import { loadEnv } from '../env.js'
 import { createAuditWriter } from './audit.js'
 import { createSessionStore } from './auth-session-store.js'
 import { createUserStore } from './auth-user-store.js'
@@ -10,6 +11,8 @@ const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro
 const users = createUserStore(pools.rw)
 const sessions = createSessionStore(pools.rw, createAuditWriter(pools.rw))
 const lifetime = { idleSeconds: 3600, absoluteSeconds: 7200 }
+// Move stored session timestamps instead of waiting for the default seven-day lifetime.
+const DAY_SECONDS = 24 * 60 * 60
 
 beforeEach(async () => {
   await pools.rw.query('TRUNCATE auth_oidc_logout_events, audit_events, service_accounts, auth_users CASCADE')
@@ -17,6 +20,37 @@ beforeEach(async () => {
 afterAll(() => closePools(pools))
 
 describe('SessionStore', () => {
+  it('6日間使わずに戻っても認証でき、操作を再開してもログインから7日で終了する', async () => {
+    const settings = loadEnv({
+      DATABASE_URL_RW: 'postgres://rw@localhost/dashboard_test',
+      DATABASE_URL_RO: 'postgres://ro@localhost/dashboard_test',
+      ENCRYPTION_KEY: '0'.repeat(64),
+      ALLOWED_ORIGINS: 'http://localhost:5173',
+    })
+    const defaultLifetime = {
+      idleSeconds: settings.AUTH_SESSION_IDLE_SECONDS,
+      absoluteSeconds: settings.AUTH_SESSION_ABSOLUTE_SECONDS,
+    }
+    const user = await users.createUser({ username: 'alice', displayName: 'Alice', roles: ['viewer'] })
+    const session = await sessions.createSession({ userId: user.id, lifetime: defaultLifetime })
+    await pools.rw.query(
+      `UPDATE auth_sessions SET created_at=created_at-make_interval(secs=>$2),
+        last_seen_at=last_seen_at-make_interval(secs=>$2),
+        idle_expires_at=idle_expires_at-make_interval(secs=>$2),
+        absolute_expires_at=absolute_expires_at-make_interval(secs=>$2) WHERE id=$1`,
+      [session.id, 6 * DAY_SECONDS],
+    )
+    expect(await sessions.authenticateSession(session.token, defaultLifetime.idleSeconds, 0)).not.toBeNull()
+
+    await pools.rw.query(
+      `UPDATE auth_sessions SET created_at=created_at-make_interval(secs=>$2),
+        idle_expires_at=idle_expires_at-make_interval(secs=>$2),
+        absolute_expires_at=absolute_expires_at-make_interval(secs=>$2) WHERE id=$1`,
+      [session.id, DAY_SECONDS],
+    )
+    expect(await sessions.authenticateSession(session.token, defaultLifetime.idleSeconds)).toBeNull()
+  })
+
   it('session token は hash だけを保存し、失効させたら認証しない', async () => {
     const user = await users.createUser({ username: 'admin', displayName: 'Admin', roles: ['admin'] })
     const session = await sessions.createSession({ userId: user.id, lifetime })
