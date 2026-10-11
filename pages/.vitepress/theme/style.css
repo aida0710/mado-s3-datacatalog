@@ -107,9 +107,16 @@ body {
   border-bottom: 0 !important;
 }
 /* サイドバーの真上の、名前の欄 (サイドバーと同じ幅)。下端に上部バーとの境目の線を引く。
-   サイドバー自身の上端は上部バーの裏に隠れるので、線はこちらに置く。 */
-.VPNavBar.has-sidebar .title {
-  border-bottom: 1px solid var(--header-border) !important;
+   サイドバー自身の上端は上部バーの裏に隠れるので、線はこちらに置く。サイドバーが出るのは
+   960px 以上だけなので、それより狭いときはロゴの下に線を引かない。 */
+@media (min-width: 960px) {
+  .VPNavBar.has-sidebar .title {
+    border-bottom: 1px solid var(--header-border) !important;
+  }
+}
+/* スマホでメニューを開いたときの上部バーの下端。VitePress の既定は明るい地向けの線。 */
+.VPNavBar.screen-open {
+  border-bottom-color: var(--header-border) !important;
 }
 .VPNavBarMenuLink {
   color: var(--header-text-muted) !important;
@@ -158,6 +165,13 @@ body {
 .VPNavScreenMenuLink {
   border-color: var(--header-border) !important;
   color: var(--header-text) !important;
+}
+/* スマホのメニューの GitHub のアイコン。VitePress の既定の灰色は暗い地では見えにくい。 */
+.VPNavScreenSocialLinks .VPSocialLink {
+  color: var(--header-text-muted) !important;
+}
+.VPNavScreenSocialLinks .VPSocialLink:hover {
+  color: var(--header-text-strong) !important;
 }
 
 /* ── サイドバー: アプリと同じ暗い地。上部バーとの境目の線は上の .title に引く ── */
