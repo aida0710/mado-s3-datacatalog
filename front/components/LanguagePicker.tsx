@@ -18,7 +18,7 @@ export function LanguagePicker() {
   const menu = useRef<HTMLDivElement>(null)
   const menuId = useId()
   const popoverStyle = useAnchoredPopover({ isOpen, anchorRef: trigger, popoverRef: menu,
-    minWidth: LANGUAGE_MENU_MIN_WIDTH, maxHeight: LANGUAGE_MENU_MAX_HEIGHT })
+    minWidth: LANGUAGE_MENU_MIN_WIDTH, maxHeight: LANGUAGE_MENU_MAX_HEIGHT, alignment: 'end' })
   const label = translate('common.language')
   const selectedName = LANGUAGES.find(language => language.locale === locale)!.name
 

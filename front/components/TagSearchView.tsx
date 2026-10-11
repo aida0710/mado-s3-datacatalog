@@ -318,7 +318,7 @@ export function TagSearchView({ connectionId }: Props) {
                 </table>
               </div>
               <div className="table-footer">
-                <span>{hits.length} {translate("common.items")}</span>
+                <span>{hits.length} {translate("common.items", { count: hits.length })}</span>
               </div>
             </div>
           )}

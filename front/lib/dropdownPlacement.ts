@@ -5,6 +5,8 @@ const DROPDOWN_ANCHOR_GAP = 4;
 // Below this much room under the button, a dropdown opens upward when there is more room above.
 const DROPDOWN_MIN_HEIGHT_BELOW = 200;
 
+export type DropdownAlignment = 'start' | 'end';
+
 export interface DropdownAnchor {
   top: number;
   bottom: number;
@@ -31,16 +33,19 @@ export function placeDropdown({
   viewport,
   minWidth,
   maxHeight,
+  alignment = 'start',
 }: {
   anchor: DropdownAnchor;
   viewport: { width: number; height: number };
   minWidth: number;
   maxHeight: number;
+  alignment?: DropdownAlignment;
 }): DropdownPlacement {
   const widestFit = Math.max(0, viewport.width - 2 * DROPDOWN_VIEWPORT_MARGIN);
   const width = Math.min(Math.max(anchor.width, minWidth), widestFit);
   const rightmostLeft = viewport.width - DROPDOWN_VIEWPORT_MARGIN - width;
-  const left = Math.max(DROPDOWN_VIEWPORT_MARGIN, Math.min(anchor.left, rightmostLeft));
+  const alignedLeft = alignment === 'end' ? anchor.left + anchor.width - width : anchor.left;
+  const left = Math.max(DROPDOWN_VIEWPORT_MARGIN, Math.min(alignedLeft, rightmostLeft));
   const roomBelow =
     viewport.height - anchor.bottom - DROPDOWN_ANCHOR_GAP - DROPDOWN_VIEWPORT_MARGIN;
   const roomAbove = anchor.top - DROPDOWN_ANCHOR_GAP - DROPDOWN_VIEWPORT_MARGIN;

@@ -6,6 +6,9 @@ import { Download, Upload } from 'lucide-react'
 import { readJsonFile, summaryText, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { Dialog } from './Dialog'
 
+// The compact result row shows a few causes; the summary carries the total failure count.
+const MAX_IMPORT_FAILURE_MESSAGES = 3
+
 interface Props {
   /** 対象名 (例: 接続 / タグ)。隠し input の aria-label に使う。
    *  1 画面に複数置くとボタン名だけでは区別がつかないため。 */
@@ -34,7 +37,7 @@ export function ImportExportButtons({
   const titleId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // ファイルを読んだ時点では実行せず、取り込み方法を選んでもらう。
@@ -42,7 +45,7 @@ export function ImportExportButtons({
   const [picked, setPicked] = useState<unknown | null>(null)
 
   const handleFile = async (file: File) => {
-    setMessage(null)
+    setImportSummary(null)
     setError(null)
     try {
       setPicked(await readJsonFile(file))
@@ -57,13 +60,11 @@ export function ImportExportButtons({
     const data = picked
     setPicked(null)
     setBusy(true)
-    setMessage(null)
+    setImportSummary(null)
     setError(null)
     try {
       const summary = await onImport(data, mode)
-      setMessage(summaryText(summary))
-      // 失敗が出たときだけ理由を見せる (全部は出さない — 件数で足りる)。
-      if (summary.failed.length > 0) setError(summary.failed.slice(0, 3).join(' / '))
+      setImportSummary(summary)
       onDone?.()
     } catch (e) {
       setError((e as Error).message)
@@ -71,6 +72,9 @@ export function ImportExportButtons({
       setBusy(false)
     }
   }
+
+  const importError = error ? localizeMessage(error)
+    : importSummary?.failed.slice(0, MAX_IMPORT_FAILURE_MESSAGES).map(message => localizeMessage(message)).join(' / ')
 
   return (
     <div className="import-export">
@@ -99,10 +103,10 @@ export function ImportExportButtons({
           if (f) void handleFile(f)
         }}
       />
-      {(message || error) && (
+      {(importSummary || error) && (
         <p className="import-export__result">
-          {message && <span className="muted">{message}</span>}
-          {error && <span className="import-export__error" role="alert">{localizeMessage(error)}</span>}
+          {importSummary && <span className="muted">{summaryText(importSummary)}</span>}
+          {importError && <span className="import-export__error" role="alert">{importError}</span>}
         </p>
       )}
 

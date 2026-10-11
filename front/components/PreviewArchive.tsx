@@ -213,18 +213,18 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
   if (error) return <p className="notice error">{localizeMessage(error)}</p>
   if (!data) {
     const modeLabel =
-      progress.mode === 'range'  ? 'range request'
-      : progress.mode === 'stream' ? 'streaming decode'
-      : 'connecting'
+      progress.mode === 'range' ? translate('previewArchive.fetchingParts')
+      : progress.mode === 'stream' ? translate('previewArchive.decompressing')
+      : translate('previewArchive.connecting')
     return (
       <div className="preview-stack">
         {sizeSelect}
         <p className="muted mono">
           {modeLabel}…{' '}
           {progress.entries}
-          {translate("previewArchive.items")}
+          {translate("previewArchive.items", { count: progress.entries })}
           {fmtSize(progress.bytes)}
-          {progress.requests > 0 && <>{' · '}{progress.requests}{' req'}</>}
+          {progress.requests > 0 && translate('previewArchive.requests', { value0: progress.requests })}
           {' · '}
           {progress.elapsed.toFixed(1)}
           {'s'}
@@ -330,10 +330,10 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
         </div>
         <div className="table-footer">
           <span className="mono">
-            {data.entries.length > 0
-              ? `${start}-${end}`
-              : 'no entries'}
-            {' / page '}{page}
+            {translate('previewArchive.entriesOnPage', {
+              value0: data.entries.length > 0 ? `${start}-${end}` : translate('previewArchive.noEntries'),
+              value1: page,
+            })}
             {data.hasMore || data.truncated ? '+' : ''}
           </span>
           {/* 一覧のページャ (storage/Pager.tsx) と同じく、前後はアイコンのボタン。 */}

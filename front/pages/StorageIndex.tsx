@@ -316,7 +316,7 @@ function BucketTableRow({
                             type="checkbox"
                             checked={inUse}
                             onChange={onToggle}
-                            aria-label={translate("storageIndex.inBucketsInUse", { value0: bucket.name, value1: inUse ? translate("common.remove") : translate("common.add") })}
+                            aria-label={translate(inUse ? 'storageIndex.removeBucketFromBucketsInUse' : 'storageIndex.addBucketToBucketsInUse', { value0: bucket.name })}
                         />
                     </label>
                 </td>

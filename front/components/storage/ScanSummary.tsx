@@ -39,7 +39,7 @@ export function ScanSummary({ result, running, onOpen }: Props) {
   return (
     <span className="scan-summary">
       {translate("scanSummary.directoryContents")}{' '}
-      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {" " + translate("common.items2")}{' '}
+      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: result.objectCount })}{' '}
       <strong className="mono">{fmtSize(result.totalBytes)}</strong>
       {result.partial && (
         <span

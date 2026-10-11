@@ -211,9 +211,12 @@ function compareBucketCapacity(a: CapacityBucketHistory, b: CapacityBucketHistor
   return a.bucket.localeCompare(b.bucket)
 }
 
-function elapsedMinute(startedAt: string, now: number): string {
+// A minute is displayed as its ordinal number, starting with the first minute.
+const MILLISECONDS_PER_MINUTE = 60_000
+
+function currentMinute(startedAt: string, now: number): string {
   const elapsed = Math.max(0, now - new Date(startedAt).getTime())
-  return translate("capacityMetricsPage.minutesElapsed", { value0: Math.floor(elapsed / 60_000) + 1 })
+  return translate("capacityMetricsPage.currentMinute", { value0: Math.floor(elapsed / MILLISECONDS_PER_MINUTE) + 1 })
 }
 
 function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
@@ -238,7 +241,7 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
         <p className="capacity-activity-title" title={running.bucket}>{translate("capacityMetricsPage.scanning", { value0: running.bucket })}</p>
         <p className="muted mono">
           {translate("capacityMetricsPage.scanProgress", {
-            value0: elapsedMinute(running.startedAt ?? running.createdAt, now),
+            value0: currentMinute(running.startedAt ?? running.createdAt, now),
             value1: running.objectCount.toLocaleString(getIntlLocale()),
             value2: queuedCount.toLocaleString(getIntlLocale()),
           })}
@@ -279,7 +282,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <CompactMetric label={translate("common.objectCount")} value={latest ? latest.objectCount.toLocaleString(getIntlLocale()) : '—'} />
         <CompactMetric label={translate("capacityMetricsPage.lastRetrieved")} value={latest ? new Date(latest.collectedAt).toLocaleString(getIntlLocale()) : '—'} />
       </dl>
-      {history.lastError && !scanJob && <p className="notice error">{history.lastError}</p>}
+      {history.lastError && !scanJob && <p className="notice error">{localizeMessage(history.lastError)}</p>}
       <div className="capacity-chart">
         {history.points.length >= 2 ? (
           <Suspense fallback={<p className="capacity-chart-placeholder">{translate("common.loadingGraph")}</p>}>

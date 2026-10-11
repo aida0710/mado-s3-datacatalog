@@ -42,7 +42,7 @@ function CapacityTooltip({ active, payload, label }: {
     <div className="capacity-tooltip">
       <p className="muted">{new Date(Number(label)).toLocaleString(getIntlLocale())}</p>
       <p className="capacity-tooltip-value">{fmtCapacityBytes(point.totalBytes, CHART_FRACTION_DIGITS)}</p>
-      <p className="muted">{point.objectCount?.toLocaleString(getIntlLocale())} {" " + translate("capacityHistoryChart.objects")}</p>
+      <p className="muted">{point.objectCount?.toLocaleString(getIntlLocale())} {" " + translate("capacityHistoryChart.objects", { count: point.objectCount ?? 0 })}</p>
     </div>
   )
 }

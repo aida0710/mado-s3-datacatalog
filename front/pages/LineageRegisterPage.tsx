@@ -421,7 +421,7 @@ export default function LineageRegisterPage() {
           >{item.label}</button>
         ))}
       </nav>
-      {connectionError && <p className="notice error" role="alert">{connectionError}</p>}
+      {connectionError && <p className="notice error" role="alert">{localizeMessage(connectionError)}</p>}
       {kind === 'dataset' && <DatasetRegistrationForm connections={connections} />}
       {kind === 'location' && <LocationRegistrationForm connections={connections} />}
       {kind === 'run' && <RunRegistrationForm />}

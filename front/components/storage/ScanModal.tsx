@@ -236,7 +236,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
                   <div className="scan-figure">
                     <span className="muted">{translate("scanModal.scanned")}</span>
                     <span className="scan-figure-value">
-                      {scanned.toLocaleString()}<small>{translate("common.items")}</small>
+                      {scanned.toLocaleString()}<small>{translate("common.items", { count: scanned })}</small>
                     </span>
                   </div>
                 ) : result && (
@@ -244,7 +244,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
                     <div className="scan-figure">
                       <span className="muted">{translate("scanModal.objects")}</span>
                       <span className="scan-figure-value">
-                        {result.objectCount.toLocaleString()}<small>{translate("common.items")}</small>
+                        {result.objectCount.toLocaleString()}<small>{translate("common.items", { count: result.objectCount })}</small>
                       </span>
                     </div>
                     <div className="scan-figure">

@@ -1,4 +1,5 @@
 import { LanguagePicker } from '../LanguagePicker'
+import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 import { useState } from 'react'
@@ -76,7 +77,7 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
           )}
         </div>
       </header>
-      {logoutError && <p className="notice error topbar-notice" role="alert">{logoutError}</p>}
+      {logoutError && <p className="notice error topbar-notice" role="alert">{localizeMessage(logoutError)}</p>}
     </>
   )
 }

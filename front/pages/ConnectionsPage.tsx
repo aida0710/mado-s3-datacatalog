@@ -1,3 +1,4 @@
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -364,7 +365,7 @@ export default function ConnectionsPage() {
         <div className="empty-state">
           <h3>{translate("connectionsPage.noConnectionsYet")}</h3>
           <p>
-            {translate("connectionsPage.addedConnectionsAreAvailableIn") + " "}<code>/storage/&lt;id&gt;/</code> {" " + translate("connectionsPage.label")}<br />
+            <TranslatedMessage message="connectionsPage.connectionsAvailableAt" values={{ value0: <code>/storage/&lt;id&gt;/</code> }} /><br />
             {translate("connectionsPage.registerTheEndpointRegionAndAccessKeyTogether")}</p>
           <Link className="button primary" to="/settings/connections/new">
             <Plus size={15} aria-hidden="true" />

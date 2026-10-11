@@ -1,4 +1,5 @@
 import { useLocale } from '../i18n/useLocale'
+import { localizeMessage } from '../i18n/localizeMessage'
 import { translate } from '../i18n/translate'
 import { lazy, Suspense, useEffect, useReducer } from 'react'
 import { Route, Routes, Link, useSearchParams } from 'react-router-dom'
@@ -76,7 +77,7 @@ export default function StoragePage({ connectionId }: Props) {
           <div><h1>{translate("common.storage")}</h1></div>
         </header>
         <div className="empty-state">
-          <h2>{error ?? 'unknown'}</h2>
+          <h2>{error ? localizeMessage(error) : translate('common.unknown')}</h2>
           <Link className="button primary" to="/storage">{translate("storagePage.backToConnections")}</Link>
         </div>
       </>

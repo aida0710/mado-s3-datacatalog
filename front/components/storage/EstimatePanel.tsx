@@ -141,7 +141,7 @@ function CandidateRow({ c, expanded, onToggle }: {
                 {c.warnings.map(w => (
                   <li key={w.kind}>
                     <TriangleAlert size={14} aria-hidden="true" />
-                    <span>{w.message}</span>
+                    <span>{localizeMessage(w.message)}</span>
                   </li>
                 ))}
               </ul>
@@ -239,7 +239,7 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
   }
 
   if (state.kind === 'error') {
-    return <p className="notice error">{state.message}</p>
+    return <p className="notice error">{localizeMessage(state.message)}</p>
   }
 
   const { source, scan, catalog } = state.data
@@ -249,7 +249,7 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
     <div>
       <div className="est-summary">
         <span>
-          <strong>{scan.objectCount.toLocaleString()}</strong> {" " + translate("common.items2")}{' '}
+          <strong>{scan.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: scan.objectCount })}{' '}
           <strong>{fmtSize(scan.totalBytes)}</strong>
           <span className="muted">{translate("estimatePanel.average") + " "}{fmtSize(avg)}）</span>
         </span>

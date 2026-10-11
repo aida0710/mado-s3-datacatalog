@@ -130,7 +130,7 @@ export function DatasetPicker({ value, onChange, label = translate("common.datas
                     </button>
                     <small className="mono break-word">{item.namespace} / {item.name}</small>
                   </td>
-                  <td className="numeric nowrap">{item.versionCount}{translate("common.items")}</td>
+                  <td className="numeric nowrap">{item.versionCount}{translate("common.items", { count: item.versionCount })}</td>
                 </tr>
               ))}
             </tbody>

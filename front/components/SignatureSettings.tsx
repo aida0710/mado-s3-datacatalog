@@ -151,7 +151,7 @@ export function SignatureSettings() {
                 <label className="field"><span>{translate("common.confirmNewPassword")}</span><input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
                 <div className="form-submit-row">
                   <button type="submit" className="button primary" disabled={passwordBusy}>{passwordBusy ? translate("signatureSettings.changing") : translate("common.change")}</button>
-                  {passwordNotice && <span className="form-submit-row__status" role="status">{passwordNotice}</span>}
+                  {passwordNotice && <span className="form-submit-row__status" role="status">{localizeMessage(passwordNotice)}</span>}
                 </div>
               </form>
             </details>
@@ -161,7 +161,7 @@ export function SignatureSettings() {
               <LogOut size={14} aria-hidden="true" />
               {loggingOut ? translate("signatureSettings.signingOut") : translate("common.signOut")}
             </button>
-            {logoutError && <p className="notice error" role="alert">{logoutError}</p>}
+            {logoutError && <p className="notice error" role="alert">{localizeMessage(logoutError)}</p>}
           </div>
         </>
       )}

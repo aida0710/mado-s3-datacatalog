@@ -190,7 +190,7 @@ export default function LineagePage() {
         <div className="notice lineage-warning" role="status">
           <span>
             <strong>{translate("lineagePage.graphSynchronization") + " "}{projectionStateLabel(projection.state)}</strong>
-            {' '}{projection.message ?? translate("lineagePage.eventsArePendingSynchronization", { value0: projection.pendingEvents ?? 0 })}
+            {' '}{localizeMessage(projection.message ?? translate("lineagePage.eventsArePendingSynchronization", { value0: projection.pendingEvents ?? 0 }))}
           </span>
         </div>
       )}
@@ -200,7 +200,7 @@ export default function LineagePage() {
         </div>
       )}
       {graphState.data?.warnings.map((warning, index) => (
-        <div key={`${warning}:${index}`} className="notice lineage-warning" role="status"><span>{warning}</span></div>
+        <div key={`${warning}:${index}`} className="notice lineage-warning" role="status"><span>{localizeMessage(warning)}</span></div>
       ))}
 
       {!ready && (

@@ -223,7 +223,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
         </div>
         {visibilityMode === 'whitelist' && (
           <div className="choice-users" role="group" aria-label={translate("connectionForm.usersAllowedToConnect")}>
-            {accessUsersError && <p className="notice error" role="alert">{accessUsersError}</p>}
+            {accessUsersError && <p className="notice error" role="alert">{localizeMessage(accessUsersError)}</p>}
             {!accessUsersError && accessUsers.length === 0 && (
               <p className="muted">{translate("connectionForm.thereAreNoUsersToSelectOnlyConnection")}</p>
             )}

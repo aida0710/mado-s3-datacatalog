@@ -43,11 +43,11 @@ export function fmtUsd(n: number): string {
 }
 
 /** 所要時間の単位。上振れ側の大きさで決め、両端で単位を揃える。 */
-function durationUnit(sec: number): { div: number; unit: string } {
-  if (sec < 90) return { div: 1, unit: translate("format.seconds") }
-  if (sec < 90 * 60) return { div: 60, unit: translate("format.minutes") }
-  if (sec < 48 * 3600) return { div: 3600, unit: translate("format.hours") }
-  return { div: 86400, unit: translate("format.days") }
+function durationUnit(sec: number): { div: number; message: 'format.seconds' | 'format.minutes' | 'format.hours' | 'format.days' } {
+  if (sec < 90) return { div: 1, message: 'format.seconds' }
+  if (sec < 90 * 60) return { div: 60, message: 'format.minutes' }
+  if (sec < 48 * 3600) return { div: 3600, message: 'format.hours' }
+  return { div: 86400, message: 'format.days' }
 }
 
 function fmtDurationNum(v: number): string {
@@ -57,10 +57,12 @@ function fmtDurationNum(v: number): string {
 // 所要時間はレンジで出す。単一の数字は外れたときに機能全体の信用を落とすので、
 // 楽観と悲観の幅をそのまま見せる。両端が同じ表示に丸まったら 1 つだけ出す。
 export function fmtDurationRange(optimisticSec: number, pessimisticSec: number): string {
-  const { div, unit } = durationUnit(Math.max(optimisticSec, pessimisticSec))
+  const { div, message } = durationUnit(Math.max(optimisticSec, pessimisticSec))
   const a = fmtDurationNum(optimisticSec / div)
   const b = fmtDurationNum(pessimisticSec / div)
-  return a === b ? `${a} ${unit}` : `${a}〜${b} ${unit}`
+  if (a === b) return `${a} ${translate(message, { count: Number(a) })}`
+  const separator = getLocale() === 'en' ? '–' : '〜'
+  return `${a}${separator}${b} ${translate(message)}`
 }
 
 // プレビュー対象を人が読める 1 本の文字列にする。tar 内エントリは

@@ -1,9 +1,8 @@
 import { localizeMessage } from '../i18n/localizeMessage'
-import { LanguagePicker } from '../components/LanguagePicker'
+import { LoginHeader } from '../components/shell/LoginHeader'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 import { useState, type FormEvent } from 'react'
-import { ProductLogo } from '../components/shell/ProductLogo'
 import { fetchApi } from '../lib/api/http'
 
 /** ログイン画面とパスワード変更画面の見出しの id。重ねて出すときの dialog の名前にも使う。 */
@@ -61,8 +60,7 @@ export function LoginPage({
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
-        <div className="login-mark"><ProductLogo /></div>
-        <LanguagePicker />
+        <LoginHeader />
         <h1 id={AUTH_TITLE_ID}>{translate("loginPage.signIn")}</h1>
         {(sessionExpired || idpLogoutIncomplete || overlay) && (
           <div className="login-lead">
@@ -140,8 +138,7 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
-        <div className="login-mark"><ProductLogo /></div>
-        <LanguagePicker />
+        <LoginHeader />
         <p className="login-eyebrow">{translate('loginPage.firstSignIn')}</p>
         <h1 id={AUTH_TITLE_ID}>{translate("common.changePassword")}</h1>
         <div className="login-lead"><p>{translate("loginPage.updateYourInitialPasswordOnThisScreen")}</p></div>

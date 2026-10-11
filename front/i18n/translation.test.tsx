@@ -7,7 +7,7 @@ import { translate, type MessageKey } from './translate'
 import { TranslatedMessage } from './TranslatedMessage'
 import { localizeMessage } from './localizeMessage'
 import { CAPABILITY_UI } from './connectionOptions'
-import { fmtCacheAge } from '../lib/format'
+import { fmtCacheAge, fmtDurationRange } from '../lib/format'
 
 afterEach(() => setLocale('ja'))
 
@@ -47,6 +47,35 @@ describe('localized application messages', () => {
     expect(localizeMessage('解析できませんでした: custom detail')).toBe('Analysis failed: custom detail')
     expect(localizeMessage('この接続では「ファイルのプレビュー」が無効になっています')).toBe('“File previews” is disabled for this connection.')
     expect(localizeMessage('custom service detail')).toBe('custom service detail')
+  })
+
+  it('uses singular count labels and duration units only for one item', () => {
+    setLocale('en')
+    expect(translate('common.items', { count: 0 })).toBe(' items')
+    expect(translate('common.items', { count: 1 })).toBe(' item')
+    expect(translate('common.items', { count: 2 })).toBe(' items')
+    expect(translate('lineagePage.eventsArePendingSynchronization', { value0: 1 })).toBe('1 event is pending synchronization.')
+    expect(fmtDurationRange(1, 1)).toBe('1 second')
+    expect(fmtDurationRange(3600, 7200)).toBe('1–2 hours')
+  })
+
+  it('preserves inline markup while selecting singular messages after a language change', () => {
+    setLocale('ja')
+    render(<TranslatedMessage message="lineagePage.eventsArePendingSynchronization" count={1} values={{ value0: <strong>1</strong> }} />)
+    act(() => setLocale('en'))
+    expect(screen.getByText('1').parentElement).toHaveTextContent('1 event is pending synchronization.')
+    expect(screen.getByText('1').tagName).toBe('STRONG')
+  })
+
+  it('translates API warnings in both directions without changing embedded values', () => {
+    const retentionWarning = '最小保存期間 30 日。30 日以内に削除しても 30 日分は課金されます。'
+    const lineageWarning = 'Skipped malformed Marquez node: 研究（A）、B〜C'
+    setLocale('en')
+    const englishRetentionWarning = localizeMessage(retentionWarning)
+    expect(englishRetentionWarning).toBe('Minimum retention: 30 days. Deleting within 30 days still incurs charges for 30 days.')
+    setLocale('ja')
+    expect(localizeMessage(englishRetentionWarning)).toBe(retentionWarning)
+    expect(localizeMessage(lineageWarning)).toBe('形式が不正なMarquezの項目を除外しました: 研究（A）、B〜C')
   })
 })
 

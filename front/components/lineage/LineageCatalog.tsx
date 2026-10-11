@@ -154,7 +154,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                           </td>
                           <td className="lineage-catalog__secondary lineage-catalog__description">{description}</td>
                           <td className="lineage-catalog__secondary nowrap">{mediaType}</td>
-                          <td className="numeric nowrap">{dataset.versionCount}{translate("common.items")}</td>
+                          <td className="numeric nowrap">{dataset.versionCount}{translate("common.items", { count: dataset.versionCount })}</td>
                           <td className="responsive-table-toggle lineage-catalog__row-toggle">
                             <button
                               type="button"

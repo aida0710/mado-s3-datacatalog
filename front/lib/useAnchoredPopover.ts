@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
-import { placeDropdown } from './dropdownPlacement';
+import { placeDropdown, type DropdownAlignment } from './dropdownPlacement';
 
 // Browsers without the Popover API still show the element in place with position: fixed; it may
 // then be clipped by a scrolling ancestor such as the sidebar.
@@ -18,12 +18,14 @@ export function useAnchoredPopover({
   popoverRef,
   minWidth,
   maxHeight,
+  alignment = 'start',
 }: {
   isOpen: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   popoverRef: RefObject<HTMLElement | null>;
   minWidth: number;
   maxHeight: number;
+  alignment?: DropdownAlignment;
 }): CSSProperties | undefined {
   const [style, setStyle] = useState<CSSProperties>();
   useLayoutEffect(() => {
@@ -39,6 +41,7 @@ export function useAnchoredPopover({
           viewport: { width: window.innerWidth, height: window.innerHeight },
           minWidth,
           maxHeight,
+          alignment,
         }),
       );
     };
@@ -51,6 +54,6 @@ export function useAnchoredPopover({
       window.removeEventListener('scroll', place, true);
       if (supportsPopover(popover) && popover.matches(':popover-open')) popover.hidePopover();
     };
-  }, [isOpen, anchorRef, popoverRef, minWidth, maxHeight]);
+  }, [isOpen, anchorRef, popoverRef, minWidth, maxHeight, alignment]);
   return isOpen ? style : undefined;
 }
