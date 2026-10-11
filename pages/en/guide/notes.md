@@ -8,13 +8,13 @@ Write descriptions of a directory in its **S3 README**, and team-wide announceme
 
 ## Write a directory README
 
-Open the directory in Storage and click **編集** (Edit) on the README. If there is no README yet, you can write one from **作成** (Create). Record things such as the contents, file formats, processing conditions, and notes on usage.
+Open the directory in Storage and click **編集** (Edit), the pencil button to the right of the README heading. If there is no README yet, you can write one from **作成** (Create), the plus button. Record things such as the contents, file formats, processing conditions, and notes on usage.
 
 <Screenshot src="/screenshots/storage-directory.png" alt="S3 README shown above the file list" caption="You can read the description of a directory before opening any of its files." />
 
 <Screenshot src="/screenshots/readme-edit.png" alt="README editing screen with the file list and the Markdown editor side by side" caption="You can edit Markdown while inserting files from the list on the left into the body." />
 
-The README body is written back to S3. This requires a writable connection and a setting that allows **READMEの編集** (README editing).
+The README body is written back to S3. This requires a writable connection and a setting that allows **README の編集** (Edit README).
 
 ## Write the Team note on Home
 

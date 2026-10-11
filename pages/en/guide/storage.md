@@ -4,13 +4,13 @@ description: Switch connections and move through buckets and directories. Search
 
 # Find buckets and files
 
-When you select a connection in Storage, its buckets are listed. Click the star on a bucket you use often to add it to your favorites.
+When you select a connection in Storage, its buckets are listed. Check the box at the left of a bucket you use often to group it at the top of the list as **現在使っているバケット** (Buckets in use).
 
-<Screenshot src="/screenshots/storage-buckets.png" alt="Bucket list and favorites in Storage" caption="Click a bucket name to open it. To switch to another storage, use CONNECTION." />
+<Screenshot src="/screenshots/storage-buckets.png" alt="The bucket list in Storage with the buckets in use" caption="Click a bucket name to open it. To switch to another storage, use Connection." />
 
 ## Move through directories and go back with the breadcrumbs
 
-Click a directory's row to move down one level. Use the breadcrumbs at the top to go back to a parent directory or the bucket list. If the directory has a README, it appears above the file list.
+Click a directory's row to move down one level. Use the breadcrumbs above the page title to go back to a parent directory or the bucket list. If the directory has a README, it appears above the file list.
 
 <Screenshot src="/screenshots/storage-directory.png" alt="README and file list of the samples directory" caption="You can check the README, directories, and files on the same screen." />
 
@@ -33,16 +33,16 @@ The list and the README show their fetch time. The color of the list shows how m
 | 12–24 hours | Red |
 | 24 hours or more | Dark red |
 
-When you need the latest list, such as right after adding files to S3, click **↻** to fetch it again.
+When you need the latest list, such as right after adding files to S3, click **再読み込み** (Reload), the circular arrow button on the fetch time bar, to fetch it again.
 
 ## Copy a Web URL to share
 
-The **⋯** menu on a file offers Web URL, S3 URL, and download.
+The **⋯** (actions) menu at the right end of a row lets you copy the Web URL or S3 URL, or download the file.
 
 | Action | Use |
 | --- | --- |
-| **Web URLをコピー** (Copy Web URL) | Open the mado preview at the same location |
-| **S3 URLをコピー** (Copy S3 URL) | Use `s3://bucket/key` in scripts or notes |
-| **ダウンロード** (Download) | Save the original file to your computer |
+| **Web URL をコピー** (Copy Web URL) | Open the mado preview at the same location |
+| **S3 URL をコピー** (Copy S3 URL) | Use `s3://bucket/key` in scripts or notes |
+| **このファイルをダウンロード** (Download this file) | Save the original file to your computer |
 
 People who receive a Web URL also need access permission for that connection and a network that can reach mado. Copying a link does not grant any access permission.

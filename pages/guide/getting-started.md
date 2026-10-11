@@ -16,13 +16,13 @@ madoは、複数のS3互換ストレージを横断して見るWebツールで�
 
 ## Storageから最初のファイルを開く
 
-1. 上部の **Storage** を開きます。デフォルト接続があれば、その接続を自動で開きます。
+1. 左のサイドバーの **Storage** を開きます（スマホでは左上のメニューのボタンから開きます）。デフォルト接続があれば、その接続を自動で開きます。
 2. バケットを選び、ディレクトリを辿ります。
 3. ファイルの行をクリックすると、右側にプレビューが開きます。
 
-接続を切り替えるときは右上の **CONNECTION** メニューを使います。接続がまだなければ、管理者が[ストレージを登録](../setup/connections.md)してください。
+接続を切り替えるときは、見出しの右にある **Connection** の選択欄を使います。接続がまだなければ、管理者が[ストレージを登録](../setup/connections.md)してください。
 
-<Screenshot src="/screenshots/storage-buckets.png" alt="お気に入りとバケット一覧を表示したStorage画面" caption="よく使うバケットはお気に入りにして、一覧の上から開けます。" />
+<Screenshot src="/screenshots/storage-buckets.png" alt="現在使っているバケットとその他のバケットを表示したStorage画面" caption="よく使うバケットはチェックを入れて、一覧の上から開けます。" />
 
 <Screenshot src="/screenshots/text-preview.png" alt="ファイル一覧の右側でmetadata.jsonを開いた画面" caption="JSONやテキストは、その場で読んで内容をコピーできます。" />
 
