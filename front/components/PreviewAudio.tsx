@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { api } from '../lib/api/client'
@@ -9,6 +6,9 @@ import { formatAudioInfoLines } from '../lib/audioInfo'
 import { useAudioSrc } from '../lib/useAudioSrc'
 import { Waveform } from './Waveform'
 import { useCapabilities } from '../lib/useCapabilities'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 type Analyze = z.infer<typeof MediaAnalyze>
 
@@ -79,13 +79,13 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
 
   return (
     <div className="preview-stack preview-audio">
-      {srcLoading && <p className="muted">{translate("previewAudio.fetchingAudio")}</p>}
-      {srcError && <p className="notice error">{translate("previewAudio.couldNotFetchAudio") + " "}{localizeMessage(srcError)}</p>}
+      {srcLoading && <p className="muted">{translate('previewAudio.fetchingAudio')}</p>}
+      {srcError && <p className="notice error">{translate('previewAudio.couldNotFetchAudio')}{' '}{localizeMessage(srcError)}</p>}
       {src && <audio ref={audioRef} src={src} controls preload="metadata" />}
       {/* analyzing は初期値 true のまま据え置く (effect 内の同期 setState は
           react-hooks/set-state-in-effect に引っかかる) ので、権限側で出し分ける。 */}
-      {analyzing && caps.audioInfo && <p className="muted">{translate("previewAudio.analyzing")}</p>}
-      {error && <p className="preview-error">{translate("previewAudio.couldNotDisplayWaveform") + " "}{localizeMessage(error)}</p>}
+      {analyzing && caps.audioInfo && <p className="muted">{translate('previewAudio.analyzing')}</p>}
+      {error && <p className="preview-error">{translate('previewAudio.couldNotDisplayWaveform')}{' '}{localizeMessage(error)}</p>}
       {(showWaveform || showSpectrogram) && (
         <div className="preview-audio-timeline">
           {showWaveform && <Waveform peaks={analyze.peaks} progress={progress} onSeek={onSeek} />}
@@ -93,7 +93,7 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
             <img
               className="preview-spectrogram"
               src={api.spectrogramUrl(connectionId, analyze.cacheKey)}
-              alt={translate("previewAudio.spectrogram")}
+              alt={translate('previewAudio.spectrogram')}
             />
           )}
         </div>

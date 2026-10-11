@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { copyToClipboard } from '../lib/clipboard'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   // 画面に出す短い名前 (basename)。幅が足りないので末尾を省略する。
@@ -42,12 +42,12 @@ export function CopyablePath({ text, fullPath, className }: Props) {
       type="button"
       className={className ? `copyable-path ${className}` : 'copyable-path'}
       title={fullPath}
-      aria-label={translate("copyablePath.copyPath", { value0: fullPath })}
+      aria-label={translate('copyablePath.copyPath', { value0: fullPath })}
       onClick={() => void onCopy()}
     >
       {copied && <Check size={14} aria-hidden="true" />}
       <span className="copyable-path-text">
-        {copied == null ? text : copied ? translate("common.copied") : translate("common.copyFailed")}
+        {copied == null ? text : copied ? translate('common.copied') : translate('common.copyFailed')}
       </span>
     </button>
   )

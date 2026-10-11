@@ -1,6 +1,6 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Cursor = { continuation?: string; startAfter?: string }
 
@@ -31,17 +31,17 @@ export function Pager({
       <div className="table-footer storage-pager">
         {/* 空のディレクトリのときは件数を出さない。 */}
         <span className="storage-pager-summary">
-          {translate("pager.page") + " "}{totalLabel}
-          {!isEmpty && translate("pager.items", { value0: entryCount })}
+          {translate('pager.page')}{' '}{totalLabel}
+          {!isEmpty && translate('pager.items', { value0: entryCount })}
         </span>
-        <nav className="storage-pager-nav" aria-label={translate("pager.pagination")}>
+        <nav className="storage-pager-nav" aria-label={translate('pager.pagination')}>
           <button
             type="button"
             className="icon-button"
             onClick={onPrev}
             disabled={pageIdx === 0 || loading}
-            aria-label={translate("common.previousPage")}
-            title={translate("common.previousPage")}
+            aria-label={translate('common.previousPage')}
+            title={translate('common.previousPage')}
           >
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
@@ -70,8 +70,8 @@ export function Pager({
             className="icon-button"
             onClick={onNext}
             disabled={!hasNext || loading}
-            aria-label={translate("common.nextPage")}
-            title={translate("common.nextPage")}
+            aria-label={translate('common.nextPage')}
+            title={translate('common.nextPage')}
           >
             <ChevronRight size={16} aria-hidden="true" />
           </button>
@@ -85,8 +85,8 @@ export function Pager({
       {cursorStuck && (
         <p className="notice storage-warning">
           <span>
-            {translate("pager.cannotAdvanceTheServerReturnedTheSameCursor") + " "}<strong>{translate("common.listObjectsApiVersion")}</strong>{' '}
-            {translate("pager.to") + " "}<span className="mono">v1</span> {" " + translate("pager.inSettingsThisCanHappenWithV1Only")}</span>
+            {translate('pager.cannotAdvanceTheServerReturnedTheSameCursor')}{' '}<strong>{translate('common.listObjectsApiVersion')}</strong>{' '}
+            {translate('pager.to')}{' '}<span className="mono">v1</span> {translate('pager.inSettingsThisCanHappenWithV1Only')}</span>
         </p>
       )}
     </>

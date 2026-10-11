@@ -1,21 +1,21 @@
-import { TranslatedMessage } from '../i18n/TranslatedMessage'
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useReducer, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { api } from '../lib/api/client'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
-import { CAPABILITY_UI } from '../i18n/connectionOptions'
 import type { Capabilities, Connection } from '../lib/api/types'
 import { ConnectionDeleteConfirm } from '../components/ConnectionDeleteConfirm'
 import { ImportExportButtons } from '../components/ImportExportButtons'
 import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
-import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { invalidateCapabilitiesCache } from '../lib/useCapabilities'
 import { narrowerThan } from '../lib/breakpoints'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
+import { CAPABILITY_UI } from '../i18n/connectionOptions'
 
 // エクスポート形式。認証情報は空文字で書き出す。
 //
@@ -182,7 +182,7 @@ export default function ConnectionsPage() {
   const handleImport = async (data: unknown, mode: ImportMode): Promise<ImportSummary> => {
     const d = data as { mado?: unknown; connections?: unknown } | null
     if (d?.mado !== 'connections' || !Array.isArray(d.connections)) {
-      throw new Error(translate("connectionsPage.thisIsNotAMadoConnectionExportFile"))
+      throw new Error(translate('connectionsPage.thisIsNotAMadoConnectionExportFile'))
     }
     const existing = new Set(connections.map(c => c.name))
     const summary: ImportSummary = { added: 0, skipped: 0, removed: 0, failed: [] }
@@ -203,20 +203,20 @@ export default function ConnectionsPage() {
           summary.removed = (summary.removed ?? 0) + 1
           existing.delete(c.name)
         } catch (e) {
-          summary.failed.push(`${c.name}: ${(e as Error).message}`)
+          summary.failed.push(describeImportFailure(c.name, e))
         }
       }
     }
     for (const raw of d.connections as unknown[]) {
       const c = raw as Record<string, unknown>
       if (typeof c?.name !== 'string' || typeof c?.endpoint !== 'string' || typeof c?.region !== 'string') {
-        summary.failed.push(translate("connectionsPage.someItemsHaveNonStringNameEndpointOr"))
+        summary.failed.push(translate('connectionsPage.someItemsHaveNonStringNameEndpointOr'))
         continue
       }
       if (existing.has(c.name)) { summary.skipped++; continue }
       // 空のまま取り込むと API の min(1) で弾かれるので、先に理由を出す。
       if (!c.accessKeyId || !c.secretAccessKey) {
-        summary.failed.push(translate("connectionsPage.accessKeyOrSecretKeyIsEmpty", { value0: c.name }))
+        summary.failed.push(translate('connectionsPage.accessKeyOrSecretKeyIsEmpty', { value0: c.name }))
         continue
       }
       try {
@@ -234,7 +234,7 @@ export default function ConnectionsPage() {
         existing.add(c.name)
         summary.added++
       } catch (e) {
-        summary.failed.push(`${c.name}: ${(e as Error).message}`)
+        summary.failed.push(describeImportFailure(c.name, e))
       }
     }
     return summary
@@ -246,22 +246,22 @@ export default function ConnectionsPage() {
   const columns: Column[] = [
     {
       key: 'name',
-      header: translate("common.name"),
+      header: translate('common.name'),
       primary: true,
       render: connection => (
         <>
           <span className="connection-name">
             <strong>{connection.name}</strong>
             {connection.isDefault && (
-              <span className="status-badge connection-default" title={translate("connectionsPage.theStorageTabOpensThisConnection")}>
-                {translate("connectionsPage.default")}</span>
+              <span className="status-badge connection-default" title={translate('connectionsPage.storageOpensThisConnection')}>
+                {translate('connectionsPage.default')}</span>
             )}
             {connection.visibility.mode === 'whitelist' && (
               <span
                 className="status-badge status-queued"
-                title={translate("connectionsPage.usersAllowed", { value0: connection.visibility.allowedUsers.length })}
+                title={translate('connectionsPage.usersAllowed', { value0: connection.visibility.allowedUsers.length })}
               >
-                {translate("connectionsPage.allowlistCount", { value0: connection.visibility.allowedUsers.length })}
+                {translate('connectionsPage.allowlistCount', { value0: connection.visibility.allowedUsers.length })}
               </span>
             )}
           </span>
@@ -269,7 +269,7 @@ export default function ConnectionsPage() {
               (編集画面を開かないと分からないと、事故の原因になる)。 */}
           {restrictions(connection).length > 0 && (
             <span className="connection-restrictions muted">
-              {translate("connectionsPage.restrictions") + " "}{restrictions(connection).join(' / ')}
+              {translate('connectionsPage.restrictions')}{' '}{restrictions(connection).join(' / ')}
             </span>
           )}
         </>
@@ -277,7 +277,7 @@ export default function ConnectionsPage() {
     },
     {
       key: 'endpoint',
-      header: translate("connectionsPage.endpointRegion"),
+      header: translate('connectionsPage.endpointRegion'),
       primary: false,
       className: 'mono',
       render: connection => (
@@ -291,7 +291,7 @@ export default function ConnectionsPage() {
     },
     {
       key: 'other',
-      header: translate("common.other"),
+      header: translate('common.other'),
       primary: false,
       className: 'mono muted',
       // 項目の途中 (list-v2 のハイフンなど) では折り返さず、項目の間で折り返す。
@@ -308,7 +308,7 @@ export default function ConnectionsPage() {
     },
     {
       key: 'actions',
-      header: translate("common.actions"),
+      header: translate('common.actions'),
       primary: false,
       className: 'row-actions',
       render: connection => (
@@ -320,16 +320,16 @@ export default function ConnectionsPage() {
               onClick={() => void handleSetDefault(connection.id)}
               title={translate('connectionsPage.makeThisTheConnectionStorageOpens')}
             >
-              {translate("connectionsPage.setAsDefault")}</button>
+              {translate('connectionsPage.setAsDefault')}</button>
           )}
-          <Link className="button small" to={`/storage/${encodeURIComponent(connection.id)}/`}>{translate("common.open")}</Link>
-          <Link className="button small" to={`/settings/connections/${encodeURIComponent(connection.id)}`}>{translate("common.edit")}</Link>
+          <Link className="button small" to={`/storage/${encodeURIComponent(connection.id)}/`}>{translate('common.open')}</Link>
+          <Link className="button small" to={`/settings/connections/${encodeURIComponent(connection.id)}`}>{translate('common.edit')}</Link>
           <button
             type="button"
             className="button small danger"
             onClick={() => dispatch({ type: 'openDelete', connection })}
           >
-            {translate("common.delete")}</button>
+            {translate('common.delete')}</button>
         </span>
       ),
     },
@@ -341,35 +341,35 @@ export default function ConnectionsPage() {
   return (
     <section>
       <SettingsSectionHeader
-        title={translate("connectionsPage.manageObjectStorageConnections")}
+        title={translate('connectionsPage.manageObjectStorageConnections')}
         actions={
           <>
             <ImportExportButtons
-              what={translate("common.connection")}
-              replaceWarning={translate("connectionsPage.readmesFavoritesAndTagAssignmentsForDeletedConnections")}
+              what={translate('common.connection')}
+              replaceWarning={translate('connectionsPage.readmesFavoritesAndTagAssignmentsForDeletedConnections')}
               onExport={handleExport}
               onImport={handleImport}
               onDone={refresh}
             />
             <Link className="button primary small" to="/settings/connections/new">
               <Plus size={14} aria-hidden="true" />
-              {translate("common.add")}</Link>
+              {translate('common.add')}</Link>
           </>
         }
       />
 
-      {loading && <p className="state-message">{translate("common.loading")}</p>}
+      {loading && <p className="state-message">{translate('common.loading')}</p>}
       {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {!loading && connections.length === 0 && (
         <div className="empty-state">
-          <h3>{translate("connectionsPage.noConnectionsYet")}</h3>
+          <h3>{translate('connectionsPage.noConnectionsYet')}</h3>
           <p>
             <TranslatedMessage message="connectionsPage.connectionsAvailableAt" values={{ value0: <code>/storage/&lt;id&gt;/</code> }} /><br />
-            {translate("connectionsPage.registerTheEndpointRegionAndAccessKeyTogether")}</p>
+            {translate('connectionsPage.registerTheEndpointRegionAndAccessKeyTogether')}</p>
           <Link className="button primary" to="/settings/connections/new">
             <Plus size={15} aria-hidden="true" />
-            {translate("connectionsPage.addYourFirstConnection")}</Link>
+            {translate('connectionsPage.addYourFirstConnection')}</Link>
         </div>
       )}
 
@@ -385,7 +385,7 @@ export default function ConnectionsPage() {
                 ))}
                 {isNarrow && (
                   <th scope="col" className="responsive-table-toggle">
-                    <span className="sr-only">{translate("common.showDetails")}</span>
+                    <span className="sr-only">{translate('common.showDetails')}</span>
                   </th>
                 )}
               </tr>
@@ -406,8 +406,8 @@ export default function ConnectionsPage() {
                           className="icon-button"
                           aria-expanded={isOpen}
                           aria-controls={detailId}
-                          aria-label={isOpen ? translate("common.hideDetails") : translate("common.showDetails")}
-                          title={isOpen ? translate("common.hideDetails") : translate("common.showDetails")}
+                          aria-label={isOpen ? translate('common.hideDetails') : translate('common.showDetails')}
+                          title={isOpen ? translate('common.hideDetails') : translate('common.showDetails')}
                           onClick={() => toggleRow(connection.id)}
                         >
                           {isOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}

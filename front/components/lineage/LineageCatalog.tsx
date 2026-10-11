@@ -1,11 +1,11 @@
-import { localizeMessage } from '../../i18n/localizeMessage'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { Fragment, useEffect, useId, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { RegistryDatasetSummary } from '../../lib/api/types'
 import { isFromRowControl } from '../../lib/rowClick'
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 const PAGE_SIZE = 20
 const SEARCH_DELAY_MS = 200
@@ -85,7 +85,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
   })
 
   return (
-    <section className="lineage-catalog" aria-label={translate("lineageCatalog.registeredDatasets")}>
+    <section className="lineage-catalog" aria-label={translate('lineageCatalog.registeredDatasets')}>
       <h2 className="lineage-catalog__heading">
         <button
           type="button"
@@ -96,7 +96,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
           {expanded
             ? <ChevronDown size={18} aria-hidden="true" />
             : <ChevronRight size={18} aria-hidden="true" />}
-          {translate("lineageCatalog.browseAndSearchRegistry")}</button>
+          {translate('lineageCatalog.browseAndSearchRegistry')}</button>
       </h2>
 
       {expanded && (
@@ -104,32 +104,32 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
           <div className="lineage-toolbar">
             <label className="lineage-search-field">
               <Search size={16} aria-hidden="true" />
-              <span className="sr-only">{translate("lineageCatalog.searchDatasets")}</span>
+              <span className="sr-only">{translate('lineageCatalog.searchDatasets')}</span>
               <input
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder={translate("lineageCatalog.podcastEnglishDialogueS3Dataset")}
+                placeholder={translate('lineageCatalog.podcastEnglishDialogueS3Dataset')}
                 autoComplete="off"
               />
             </label>
-            <span className="lineage-toolbar__status">{loading ? translate("common.searching") : translate("lineageCatalog.registered", { value0: total })}</span>
+            <span className="lineage-toolbar__status">{loading ? translate('common.searching') : translate('lineageCatalog.registered', { value0: total })}</span>
           </div>
 
           {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
           {!loading && !error && results.length === 0 && (
-            <p className="state-message">{translate("lineageCatalog.noDatasetsMatchTheseConditions")}</p>
+            <p className="state-message">{translate('lineageCatalog.noDatasetsMatchTheseConditions')}</p>
           )}
           {results.length > 0 && (
             <div className="table-scroll">
               <table className="responsive-table">
                 <thead>
                   <tr>
-                    <th scope="col">{translate("common.dataset")}</th>
-                    <th scope="col" className="lineage-catalog__secondary">{translate("common.description")}</th>
-                    <th scope="col" className="lineage-catalog__secondary">{translate("common.dataFormat")}</th>
-                    <th scope="col" className="numeric">{translate("common.version")}</th>
+                    <th scope="col">{translate('common.dataset')}</th>
+                    <th scope="col" className="lineage-catalog__secondary">{translate('common.description')}</th>
+                    <th scope="col" className="lineage-catalog__secondary">{translate('common.dataFormat')}</th>
+                    <th scope="col" className="numeric">{translate('common.version')}</th>
                     <th scope="col" className="responsive-table-toggle lineage-catalog__row-toggle">
-                      <span className="sr-only">{translate("common.showDetails")}</span>
+                      <span className="sr-only">{translate('common.showDetails')}</span>
                     </th>
                   </tr>
                 </thead>
@@ -138,8 +138,8 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                     const key = datasetKey(dataset)
                     const rowOpen = openRows.has(key)
                     const detailId = `${detailIdPrefix}-${index}`
-                    const description = dataset.description ?? <span className="muted">{translate("lineageCatalog.noDescriptionRegistered")}</span>
-                    const mediaType = dataset.mediaType ?? <span className="muted">{translate("lineageCatalog.dataFormatNotRegistered")}</span>
+                    const description = dataset.description ?? <span className="muted">{translate('lineageCatalog.noDescriptionRegistered')}</span>
+                    const mediaType = dataset.mediaType ?? <span className="muted">{translate('lineageCatalog.dataFormatNotRegistered')}</span>
                     return (
                       <Fragment key={key}>
                         <tr
@@ -154,15 +154,15 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                           </td>
                           <td className="lineage-catalog__secondary lineage-catalog__description">{description}</td>
                           <td className="lineage-catalog__secondary nowrap">{mediaType}</td>
-                          <td className="numeric nowrap">{dataset.versionCount}{translate("common.items", { count: dataset.versionCount })}</td>
+                          <td className="numeric nowrap">{dataset.versionCount}{translate('common.items', { count: dataset.versionCount })}</td>
                           <td className="responsive-table-toggle lineage-catalog__row-toggle">
                             <button
                               type="button"
                               className="icon-button"
                               aria-expanded={rowOpen}
                               aria-controls={detailId}
-                              aria-label={rowOpen ? translate("common.hideDetails") : translate("common.showDetails")}
-                              title={rowOpen ? translate("common.hideDetails") : translate("common.showDetails")}
+                              aria-label={rowOpen ? translate('common.hideDetails') : translate('common.showDetails')}
+                              title={rowOpen ? translate('common.hideDetails') : translate('common.showDetails')}
                               onClick={() => toggleRow(key)}
                             >
                               {rowOpen
@@ -175,8 +175,8 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                           <tr id={detailId} className="responsive-table-details lineage-catalog__details">
                             <td colSpan={3}>
                               <dl>
-                                <div><dt>{translate("common.description")}</dt><dd>{description}</dd></div>
-                                <div><dt>{translate("common.dataFormat")}</dt><dd>{mediaType}</dd></div>
+                                <div><dt>{translate('common.description')}</dt><dd>{description}</dd></div>
+                                <div><dt>{translate('common.dataFormat')}</dt><dd>{mediaType}</dd></div>
                               </dl>
                             </td>
                           </tr>
@@ -197,16 +197,16 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={translate("lineageCatalog.previous")}
-                    title={translate("lineageCatalog.previous")}
+                    aria-label={translate('lineageCatalog.previous')}
+                    title={translate('lineageCatalog.previous')}
                     disabled={offset === 0 || loading}
                     onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))}
                   ><ChevronLeft size={16} aria-hidden="true" /></button>
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={translate("lineageCatalog.next")}
-                    title={translate("lineageCatalog.next")}
+                    aria-label={translate('lineageCatalog.next')}
+                    title={translate('lineageCatalog.next')}
                     disabled={offset + results.length >= total || loading}
                     onClick={() => setOffset(value => value + PAGE_SIZE)}
                   ><ChevronRight size={16} aria-hidden="true" /></button>

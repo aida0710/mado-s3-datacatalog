@@ -1,7 +1,7 @@
-import { translate } from '../../i18n/translate'
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { LineageGraph, LineageNodeKind, LineageNodeSummary } from '../api/types'
 import { lineageStatusLabel, lineageStatusTone, type LineageStatusTone } from './labels'
+import { translate } from '../../i18n/translate'
 
 export type VisibleLineageNodeKind = Exclude<LineageNodeKind, 'location'>
 
@@ -41,8 +41,8 @@ function rawStatusOf(node: LineageNodeSummary): string | null {
 function metaOf(node: LineageNodeSummary): string | null {
   if (node.kind === 'dataset' || node.kind === 'source') {
     const versions = node.registry?.versionCount
-    if (versions != null) return translate("graphModel.versions", { value0: versions })
-    return node.completeness === 'unregistered' ? translate("common.notRegistered") : null
+    if (versions != null) return translate('graphModel.versions', { value0: versions })
+    return node.completeness === 'unregistered' ? translate('common.notRegistered') : null
   }
   if (node.kind === 'version') return stringData(node, 'version')
   return null

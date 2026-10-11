@@ -1,6 +1,3 @@
-import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background, BackgroundVariant, Controls, MarkerType, MiniMap, ReactFlow, ReactFlowProvider,
@@ -17,6 +14,9 @@ import {
 import { LINEAGE_KIND_LABEL } from '../../lib/lineage/labels'
 import { layoutLineage } from '../../lib/lineage/layout'
 import { LineageNode } from './LineageNode'
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 const nodeTypes = { lineage: LineageNode }
 
@@ -56,9 +56,9 @@ interface CanvasProps extends Props {
 }
 
 const DIRECTIONS: Array<{ value: LineageDirection; label: string }> = [
-  { value: 'both', get label() { return translate("lineageGraph.both") } },
-  { value: 'upstream', get label() { return translate("lineageGraph.upstream") } },
-  { value: 'downstream', get label() { return translate("lineageGraph.downstream") } },
+  { value: 'both', get label() { return translate('lineageGraph.both') } },
+  { value: 'upstream', get label() { return translate('lineageGraph.upstream') } },
+  { value: 'downstream', get label() { return translate('lineageGraph.downstream') } },
 ]
 
 function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: CanvasProps) {
@@ -122,7 +122,7 @@ function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: Ca
   }, [fitView, graphKey, nodes, selectedId])
 
   return (
-    <div className="lineage-canvas" aria-label={translate("lineageGraph.dataLineageGraph")}>
+    <div className="lineage-canvas" aria-label={translate('lineageGraph.dataLineageGraph')}>
       <ReactFlow
         key={graphKey}
         nodes={nodes}
@@ -164,19 +164,19 @@ export function LineageGraph(props: Props) {
         <div className="lineage-graph__search">
           <label className="lineage-search-field">
             <Search size={16} aria-hidden="true" />
-            <span className="sr-only">{translate("lineageGraph.searchGraph")}</span>
+            <span className="sr-only">{translate('lineageGraph.searchGraph')}</span>
             <input
               type="search"
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder={translate("lineageGraph.datasetOrProcessingName")}
+              placeholder={translate('lineageGraph.datasetOrProcessingName')}
               autoComplete="off"
             />
           </label>
           {searching && (
             <div className="popover lineage-graph__results">
               {visibleResults.length === 0 ? (
-                <p className="muted">{translate("lineageGraph.noMatchingItems")}</p>
+                <p className="muted">{translate('lineageGraph.noMatchingItems')}</p>
               ) : (
                 <ul>
                   {visibleResults.map(node => (
@@ -192,14 +192,14 @@ export function LineageGraph(props: Props) {
                 </ul>
               )}
               {results.length > visibleResults.length && (
-                <p className="muted">{translate("common.additionalItems", { value0: results.length - visibleResults.length })}</p>
+                <p className="muted">{translate('common.additionalItems', { value0: results.length - visibleResults.length })}</p>
               )}
             </div>
           )}
         </div>
         <div className="lineage-toolbar__item">
-          <span>{translate("lineageGraph.traversalDirection")}</span>
-          <div className="lineage-segmented" role="group" aria-label={translate("lineageGraph.traversalDirectionFromTheSelectedItem")}>
+          <span>{translate('lineageGraph.traversalDirection')}</span>
+          <div className="lineage-segmented" role="group" aria-label={translate('lineageGraph.traversalDirectionFromTheSelectedItem')}>
             {DIRECTIONS.map(option => (
               <button
                 key={option.value}

@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { Download, X } from 'lucide-react'
 import { api } from '../lib/api/client'
 import { classify, classifyEntry } from '../lib/api/mime'
@@ -16,6 +14,8 @@ import { PreviewAudio } from './PreviewAudio'
 import { PreviewVideo } from './PreviewVideo'
 import { PreviewArchive } from './PreviewArchive'
 import { UnsupportedPreview } from './UnsupportedPreview'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // ピンカード内のテキスト/JSON 表示。url は単体ファイルなら api.textPreviewUrl、
 // tar エントリなら api.tarEntryUrl。minify された 1 行 JSON でも潰れないよう固定高さ
@@ -26,7 +26,7 @@ function PinnedTextBody({ name, url }: { name: string; url: string }) {
   const sniffed = useSniffedText(url)
 
   if (sniffed.status === 'error') return <p className="notice error">{sniffed.message}</p>
-  if (sniffed.status === 'loading') return <p className="muted">{translate("common.loading")}</p>
+  if (sniffed.status === 'loading') return <p className="muted">{translate('common.loading')}</p>
   if (sniffed.status === 'binary') return <UnsupportedPreview />
   return <PinnedText name={name} text={prettyPrintJson(name, sniffed.text)} />
 }
@@ -100,8 +100,8 @@ export function PinnedPreviewCard({ item }: { item: PinnedItem }) {
             className="icon-button"
             href={downloadUrl}
             download={filename}
-            aria-label={translate("common.download", { value0: filename })}
-            title={translate("common.download2")}
+            aria-label={translate('common.download', { value0: filename })}
+            title={translate('common.download2')}
           >
             <Download size={16} aria-hidden="true" />
           </a>
@@ -110,8 +110,8 @@ export function PinnedPreviewCard({ item }: { item: PinnedItem }) {
           type="button"
           className="icon-button"
           onClick={() => removePin(item.id)}
-          aria-label={translate("pinnedPreviewCard.unpin", { value0: filename })}
-          title={translate("pinnedPreviewCard.unpin2")}
+          aria-label={translate('pinnedPreviewCard.unpin', { value0: filename })}
+          title={translate('pinnedPreviewCard.unpin2')}
         >
           <X size={16} aria-hidden="true" />
         </button>

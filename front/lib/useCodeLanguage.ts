@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useMemo, useState } from 'react'
 import { CODE_LANGUAGES, detectLanguage, isCodeLanguage, type CodeLanguage } from '@mado/design-system/code'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 /** 'auto' は推測した形式に従う。それ以外は利用者が選んだ形式。 */
 export type CodeLanguageChoice = CodeLanguage | 'auto'
@@ -26,8 +26,8 @@ export function codeLanguageKey(fileName: string): string {
 
 /** 形式の名前。テキストとログは表示言語に合わせ、言語名は共通の表記を使う。 */
 export function codeLanguageName(language: CodeLanguage): string {
-  if (language === 'plaintext') return translate("useCodeLanguage.text")
-  if (language === 'log') return translate("useCodeLanguage.log")
+  if (language === 'plaintext') return translate('useCodeLanguage.text')
+  if (language === 'log') return translate('useCodeLanguage.log')
   return CODE_LANGUAGES.find(item => item.id === language)?.name ?? language
 }
 

@@ -1,7 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-react'
@@ -10,6 +6,10 @@ import { fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
 import { narrowerThan } from '../lib/breakpoints'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import { fmtDateTimeWithSeconds } from '../lib/format'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface UserRow {
   id: string
@@ -50,52 +50,52 @@ interface AuditPage {
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  get 'auth.password.change'() { return translate("adminPage.changePassword") },
-  get 'auth.profile.update'() { return translate("adminPage.updateAccountSettings") },
-  get 'auth.bootstrap_admin'() { return translate("adminPage.createInitialAdministrator") },
-  get 'auth.oidc.session_revoke'() { return translate("adminPage.revokeSsoSession") },
-  get 'auth.oidc.sync'() { return translate("adminPage.syncSsoAccountInformation") },
-  get 'connection.create'() { return translate("common.addConnection") },
-  get 'connection.update'() { return translate("adminPage.updateConnection") },
-  get 'connection.delete'() { return translate("common.deleteConnection") },
-  get 'connection.default.set'() { return translate("adminPage.changeDefaultConnection") },
-  get 'note.update'() { return translate("adminPage.saveSharedNote") },
-  get 'note.read'() { return translate("adminPage.viewSharedNote") },
-  get 'storage.readme.update'() { return translate("adminPage.saveReadme") },
-  get 'storage.readme.read'() { return translate("adminPage.viewReadme") },
-  get 'storage.scan.start'() { return translate("adminPage.startScan") },
-  get 'storage.tag.assign'() { return translate("adminPage.assignTag") },
-  get 'storage.tag.remove'() { return translate("adminPage.removeTag") },
-  get 'storage.favorite.add'() { return translate("adminPage.addToFavorites") },
-  get 'storage.favorite.remove'() { return translate("adminPage.removeFromFavorites") },
-  get 'storage.download.raw'() { return translate("adminPage.downloadFile") },
-  get 'storage.download.tar'() { return translate("adminPage.downloadArchive") },
-  get 'storage.download.tar-entry'() { return translate("adminPage.downloadArchiveEntry") },
-  get 'storage.preview.text'() { return translate("adminPage.viewText") },
-  get 'storage.preview.image'() { return translate("adminPage.viewImage") },
-  get 'tag.create'() { return translate("adminPage.createTag") },
-  get 'tag.update'() { return translate("adminPage.updateTag") },
-  get 'tag.delete'() { return translate("common.deleteTag") },
-  get 'setting.update'() { return translate("adminPage.updateSettings") },
-  get 'pricing.refresh'() { return translate("adminPage.updatePricing") },
-  get 'job.cancel'() { return translate("adminPage.abortJob") },
-  get 'lineage.read'() { return translate("adminPage.viewDataLineage") },
-  get 'lineage.dataset.update'() { return translate("adminPage.updateDatasetInformation") },
-  get 'lineage.dataset.register'() { return translate("adminPage.registerDataset") },
-  get 'lineage.location.register'() { return translate("adminPage.registerStorageLocation") },
-  get 'lineage.run.register'() { return translate("common.registerProcessingHistory") },
-  get 'lineage.ingest'() { return translate("adminPage.applyOpenLineageEvent") },
-  get 'service_account.create'() { return translate("adminPage.createServiceAccount") },
-  get 'service_account.update'() { return translate("adminPage.updateServiceAccount") },
-  get 'service_account.key.issue'() { return translate("adminPage.issueApiKey") },
-  get 'service_account.key.revoke'() { return translate("adminPage.revokeApiKey") },
-  get 'user.create'() { return translate("adminPage.createUser") },
-  get 'user.update'() { return translate("adminPage.updateUser") },
-  get 'user.roles.update'() { return translate("adminPage.updateUserPermissions") },
-  get 'user.password.reset'() { return translate("adminPage.resetPassword") },
-  get 'user.delete'() { return translate("adminPage.deleteUser") },
-  get 'user.manage'() { return translate("adminPage.userOperations") },
-  get 'service_account.manage'() { return translate("adminPage.serviceAccountOperations") },
+  get 'auth.password.change'() { return translate('adminPage.changePassword') },
+  get 'auth.profile.update'() { return translate('adminPage.updateAccountSettings') },
+  get 'auth.bootstrap_admin'() { return translate('adminPage.createInitialAdministrator') },
+  get 'auth.oidc.session_revoke'() { return translate('adminPage.revokeSsoSession') },
+  get 'auth.oidc.sync'() { return translate('adminPage.syncSsoAccountInformation') },
+  get 'connection.create'() { return translate('common.addConnection') },
+  get 'connection.update'() { return translate('adminPage.updateConnection') },
+  get 'connection.delete'() { return translate('common.deleteConnection') },
+  get 'connection.default.set'() { return translate('adminPage.changeDefaultConnection') },
+  get 'note.update'() { return translate('adminPage.saveSharedNote') },
+  get 'note.read'() { return translate('adminPage.viewSharedNote') },
+  get 'storage.readme.update'() { return translate('adminPage.saveReadme') },
+  get 'storage.readme.read'() { return translate('adminPage.viewReadme') },
+  get 'storage.scan.start'() { return translate('adminPage.startScan') },
+  get 'storage.tag.assign'() { return translate('adminPage.assignTag') },
+  get 'storage.tag.remove'() { return translate('adminPage.removeTag') },
+  get 'storage.favorite.add'() { return translate('adminPage.addToFavorites') },
+  get 'storage.favorite.remove'() { return translate('adminPage.removeFromFavorites') },
+  get 'storage.download.raw'() { return translate('adminPage.downloadFile') },
+  get 'storage.download.tar'() { return translate('adminPage.downloadArchive') },
+  get 'storage.download.tar-entry'() { return translate('adminPage.downloadArchiveEntry') },
+  get 'storage.preview.text'() { return translate('adminPage.viewText') },
+  get 'storage.preview.image'() { return translate('adminPage.viewImage') },
+  get 'tag.create'() { return translate('adminPage.createTag') },
+  get 'tag.update'() { return translate('adminPage.updateTag') },
+  get 'tag.delete'() { return translate('common.deleteTag') },
+  get 'setting.update'() { return translate('adminPage.updateSettings') },
+  get 'pricing.refresh'() { return translate('adminPage.updatePricing') },
+  get 'job.cancel'() { return translate('adminPage.abortJob') },
+  get 'lineage.read'() { return translate('adminPage.viewDataLineage') },
+  get 'lineage.dataset.update'() { return translate('adminPage.updateDatasetInformation') },
+  get 'lineage.dataset.register'() { return translate('adminPage.registerDataset') },
+  get 'lineage.location.register'() { return translate('adminPage.registerStorageLocation') },
+  get 'lineage.run.register'() { return translate('common.registerProcessingHistory') },
+  get 'lineage.ingest'() { return translate('adminPage.applyOpenLineageEvent') },
+  get 'service_account.create'() { return translate('adminPage.createServiceAccount') },
+  get 'service_account.update'() { return translate('adminPage.updateServiceAccount') },
+  get 'service_account.key.issue'() { return translate('adminPage.issueApiKey') },
+  get 'service_account.key.revoke'() { return translate('adminPage.revokeApiKey') },
+  get 'user.create'() { return translate('adminPage.createUser') },
+  get 'user.update'() { return translate('adminPage.updateUser') },
+  get 'user.roles.update'() { return translate('adminPage.updateUserPermissions') },
+  get 'user.password.reset'() { return translate('adminPage.resetPassword') },
+  get 'user.delete'() { return translate('adminPage.deleteUser') },
+  get 'user.manage'() { return translate('adminPage.userOperations') },
+  get 'service_account.manage'() { return translate('adminPage.serviceAccountOperations') },
 }
 
 const OUTCOME_LABELS: Record<AuditEventRow['outcome'], string> = {
@@ -106,18 +106,18 @@ const OUTCOME_LABELS: Record<AuditEventRow['outcome'], string> = {
 }
 
 const ROLE_OPTIONS = [
-  { id: 'viewer', get label() { return translate("adminPage.viewerReadOnly") }, get help() { return translate("adminPage.canBrowseStorageAndDataLineage") } },
-  { id: 'curator', get label() { return translate("adminPage.curatorEditContent") }, get help() { return translate("adminPage.canBrowseAndEditReadmesNotesAndTags") } },
-  { id: 'operator', get label() { return translate("adminPage.operatorRunJobs") }, get help() { return translate("adminPage.canBrowseRunScansUpdatePricingAndAbort") } },
-  { id: 'admin', get label() { return translate("adminPage.adminFullAdministration") }, get help() { return translate("adminPage.canManageEverythingIncludingConnectionsSettingsUsersApi") } },
+  { id: 'viewer', get label() { return translate('adminPage.viewerReadOnly') }, get help() { return translate('adminPage.canBrowseStorageAndDataLineage') } },
+  { id: 'curator', get label() { return translate('adminPage.curatorEditContent') }, get help() { return translate('adminPage.canBrowseAndEditReadmesNotesAndTags') } },
+  { id: 'operator', get label() { return translate('adminPage.operatorRunJobs') }, get help() { return translate('adminPage.canBrowseRunScansUpdatePricingAndAbort') } },
+  { id: 'admin', get label() { return translate('adminPage.adminFullAdministration') }, get help() { return translate('adminPage.canManageEverythingIncludingConnectionsSettingsUsersApi') } },
 ] as const
 
 type RoleId = (typeof ROLE_OPTIONS)[number]['id']
 
 // Service Account keyの用途。Madoのデータへは読み取りのscopeだけを開く。
 const KEY_SCOPE_OPTIONS = [
-  { scope: 'lineage:write', get label() { return translate("adminPage.sendOpenLineageLineageWrite") }, get help() { return translate("adminPage.canWriteLineageOnlyToAllowedNamespaces") } },
-  { scope: 'metrics:read', get label() { return translate("adminPage.prometheusCollectionMetricsRead") }, get help() { return translate("adminPage.canReadBucketNamesAndCapacitiesForEvery") } },
+  { scope: 'lineage:write', get label() { return translate('adminPage.sendOpenLineageLineageWrite') }, get help() { return translate('adminPage.canWriteLineageOnlyToAllowedNamespaces') } },
+  { scope: 'metrics:read', get label() { return translate('adminPage.prometheusCollectionMetricsRead') }, get help() { return translate('adminPage.canReadBucketNamesAndCapacitiesForEvery') } },
 ] as const
 
 type KeyScope = (typeof KEY_SCOPE_OPTIONS)[number]['scope']
@@ -187,7 +187,7 @@ function useOpenRows<K>() {
 /** 表の右端の、行の下に詳細を開くボタン。 */
 function RowToggle({ open, controls, onToggle }: { open: boolean; controls: string; onToggle: () => void }) {
   useLocale()
-  const label = open ? translate("common.hideDetails") : translate("common.showDetails")
+  const label = open ? translate('common.hideDetails') : translate('common.showDetails')
   return (
     <button
       type="button"
@@ -222,8 +222,8 @@ function SecretNotice({ secret, note, onClose }: {
       <span className="secret-notice__actions">
         <button type="button" className="button small" onClick={() => void navigator.clipboard.writeText(secret.value)}>
           <Copy size={14} aria-hidden="true" />
-          {translate("adminPage.copy")}</button>
-        <button type="button" className="button small" onClick={onClose}>{translate("common.close")}</button>
+          {translate('adminPage.copy')}</button>
+        <button type="button" className="button small" onClick={onClose}>{translate('common.close')}</button>
       </span>
     </div>
   )
@@ -257,7 +257,7 @@ function UsersPage() {
       setUsers(body.users)
       setSsoRoleMappings(normalizeSsoRoleMapping(body.ssoRoleMapping))
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("common.couldNotLoadUsers"))
+      setError(cause instanceof Error ? cause.message : translate('common.couldNotLoadUsers'))
     }
   }, [])
 
@@ -270,7 +270,7 @@ function UsersPage() {
         setSsoRoleMappings(normalizeSsoRoleMapping(body.ssoRoleMapping))
       })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : translate("common.couldNotLoadUsers"))
+        if (current) setError(cause instanceof Error ? cause.message : translate('common.couldNotLoadUsers'))
       })
     return () => { current = false }
   }, [])
@@ -290,10 +290,10 @@ function UsersPage() {
       })
       formElement.reset()
       setRole('viewer')
-      setNotice(translate("adminPage.localUserCreatedAPasswordChangeIsRequired"))
+      setNotice(translate('adminPage.localUserCreatedAPasswordChangeIsRequired'))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotCreate"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotCreate'))
     }
   }
 
@@ -322,10 +322,10 @@ function UsersPage() {
           })
         }
       }
-      setNotice(translate("adminPage.updated", { value0: String(form.get('displayName')) }))
+      setNotice(translate('adminPage.updated', { value0: String(form.get('displayName')) }))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotUpdate"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotUpdate'))
     }
   }
 
@@ -336,9 +336,9 @@ function UsersPage() {
       const body = await jsonRequest<{ temporaryPassword: string }>(`/api/internal/users/${encodeURIComponent(user.id)}/reset-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
       })
-      setSecret({ label: translate("adminPage.temporaryPasswordFor", { value0: user.displayName }), value: body.temporaryPassword })
+      setSecret({ label: translate('adminPage.temporaryPasswordFor', { value0: user.displayName }), value: body.temporaryPassword })
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotResetPassword"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotResetPassword'))
     }
   }
 
@@ -348,7 +348,7 @@ function UsersPage() {
     setNotice(null)
     await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}`, { method: 'DELETE' })
     setDeleting(null)
-    setNotice(translate("adminPage.deleted", { value0: user.displayName }))
+    setNotice(translate('adminPage.deleted', { value0: user.displayName }))
     await reload()
   }
 
@@ -363,40 +363,40 @@ function UsersPage() {
     <section className="admin-users">
       {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {notice && <p className="notice success" role="status">{localizeMessage(notice)}</p>}
-      {secret && <SecretNotice secret={secret} note={translate("adminPage.shownOnlyOnce")} onClose={() => setSecret(null)} />}
+      {secret && <SecretNotice secret={secret} note={translate('adminPage.shownOnlyOnce')} onClose={() => setSecret(null)} />}
       {users.length > 0 && (
         <>
           <div className="admin-toolbar" role="search">
             <input
               type="search"
-              aria-label={translate("adminPage.searchUsers")}
-              placeholder={translate("adminPage.displayNameUserIdOrEmailAddress")}
+              aria-label={translate('adminPage.searchUsers')}
+              placeholder={translate('adminPage.displayNameUserIdOrEmailAddress')}
               value={query}
               onChange={event => setQuery(event.target.value)}
             />
             <select
-              aria-label={translate("adminPage.filterByStatus")}
+              aria-label={translate('adminPage.filterByStatus')}
               value={statusFilter}
               onChange={event => setStatusFilter(event.target.value as '' | UserRow['status'])}
             >
-              <option value="">{translate("adminPage.allStatuses")}</option>
-              <option value="active">{translate("adminPage.active")}</option>
-              <option value="disabled">{translate("adminPage.disabled")}</option>
+              <option value="">{translate('adminPage.allStatuses')}</option>
+              <option value="active">{translate('adminPage.active')}</option>
+              <option value="disabled">{translate('adminPage.disabled')}</option>
             </select>
           </div>
           {visibleUsers.length === 0 ? (
-            <p className="state-message">{translate("adminPage.noUsersMatchTheseConditions")}</p>
+            <p className="state-message">{translate('adminPage.noUsersMatchTheseConditions')}</p>
           ) : (
             <div className="table-scroll">
               <table className="responsive-table admin-users-table">
                 <thead>
                   <tr>
-                    <th scope="col">{translate("common.displayName")}</th>
-                    {!isNarrow && <th scope="col">{translate("common.emailAddress")}</th>}
-                    {!isNarrow && <th scope="col">{translate("adminPage.permissions")}</th>}
-                    {!isNarrow && <th scope="col">{translate("adminPage.authentication")}</th>}
-                    <th scope="col">{translate("common.status")}</th>
-                    <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate("common.showDetails")}</span></th>
+                    <th scope="col">{translate('common.displayName')}</th>
+                    {!isNarrow && <th scope="col">{translate('common.emailAddress')}</th>}
+                    {!isNarrow && <th scope="col">{translate('adminPage.permissions')}</th>}
+                    {!isNarrow && <th scope="col">{translate('adminPage.authentication')}</th>}
+                    <th scope="col">{translate('common.status')}</th>
+                    <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate('common.showDetails')}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -413,12 +413,12 @@ function UsersPage() {
                         <td>
                           <span className="user-name">
                             <strong>{user.displayName}</strong>
-                            <span className="muted mono">{user.username ?? translate("adminPage.userIdNotSet")}</span>
+                            <span className="muted mono">{user.username ?? translate('adminPage.userIdNotSet')}</span>
                           </span>
                         </td>
                         {!isNarrow && <td className="break-word">{user.email ?? '—'}</td>}
                         {!isNarrow && <td>{user.roles.join(', ') || '—'}</td>}
-                        {!isNarrow && <td>{user.authMethods.join(' + ') || translate("common.notSet")}</td>}
+                        {!isNarrow && <td>{user.authMethods.join(' + ') || translate('common.notSet')}</td>}
                         <td><StatusBadge status={user.status} /></td>
                         <td className="responsive-table-toggle">
                           <RowToggle open={isOpen} controls={detailId} onToggle={() => toggleRow(user.id)} />
@@ -429,28 +429,28 @@ function UsersPage() {
                           <td colSpan={columnCount}>
                             <form
                               className="admin-user-form"
-                              aria-label={translate("adminPage.edit", { value0: user.displayName })}
+                              aria-label={translate('adminPage.edit', { value0: user.displayName })}
                               onSubmit={event => void updateUser(event, user)}
                             >
                               <label className="field">
-                                <span>{translate("common.displayName")}</span>
+                                <span>{translate('common.displayName')}</span>
                                 <input name="displayName" defaultValue={user.displayName} maxLength={128} required />
                               </label>
                               <label className="field">
-                                <span>{translate("common.userIdLoginId")}</span>
+                                <span>{translate('common.userIdLoginId')}</span>
                                 <input name="username" defaultValue={user.username ?? ''} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required />
                               </label>
                               {user.email && (
                                 <div className="field readonly-field admin-user-form__wide">
-                                  <span>{translate("common.emailAddress")}</span>
+                                  <span>{translate('common.emailAddress')}</span>
                                   <strong className="mono">{user.email}</strong>
                                   <small className="muted">
-                                    {sso ? translate("adminPage.managedByTheSsoProviderAndCannotBe") : translate("common.thisAuthenticationIdentifierCannotBeChangedInMado")}
+                                    {sso ? translate('adminPage.managedByTheSsoProviderAndCannotBe') : translate('common.thisAuthenticationIdentifierCannotBeChangedInMado')}
                                   </small>
                                 </div>
                               )}
                               <label className="field">
-                                <span>{translate("adminPage.permissions")}</span>
+                                <span>{translate('adminPage.permissions')}</span>
                                 <select
                                   name="role"
                                   defaultValue={user.roles[0] ?? 'viewer'}
@@ -461,27 +461,27 @@ function UsersPage() {
                                 </select>
                                 {sso && (
                                   <small id={`sso-role-help-${user.id}`} className="muted">
-                                    {translate("common.managedByYourSsoProviderAndCannotBe")}</small>
+                                    {translate('common.managedByYourSsoProviderAndCannotBe')}</small>
                                 )}
                               </label>
                               <label className="field">
-                                <span>{translate("common.status")}</span>
+                                <span>{translate('common.status')}</span>
                                 <select name="status" defaultValue={user.status}>
-                                  <option value="active">{translate("adminPage.active")}</option>
-                                  <option value="disabled">{translate("adminPage.disabled")}</option>
+                                  <option value="active">{translate('adminPage.active')}</option>
+                                  <option value="disabled">{translate('adminPage.disabled')}</option>
                                 </select>
                               </label>
                               <dl className="admin-user-meta admin-user-form__wide">
-                                <div><dt>{translate("adminPage.internalId")}</dt><dd className="mono">{user.id}</dd></div>
-                                <div><dt>{translate("adminPage.authentication")}</dt><dd>{user.authMethods.join(' + ') || translate("common.notSet")}</dd></div>
+                                <div><dt>{translate('adminPage.internalId')}</dt><dd className="mono">{user.id}</dd></div>
+                                <div><dt>{translate('adminPage.authentication')}</dt><dd>{user.authMethods.join(' + ') || translate('common.notSet')}</dd></div>
                               </dl>
                               <div className="admin-user-form__actions admin-user-form__wide">
-                                <button type="submit" className="button primary">{translate("common.save")}</button>
+                                <button type="submit" className="button primary">{translate('common.save')}</button>
                                 {!(sso && !user.authMethods.includes('local')) && (
-                                  <button type="button" className="button" onClick={() => void resetPassword(user)}>{translate("adminPage.resetPassword")}</button>
+                                  <button type="button" className="button" onClick={() => void resetPassword(user)}>{translate('adminPage.resetPassword')}</button>
                                 )}
                                 {user.id !== currentUser?.id && (
-                                  <button type="button" className="button danger" onClick={() => setDeleting(user)}>{translate("common.delete")}</button>
+                                  <button type="button" className="button danger" onClick={() => setDeleting(user)}>{translate('common.delete')}</button>
                                 )}
                               </div>
                             </form>
@@ -499,24 +499,24 @@ function UsersPage() {
 
       <section className="admin-section">
         <form className="admin-create-form" onSubmit={createUser} aria-labelledby="admin-create-user-title">
-          <div className="section-heading"><h2 id="admin-create-user-title">{translate("adminPage.addUser")}</h2></div>
+          <div className="section-heading"><h2 id="admin-create-user-title">{translate('adminPage.addUser')}</h2></div>
           <div className="admin-form-grid">
-            <label className="field"><span>{translate("common.displayName")}</span><input name="displayName" placeholder={translate("adminPage.eGMadoCurator")} required /></label>
-            <label className="field"><span>{translate("common.userIdLoginId")}</span><input name="username" placeholder={translate("adminPage.eGCurator")} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required /></label>
-            <label className="field"><span>{translate("adminPage.emailAddressOptional")}</span><input name="email" type="email" placeholder="email@example.jp" /></label>
-            <label className="field"><span>{translate("adminPage.initialPasswordAtLeast12Characters")}</span><input name="password" type="password" minLength={12} autoComplete="new-password" required /></label>
+            <label className="field"><span>{translate('common.displayName')}</span><input name="displayName" placeholder={translate('adminPage.eGMadoCurator')} required /></label>
+            <label className="field"><span>{translate('common.userIdLoginId')}</span><input name="username" placeholder={translate('adminPage.eGCurator')} pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required /></label>
+            <label className="field"><span>{translate('adminPage.emailAddressOptional')}</span><input name="email" type="email" placeholder="email@example.jp" /></label>
+            <label className="field"><span>{translate('adminPage.initialPasswordAtLeast12Characters')}</span><input name="password" type="password" minLength={12} autoComplete="new-password" required /></label>
             <label className="field admin-form-grid__wide">
-              <span>{translate("adminPage.permissions")}</span>
+              <span>{translate('adminPage.permissions')}</span>
               <select name="role" value={role} onChange={event => setRole(event.target.value as RoleId)}>
                 {ROLE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
               </select>
               <small className="muted">{ROLE_OPTIONS.find(option => option.id === role)?.help}</small>
             </label>
           </div>
-          <button type="submit" className="button primary">{translate("common.create")}</button>
+          <button type="submit" className="button primary">{translate('common.create')}</button>
         </form>
         <blockquote className="sso-guidance">
-          <p>{translate("adminPage.forSsoTheFollowingAuthentikGroupsMapTo")}</p>
+          <p>{translate('adminPage.forSsoTheFollowingAuthentikGroupsMapTo')}</p>
           <ul>
             {ssoRoleMappings.map(({ group, role }) => (
               <li key={group}>
@@ -525,7 +525,7 @@ function UsersPage() {
                 <strong>{ROLE_OPTIONS.find(option => option.id === role)?.label}</strong>
               </li>
             ))}
-            {ssoRoleMappings.length === 0 && <li className="sso-guidance__empty">{translate("adminPage.noSsoPermissionMappingsAreConfigured")}</li>}
+            {ssoRoleMappings.length === 0 && <li className="sso-guidance__empty">{translate('adminPage.noSsoPermissionMappingsAreConfigured')}</li>}
           </ul>
         </blockquote>
       </section>
@@ -533,11 +533,11 @@ function UsersPage() {
       {deleting && (
         <DeleteConfirmDialog
           titleId="admin-user-delete-title"
-          title={translate("adminPage.deleteUser")}
+          title={translate('adminPage.deleteUser')}
           onConfirm={() => deleteUser(deleting)}
           onCancel={() => setDeleting(null)}
         >
-          {translate("adminPage.confirmUserDeletion", { value0: deleting.displayName })}
+          {translate('adminPage.confirmUserDeletion', { value0: deleting.displayName })}
         </DeleteConfirmDialog>
       )}
     </section>
@@ -558,7 +558,7 @@ function ServiceAccountsPage() {
       const body = await jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
       setAccounts(body.accounts)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadServiceAccounts"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadServiceAccounts'))
     }
   }, [])
 
@@ -567,7 +567,7 @@ function ServiceAccountsPage() {
     jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
       .then(body => { if (current) setAccounts(body.accounts) })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadServiceAccounts"))
+        if (current) setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadServiceAccounts'))
       })
     return () => { current = false }
   }, [])
@@ -583,10 +583,10 @@ function ServiceAccountsPage() {
         body: JSON.stringify({ name: form.get('name'), description: form.get('description') }),
       })
       formElement.reset()
-      setNotice(translate("adminPage.serviceAccountCreated"))
+      setNotice(translate('adminPage.serviceAccountCreated'))
       await reload()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotCreate"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotCreate'))
     }
   }
 
@@ -612,7 +612,7 @@ function ServiceAccountsPage() {
       formElement.reset()
       setNotice(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotIssueKey"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotIssueKey'))
     }
   }
 
@@ -620,22 +620,22 @@ function ServiceAccountsPage() {
     <section className="admin-accounts">
       {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {notice && <p className="notice success" role="status">{localizeMessage(notice)}</p>}
-      {secret && <SecretNotice secret={secret} note={translate("adminPage.thisKeyIsShownOnlyOnce")} onClose={() => setSecret(null)} />}
+      {secret && <SecretNotice secret={secret} note={translate('adminPage.thisKeyIsShownOnlyOnce')} onClose={() => setSecret(null)} />}
       {accounts.length > 0 && (
         <div className="table-scroll">
           <table className="admin-accounts-table">
             <thead>
               <tr>
-                <th scope="col">{translate("common.name")}</th>
-                <th scope="col">{translate("adminPage.purpose")}</th>
-                <th scope="col">{translate("common.status")}</th>
+                <th scope="col">{translate('common.name')}</th>
+                <th scope="col">{translate('adminPage.purpose')}</th>
+                <th scope="col">{translate('common.status')}</th>
               </tr>
             </thead>
             <tbody>
               {accounts.map(account => (
                 <tr key={account.id}>
                   <td className="break-word"><strong>{account.name}</strong></td>
-                  <td className={account.description ? undefined : 'muted'}>{account.description || translate("adminPage.noDescription")}</td>
+                  <td className={account.description ? undefined : 'muted'}>{account.description || translate('adminPage.noDescription')}</td>
                   <td><StatusBadge status={account.status} /></td>
                 </tr>
               ))}
@@ -646,34 +646,34 @@ function ServiceAccountsPage() {
       <div className="admin-forms">
         <section className="admin-section">
           <form onSubmit={createAccount} aria-labelledby="admin-create-account-title">
-            <div className="section-heading"><h2 id="admin-create-account-title">{translate("adminPage.addServiceAccount")}</h2></div>
-            <label className="field"><span>{translate("adminPage.serviceAccountName")}</span><input name="name" placeholder={translate("adminPage.eGNemoCuratorProduction")} required /></label>
-            <label className="field"><span>{translate("adminPage.purposeOptional")}</span><input name="description" placeholder={translate("adminPage.eGProductionAudioPreprocessingPipeline")} /></label>
-            <button type="submit" className="button primary">{translate("common.create")}</button>
+            <div className="section-heading"><h2 id="admin-create-account-title">{translate('adminPage.addServiceAccount')}</h2></div>
+            <label className="field"><span>{translate('adminPage.serviceAccountName')}</span><input name="name" placeholder={translate('adminPage.eGNemoCuratorProduction')} required /></label>
+            <label className="field"><span>{translate('adminPage.purposeOptional')}</span><input name="description" placeholder={translate('adminPage.eGProductionAudioPreprocessingPipeline')} /></label>
+            <button type="submit" className="button primary">{translate('common.create')}</button>
           </form>
         </section>
         <section className="admin-section">
           <form onSubmit={issueKey} aria-labelledby="admin-issue-key-title">
-            <div className="section-heading"><h2 id="admin-issue-key-title">{translate("adminPage.issueApiKey2")}</h2></div>
+            <div className="section-heading"><h2 id="admin-issue-key-title">{translate('adminPage.issueApiKey2')}</h2></div>
             <label className="field">
-              <span>{translate("adminPage.serviceAccount")}</span>
+              <span>{translate('adminPage.serviceAccount')}</span>
               <select name="accountId" required defaultValue="">
-                <option value="" disabled>{translate("adminPage.selectAnOption")}</option>
+                <option value="" disabled>{translate('adminPage.selectAnOption')}</option>
                 {accounts.filter(a => a.status === 'active').map(account => <option key={account.id} value={account.id}>{account.name}</option>)}
               </select>
             </label>
             <label className="field">
-              <span>{translate("adminPage.purpose")}</span>
+              <span>{translate('adminPage.purpose')}</span>
               <select name="scope" value={keyScope} onChange={event => setKeyScope(event.target.value as KeyScope)}>
                 {KEY_SCOPE_OPTIONS.map(option => <option key={option.scope} value={option.scope}>{option.label}</option>)}
               </select>
               <small className="muted">{KEY_SCOPE_OPTIONS.find(option => option.scope === keyScope)?.help}</small>
             </label>
-            <label className="field"><span>{translate("adminPage.keyName")}</span><input name="name" placeholder={translate("adminPage.eGProduction202608")} required /></label>
+            <label className="field"><span>{translate('adminPage.keyName')}</span><input name="name" placeholder={translate('adminPage.eGProduction202608')} required /></label>
             {keyScope === 'lineage:write' && (
-              <label className="field"><span>{translate("adminPage.allowedNamespaces")}</span><input name="namespaces" placeholder={translate("adminPage.speechPodcastCommaSeparated")} required /></label>
+              <label className="field"><span>{translate('adminPage.allowedNamespaces')}</span><input name="namespaces" placeholder={translate('adminPage.speechPodcastCommaSeparated')} required /></label>
             )}
-            <button type="submit" className="button primary">{translate("adminPage.showKeyOnce")}</button>
+            <button type="submit" className="button primary">{translate('adminPage.showKeyOnce')}</button>
           </form>
         </section>
       </div>
@@ -703,7 +703,7 @@ function AuditPageView() {
       setAuditEvents(body.events)
       setNextBeforeId(body.nextBeforeId)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
     }
   }, [])
 
@@ -716,7 +716,7 @@ function AuditPageView() {
         setNextBeforeId(body.nextBeforeId)
       })
       .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
+        if (current) setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
       })
     return () => { current = false }
   }, [])
@@ -729,7 +729,7 @@ function AuditPageView() {
       setAuditEvents(current => [...current, ...body.events])
       setNextBeforeId(body.nextBeforeId)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("adminPage.couldNotLoadAuditLogs"))
+      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
     } finally {
       setLoading(false)
     }
@@ -742,22 +742,22 @@ function AuditPageView() {
       <div className="admin-toolbar admin-toolbar--end">
         <button type="button" className="button small" onClick={() => void reload()}>
           <RefreshCw size={14} aria-hidden="true" />
-          {translate("common.update")}</button>
+          {translate('common.update')}</button>
       </div>
       {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {auditEvents.length === 0 ? (
-        <p className="state-message">{translate("adminPage.noRecordsYet")}</p>
+        <p className="state-message">{translate('adminPage.noRecordsYet')}</p>
       ) : (
         <div className="table-scroll">
           <table className="responsive-table audit-table">
             <thead>
               <tr>
-                <th scope="col">{translate("adminPage.time")}</th>
-                {!isNarrow && <th scope="col">{translate("adminPage.actor")}</th>}
-                <th scope="col">{translate("common.actions")}</th>
-                {!isNarrow && <th scope="col">{translate("adminPage.resource")}</th>}
-                <th scope="col">{translate("adminPage.outcome")}</th>
-                <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate("common.showDetails")}</span></th>
+                <th scope="col">{translate('adminPage.time')}</th>
+                {!isNarrow && <th scope="col">{translate('adminPage.actor')}</th>}
+                <th scope="col">{translate('common.actions')}</th>
+                {!isNarrow && <th scope="col">{translate('adminPage.resource')}</th>}
+                <th scope="col">{translate('adminPage.outcome')}</th>
+                <th scope="col" className="responsive-table-toggle"><span className="sr-only">{translate('common.showDetails')}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -772,7 +772,7 @@ function AuditPageView() {
                     onClick={clickEvent => { if (!isFromControl(clickEvent)) toggleRow(event.id) }}
                   >
                     <td>
-                      <time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString(getIntlLocale(), { hour12: false })}</time>
+                      <time dateTime={event.occurred_at}>{fmtDateTimeWithSeconds(event.occurred_at)}</time>
                     </td>
                     {!isNarrow && <td className="audit-label">{event.actor_label}</td>}
                     <td><span title={event.action}>{ACTION_LABELS[event.action] ?? event.action}</span></td>
@@ -788,8 +788,8 @@ function AuditPageView() {
                         <dl className="audit-detail">
                           {isNarrow && (
                             <>
-                              <div><dt>{translate("adminPage.actor")}</dt><dd>{event.actor_label}</dd></div>
-                              <div><dt>{translate("adminPage.resource")}</dt><dd className="mono"><AuditTarget event={event} /></dd></div>
+                              <div><dt>{translate('adminPage.actor')}</dt><dd>{event.actor_label}</dd></div>
+                              <div><dt>{translate('adminPage.resource')}</dt><dd className="mono"><AuditTarget event={event} /></dd></div>
                             </>
                           )}
                           {changes.map((change, index) => (
@@ -809,7 +809,7 @@ function AuditPageView() {
                             ))}
                         </dl>
                         {(!event.details || Object.keys(event.details).length === 0) && (
-                          <p className="muted audit-detail__empty">{translate("adminPage.noDetails")}</p>
+                          <p className="muted audit-detail__empty">{translate('adminPage.noDetails')}</p>
                         )}
                       </td>
                     </tr>
@@ -823,7 +823,7 @@ function AuditPageView() {
       {nextBeforeId && (
         <div className="admin-more">
           <button type="button" className="button small" disabled={loading} onClick={() => void loadMore()}>
-            {loading ? translate("common.loading") : translate("adminPage.showMore")}
+            {loading ? translate('common.loading') : translate('adminPage.showMore')}
           </button>
         </div>
       )}
@@ -845,10 +845,10 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page">
-      <nav className="tabs access-tabs" aria-label={translate('settingsPage.access')}>
-        {canUsers && <NavLink to="/settings/access/users" className="tab">{translate("adminPage.users")}</NavLink>}
-        {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">{translate("adminPage.serviceAccounts")}</NavLink>}
-        {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate("adminPage.audit")}</NavLink>}
+      <nav className="tabs access-tabs" aria-label={translate('section.access')}>
+        {canUsers && <NavLink to="/settings/access/users" className="tab">{translate('section.users')}</NavLink>}
+        {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">{translate('adminPage.serviceAccounts')}</NavLink>}
+        {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate('section.audit')}</NavLink>}
       </nav>
       <Routes>
         <Route index element={<Navigate to={defaultPath} replace />} />

@@ -10,16 +10,16 @@
 // 走査中と結果で骨格 (.scan-figures) を保つ。完了時に「走査済み」が
 // 「オブジェクト / 合計サイズ」へ置き換わるだけで、レイアウトが飛ばない。
 
-import { localizeMessage } from '../../i18n/localizeMessage'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import { ScanResult as ScanResultSchema, type ScanResult } from '../../lib/api/types'
-import { fmtCacheAge, fmtSize } from '../../lib/format'
+import { fmtCacheAge, fmtCount, fmtSize } from '../../lib/format'
 import { Dialog } from '../Dialog'
 import { EstimatePanel } from './EstimatePanel'
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -46,16 +46,16 @@ function Breakdown({ title, rows }: {
         <thead>
           <tr>
             <th scope="col">{title}</th>
-            <th scope="col" className="numeric scan-col-count">{translate("scanModal.count")}</th>
-            <th scope="col" className="numeric scan-col-size">{translate("scanModal.size")}</th>
-            <th scope="col" className="scan-col-meter"><span className="sr-only">{translate("scanModal.shareOfTotalSize")}</span></th>
+            <th scope="col" className="numeric scan-col-count">{translate('scanModal.count')}</th>
+            <th scope="col" className="numeric scan-col-size">{translate('scanModal.size')}</th>
+            <th scope="col" className="scan-col-meter"><span className="sr-only">{translate('scanModal.shareOfTotalSize')}</span></th>
           </tr>
         </thead>
         <tbody>
           {rows.map(r => (
             <tr key={r.label}>
               <td className="mono break-word">{r.label}</td>
-              <td className="numeric mono">{r.objectCount.toLocaleString()}</td>
+              <td className="numeric mono">{fmtCount(r.objectCount)}</td>
               <td className="numeric mono nowrap">{fmtSize(r.totalBytes)}</td>
               <td className="scan-col-meter">
                 <span className="storage-meter" aria-hidden="true">
@@ -122,7 +122,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
           setRunning(false)
           onResult?.(r)
         } else if (job.status === 'error') {
-          setError(job.error ?? translate("scanModal.scanFailed"))
+          setError(job.error ?? translate('scanModal.scanFailed'))
           setRunning(false)
         } else if (job.status === 'canceled') {
           setCanceled(true)
@@ -156,20 +156,20 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
       <>
         <span className="scan-dialog-status">
           <span className="storage-pulse-dot" aria-hidden="true" />
-          {translate("scanModal.scanning")}</span>
-        <button type="button" className="button" onClick={cancel}>{translate("scanModal.cancel")}</button>
+          {translate('scanModal.scanning')}</span>
+        <button type="button" className="button" onClick={cancel}>{translate('scanModal.cancel')}</button>
       </>
     ) : (
       <>
         {scannedAt && (
-          <span className="scan-dialog-status">{translate("scanModal.scannedAt", { value0: fmtCacheAge(new Date(scannedAt)) })}</span>
+          <span className="scan-dialog-status">{translate('scanModal.scannedAt', { value0: fmtCacheAge(new Date(scannedAt)) })}</span>
         )}
         {result ? (
           <button type="button" className="button" onClick={start}>
             <RefreshCw size={14} aria-hidden="true" />
-            {translate("scanModal.scanAgain")}</button>
+            {translate('scanModal.scanAgain')}</button>
         ) : (
-          <button type="button" className="button primary" onClick={start}>{translate("common.scan")}</button>
+          <button type="button" className="button primary" onClick={start}>{translate('common.scan')}</button>
         )}
       </>
     )
@@ -178,8 +178,8 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
   return (
     <Dialog
       titleId={titleId}
-      title={translate("scanModal.directorySummary")}
-      subtitle={`${bucket} / ${prefix || translate("scanModal.bucketRoot")}`}
+      title={translate('scanModal.directorySummary')}
+      subtitle={`${bucket} / ${prefix || translate('scanModal.bucketRoot')}`}
       onClose={onClose}
       size="wide"
       footer={footer}
@@ -198,7 +198,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             className="tab"
             onClick={() => setTab('breakdown')}
           >
-            {translate("common.breakdown")}</button>
+            {translate('common.breakdown')}</button>
           <button
             type="button"
             role="tab"
@@ -208,7 +208,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             className="tab"
             onClick={() => setTab('estimate')}
           >
-            {translate("scanModal.transferEstimate")}</button>
+            {translate('scanModal.transferEstimate')}</button>
         </div>
 
         {tab === 'estimate' ? (
@@ -234,21 +234,21 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               <div className="scan-figures">
                 {running ? (
                   <div className="scan-figure">
-                    <span className="muted">{translate("scanModal.scanned")}</span>
+                    <span className="muted">{translate('scanModal.scanned')}</span>
                     <span className="scan-figure-value">
-                      {scanned.toLocaleString()}<small>{translate("common.items", { count: scanned })}</small>
+                      {fmtCount(scanned)}<small>{translate('common.items', { count: scanned })}</small>
                     </span>
                   </div>
                 ) : result && (
                   <>
                     <div className="scan-figure">
-                      <span className="muted">{translate("scanModal.objects")}</span>
+                      <span className="muted">{translate('scanModal.objects')}</span>
                       <span className="scan-figure-value">
-                        {result.objectCount.toLocaleString()}<small>{translate("common.items", { count: result.objectCount })}</small>
+                        {fmtCount(result.objectCount)}<small>{translate('common.items', { count: result.objectCount })}</small>
                       </span>
                     </div>
                     <div className="scan-figure">
-                      <span className="muted">{translate("scanModal.totalSize")}</span>
+                      <span className="muted">{translate('scanModal.totalSize')}</span>
                       <span className="scan-figure-value">{fmtSize(result.totalBytes)}</span>
                     </div>
                   </>
@@ -258,7 +258,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
 
             {running && (
               <div className="storage-busy-track">
-                <div role="progressbar" aria-label={translate("scanModal.scanning2")} className="storage-busy-bar" />
+                <div role="progressbar" aria-label={translate('scanModal.scanning2')} className="storage-busy-bar" />
               </div>
             )}
 
@@ -266,16 +266,16 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               <>
                 {result.partial && (
                   <p className="notice storage-warning">
-                    {translate("scanModal.anErrorOccurredDuringTheScanTheSummary")}</p>
+                    {translate('scanModal.anErrorOccurredDuringTheScanTheSummary')}</p>
                 )}
                 <Breakdown
-                  title={translate("scanModal.subdirectories")}
+                  title={translate('scanModal.subdirectories')}
                   rows={result.children.map(c => ({
                     label: c.name, objectCount: c.objectCount, totalBytes: c.totalBytes,
                   }))}
                 />
                 <Breakdown
-                  title={translate("scanModal.extensions")}
+                  title={translate('scanModal.extensions')}
                   rows={result.extensions.map(e => ({
                     label: e.ext, objectCount: e.objectCount, totalBytes: e.totalBytes,
                   }))}
@@ -283,10 +283,10 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
               </>
             )}
 
-            {canceled && <p className="muted">{translate("scanModal.canceled")}</p>}
+            {canceled && <p className="muted">{translate('scanModal.canceled')}</p>}
             {error && <p className="notice error">{localizeMessage(error)}</p>}
             {loaded && !result && !running && !error && (
-              <p className="state-message">{translate("scanModal.notScannedYet")}</p>
+              <p className="state-message">{translate('scanModal.notScannedYet')}</p>
             )}
           </div>
         )}

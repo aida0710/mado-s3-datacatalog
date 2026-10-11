@@ -1,13 +1,13 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { api } from '../lib/api/client'
 import { encPath } from '../lib/route'
 import { useCapabilities } from '../lib/useCapabilities'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -119,18 +119,18 @@ export function ReadmeSearchPanel({ connectionId }: Props) {
         <Search size={16} aria-hidden="true" />
         <input
           type="search"
-          placeholder={translate("readmeSearchPanel.searchReadmeContentAtLeast2Characters")}
+          placeholder={translate('readmeSearchPanel.searchReadmeContentAtLeast2Characters')}
           value={q}
           onChange={e => onChangeQ(e.target.value)}
-          aria-label={translate("readmeSearchPanel.searchReadmeContent")}
+          aria-label={translate('readmeSearchPanel.searchReadmeContent')}
         />
-        {loading && <span className="muted nowrap">{translate("common.searching")}</span>}
+        {loading && <span className="muted nowrap">{translate('common.searching')}</span>}
       </div>
 
       {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {hits !== null && hits.length === 0 && !loading && !error && (
-        <p className="muted readme-search__message">{translate("readmeSearchPanel.noMatches")}</p>
+        <p className="muted readme-search__message">{translate('readmeSearchPanel.noMatches')}</p>
       )}
 
       {hits !== null && hits.length > 0 && (
@@ -146,7 +146,7 @@ export function ReadmeSearchPanel({ connectionId }: Props) {
                   {h.prefix || '(root)'}
                 </Link>
                 <span className="muted">
-                  {translate("common.lastBy") + " "}{h.editor} · {fmtTime(h.edited_at)}
+                  {translate('common.lastBy')}{' '}{h.editor} · {fmtTime(h.edited_at)}
                 </span>
               </li>
             )

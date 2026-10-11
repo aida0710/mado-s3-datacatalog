@@ -1,6 +1,6 @@
 export type Locale = 'en' | 'ja'
 
-// Keep this preference separate from the standalone ML Tracking application.
+// 単独で動く ML Tracking とは別の保存キーにする。
 const LOCALE_STORAGE_KEY = 'mado.locale'
 const listeners = new Set<() => void>()
 
@@ -8,19 +8,28 @@ function isLocale(value: unknown): value is Locale {
   return value === 'en' || value === 'ja'
 }
 
+// ブラウザから言語を取れない、または対応していない言語のときに使う。
+const FALLBACK_LOCALE: Locale = 'en'
+
+// 選んで保存した言語を優先し、無ければブラウザの優先言語を順に見る。
 export function initialLocale(): Locale {
   try {
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY)
     if (isLocale(stored)) return stored
   } catch {
-    // Private browsing can disable storage; language selection still works.
+    // プライベートブラウズなどで保存先が使えなくても、言語の切り替えは動かす。
   }
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'ja'
-  for (const language of navigator.languages ?? [navigator.language]) {
-    const supported = language.split('-')[0]
+  return browserLocale() ?? FALLBACK_LOCALE
+}
+
+function browserLocale(): Locale | null {
+  if (typeof navigator === 'undefined') return null
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language]
+  for (const language of languages) {
+    const supported = language?.split('-')[0]
     if (isLocale(supported)) return supported
   }
-  return 'en'
+  return null
 }
 
 let locale = initialLocale()
@@ -49,7 +58,7 @@ export function setLocale(next: Locale): void {
   try {
     localStorage.setItem(LOCALE_STORAGE_KEY, next)
   } catch {
-    // The in-memory choice remains usable when storage is unavailable.
+    // 保存できなくても、開いている間は選んだ言語のまま使える。
   }
 }
 

@@ -1,6 +1,4 @@
-import { translate } from '../i18n/translate'
 import { ALL_CAPABILITIES_ON } from './api/types'
-import { CAPABILITY_UI } from '../i18n/connectionOptions'
 import type {
   Capabilities,
   Capability,
@@ -12,6 +10,8 @@ import type {
   Provider,
   StorageClassKey,
 } from './api/types'
+import { translate } from '../i18n/translate'
+import { CAPABILITY_UI } from '../i18n/connectionOptions'
 
 // 接続フォームの状態と、それを API の入力へ変換する純粋ロジック。
 // 画面 (ConnectionForm) はここを呼ぶだけで、差分の計算をしない。
@@ -137,12 +137,12 @@ export function initialState(current: Connection | null): FormState {
 
 /** 送信前に画面側で弾く不足項目。null なら送ってよい。 */
 export function validateForm(state: FormState, isEdit: boolean): string | null {
-  if (!state.name.trim()) return translate("common.enterAName")
-  if (!state.endpoint.trim()) return translate("connectionFormState.enterAnEndpoint")
-  if (!state.region.trim()) return translate("connectionFormState.enterARegion")
+  if (!state.name.trim()) return translate('common.enterAName')
+  if (!state.endpoint.trim()) return translate('connectionFormState.enterAnEndpoint')
+  if (!state.region.trim()) return translate('connectionFormState.enterARegion')
   if (!isEdit) {
-    if (!state.accessKeyId.trim()) return translate("connectionFormState.enterAnAccessKeyId")
-    if (!state.secretAccessKey) return translate("connectionFormState.enterASecretAccessKey")
+    if (!state.accessKeyId.trim()) return translate('connectionFormState.enterAnAccessKeyId')
+    if (!state.secretAccessKey) return translate('connectionFormState.enterASecretAccessKey')
   }
   return null
 }

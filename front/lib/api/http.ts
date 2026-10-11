@@ -1,7 +1,7 @@
-import { translate } from '../../i18n/translate'
-import { localizeMessage } from '../../i18n/localizeMessage'
 import type { z } from 'zod'
 import { notifyUnauthorized } from './unauthorized-events'
+import { translate } from '../../i18n/translate'
+import { localizeMessage } from '../../i18n/localizeMessage'
 
 export const API_BASE = '/api/internal'
 
@@ -20,7 +20,7 @@ export const cacheKey = (...parts: Array<string | number | null | undefined>): s
 
 /** 401 のときに画面へ出す文言。サーバーの `unauthorized` は利用者に意味が伝わらないので置き換える。 */
 export function getSessionExpiredMessage(): string {
-  return translate("http.yourSessionHasExpiredSignInAgainAnd")
+  return translate('http.yourSessionHasExpiredSignInAgainAnd')
 }
 
 /**

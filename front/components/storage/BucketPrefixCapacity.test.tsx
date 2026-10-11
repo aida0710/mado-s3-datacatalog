@@ -42,7 +42,7 @@ describe('BucketPrefixCapacity', () => {
 
   it('ディレクトリ名のリンクから一覧画面のそのディレクトリへ移動できる', () => {
     mount([prefix('日本語 dir/', 1024)])
-    expect(screen.getByRole('link', { name: '日本語 dir/を開く' }))
+    expect(screen.getByRole('link', { name: '日本語 dir/ を開く' }))
       .toHaveAttribute('href', '/storage/c1/dataset/%E6%97%A5%E6%9C%AC%E8%AA%9E%20dir/')
   })
 

@@ -1,4 +1,3 @@
-import { initializeLocale } from './i18n/locale'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
@@ -17,6 +16,7 @@ import '@mado/design-system/tokens.css'
 import App from './App.tsx'
 import { AuthGate } from './lib/auth.tsx'
 import { initialTheme } from './lib/useTheme'
+import { initializeLocale } from './i18n/locale'
 
 // ログイン画面も含め、最初の描画から保存したテーマ (無ければ OS の設定) で出す。
 document.documentElement.dataset.theme = initialTheme()

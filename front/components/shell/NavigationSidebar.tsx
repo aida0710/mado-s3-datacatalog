@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import type { Navigation } from '../../lib/useNavigation'
 import { NavigationLinkList } from './NavigationLinkList'
 import { NavigationResizeHandle } from './NavigationResizeHandle'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 /**
  * md (900px) 以上の画面の切り替え。名前つきのサイドバーか、lg (1200px) 未満または利用者が
@@ -13,7 +13,7 @@ import { NavigationResizeHandle } from './NavigationResizeHandle'
 export function NavigationSidebar({ navigation }: { navigation: Navigation }) {
   useLocale()
   const isRail = navigation.mode === 'rail'
-  const toggleLabel = isRail ? translate("navigationSidebar.expandSidebar") : translate("navigationSidebar.showSidebarIconsOnly")
+  const toggleLabel = isRail ? translate('navigationSidebar.expandSidebar') : translate('navigationSidebar.showSidebarIconsOnly')
   return (
     <aside className="navigation-sidebar" data-collapsed={isRail ? 'true' : 'false'}>
       <div className="navigation-sidebar-scroll">

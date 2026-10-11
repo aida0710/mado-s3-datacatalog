@@ -7,8 +7,6 @@
 // 親 (ReadmeEditPage / NoteEditPage) は ref から insertAtCursor を呼んでファイル名や
 // パスを Monaco の現在カーソル位置へ挿入する。
 
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { forwardRef, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react'
 import Editor, { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
@@ -16,6 +14,8 @@ import editorWorker from 'monaco-editor/editor/editor.worker.js?worker'
 import type { editor as monacoEditor } from 'monaco-editor'
 import { useDocumentTheme } from '../lib/useDocumentTheme'
 import type { Theme } from '../lib/useTheme'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 declare global {
   interface Window {
@@ -159,7 +159,7 @@ export const MonacoMarkdownEditor = forwardRef<MonacoMarkdownEditorHandle, Props
         theme={THEME_NAMES[theme]}
         onMount={ed => { editorRef.current = ed }}
         options={options}
-        loading={<p className="muted">{translate("monacoMarkdownEditor.loadingEditor")}</p>}
+        loading={<p className="muted">{translate('monacoMarkdownEditor.loadingEditor')}</p>}
       />
     )
   },

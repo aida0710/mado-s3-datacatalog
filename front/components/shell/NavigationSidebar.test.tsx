@@ -31,8 +31,8 @@ describe('NavigationSidebar', () => {
   it('名前つきのサイドバーは、今の画面のリンクに印を付け、畳むボタンと幅を変える境目を出す', () => {
     const value = navigation()
     renderSidebar(value)
-    expect(screen.getByRole('link', { name: 'ストレージ' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'ホーム' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: 'Storage' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
     fireEvent.click(screen.getByRole('button', { name: 'サイドバーをアイコンだけにする' }))
     expect(value.toggleCollapsed).toHaveBeenCalledOnce()
     const handle = screen.getByRole('separator', { name: 'サイドバーの幅' })
@@ -44,7 +44,7 @@ describe('NavigationSidebar', () => {
 
   it('アイコンだけの列では名前をツールチップにし、幅は変えられない', () => {
     renderSidebar(navigation({ mode: 'rail' }))
-    expect(screen.getByRole('link', { name: '設定' })).toHaveAttribute('title', '設定')
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('title', 'Settings')
     expect(screen.getByRole('button', { name: 'サイドバーを広げる' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('separator')).toBeNull()
   })

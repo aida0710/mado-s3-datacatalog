@@ -1,11 +1,11 @@
-import { localizeMessage } from '../../i18n/localizeMessage'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { RegistryDatasetSummary } from '../../lib/api/types'
 import { isFromRowControl } from '../../lib/rowClick'
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 export interface VersionChoice {
   id: string
@@ -32,7 +32,7 @@ function PickedValue({ label, title, identity, onChange }: {
           <strong>{title}</strong>
           <span className="muted mono break-word">{identity}</span>
         </div>
-        <button type="button" className="button small" onClick={onChange}>{translate("common.change")}</button>
+        <button type="button" className="button small" onClick={onChange}>{translate('common.change')}</button>
       </div>
     </div>
   )
@@ -44,7 +44,7 @@ interface DatasetPickerProps {
   label?: string
 }
 
-export function DatasetPicker({ value, onChange, label = translate("common.dataset") }: DatasetPickerProps) {
+export function DatasetPicker({ value, onChange, label = translate('common.dataset') }: DatasetPickerProps) {
   useLocale()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<RegistryDatasetSummary[]>([])
@@ -102,19 +102,19 @@ export function DatasetPicker({ value, onChange, label = translate("common.datas
             setResults([])
             setLoading(next.trim().length > 0)
           }}
-          placeholder={translate("manualLineagePicker.searchByNameDescriptionOrS3Uri")}
+          placeholder={translate('manualLineagePicker.searchByNameDescriptionOrS3Uri')}
           autoComplete="off"
         />
       </label>
-      {loading && <p className="muted lineage-picker__status">{translate("common.searching")}</p>}
+      {loading && <p className="muted lineage-picker__status">{translate('common.searching')}</p>}
       {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
       {results.length > 0 && (
         <div className="table-scroll lineage-picker__results">
           <table className="responsive-table">
             <thead>
               <tr>
-                <th scope="col">{translate("common.dataset")}</th>
-                <th scope="col" className="numeric">{translate("common.version")}</th>
+                <th scope="col">{translate('common.dataset')}</th>
+                <th scope="col" className="numeric">{translate('common.version')}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +130,7 @@ export function DatasetPicker({ value, onChange, label = translate("common.datas
                     </button>
                     <small className="mono break-word">{item.namespace} / {item.name}</small>
                   </td>
-                  <td className="numeric nowrap">{item.versionCount}{translate("common.items", { count: item.versionCount })}</td>
+                  <td className="numeric nowrap">{item.versionCount}{translate('common.items', { count: item.versionCount })}</td>
                 </tr>
               ))}
             </tbody>
@@ -147,7 +147,7 @@ interface VersionPickerProps {
   label?: string
 }
 
-export function VersionPicker({ value, onChange, label = translate("manualLineagePicker.dataVersions") }: VersionPickerProps) {
+export function VersionPicker({ value, onChange, label = translate('manualLineagePicker.dataVersions') }: VersionPickerProps) {
   useLocale()
   const [dataset, setDataset] = useState<RegistryDatasetSummary | null>(null)
   const [versions, setVersions] = useState<Array<{ id: string; version: string }>>([])
@@ -193,7 +193,7 @@ export function VersionPicker({ value, onChange, label = translate("manualLineag
       }} label={label} />
       {dataset && (
         <label className="field">
-          <span>{translate("common.version")}</span>
+          <span>{translate('common.version')}</span>
           <select
             value=""
             disabled={loading || versions.length === 0}
@@ -210,7 +210,7 @@ export function VersionPicker({ value, onChange, label = translate("manualLineag
               })
             }}
           >
-            <option value="">{loading ? translate("common.loading") : versions.length === 0 ? translate("manualLineagePicker.noVersions") : translate("manualLineagePicker.selectAVersion")}</option>
+            <option value="">{loading ? translate('common.loading') : versions.length === 0 ? translate('manualLineagePicker.noVersions') : translate('manualLineagePicker.selectAVersion')}</option>
             {versions.map(version => <option key={version.id} value={version.id}>{version.version}</option>)}
           </select>
         </label>
@@ -245,7 +245,7 @@ export function VersionListPicker({ values, onChange, label }: VersionListPicker
           }}
         >
           <Plus size={14} aria-hidden="true" />
-          {translate("common.add")}</button>
+          {translate('common.add')}</button>
       )}
       {values.length > 0 && (
         <ul className="lineage-version-list__selected">
@@ -255,8 +255,8 @@ export function VersionListPicker({ values, onChange, label }: VersionListPicker
               <button
                 type="button"
                 className="icon-button"
-                aria-label={translate("common.remove")}
-                title={translate("common.remove")}
+                aria-label={translate('common.remove')}
+                title={translate('common.remove')}
                 onClick={() => onChange(values.filter(item => item.id !== value.id))}
               >
                 <X size={16} aria-hidden="true" />

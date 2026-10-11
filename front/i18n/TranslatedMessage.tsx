@@ -9,7 +9,7 @@ interface Props<Key extends MessageKey> {
   values: Record<InterpolationNames<typeof japaneseMessages[Key]>, ReactNode>
 }
 
-// Keep inline markup while allowing each language to choose the sentence's word order.
+// 文の中の強調やリンクを要素のまま保ち、語順は言語ごとの訳文に任せる。
 export function TranslatedMessage<Key extends MessageKey>({ message, values, count }: Props<Key>) {
   useLocale()
   const template = getMessageTemplate(message, { ...values, count })

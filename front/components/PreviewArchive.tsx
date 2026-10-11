@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer, useState, type KeyboardEvent } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -14,6 +11,9 @@ import { absoluteUrl, tarEntryWebUrl } from '../lib/route'
 import { TarEntryModal } from './TarEntryModal'
 import { CacheBanner } from './storage/CacheBanner'
 import { CopyMenu, type MenuItem } from './CopyMenu'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 type Resp = z.infer<typeof TarPreview>
 type Entry = Resp['entries'][number]
@@ -191,7 +191,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
   const sizeSelect = (
     <div className="preview-toolbar">
       <label className="preview-select">
-        {translate("previewArchive.itemsPerPage")}<select
+        {translate('previewArchive.itemsPerPage')}<select
           value={pageSize}
           onChange={e => dispatch({ type: 'setPageSize', size: Number(e.target.value) })}
           disabled={loading}
@@ -222,7 +222,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
         <p className="muted mono">
           {modeLabel}…{' '}
           {progress.entries}
-          {translate("previewArchive.items", { count: progress.entries })}
+          {translate('previewArchive.items', { count: progress.entries })}
           {fmtSize(progress.bytes)}
           {progress.requests > 0 && translate('previewArchive.requests', { value0: progress.requests })}
           {' · '}
@@ -255,15 +255,15 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
     <div className="preview-stack">
       {sizeSelect}
       {data.truncated && (
-        <p className="notice">{translate("previewArchive.theByteLimitHasBeenReachedNoMore")}</p>
+        <p className="notice">{translate('previewArchive.theByteLimitHasBeenReachedNoMore')}</p>
       )}
       <div>
         <div className="table-scroll">
           <table className="preview-archive-table">
             <thead>
               <tr>
-                <th>{translate("common.name")}</th>
-                <th className="numeric">{translate("common.size")}</th>
+                <th>{translate('entryTable.name')}</th>
+                <th className="numeric">{translate('entryTable.size')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -272,7 +272,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                 const items: MenuItem[] = [
                   ...(classify(e.name) === 'audio' ? [{
                     kind: 'action' as const,
-                    label: translate("common.addToPlayer"),
+                    label: translate('common.addToPlayer'),
                     onSelect: () => deck.addTrack({
                       label: e.name,
                       connectionId, bucket, key: k, entryPath: e.name,
@@ -281,12 +281,12 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                   // 種別で出し分けない (EntryTable と同じ理由)。
                   {
                     kind: 'action' as const,
-                    label: translate("common.pin"),
+                    label: translate('common.pin'),
                     onSelect: () => addPin({ connectionId, bucket, key: k, entryPath: e.name }),
                   },
                   {
                     kind: 'download',
-                    label: translate("previewArchive.downloadThisEntry"),
+                    label: translate('previewArchive.downloadThisEntry'),
                     href: api.tarEntryUrl({ connectionId, bucket, key: k, entry: e.name }),
                     filename: e.name.split('/').pop() ?? e.name,
                   },
@@ -295,12 +295,12 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                   // どちらもクリップボードに載せるので絶対 URL にする。
                   {
                     kind: 'copy',
-                    label: translate("common.copyWebUrl"),
+                    label: translate('common.copyWebUrl'),
                     value: absoluteUrl(tarEntryWebUrl({ connectionId, bucket, tarKey: k, entryPath: e.name })),
                   },
                   {
                     kind: 'copy',
-                    label: translate("common.copyRawDataUrl"),
+                    label: translate('common.copyRawDataUrl'),
                     value: absoluteUrl(api.tarEntryUrl({ connectionId, bucket, key: k, entry: e.name })),
                   },
                 ]
@@ -331,7 +331,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
         <div className="table-footer">
           <span className="mono">
             {translate('previewArchive.entriesOnPage', {
-              value0: data.entries.length > 0 ? `${start}-${end}` : translate('previewArchive.noEntries'),
+              value0: data.entries.length > 0 ? `${start}-${end}` : translate('common.noEntries'),
               value1: page,
             })}
             {data.hasMore || data.truncated ? '+' : ''}
@@ -343,8 +343,8 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
               className="icon-button"
               onClick={() => dispatch({ type: 'pagePrev' })}
               disabled={offset === 0 || loading}
-              aria-label={translate("common.previousPage")}
-              title={translate("common.previousPage")}
+              aria-label={translate('common.previousPage')}
+              title={translate('common.previousPage')}
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
@@ -353,8 +353,8 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
               className="icon-button"
               onClick={() => dispatch({ type: 'pageNext' })}
               disabled={data.truncated || loading || data.entries.length === 0}
-              aria-label={translate("common.nextPage")}
-              title={translate("common.nextPage")}
+              aria-label={translate('common.nextPage')}
+              title={translate('common.nextPage')}
             >
               <ChevronRight size={16} aria-hidden="true" />
             </button>

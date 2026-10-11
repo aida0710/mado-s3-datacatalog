@@ -1,5 +1,5 @@
-import { translate } from '../../i18n/translate'
 import { HardDrive, House, Network, Settings, type LucideIcon } from 'lucide-react'
+import { translate } from '../../i18n/translate'
 
 export interface NavigationLink {
   to: string
@@ -9,10 +9,10 @@ export interface NavigationLink {
 
 /** 左のサイドバー (狭い画面ではドロワー) に並べる画面。 */
 export const NAVIGATION_LINKS: readonly NavigationLink[] = [
-  { to: '/', get label() { return translate('navigation.home') }, icon: House },
-  { to: '/storage', get label() { return translate('common.storage') }, icon: HardDrive },
-  { to: '/lineage', get label() { return translate('common.dataLineage') }, icon: Network },
-  { to: '/settings', get label() { return translate('common.settings') }, icon: Settings },
+  { to: '/', get label() { return translate('section.home') }, icon: House },
+  { to: '/storage', get label() { return translate('section.storage') }, icon: HardDrive },
+  { to: '/lineage', get label() { return translate('section.dataLineage') }, icon: Network },
+  { to: '/settings', get label() { return translate('section.settings') }, icon: Settings },
 ]
 
 /** 今の画面がこのリンクの配下か。Home は / のときだけ。 */

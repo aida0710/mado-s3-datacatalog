@@ -28,6 +28,13 @@ describe('language preference', () => {
     expect(initialLocale()).toBe('en')
   })
 
+  it('falls back to English when the browser reports no language', () => {
+    localStorage.removeItem('mado.locale')
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue([])
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue('')
+    expect(initialLocale()).toBe('en')
+  })
+
   it('still switches language when browser storage is unavailable', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Unavailable') })
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Unavailable') })

@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -8,13 +6,15 @@ import { useCodeLanguage } from '../lib/useCodeLanguage'
 import { useSniffedText } from '../lib/useSniffedText'
 import { CodeFormatSelect, CodeView } from './CodeView'
 import { UnsupportedPreview } from './UnsupportedPreview'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 export function PreviewText({ connectionId, bucket, k }: { connectionId: string; bucket: string; k: string }) {
   useLocale()
   const sniffed = useSniffedText(api.textPreviewUrl(connectionId, bucket, k))
 
   if (sniffed.status === 'error') return <p className="notice error">{sniffed.message}</p>
-  if (sniffed.status === 'loading') return <p className="muted">{translate("common.loading")}</p>
+  if (sniffed.status === 'loading') return <p className="muted">{translate('common.loading')}</p>
   if (sniffed.status === 'binary') return <UnsupportedPreview />
   return <TextBody name={k} text={sniffed.text} />
 }
@@ -54,11 +54,11 @@ export function CopyContentButton({ copied, onCopy }: { copied: boolean | null; 
       type="button"
       className="button small"
       onClick={onCopy}
-      title={translate("previewText.copyContent")}
-      aria-label={translate("previewText.copyContent")}
+      title={translate('previewText.copyContent')}
+      aria-label={translate('previewText.copyContent')}
     >
       {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-      {copied == null ? translate("previewText.copyContent") : copied ? translate("common.copied") : translate("common.copyFailed")}
+      {copied == null ? translate('previewText.copyContent') : copied ? translate('common.copied') : translate('common.copyFailed')}
     </button>
   )
 }
