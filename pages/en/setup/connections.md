@@ -16,10 +16,10 @@ Click **追加** (Add) and enter the name, endpoint, region, access key ID, and 
 
 | Field | What to set |
 | --- | --- |
-| **名前** (Name) | Display name shown in the CONNECTION menu and the list |
+| **名前** (Name) | Display name shown in the **Connection** selector in Storage and in the list |
 | **エンドポイント** (Endpoint) | URL of the S3-compatible API |
 | **リージョン** (Region) | Region that the endpoint requires |
-| **アクセスキーID** / **シークレットアクセスキー** (Access key ID / Secret access key) | S3 credentials issued for the endpoint |
+| **アクセスキー ID** / **シークレットアクセスキー** (Access key ID / Secret access key) | S3 credentials issued for the endpoint |
 | path-style | Set to match the endpoint's S3-compatible implementation |
 | ListObjects | v1 or v2. Choose the one the endpoint supports |
 
@@ -27,7 +27,7 @@ Credentials are encrypted when saved. If you don't want to change the existing c
 
 ## Choose the default connection for Storage
 
-Click **デフォルトにする** (Set as default) in the connection list to open that connection whenever you open the Storage tab. You can switch to another connection from the CONNECTION menu.
+Click **デフォルトにする** (Set as default) in the connection list to open that connection whenever you open Storage. You can switch to another connection from the **Connection** selector in Storage.
 
 ## Limit which users can see a connection
 
@@ -42,12 +42,13 @@ Users who are not allowed do not see the connection, and opening its URL directl
 | Setting | When disabled |
 | --- | --- |
 | **バケット / オブジェクトの一覧** (Bucket / object list) | The lists for this connection cannot be opened |
-| **ファイルのプレビュー** (File preview) | Text, images, audio, and video cannot be opened |
+| **ファイルのプレビュー (テキスト / 画像 / 音声 / 動画)** (File preview: text, images, audio, video) | Text, images, audio, and video cannot be opened |
 | **ファイルのダウンロード** (File download) | The download action is not shown |
-| **圧縮ファイルを開く** (Open archive files) | The contents of tar and similar archives cannot be opened |
+| **圧縮ファイル (tar / tar.gz / tar.xz) を開く** (Open archive files: tar, tar.gz, tar.xz) | The contents of tar and similar archives cannot be opened |
 | **音声情報・波形の表示** (Show audio info and waveform) | Audio analysis is not run |
 | **スペクトログラムの表示** (Show spectrogram) | Spectrograms are not shown |
-| **READMEの読み込み / 編集** (Read / edit README) | Reading and writing READMEs is restricted |
+| **README の読み込み** (Read README) | READMEs are not shown (and cannot be edited) |
+| **README の編集** (Edit README) | READMEs cannot be written back to the bucket |
 
 The API also enforces these restrictions. Connection-level restrictions apply to Admins too, so these settings do more than hide buttons.
 
