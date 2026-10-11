@@ -38,6 +38,11 @@ export interface ImportSummary {
   failed: string[]
 }
 
+/** 取り込めなかった 1 件を「名前: 理由」の形で書く。ImportSummary.failed に入れる。 */
+export function describeImportFailure(label: string, error: unknown): string {
+  return `${label}: ${error instanceof Error ? error.message : String(error)}`
+}
+
 export function summaryText(s: ImportSummary): string {
   const parts = [translate('jsonFile.added', { value0: s.added }), translate('jsonFile.skipped', { value0: s.skipped })]
   if (s.removed) parts.push(translate('jsonFile.deleted', { value0: s.removed }))

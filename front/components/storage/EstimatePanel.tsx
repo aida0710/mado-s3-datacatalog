@@ -14,7 +14,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEve
 import { ChevronDown, ChevronRight, TriangleAlert } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { TransferCandidate, TransferEstimate } from '../../lib/api/types'
-import { fmtCacheAge, fmtDurationRange, fmtSize, fmtUsd } from '../../lib/format'
+import { fmtCacheAge, fmtCount, fmtDurationRange, fmtSize, fmtUsd } from '../../lib/format'
 import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
@@ -127,7 +127,7 @@ function CandidateRow({ c, expanded, onToggle }: {
               <CostRow
                 label={translate('estimatePanel.putRequests')}
                 value={c.upfront.putRequests}
-                note={translate('estimatePanel.requests', { value0: c.putRequestCount.toLocaleString() })}
+                note={translate('estimatePanel.requests', { value0: fmtCount(c.putRequestCount) })}
               />
               <CostRow
                 label={translate('estimatePanel.monthlyCost')}
@@ -249,7 +249,7 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
     <div>
       <div className="est-summary">
         <span>
-          <strong>{scan.objectCount.toLocaleString()}</strong> {translate('common.items2', { count: scan.objectCount })}{' '}
+          <strong>{fmtCount(scan.objectCount)}</strong> {translate('common.items2', { count: scan.objectCount })}{' '}
           <strong>{fmtSize(scan.totalBytes)}</strong>
           <span className="muted">{translate('estimatePanel.average', { value0: fmtSize(avg) })}</span>
         </span>

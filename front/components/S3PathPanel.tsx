@@ -143,7 +143,7 @@ export function S3PathPanel({ connectionId }: Props) {
         {canOpenDirectly && openHref && (
           <Link to={openHref} className="s3-path-open">
             <ArrowRight size={14} aria-hidden="true" />
-            {translate('sPathPanel.openPath', { value0: `${parsed!.bucket}/${parsed!.prefix}` })}
+            {translate('common.openPath', { value0: `${parsed!.bucket}/${parsed!.prefix}` })}
           </Link>
         )}
       </div>

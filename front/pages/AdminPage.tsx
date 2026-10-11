@@ -6,8 +6,8 @@ import { fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
 import { narrowerThan } from '../lib/breakpoints'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import { fmtDateTimeWithSeconds } from '../lib/format'
 import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -772,7 +772,7 @@ function AuditPageView() {
                     onClick={clickEvent => { if (!isFromControl(clickEvent)) toggleRow(event.id) }}
                   >
                     <td>
-                      <time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString(getIntlLocale(), { hour12: false })}</time>
+                      <time dateTime={event.occurred_at}>{fmtDateTimeWithSeconds(event.occurred_at)}</time>
                     </td>
                     {!isNarrow && <td className="audit-label">{event.actor_label}</td>}
                     <td><span title={event.action}>{ACTION_LABELS[event.action] ?? event.action}</span></td>

@@ -331,7 +331,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
         <div className="table-footer">
           <span className="mono">
             {translate('previewArchive.entriesOnPage', {
-              value0: data.entries.length > 0 ? `${start}-${end}` : translate('previewArchive.noEntries'),
+              value0: data.entries.length > 0 ? `${start}-${end}` : translate('common.noEntries'),
               value1: page,
             })}
             {data.hasMore || data.truncated ? '+' : ''}

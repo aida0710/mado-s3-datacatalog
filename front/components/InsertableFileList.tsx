@@ -116,7 +116,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
       ) : !data ? (
         <p className="filelist__message muted">{translate('common.loading')}</p>
       ) : data.directories.length === 0 && data.files.length === 0 ? (
-        <p className="filelist__message muted">{translate('insertableFileList.noEntries')}</p>
+        <p className="filelist__message muted">{translate('common.noEntries')}</p>
       ) : (
         <ul className="filelist__rows">
           {data.directories.map(d => {
@@ -138,7 +138,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
                   className="icon-button filelist__open"
                   onClick={() => setPrefix(d)}
                   title={translate('insertableFileList.openThisDirectory')}
-                  aria-label={translate('insertableFileList.open', { value0: base })}
+                  aria-label={translate('common.openPath', { value0: base })}
                 >
                   <ChevronRight size={16} aria-hidden="true" />
                 </button>

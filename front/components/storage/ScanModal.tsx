@@ -14,7 +14,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import { ScanResult as ScanResultSchema, type ScanResult } from '../../lib/api/types'
-import { fmtCacheAge, fmtSize } from '../../lib/format'
+import { fmtCacheAge, fmtCount, fmtSize } from '../../lib/format'
 import { Dialog } from '../Dialog'
 import { EstimatePanel } from './EstimatePanel'
 import { localizeMessage } from '../../i18n/localizeMessage'
@@ -55,7 +55,7 @@ function Breakdown({ title, rows }: {
           {rows.map(r => (
             <tr key={r.label}>
               <td className="mono break-word">{r.label}</td>
-              <td className="numeric mono">{r.objectCount.toLocaleString()}</td>
+              <td className="numeric mono">{fmtCount(r.objectCount)}</td>
               <td className="numeric mono nowrap">{fmtSize(r.totalBytes)}</td>
               <td className="scan-col-meter">
                 <span className="storage-meter" aria-hidden="true">
@@ -236,7 +236,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
                   <div className="scan-figure">
                     <span className="muted">{translate('scanModal.scanned')}</span>
                     <span className="scan-figure-value">
-                      {scanned.toLocaleString()}<small>{translate('common.items', { count: scanned })}</small>
+                      {fmtCount(scanned)}<small>{translate('common.items', { count: scanned })}</small>
                     </span>
                   </div>
                 ) : result && (
@@ -244,7 +244,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
                     <div className="scan-figure">
                       <span className="muted">{translate('scanModal.objects')}</span>
                       <span className="scan-figure-value">
-                        {result.objectCount.toLocaleString()}<small>{translate('common.items', { count: result.objectCount })}</small>
+                        {fmtCount(result.objectCount)}<small>{translate('common.items', { count: result.objectCount })}</small>
                       </span>
                     </div>
                     <div className="scan-figure">

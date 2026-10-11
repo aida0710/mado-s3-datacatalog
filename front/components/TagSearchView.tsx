@@ -6,7 +6,7 @@ import { encPath, fileLinkToDirRedirect, parseS3Path } from '../lib/route'
 import { Dialog } from './Dialog'
 import { TagToggleChips } from './TagToggleChips'
 import { ImportExportButtons } from './ImportExportButtons'
-import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { TranslatedMessage } from '../i18n/TranslatedMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -169,7 +169,7 @@ export function TagSearchView({ connectionId }: Props) {
             const created = await api.createTag({ name, color: colorOf.get(name) ?? '#8e887b' })
             byName = new Map(byName).set(name, created)
           } catch (e) {
-            summary.failed.push(`${name}: ${(e as Error).message}`)
+            summary.failed.push(describeImportFailure(name, e))
           }
         }
       }
@@ -201,7 +201,7 @@ export function TagSearchView({ connectionId }: Props) {
           summary.removed = (summary.removed ?? 0) + 1
           existing.delete(k)
         } catch (e) {
-          summary.failed.push(`${targetUri(h)}: ${(e as Error).message}`)
+          summary.failed.push(describeImportFailure(targetUri(h), e))
         }
       }
     }
@@ -219,7 +219,7 @@ export function TagSearchView({ connectionId }: Props) {
         await api.assignTag({ connectionId, bucket: parsed.bucket, kind: kindOf(parsed.prefix), path: parsed.prefix, tagId: tag.id })
         summary.added++
       } catch (e) {
-        summary.failed.push(`${a.target}: ${(e as Error).message}`)
+        summary.failed.push(describeImportFailure(a.target, e))
       }
     }
     return summary

@@ -7,7 +7,7 @@ import { Dialog } from './Dialog'
 import { TagBadge } from './TagBadge'
 import { ImportExportButtons } from './ImportExportButtons'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
-import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -166,7 +166,7 @@ export function TagsSettings() {
           summary.removed = (summary.removed ?? 0) + 1
           existing.delete(t.name)
         } catch (e) {
-          summary.failed.push(`${t.name}: ${(e as Error).message}`)
+          summary.failed.push(describeImportFailure(t.name, e))
         }
       }
     }
@@ -181,7 +181,7 @@ export function TagsSettings() {
         existing.add(t.name)
         summary.added++
       } catch (e) {
-        summary.failed.push(`${t.name}: ${(e as Error).message}`)
+        summary.failed.push(describeImportFailure(t.name, e))
       }
     }
     return summary

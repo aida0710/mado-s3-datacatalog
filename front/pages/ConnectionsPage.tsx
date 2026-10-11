@@ -7,7 +7,7 @@ import type { Capabilities, Connection } from '../lib/api/types'
 import { ConnectionDeleteConfirm } from '../components/ConnectionDeleteConfirm'
 import { ImportExportButtons } from '../components/ImportExportButtons'
 import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
-import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { invalidateCapabilitiesCache } from '../lib/useCapabilities'
 import { narrowerThan } from '../lib/breakpoints'
 import { useMediaQuery } from '../lib/useMediaQuery'
@@ -203,7 +203,7 @@ export default function ConnectionsPage() {
           summary.removed = (summary.removed ?? 0) + 1
           existing.delete(c.name)
         } catch (e) {
-          summary.failed.push(`${c.name}: ${(e as Error).message}`)
+          summary.failed.push(describeImportFailure(c.name, e))
         }
       }
     }
@@ -234,7 +234,7 @@ export default function ConnectionsPage() {
         existing.add(c.name)
         summary.added++
       } catch (e) {
-        summary.failed.push(`${c.name}: ${(e as Error).message}`)
+        summary.failed.push(describeImportFailure(c.name, e))
       }
     }
     return summary

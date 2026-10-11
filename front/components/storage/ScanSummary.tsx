@@ -4,7 +4,7 @@
 // 結果がボタンの向こうに隠れているのはもったいないので、走査済みなら
 // 数字をその場に出す。未走査のときだけ誘い文句になる。
 
-import { fmtSize } from '../../lib/format'
+import { fmtCount, fmtSize } from '../../lib/format'
 import type { ScanResult } from '../../lib/api/types'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
@@ -39,7 +39,7 @@ export function ScanSummary({ result, running, onOpen }: Props) {
   return (
     <span className="scan-summary">
       {translate('scanSummary.directoryContents')}{' '}
-      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {translate('common.items2', { count: result.objectCount })}{' '}
+      <strong className="mono">{fmtCount(result.objectCount)}</strong> {translate('common.items2', { count: result.objectCount })}{' '}
       <strong className="mono">{fmtSize(result.totalBytes)}</strong>
       {result.partial && (
         <span

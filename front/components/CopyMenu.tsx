@@ -1,10 +1,12 @@
 import {
-  memo, useCallback, useEffect, useLayoutEffect, useRef, useState,
+  memo, useEffect, useRef, useState,
   type CSSProperties, type KeyboardEvent, type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Ellipsis, X } from 'lucide-react'
 import { copyToClipboard } from '../lib/clipboard'
+import { DROPDOWN_VIEWPORT_MARGIN } from '../lib/dropdownPlacement'
+import { useAnchoredPopover } from '../lib/useAnchoredPopover'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -13,15 +15,15 @@ export type MenuItem =
   | { kind: 'download'; label: string; href: string; filename: string }
   | { kind: 'action'; label: string; onSelect: () => void }
 
-// メニュー幅の下限 / 上限。storage.css の .copy-menu-list の min-width / max-width と対で、
-// place() が viewport 幅に丸めるときの基準値にも使う。
-const MENU_MIN_W = 280
-const MENU_MAX_W = 480
+// メニューの幅の下限と上限。中身 (コピーする URL など) に合わせてこの間で広げ、狭い画面では画面に合わせて縮める。
+const MENU_MIN_WIDTH = 280
+const MENU_MAX_WIDTH = 480
+// メニューの高さは画面に収まる範囲で中身に任せる (項目は数個なので上限を設けない)。
+const MENU_MAX_HEIGHT = Number.POSITIVE_INFINITY
 // コピーした結果を見せておく時間。
 const FEEDBACK_MS = 1500
-// メニューと結果の吹き出しをトリガーから離す距離と、画面の端に残す余白。
-const GAP = 6
-const MARGIN = 8
+// 結果の吹き出しをトリガーから離す距離。
+const FEEDBACK_GAP = 6
 
 interface Props {
   items: MenuItem[]
@@ -56,61 +58,16 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
   useLocale()
   const [open, setOpen] = useState(false)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
-  // 確定した fixed 配置。未確定 (null) の間は不可視で描画してチラつきを防ぐ。
-  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const feedbackTimer = useRef<number | null>(null)
-
-  // トリガの実座標から fixed 配置を計算する。横はトリガ右端に揃え、縦は下に
-  // 収まらなければ上向きに開く。メニュー高さは実測 (offsetHeight) を優先し、
-  // レイアウト未確定の環境では項目数からの概算でフォールバックする。
-  const place = useCallback(() => {
-    const trigger = triggerRef.current
-    if (!trigger) return
-    const r = trigger.getBoundingClientRect()
-    const menuH = menuRef.current?.offsetHeight || items.length * 48 + 8
-    const vw = window.innerWidth
-    const spaceBelow = window.innerHeight - r.bottom
-    const up = spaceBelow < menuH + GAP && r.top > spaceBelow
-    // 幅は CSS の min-width/max-width (280/480px) が基本だが、それを viewport 幅にも
-    // 収める。スマホ幅では 280px の min-width が画面からはみ出す原因になるため、
-    // min 側も同じ上限で丸める (inline style は class より優先されるので効く)。
-    const maxW = Math.min(MENU_MAX_W, Math.max(0, vw - MARGIN * 2))
-    const minW = Math.min(MENU_MIN_W, maxW)
-    const menuW = menuRef.current?.offsetWidth || minW
-    // 横はトリガ右端に揃えるが、左端が画面外へ出ないよう right に上限をかける。
-    // 揃えるだけだと、トリガが画面左寄りにある行を狭い画面で開いたとき right が
-    // 大きくなりすぎ、メニューが左へ突き抜けて見切れる。
-    const right = Math.min(
-      Math.max(MARGIN, Math.round(vw - r.right)),
-      Math.max(MARGIN, vw - MARGIN - menuW),
-    )
-    setMenuStyle({
-      position: 'fixed',
-      right,
-      ...(up
-        ? { bottom: Math.round(window.innerHeight - r.top + GAP) }
-        : { top: Math.round(r.bottom + GAP) }),
-      maxHeight: `calc(100vh - ${MARGIN * 2}px)`,
-      maxWidth: maxW,
-      minWidth: minW,
-    })
-  }, [items.length])
-
-  useLayoutEffect(() => {
-    if (!open) { setMenuStyle(null); return }
-    place()
-    // 開いている間はスクロール (capture で入れ子のスクロール枠も拾う) と
-    // リサイズで再配置し、トリガに貼り付いたままにする。
-    window.addEventListener('scroll', place, true)
-    window.addEventListener('resize', place)
-    return () => {
-      window.removeEventListener('scroll', place, true)
-      window.removeEventListener('resize', place)
-    }
-  }, [open, place])
+  // 横はトリガーの右端にそろえ、縦は下に余地が無ければ上向きに開く。開いている間はスクロールと
+  // 画面のサイズ変更に合わせて置き直す。置き場所が決まるまで (undefined) は不可視で描いてチラつきを防ぐ。
+  const menuStyle = useAnchoredPopover({
+    isOpen: open, anchorRef: triggerRef, popoverRef: menuRef,
+    minWidth: MENU_MIN_WIDTH, maxWidth: MENU_MAX_WIDTH, maxHeight: MENU_MAX_HEIGHT, alignment: 'end',
+  })
 
   useEffect(() => {
     if (!open) return
@@ -141,12 +98,12 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
     const style: CSSProperties = r
       ? {
           position: 'fixed',
-          right: Math.max(MARGIN, Math.round(window.innerWidth - r.right)),
+          right: Math.max(DROPDOWN_VIEWPORT_MARGIN, Math.round(window.innerWidth - r.right)),
           ...(r.top > 48
-            ? { bottom: Math.round(window.innerHeight - r.top + GAP) }
-            : { top: Math.round(r.bottom + GAP) }),
+            ? { bottom: Math.round(window.innerHeight - r.top + FEEDBACK_GAP) }
+            : { top: Math.round(r.bottom + FEEDBACK_GAP) }),
         }
-      : { position: 'fixed', right: MARGIN, bottom: MARGIN }
+      : { position: 'fixed', right: DROPDOWN_VIEWPORT_MARGIN, bottom: DROPDOWN_VIEWPORT_MARGIN }
     setFeedback({ text, ok, style })
     if (feedbackTimer.current != null) window.clearTimeout(feedbackTimer.current)
     feedbackTimer.current = window.setTimeout(() => setFeedback(null), FEEDBACK_MS)
@@ -203,6 +160,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
           className="copy-menu-list"
           onKeyDown={stopRowKeys}
           style={{
+            position: 'fixed',
             ...menuStyle,
             // 配置確定前は不可視 (useLayoutEffect が paint 前に確定するのでチラつかない)。
             visibility: menuStyle ? 'visible' : 'hidden',

@@ -1,3 +1,8 @@
+// 表示言語の切り替えをブラウザで確かめる手動の試験 (npm test には入れていない)。
+// 使い方: npm run build のあと npx vite preview --host 127.0.0.1 --port 5781 で画面を立ち上げ、
+//   MADO_PLAYWRIGHT_MODULE=<Playwright の index.mjs> node tests/browser-i18n.mjs
+// を実行する。MADO_CHROMIUM_PATH でブラウザ、MADO_WEB_URL で画面の URL、MADO_SCREENSHOT_DIR で撮影先を変えられる。
+// API は i18nApi.mjs の見本が答えるので、API サーバーや DB は要らない。
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'

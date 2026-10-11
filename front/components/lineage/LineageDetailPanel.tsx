@@ -10,8 +10,8 @@ import {
   lineageStatusTone,
 } from '../../lib/lineage/labels'
 import { encPath, parseS3Path } from '../../lib/route'
+import { fmtDateTimeWithSeconds } from '../../lib/format'
 import { localizeMessage } from '../../i18n/localizeMessage'
-import { getIntlLocale } from '../../i18n/locale'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 
@@ -30,7 +30,7 @@ interface Props {
 function formatTime(value: string | null | undefined): string | null {
   if (!value) return null
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(getIntlLocale(), { hour12: false })
+  return Number.isNaN(date.getTime()) ? value : fmtDateTimeWithSeconds(date)
 }
 
 function display(value: unknown): string {

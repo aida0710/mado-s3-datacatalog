@@ -9,10 +9,9 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { CapacityPoint, CapacityPrefixSummary } from '../../lib/api/types'
-import { fmtCapacityBytes, fmtCapacityDelta } from '../../lib/format'
+import { fmtCapacityBytes, fmtCapacityDelta, fmtCount } from '../../lib/format'
 import { storageDirectoryHref } from '../../lib/route'
 import { localizeMessage } from '../../i18n/localizeMessage'
-import { getIntlLocale } from '../../i18n/locale'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 
@@ -61,7 +60,7 @@ export function BucketPrefixCapacity({
     <section className="capacity-prefixes" aria-label={translate('bucketPrefixCapacity.capacityByImmediateSubdirectoryOf', { value0: bucket })}>
       <div className="capacity-prefixes-heading">
         <h4>{translate('bucketPrefixCapacity.immediateSubdirectories')}</h4>
-        <p className="muted">{translate('bucketPrefixCapacity.largestDirectories', { value0: prefixes.length.toLocaleString(getIntlLocale()) })}</p>
+        <p className="muted">{translate('bucketPrefixCapacity.largestDirectories', { value0: fmtCount(prefixes.length) })}</p>
       </div>
       <div className="table-scroll">
         <table aria-label={translate('bucketPrefixCapacity.immediateSubdirectoriesOf', { value0: bucket })}>
@@ -96,7 +95,7 @@ export function BucketPrefixCapacity({
                   <ShareBar share={bucketTotalBytes > 0 ? restBytes / bucketTotalBytes : 0} />
                 </td>
                 <td className="numeric mono capacity-col-delta">—</td>
-                <td className="numeric mono capacity-col-objects">{Math.max(0, restObjects).toLocaleString(getIntlLocale())}</td>
+                <td className="numeric mono capacity-col-objects">{fmtCount(Math.max(0, restObjects))}</td>
               </tr>
             )}
           </tbody>
@@ -104,7 +103,7 @@ export function BucketPrefixCapacity({
       </div>
       {prefixes.length > INITIAL_VISIBLE_PREFIXES && (
         <button type="button" className="button small capacity-prefixes-more" onClick={() => setShowAll(value => !value)}>
-          {showAll ? translate('bucketPrefixCapacity.showOnlyTheTop', { value0: INITIAL_VISIBLE_PREFIXES }) : translate('bucketPrefixCapacity.showMore', { value0: hiddenCount.toLocaleString(getIntlLocale()) })}
+          {showAll ? translate('bucketPrefixCapacity.showOnlyTheTop', { value0: INITIAL_VISIBLE_PREFIXES }) : translate('bucketPrefixCapacity.showMore', { value0: fmtCount(hiddenCount) })}
         </button>
       )}
     </section>
@@ -144,7 +143,7 @@ function PrefixRow({ connectionId, bucket, prefix, share, open, onToggle, days, 
             <Link
               className="capacity-open-link"
               to={storageDirectoryHref(connectionId, bucket, prefix.prefix)}
-              aria-label={translate('bucketPrefixCapacity.open', { value0: prefix.prefix })}
+              aria-label={translate('common.openPath', { value0: prefix.prefix })}
             >
               {translate('common.open')}<ArrowRight size={12} aria-hidden="true" />
             </Link>
@@ -155,7 +154,7 @@ function PrefixRow({ connectionId, bucket, prefix, share, open, onToggle, days, 
         <td className="numeric mono nowrap capacity-col-delta">
           {prefix.previous ? fmtCapacityDelta({ current: prefix.totalBytes, previous: prefix.previous.totalBytes }) : '—'}
         </td>
-        <td className="numeric mono capacity-col-objects">{prefix.objectCount.toLocaleString(getIntlLocale())}</td>
+        <td className="numeric mono capacity-col-objects">{fmtCount(prefix.objectCount)}</td>
       </tr>
       {open && (
         <tr id={trendId} className="capacity-trend-row">

@@ -5,12 +5,11 @@ import { api } from '../lib/api/client'
 import type { CapacityBucketHistory, CapacityOverview, CapacityScanJob } from '../lib/api/types'
 import { useAuth } from '../lib/auth-context'
 import { useConnection } from '../lib/connectionContext'
-import { fmtCapacityBytes, fmtCapacityDelta } from '../lib/format'
+import { fmtCapacityBytes, fmtCapacityDelta, fmtCount, fmtDateTimeWithSeconds } from '../lib/format'
 import { storageDirectoryHref } from '../lib/route'
 import { ViewBreadcrumb } from '../components/ViewBreadcrumb'
 import { BucketPrefixCapacity } from '../components/storage/BucketPrefixCapacity'
 import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -99,7 +98,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
     setNotice(null)
     try {
       const result = await api.startCapacityScan(connectionId)
-      setNotice(translate('capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement', { value0: result.jobs.length.toLocaleString(getIntlLocale()) }))
+      setNotice(translate('capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement', { value0: fmtCount(result.jobs.length) }))
       setOverview(await api.capacityOverview(connectionId, days))
       setClock(Date.now())
       setError(null)
@@ -132,8 +131,8 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
       {overview && (
         <dl className="capacity-summary">
           <Metric label={translate('capacityMetricsPage.totalBucketCapacity')} value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
-          <Metric label={translate('capacityMetricsPage.totalBucketObjectCount')} value={measuredCount ? totalObjects.toLocaleString(getIntlLocale()) : '—'} />
-          <Metric label={translate('capacityMetricsPage.measurementCoverage')} value={translate('capacityMetricsPage.buckets', { value0: measuredCount.toLocaleString(getIntlLocale()), value1: bucketCount.toLocaleString(getIntlLocale()) })} />
+          <Metric label={translate('capacityMetricsPage.totalBucketObjectCount')} value={measuredCount ? fmtCount(totalObjects) : '—'} />
+          <Metric label={translate('capacityMetricsPage.measurementCoverage')} value={translate('capacityMetricsPage.buckets', { value0: fmtCount(measuredCount), value1: fmtCount(bucketCount) })} />
         </dl>
       )}
 
@@ -229,7 +228,7 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
         <span className="storage-pulse-dot" aria-hidden="true" />
         <div>
           <p className="capacity-activity-title">{translate('capacityMetricsPage.waitingForMeasurementToStart')}</p>
-          <p className="muted">{translate('capacityMetricsPage.bucketsQueued', { value0: queuedCount.toLocaleString(getIntlLocale()) })}</p>
+          <p className="muted">{translate('capacityMetricsPage.bucketsQueued', { value0: fmtCount(queuedCount) })}</p>
         </div>
       </div>
     )
@@ -242,8 +241,8 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
         <p className="muted mono">
           {translate('capacityMetricsPage.scanProgress', {
             value0: currentMinute(running.startedAt ?? running.createdAt, now),
-            value1: running.objectCount.toLocaleString(getIntlLocale()),
-            value2: queuedCount.toLocaleString(getIntlLocale()),
+            value1: fmtCount(running.objectCount),
+            value2: fmtCount(queuedCount),
           })}
         </p>
       </div>
@@ -268,7 +267,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <div className="capacity-bucket-actions">
           {scanJob && (
             <span className={`status-badge ${scanJob.status === 'running' ? 'status-running' : 'status-queued'}`}>
-              {scanJob.status === 'running' ? translate('capacityMetricsPage.scanningItems', { value0: scanJob.objectCount.toLocaleString(getIntlLocale()) }) : translate('capacityMetricsPage.waitingForMeasurement')}
+              {scanJob.status === 'running' ? translate('capacityMetricsPage.scanningItems', { value0: fmtCount(scanJob.objectCount) }) : translate('capacityMetricsPage.waitingForMeasurement')}
             </span>
           )}
           <Link className="capacity-open-link" to={storageDirectoryHref(connectionId, history.bucket, '')}>
@@ -279,8 +278,8 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
       <dl className="capacity-metrics">
         <CompactMetric label={translate('capacityMetricsPage.currentCapacity')} value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
         <CompactMetric label={translate('common.changeSincePrevious')} value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
-        <CompactMetric label={translate('common.objectCount')} value={latest ? latest.objectCount.toLocaleString(getIntlLocale()) : '—'} />
-        <CompactMetric label={translate('capacityMetricsPage.lastRetrieved')} value={latest ? new Date(latest.collectedAt).toLocaleString(getIntlLocale()) : '—'} />
+        <CompactMetric label={translate('common.objectCount')} value={latest ? fmtCount(latest.objectCount) : '—'} />
+        <CompactMetric label={translate('capacityMetricsPage.lastRetrieved')} value={latest ? fmtDateTimeWithSeconds(latest.collectedAt) : '—'} />
       </dl>
       {history.lastError && !scanJob && <p className="notice error">{localizeMessage(history.lastError)}</p>}
       <div className="capacity-chart">
