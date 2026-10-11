@@ -27,6 +27,12 @@ UserInfoには現在のgroupを返すmappingが必要です。IdP停止時は確
 refresh tokenを発行しない構成ではaccess tokenの有効期限ごとに再ログインになります。
 Authentikの[OAuth2/OIDC Providerの手順](https://docs.goauthentik.io/add-secure-apps/providers/oauth2/)も参照してください。
 
+7日保持するには、［Applications］→［Providers］でMadoのProviderを編集し、
+［Advanced protocol settings］の［Scopes］に標準の
+「authentik default OAuth Mapping: OpenID 'offline_access'」を追加します。
+［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。
+［Access Token Validity］は`minutes=5`のままで更新できます。
+
 migration 037より前に作ったSSO sessionはtokenを保持していないため、更新後に一度だけ
 ログインし直します。Local sessionはそのまま使えます。
 
@@ -42,18 +48,24 @@ server-side sessionも失効します。Madoは署名、issuer、audience、発�
 ```dotenv
 AUTH_MODE=hybrid
 AUTH_COOKIE_SECURE=true
+AUTH_SESSION_IDLE_SECONDS=604800
+AUTH_SESSION_ABSOLUTE_SECONDS=604800
 OIDC_ISSUER_URL=https://auth.example/application/o/mado/
 OIDC_CLIENT_ID=...
 OIDC_CLIENT_SECRET=...
 OIDC_REDIRECT_URI=https://mado.example/api/auth/oidc/callback
 OIDC_POST_LOGOUT_REDIRECT_URI=https://mado.example/
 OIDC_LABEL=Authentik
-OIDC_SCOPES=openid email profile
+OIDC_SCOPES=openid email profile offline_access
 OIDC_AUTO_LINK_VERIFIED_EMAIL=false
 OIDC_ALLOWED_GROUPS=mado-users,mado-admins,mado-curators,mado-operators
 OIDC_ROLE_MAPPING_JSON={"mado-admins":"admin","mado-curators":"curator","mado-operators":"operator","mado-users":"viewer"}
 OIDC_DEFAULT_ROLE=viewer
 ```
+
+この設定では、操作しない期間を含め、ログインから7日保持します。既存の`.env`も更新し、
+APIを再起動してください。設定例や既定値を変えても、既存の値は自動で変わりません。
+反映後、一度ログインし直してrefresh tokenを取得します。
 
 ## UserとRoleの同期規則
 
@@ -69,8 +81,8 @@ OIDC_DEFAULT_ROLE=viewer
 Role同期を使う環境では、SSO UserのRoleをMado画面から一時的に変えても次回ログインで
 Authentik側の状態へ戻ります。恒久変更はAuthentik groupで行います。
 
-groupの判定とRoleの同期はログインのときにだけ行います。Authentik側でgroupから外しても、
-Madoにログイン中のsessionは期限（`AUTH_SESSION_ABSOLUTE_SECONDS`、既定7日）まで元の権限のままです。
+groupの判定とRoleの同期はログイン時と、使用中のSSO sessionの再確認（1分ごと）で行います。
+Authentik側で許可groupから外したりRoleを変えたりすると、次の再確認でsessionが失効します。
 すぐに止めたいときは、MadoのSettings > Access > UsersでそのUserを無効にしてください。
 無効にするとsessionはその場で失効します。
 

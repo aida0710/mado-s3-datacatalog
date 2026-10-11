@@ -21,6 +21,9 @@ describe('loadEnv', () => {
     expect(env.PREVIEW_TAR_ENTRY_MAX_BYTES).toBe(100 * 1024 * 1024)
     expect(env.AUTH_MODE).toBe('disabled')
     expect(env.AUTH_COOKIE_SECURE).toBe(false)
+    expect(env.AUTH_SESSION_IDLE_SECONDS).toBe(604800)
+    expect(env.AUTH_SESSION_ABSOLUTE_SECONDS).toBe(604800)
+    expect(env.OIDC_SCOPES).toBe('openid email profile offline_access')
   })
 
   it('ALLOWED_ORIGINS はカンマで分け、空白を除き、空要素を落とす', () => {
