@@ -80,7 +80,7 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
   return (
     <div className="preview-stack preview-audio">
       {srcLoading && <p className="muted">{translate("previewAudio.fetchingAudio")}</p>}
-      {srcError && <p className="notice error">{translate("previewAudio.couldNotFetchAudio") + " "}{srcError}</p>}
+      {srcError && <p className="notice error">{translate("previewAudio.couldNotFetchAudio") + " "}{localizeMessage(srcError)}</p>}
       {src && <audio ref={audioRef} src={src} controls preload="metadata" />}
       {/* analyzing は初期値 true のまま据え置く (effect 内の同期 setState は
           react-hooks/set-state-in-effect に引っかかる) ので、権限側で出し分ける。 */}

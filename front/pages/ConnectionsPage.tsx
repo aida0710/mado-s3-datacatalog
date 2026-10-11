@@ -318,7 +318,7 @@ export default function ConnectionsPage() {
               type="button"
               className="button small"
               onClick={() => void handleSetDefault(connection.id)}
-              title={translate("connectionsPage.openThisConnectionFromTheStorageTab")}
+              title={translate('connectionsPage.makeThisTheConnectionStorageOpens')}
             >
               {translate("connectionsPage.setAsDefault")}</button>
           )}

@@ -147,7 +147,7 @@ export function fmtCacheAge(d: Date, now: Date = new Date(), opts: CacheAgeOptio
     : min < 60 ? formatTimeAgo(min, 'minute')
     : min < 60 * 24 ? formatTimeAgo(Math.floor(min / 60), 'hour')
     : formatTimeAgo(Math.floor(min / (60 * 24)), 'day')
-  return `${abs}(${rel})`
+  return translate('format.timeWithRelative', { value0: abs, value1: rel })
 }
 
 

@@ -251,11 +251,11 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
         <span>
           <strong>{scan.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: scan.objectCount })}{' '}
           <strong>{fmtSize(scan.totalBytes)}</strong>
-          <span className="muted">{translate("estimatePanel.average") + " "}{fmtSize(avg)}）</span>
+          <span className="muted">{translate('estimatePanel.average', { value0: fmtSize(avg) })}</span>
         </span>
         <span className="muted">
           {translate("estimatePanel.source") + " "}{source.name}
-          {source.provider !== 'aws' && `（${PROVIDER_LABELS[source.provider]}）`}
+          {source.provider !== 'aws' && translate('common.parenthetical', { value0: PROVIDER_LABELS[source.provider] })}
         </span>
       </div>
 

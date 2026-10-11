@@ -33,12 +33,15 @@ const WIDE_FIT_VIEW = { padding: 0.2, maxZoom: 1.15 }
 const NARROW_FIT_VIEW = { ...WIDE_FIT_VIEW, minZoom: 0.5 }
 
 // グラフの操作ボタンとミニマップの名前 (ツールチップにも出る)。React Flow の既定は英語。
-const ARIA_LABELS = {
-  get 'controls.ariaLabel'() { return translate("lineageGraph.graphControls") },
-  get 'controls.zoomIn.ariaLabel'() { return translate("lineageGraph.zoomIn") },
-  get 'controls.zoomOut.ariaLabel'() { return translate("lineageGraph.zoomOut") },
-  get 'controls.fitView.ariaLabel'() { return translate("lineageGraph.fitToView") },
-  get 'minimap.ariaLabel'() { return translate("lineageGraph.graphOverview") },
+// React Flow は渡したオブジェクトが替わったときだけ名前を読み直すので、言語ごとに作り直して渡す。
+function lineageAriaLabels() {
+  return {
+    'controls.ariaLabel': translate('lineageGraph.graphControls'),
+    'controls.zoomIn.ariaLabel': translate('lineageGraph.zoomIn'),
+    'controls.zoomOut.ariaLabel': translate('lineageGraph.zoomOut'),
+    'controls.fitView.ariaLabel': translate('lineageGraph.fitToView'),
+    'minimap.ariaLabel': translate('lineageGraph.graphOverview'),
+  }
 }
 
 interface Props {
@@ -63,6 +66,7 @@ function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: Ca
   const { fitView } = useReactFlow<LineageFlowNode>()
   const narrow = useMediaQuery(narrowerThan('md'))
   const focusedSelection = useRef('')
+  const ariaLabels = useLocalizedMemo(() => lineageAriaLabels(), [])
   const { nodes, edges } = useLocalizedMemo(() => {
     const elements = toFlowElements(graph)
     const traced = selectedId
@@ -136,7 +140,7 @@ function Canvas({ graph, selectedId, direction, onSelect, onClearSelection }: Ca
         fitViewOptions={narrow ? NARROW_FIT_VIEW : WIDE_FIT_VIEW}
         minZoom={0.18}
         maxZoom={2}
-        ariaLabelConfig={ARIA_LABELS}
+        ariaLabelConfig={ariaLabels}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
         <Controls showInteractive={false} />

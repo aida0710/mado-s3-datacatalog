@@ -49,6 +49,25 @@ describe('localized application messages', () => {
     expect(localizeMessage('custom service detail')).toBe('custom service detail')
   })
 
+  it('rebuilds a captured notice from its key and values after the language changes', () => {
+    setLocale('ja')
+    const notice = translate('capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement', { value0: '1' })
+    setLocale('en')
+    expect(localizeMessage(notice)).toBe(translate('capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement', { value0: '1' }))
+    setLocale('ja')
+    expect(localizeMessage(notice)).toBe('1バケットの計測を開始しました。完了すると順次反映されます。')
+  })
+
+  it('leaves text that only resembles a short screen label unchanged', () => {
+    for (const locale of ['ja', 'en'] as const) {
+      setLocale(locale)
+      expect(localizeMessage('object changed; retry the request')).toBe('object changed; retry the request')
+      expect(localizeMessage('password was changed by another request')).toBe('password was changed by another request')
+      expect(localizeMessage('Open the door')).toBe('Open the door')
+      expect(localizeMessage('タイムアウトまで3日')).toBe('タイムアウトまで3日')
+    }
+  })
+
   it('uses singular count labels and duration units only for one item', () => {
     setLocale('en')
     expect(translate('common.items', { count: 0 })).toBe(' items')

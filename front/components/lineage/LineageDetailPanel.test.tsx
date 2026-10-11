@@ -67,7 +67,7 @@ describe('LineageDetailPanel', () => {
         />
       </MemoryRouter>,
     )
-    expect(screen.queryByRole('link', { name: /Storageで開く/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'この保存場所をストレージで開く' })).toBeNull()
   })
 
   it('README の根拠・実行設定・取得元を出す', () => {

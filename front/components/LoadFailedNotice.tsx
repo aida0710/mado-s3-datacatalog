@@ -21,7 +21,7 @@ export function LoadFailedNotice({ subject, reason, onRetry, children }: Props) 
     <div className="notice error" role="alert">
       <AlertCircle size={16} aria-hidden="true" />
       <span>
-        {translate("loadFailedNotice.loadFailed", { value0: subject })}{reason && `（${localizeMessage(reason)}）`}
+        {translate("loadFailedNotice.loadFailed", { value0: subject })}{reason && translate('common.parenthetical', { value0: localizeMessage(reason) })}
         {children && <span className="load-failed__note">{children}</span>}
       </span>
       <button type="button" className="button small" onClick={onRetry}>
