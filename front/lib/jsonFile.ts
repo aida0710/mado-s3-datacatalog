@@ -1,5 +1,7 @@
 // JSON ファイルの書き出し / 読み込み。接続とタグのインポート / エクスポートで共用する。
 
+import { translate } from '../i18n/translate'
+
 // data URL ではなく Blob + createObjectURL を使う。JSON が大きくなったとき
 // data URL は URL 長の上限に当たることがあるため。
 export function downloadJson(filename: string, data: unknown): void {
@@ -20,7 +22,7 @@ export async function readJsonFile(file: File): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown
   } catch {
-    throw new Error('JSON として読めませんでした。')
+    throw new Error(translate("jsonFile.couldNotParseAsJson"))
   }
 }
 
@@ -37,9 +39,9 @@ export interface ImportSummary {
 }
 
 export function summaryText(s: ImportSummary): string {
-  const parts = [`追加 ${s.added} 件`, `スキップ ${s.skipped} 件`]
-  if (s.removed) parts.push(`削除 ${s.removed} 件`)
-  if (s.failed.length > 0) parts.push(`失敗 ${s.failed.length} 件`)
+  const parts = [translate("jsonFile.added", { value0: s.added }), translate("jsonFile.skipped", { value0: s.skipped })]
+  if (s.removed) parts.push(translate("jsonFile.deleted", { value0: s.removed }))
+  if (s.failed.length > 0) parts.push(translate("jsonFile.failed", { value0: s.failed.length }))
   return parts.join(' / ')
 }
 

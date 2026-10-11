@@ -1,3 +1,5 @@
+import { translate } from '../../i18n/translate'
+import { localizeMessage } from '../../i18n/localizeMessage'
 import type { z } from 'zod'
 import { notifyUnauthorized } from './unauthorized-events'
 
@@ -17,14 +19,16 @@ export const cacheKey = (...parts: Array<string | number | null | undefined>): s
   parts.map(p => p ?? '').join('|')
 
 /** 401 のときに画面へ出す文言。サーバーの `unauthorized` は利用者に意味が伝わらないので置き換える。 */
-export const SESSION_EXPIRED_MESSAGE = 'セッションが切れました。ログインし直してから、もう一度お試しください。'
+export function getSessionExpiredMessage(): string {
+  return translate("http.yourSessionHasExpiredSignInAgainAnd")
+}
 
 /**
  * サーバーが `{ error }` を返していればその文言、無ければ statusText を Error にする。
- * 401 だけは、ログインし直せば直ることが分かるよう、決まった日本語にする。
+ * 401は再ログインの案内にし、既知のエラーは選択中の言語で表示する。
  */
 export async function errorFromResponse(res: Response): Promise<Error> {
-  if (res.status === 401) return new Error(SESSION_EXPIRED_MESSAGE)
+  if (res.status === 401) return new Error(getSessionExpiredMessage())
   let message = res.statusText
   try {
     const body = (await res.json()) as { error?: string }
@@ -32,7 +36,7 @@ export async function errorFromResponse(res: Response): Promise<Error> {
   } catch {
     /* JSON でないエラーボディ — statusText をそのまま使う */
   }
-  return new Error(message)
+  return new Error(localizeMessage(message))
 }
 
 /**

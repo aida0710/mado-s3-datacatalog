@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useReducer, useState, type KeyboardEvent } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -121,6 +124,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
   initialEntry?: string | null
   onEntryChange?: (entryPath: string | null) => void
 }) {
+  useLocale()
   const deck = usePlayerDeck()
   const { addPin } = usePinnedPreviews()
   // 行クリックで積んだエントリ。size を出すためだけの enrichment で、開閉の真実源ではない。
@@ -187,8 +191,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
   const sizeSelect = (
     <div className="preview-toolbar">
       <label className="preview-select">
-        表示件数
-        <select
+        {translate("previewArchive.itemsPerPage")}<select
           value={pageSize}
           onChange={e => dispatch({ type: 'setPageSize', size: Number(e.target.value) })}
           disabled={loading}
@@ -207,21 +210,21 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
     </div>
   )
 
-  if (error) return <p className="notice error">{error}</p>
+  if (error) return <p className="notice error">{localizeMessage(error)}</p>
   if (!data) {
     const modeLabel =
-      progress.mode === 'range'  ? 'range request'
-      : progress.mode === 'stream' ? 'streaming decode'
-      : 'connecting'
+      progress.mode === 'range' ? translate('previewArchive.fetchingParts')
+      : progress.mode === 'stream' ? translate('previewArchive.decompressing')
+      : translate('previewArchive.connecting')
     return (
       <div className="preview-stack">
         {sizeSelect}
         <p className="muted mono">
           {modeLabel}…{' '}
           {progress.entries}
-          {' 件 · '}
+          {translate("previewArchive.items", { count: progress.entries })}
           {fmtSize(progress.bytes)}
-          {progress.requests > 0 && <>{' · '}{progress.requests}{' req'}</>}
+          {progress.requests > 0 && translate('previewArchive.requests', { value0: progress.requests })}
           {' · '}
           {progress.elapsed.toFixed(1)}
           {'s'}
@@ -252,15 +255,15 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
     <div className="preview-stack">
       {sizeSelect}
       {data.truncated && (
-        <p className="notice">バイト上限に到達しました。これ以降は読み込めません。</p>
+        <p className="notice">{translate("previewArchive.theByteLimitHasBeenReachedNoMore")}</p>
       )}
       <div>
         <div className="table-scroll">
           <table className="preview-archive-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th className="numeric">Size</th>
+                <th>{translate("common.name")}</th>
+                <th className="numeric">{translate("common.size")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -269,7 +272,7 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                 const items: MenuItem[] = [
                   ...(classify(e.name) === 'audio' ? [{
                     kind: 'action' as const,
-                    label: 'デッキに追加',
+                    label: translate("common.addToPlayer"),
                     onSelect: () => deck.addTrack({
                       label: e.name,
                       connectionId, bucket, key: k, entryPath: e.name,
@@ -278,12 +281,12 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                   // 種別で出し分けない (EntryTable と同じ理由)。
                   {
                     kind: 'action' as const,
-                    label: 'ピン留め',
+                    label: translate("common.pin"),
                     onSelect: () => addPin({ connectionId, bucket, key: k, entryPath: e.name }),
                   },
                   {
                     kind: 'download',
-                    label: 'このエントリをダウンロード',
+                    label: translate("previewArchive.downloadThisEntry"),
                     href: api.tarEntryUrl({ connectionId, bucket, key: k, entry: e.name }),
                     filename: e.name.split('/').pop() ?? e.name,
                   },
@@ -292,12 +295,12 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
                   // どちらもクリップボードに載せるので絶対 URL にする。
                   {
                     kind: 'copy',
-                    label: 'Web URL をコピー',
+                    label: translate("common.copyWebUrl"),
                     value: absoluteUrl(tarEntryWebUrl({ connectionId, bucket, tarKey: k, entryPath: e.name })),
                   },
                   {
                     kind: 'copy',
-                    label: '生データ URL をコピー',
+                    label: translate("common.copyRawDataUrl"),
                     value: absoluteUrl(api.tarEntryUrl({ connectionId, bucket, key: k, entry: e.name })),
                   },
                 ]
@@ -327,10 +330,10 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
         </div>
         <div className="table-footer">
           <span className="mono">
-            {data.entries.length > 0
-              ? `${start}-${end}`
-              : 'no entries'}
-            {' / page '}{page}
+            {translate('previewArchive.entriesOnPage', {
+              value0: data.entries.length > 0 ? `${start}-${end}` : translate('previewArchive.noEntries'),
+              value1: page,
+            })}
             {data.hasMore || data.truncated ? '+' : ''}
           </span>
           {/* 一覧のページャ (storage/Pager.tsx) と同じく、前後はアイコンのボタン。 */}
@@ -340,8 +343,8 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
               className="icon-button"
               onClick={() => dispatch({ type: 'pagePrev' })}
               disabled={offset === 0 || loading}
-              aria-label="前のページへ"
-              title="前のページへ"
+              aria-label={translate("common.previousPage")}
+              title={translate("common.previousPage")}
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
@@ -350,8 +353,8 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
               className="icon-button"
               onClick={() => dispatch({ type: 'pageNext' })}
               disabled={data.truncated || loading || data.entries.length === 0}
-              aria-label="次のページへ"
-              title="次のページへ"
+              aria-label={translate("common.nextPage")}
+              title={translate("common.nextPage")}
             >
               <ChevronRight size={16} aria-hidden="true" />
             </button>

@@ -4,6 +4,8 @@
 // 結果がボタンの向こうに隠れているのはもったいないので、走査済みなら
 // 数字をその場に出す。未走査のときだけ誘い文句になる。
 
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { fmtSize } from '../../lib/format'
 import type { ScanResult } from '../../lib/api/types'
 
@@ -18,38 +20,37 @@ interface Props {
 }
 
 export function ScanSummary({ result, running, onOpen }: Props) {
+  useLocale()
   // 走査中は前回の結果より現在の状態を優先して伝える。
   if (running) {
     return (
       <button type="button" className="link-button" onClick={onOpen}>
-        配下を走査中…
-      </button>
+        {translate("scanSummary.scanningDirectory")}</button>
     )
   }
 
   if (!result) {
     return (
       <button type="button" className="link-button" onClick={onOpen}>
-        配下を集計する
-      </button>
+        {translate("scanSummary.summarizeDirectory")}</button>
     )
   }
 
   return (
     <span className="scan-summary">
-      配下{' '}
-      <strong className="mono">{result.objectCount.toLocaleString()}</strong> 件 /{' '}
+      {translate("scanSummary.directoryContents")}{' '}
+      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: result.objectCount })}{' '}
       <strong className="mono">{fmtSize(result.totalBytes)}</strong>
       {result.partial && (
         <span
           className="scan-summary-partial"
-          title="走査中にエラーが出たため、集計は途中までです"
-          aria-label="集計は途中まで"
+          title={translate("scanSummary.anErrorOccurredDuringTheScanTheSummary")}
+          aria-label={translate("scanSummary.partialSummary")}
         >
           *
         </span>
       )}
-      <button type="button" className="link-button" onClick={onOpen}>内訳</button>
+      <button type="button" className="link-button" onClick={onOpen}>{translate("common.breakdown")}</button>
     </span>
   )
 }

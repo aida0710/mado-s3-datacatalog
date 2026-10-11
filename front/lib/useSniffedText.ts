@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
 import { api } from './api/client'
 import { looksBinary, TEXT_HEAD_BYTES } from './textSniff'
 
@@ -41,5 +43,9 @@ export function useSniffedText(url: string): SniffedText {
     return () => { cancelled = true }
   }, [url])
 
-  return result?.url === url ? result.value : LOADING
+  return useLocalizedMemo<SniffedText>(() => {
+    if (result?.url !== url) return LOADING
+    if (result.value.status !== 'error') return result.value
+    return { ...result.value, message: localizeMessage(result.value.message) }
+  }, [result, url])
 }

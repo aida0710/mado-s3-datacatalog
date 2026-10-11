@@ -1,3 +1,7 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { lazy, Suspense, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
@@ -18,7 +22,7 @@ const loadHomeNote = () => api.note('home')
 function formatEditedAt(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleString('ja-JP', {
+  return d.toLocaleString(getIntlLocale(), {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
@@ -29,13 +33,14 @@ function formatEditedAt(iso: string): string {
 
 // 最後に編集した人と日時を、見出しの下の一行にする。片方しか無ければある方だけで書く。
 function lastEditedSummary(editor: string | null, when: string | null): string | null {
-  if (editor && when) return `${editor}が${when}に更新`
-  if (editor) return `${editor}が更新`
-  if (when) return `${when}に更新`
+  if (editor && when) return translate("homePage.updatedByAt", { value0: editor, value1: when })
+  if (editor) return translate("homePage.updatedBy", { value0: editor })
+  if (when) return translate("homePage.updatedAt", { value0: when })
   return null
 }
 
 export default function HomePage() {
+  useLocale()
   const { state, retry } = useRetryableLoad(loadHomeNote)
   const [historyOpen, setHistoryOpen] = useState(false)
 
@@ -47,10 +52,10 @@ export default function HomePage() {
       <>
         <header className="page-header">
           <div>
-            <h1>Team note</h1>
+            <h1>{translate("homePage.teamNote")}</h1>
           </div>
         </header>
-        <LoadFailedNotice subject="Team note" reason={state.reason} onRetry={retry} />
+        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry} />
       </>
     )
   }
@@ -68,23 +73,22 @@ export default function HomePage() {
     <>
       <header className="page-header">
         <div>
-          <h1>Team note</h1>
+          <h1>{translate("homePage.teamNote")}</h1>
           {summary && <p className="page-description">{summary}</p>}
         </div>
         <div className="page-actions">
           <Link className="button" to="/edit-note">
             <Pencil size={15} aria-hidden="true" />
-            {data.exists ? '編集' : '作成'}
+            {data.exists ? translate("common.edit") : translate("common.create")}
           </Link>
           <button
             type="button"
             className="button"
             onClick={() => setHistoryOpen(true)}
-            title="編集履歴を表示"
+            title={translate("common.showEditHistory")}
           >
             <History size={15} aria-hidden="true" />
-            履歴
-          </button>
+            {translate("common.history")}</button>
         </div>
       </header>
 
@@ -99,16 +103,15 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="empty-state">
-          <h2>まだ何も書かれていません</h2>
-          <p>メンバー全員で同じノートを書き足していきます。例:</p>
+          <h2>{translate("homePage.noContentYet")}</h2>
+          <p>{translate("homePage.allMembersCanContributeToTheSameNote")}</p>
           <ul>
-            <li>他アプリケーションの情報</li>
-            <li>ストレージ接続まわりの補足 (どこに何があるか)</li>
+            <li>{translate("homePage.informationAboutOtherApplications")}</li>
+            <li>{translate("homePage.storageConnectionNotesWhereToFindData")}</li>
           </ul>
           <Link className="button primary" to="/edit-note">
             <Pencil size={15} aria-hidden="true" />
-            最初のノートを書く
-          </Link>
+            {translate("homePage.writeTheFirstNote")}</Link>
         </div>
       )}
 

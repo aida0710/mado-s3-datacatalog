@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { api } from '../lib/api/client'
 import { HistoryModal } from './HistoryModal'
@@ -15,6 +17,7 @@ interface Props {
 // S3 README の編集履歴ダイアログ。
 // 取得元と見出しだけがここの責務で、表示は HistoryModal と共通。
 export function ReadmeHistoryModal({ connectionId, bucket, prefix, currentBody, onClose }: Props) {
+  useLocale()
   const loadVersions = useCallback(
     () => api.readmeHistory({ connectionId, bucket, prefix }).then(r => r.versions),
     [connectionId, bucket, prefix],
@@ -25,7 +28,7 @@ export function ReadmeHistoryModal({ connectionId, bucket, prefix, currentBody, 
   )
   return (
     <HistoryModal
-      title="README の履歴"
+      title={translate("readmeHistoryModal.readmeHistory")}
       titleId="readme-history-title"
       subtitle={`${bucket} / ${prefix || '(root)'}`}
       currentBody={currentBody}

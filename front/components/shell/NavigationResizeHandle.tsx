@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useRef, useState } from 'react'
 import { NAVIGATION_WIDTH } from '../../lib/navigationWidth'
 
@@ -14,6 +16,7 @@ export function NavigationResizeHandle({
   onResize: (width: number) => void
   onReset: () => void
 }) {
+  useLocale()
   const dragStart = useRef<{ pointerX: number; width: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const endDrag = () => {
@@ -25,7 +28,7 @@ export function NavigationResizeHandle({
       className="navigation-resize-handle"
       role="separator"
       aria-orientation="vertical"
-      aria-label="サイドバーの幅"
+      aria-label={translate("navigationResizeHandle.sidebarWidth")}
       aria-valuemin={NAVIGATION_WIDTH.min}
       aria-valuemax={NAVIGATION_WIDTH.max}
       aria-valuenow={width}

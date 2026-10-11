@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Database } from 'lucide-react'
@@ -22,11 +24,12 @@ function versionHref(versionId: string): string {
 
 function locationRelation(matchType: 'exact' | 'prefix'): string {
   return matchType === 'exact'
-    ? 'この場所を保存先として登録済み'
-    : '登録済み保存先の配下'
+    ? translate("storageLineagePanel.thisLocationIsRegisteredAsStorage")
+    : translate("storageLineagePanel.underARegisteredStorageLocation")
 }
 
 export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
+  useLocale()
   const requestKey = `${connectionId}\u0000${bucket}\u0000${path}`
   const [response, setResponse] = useState<{
     key: string
@@ -48,11 +51,10 @@ export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
 
   // .notice に近い区画 (左の線 + 淡い地)。README の補足として、その直後に置かれる。
   return (
-    <aside className="storage-lineage" aria-label="この保存場所に関連するデータセット">
+    <aside className="storage-lineage" aria-label={translate("storageLineagePanel.datasetsAssociatedWithThisLocation")}>
       <span className="storage-lineage-label">
         <Database size={14} aria-hidden="true" />
-        データセット
-      </span>
+        {translate("common.dataset")}</span>
       <div className="storage-lineage-matches">
         {resolution.matches.slice(0, 3).map(match => (
           <div className="storage-lineage-match" key={`${match.versionId}:${match.locationId}`}>
@@ -60,17 +62,17 @@ export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
               <strong>{match.displayName ?? match.name}</strong>
               <span className="muted">
                 {locationRelation(match.matchType)}
-                {match.versionCount > 1 ? ` · バージョン ${match.version}` : ''}
+                {match.versionCount > 1 ? translate("storageLineagePanel.version", { value0: match.version }) : ''}
               </span>
             </div>
             <div className="storage-lineage-actions">
-              <Link className="link-button" to={versionHref(match.versionId)}>処理の流れを見る</Link>
-              <Link className="link-button" to={lineageHref(match.namespace, match.name)}>データセット全体を見る</Link>
+              <Link className="link-button" to={versionHref(match.versionId)}>{translate("storageLineagePanel.viewProcessingLineage")}</Link>
+              <Link className="link-button" to={lineageHref(match.namespace, match.name)}>{translate("storageLineagePanel.viewAllDatasets")}</Link>
             </div>
           </div>
         ))}
         {resolution.matches.length > 3 && (
-          <span className="muted">他{resolution.matches.length - 3}件</span>
+          <span className="muted">{translate("common.additionalItems", { value0: resolution.matches.length - 3 })}</span>
         )}
       </div>
     </aside>

@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, Settings } from 'lucide-react'
@@ -10,6 +12,7 @@ import { useConnection } from '../lib/connectionContext'
  * 一覧は開いたときに初めて取得する。
  */
 export function ConnectionSwitcher() {
+  useLocale()
   const current = useConnection()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -51,16 +54,16 @@ export function ConnectionSwitcher() {
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
-        <span className="connection-switcher-label">Connection</span>
+        <span className="connection-switcher-label">{translate("common.connection")}</span>
         <span className="connection-switcher-name">{current.name}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
         <div className="popover connection-switcher-menu" role="menu">
-          <div className="connection-switcher-heading">Connections</div>
-          {list === null && <div className="connection-switcher-note">読み込み中…</div>}
+          <div className="connection-switcher-heading">{translate("connectionsPage.connections")}</div>
+          {list === null && <div className="connection-switcher-note">{translate("common.loading")}</div>}
           {list !== null && others.length === 0 && (
-            <div className="connection-switcher-note">他の接続はありません</div>
+            <div className="connection-switcher-note">{translate("connectionSwitcher.noOtherConnections")}</div>
           )}
           {others.map(c => (
             <button
@@ -86,8 +89,7 @@ export function ConnectionSwitcher() {
             onClick={() => setOpen(false)}
           >
             <Settings size={14} aria-hidden="true" />
-            接続を管理…
-          </Link>
+            {translate("connectionSwitcher.manageConnections")}</Link>
         </div>
       )}
     </div>

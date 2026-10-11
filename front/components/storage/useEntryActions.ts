@@ -1,4 +1,7 @@
-import { useCallback, useMemo, useState, type KeyboardEvent } from 'react'
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
+import { useCallback, useState, type KeyboardEvent } from 'react'
 import { api } from '../../lib/api/client'
 import { classify } from '../../lib/api/mime'
 import type { StorageFileEntry, Tag } from '../../lib/api/types'
@@ -38,15 +41,16 @@ function assignedTags({ allTags, tagIds, tagsEnabled }: EntryTagProps): Tag[] {
 export function useDirectoryEntryActions({
   directory, prefix, connectionId, bucket, allTags, tagIds, tagsEnabled,
 }: DirectoryEntryInput) {
+  useLocale()
   const [pickerOpen, setPickerOpen] = useState(false)
   const href = `/storage/${encodeURIComponent(connectionId)}/${encodeURIComponent(bucket)}/${encPath(directory)}`
   const s3Url = `s3://${bucket}/${directory}`
   const webUrl = absoluteUrl(href)
-  const items = useMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: 'Web URL をコピー', value: webUrl },
-    { kind: 'copy', label: 'S3 URL をコピー', value: s3Url },
+  const items = useLocalizedMemo<MenuItem[]>(() => [
+    { kind: 'copy', label: translate("common.copyWebUrl"), value: webUrl },
+    { kind: 'copy', label: translate("common.copyS3Url"), value: s3Url },
     ...(tagsEnabled
-      ? [{ kind: 'action' as const, label: 'タグを編集', onSelect: () => setPickerOpen(true) }]
+      ? [{ kind: 'action' as const, label: translate("common.editTags"), onSelect: () => setPickerOpen(true) }]
       : []),
   ], [webUrl, s3Url, tagsEnabled])
   return {
@@ -70,6 +74,7 @@ interface FileEntryInput extends EntryTagProps {
 export function useFileEntryActions({
   file, prefix, connectionId, bucket, onSelectFile, allTags, tagIds, tagsEnabled,
 }: FileEntryInput) {
+  useLocale()
   const deck = usePlayerDeck()
   const pinned = usePinnedPreviews()
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -95,11 +100,11 @@ export function useFileEntryActions({
   const filename = file.key.split('/').pop() ?? 'file'
   const isAudio = classify(file.key) === 'audio'
   const capabilities = useCapabilities(connectionId)
-  const items = useMemo<MenuItem[]>(() => [
+  const items = useLocalizedMemo<MenuItem[]>(() => [
     // デッキ (同期再生) は音声本体を読むので preview 権限が要る。
     ...(isAudio && capabilities.preview ? [{
       kind: 'action' as const,
-      label: 'デッキに追加',
+      label: translate("common.addToPlayer"),
       onSelect: () => deck.addTrack({
         label: filename, connectionId, bucket, key: file.key,
       }),
@@ -109,17 +114,17 @@ export function useFileEntryActions({
     // バイナリをピンしてもカードに「プレビュー非対応」と出るだけで実害はない。
     {
       kind: 'action' as const,
-      label: 'ピン留め',
+      label: translate("common.pin"),
       onSelect: () => pinned.addPin({ connectionId, bucket, key: file.key }),
     },
     ...(tagsEnabled
-      ? [{ kind: 'action' as const, label: 'タグを編集', onSelect: () => setPickerOpen(true) }]
+      ? [{ kind: 'action' as const, label: translate("common.editTags"), onSelect: () => setPickerOpen(true) }]
       : []),
     ...(capabilities.download
-      ? [{ kind: 'download' as const, label: 'このファイルをダウンロード', href: downloadUrl, filename }]
+      ? [{ kind: 'download' as const, label: translate("useEntryActions.downloadThisFile"), href: downloadUrl, filename }]
       : []),
-    { kind: 'copy',     label: 'Web URL をコピー',           value: webUrl },
-    { kind: 'copy',     label: 'S3 URL をコピー',            value: s3Url },
+    { kind: 'copy',     label: translate("common.copyWebUrl"),           value: webUrl },
+    { kind: 'copy',     label: translate("common.copyS3Url"),            value: s3Url },
   ], [
     isAudio, capabilities.preview, capabilities.download, tagsEnabled, deck, pinned,
     connectionId, bucket, file.key, downloadUrl, webUrl, s3Url, filename,

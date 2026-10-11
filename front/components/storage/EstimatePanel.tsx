@@ -10,10 +10,14 @@
 // - **移動元から出す費用 (egress) を畳んだ行にも出す。** 移動先の月額だけを見て
 //   決めると桁を間違える。AWS から 40TB 出すと、置き続けるより高くつくことがある。
 
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { ChevronDown, ChevronRight, TriangleAlert } from 'lucide-react'
 import { api } from '../../lib/api/client'
-import { PROVIDER_LABELS, type TransferCandidate, type TransferEstimate } from '../../lib/api/types'
+import type { TransferCandidate, TransferEstimate } from '../../lib/api/types'
+import { PROVIDER_LABELS } from '../../i18n/connectionOptions'
 import { fmtCacheAge, fmtDurationRange, fmtSize, fmtUsd } from '../../lib/format'
 
 interface Props {
@@ -47,6 +51,7 @@ function sourceLabel(url: string): string {
 
 /** 内訳の 1 行。0 の項目も出す — 「かからない」ことが分かるのが大事。 */
 function CostRow({ label, value, note }: { label: string; value: number; note?: string }) {
+  useLocale()
   return (
     <div>
       <dt>{label}</dt>
@@ -61,6 +66,7 @@ function CandidateRow({ c, expanded, onToggle }: {
   expanded: boolean
   onToggle: () => void
 }) {
+  useLocale()
   const detailId = useId()
   const label = c.storageClassLabel && c.provider === 'aws'
     ? `${c.name} · ${c.storageClassLabel}`
@@ -88,12 +94,12 @@ function CandidateRow({ c, expanded, onToggle }: {
                 : <ChevronRight size={14} aria-hidden="true" />}
               <span className="est-toggle-label">
                 <span>{label}</span>
-                {c.sameConnection && <span className="status-badge status-queued">現在地</span>}
+                {c.sameConnection && <span className="status-badge status-queued">{translate("estimatePanel.currentLocation")}</span>}
               </span>
             </button>
             {/* 警告は件数だけを名前の横に出し、全文は開いた行で読む。 */}
             {c.warnings.length > 0 && (
-              <span className="est-warn" role="img" aria-label={`注意 ${c.warnings.length} 件`}>
+              <span className="est-warn" role="img" aria-label={translate("estimatePanel.warnings", { value0: c.warnings.length })}>
                 <TriangleAlert size={13} aria-hidden="true" />
                 {c.warnings.length}
               </span>
@@ -112,21 +118,21 @@ function CandidateRow({ c, expanded, onToggle }: {
           <td colSpan={4}>
             <dl className="est-costs">
               <CostRow
-                label="移動元から出す (egress)"
+                label={translate("estimatePanel.sourceEgress")}
                 value={c.upfront.egress}
-                note={c.sameConnection ? '同じ接続内なので回線を通らない' : undefined}
+                note={c.sameConnection ? translate("estimatePanel.noNetworkTransferWithinTheSameConnection") : undefined}
               />
-              <CostRow label="取り出し" value={c.upfront.retrieval} />
-              <CostRow label="GET リクエスト" value={c.upfront.getRequests} />
+              <CostRow label={translate("estimatePanel.retrieval")} value={c.upfront.retrieval} />
+              <CostRow label={translate("estimatePanel.getRequests")} value={c.upfront.getRequests} />
               <CostRow
-                label="PUT リクエスト"
+                label={translate("estimatePanel.putRequests")}
                 value={c.upfront.putRequests}
-                note={`${c.putRequestCount.toLocaleString()} 回`}
+                note={translate("estimatePanel.requests", { value0: c.putRequestCount.toLocaleString() })}
               />
               <CostRow
-                label="月額"
+                label={translate("estimatePanel.monthlyCost")}
                 value={c.monthlyUsd}
-                note={`課金対象 ${fmtSize(c.billableBytes)}`}
+                note={translate("estimatePanel.billable", { value0: fmtSize(c.billableBytes) })}
               />
             </dl>
 
@@ -135,7 +141,7 @@ function CandidateRow({ c, expanded, onToggle }: {
                 {c.warnings.map(w => (
                   <li key={w.kind}>
                     <TriangleAlert size={14} aria-hidden="true" />
-                    <span>{w.message}</span>
+                    <span>{localizeMessage(w.message)}</span>
                   </li>
                 ))}
               </ul>
@@ -148,6 +154,7 @@ function CandidateRow({ c, expanded, onToggle }: {
 }
 
 export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Props) {
+  useLocale()
   const [state, setState] = useState<State>({ kind: 'loading' })
   const [openId, setOpenId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -192,12 +199,12 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
         }
         if (job.status === 'error') {
           // 外に出られない環境ではここに来る。同梱の単価で見積もりは続く。
-          setRefreshError(job.error ?? '単価を取得できませんでした')
+          setRefreshError(job.error ?? translate("estimatePanel.couldNotRetrievePricing"))
           return
         }
         if (job.status === 'canceled') return
       }
-      setRefreshError('更新に時間がかかっています。あとで開き直してください')
+      setRefreshError(translate("estimatePanel.theUpdateIsTakingLongerThanExpectedReopen"))
     } catch (e) {
       setRefreshError((e as Error).message)
     } finally {
@@ -220,20 +227,19 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
   }, [state])
 
   if (state.kind === 'loading') {
-    return <p className="state-message">見積もり中…</p>
+    return <p className="state-message">{translate("estimatePanel.estimating")}</p>
   }
 
   if (state.kind === 'unscanned') {
     return (
       <div className="state-message">
-        見積もりには配下の集計が要ります。
-        <button type="button" className="button small" onClick={onNeedScan}>走査する</button>
+        {translate("estimatePanel.aDirectorySummaryIsRequiredForAnEstimate")}<button type="button" className="button small" onClick={onNeedScan}>{translate("common.scan")}</button>
       </div>
     )
   }
 
   if (state.kind === 'error') {
-    return <p className="notice error">{state.message}</p>
+    return <p className="notice error">{localizeMessage(state.message)}</p>
   }
 
   const { source, scan, catalog } = state.data
@@ -243,13 +249,13 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
     <div>
       <div className="est-summary">
         <span>
-          <strong>{scan.objectCount.toLocaleString()}</strong> 件 /{' '}
+          <strong>{scan.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: scan.objectCount })}{' '}
           <strong>{fmtSize(scan.totalBytes)}</strong>
-          <span className="muted">（平均 {fmtSize(avg)}）</span>
+          <span className="muted">{translate('estimatePanel.average', { value0: fmtSize(avg) })}</span>
         </span>
         <span className="muted">
-          移動元 {source.name}
-          {source.provider !== 'aws' && `（${PROVIDER_LABELS[source.provider]}）`}
+          {translate("estimatePanel.source") + " "}{source.name}
+          {source.provider !== 'aws' && translate('common.parenthetical', { value0: PROVIDER_LABELS[source.provider] })}
         </span>
       </div>
 
@@ -257,10 +263,10 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
         <table className="est-table">
           <thead>
             <tr>
-              <th scope="col">移動先</th>
-              <th scope="col" className="numeric">所要</th>
-              <th scope="col" className="numeric">初期</th>
-              <th scope="col" className="numeric">月額</th>
+              <th scope="col">{translate("estimatePanel.destination")}</th>
+              <th scope="col" className="numeric">{translate("estimatePanel.duration")}</th>
+              <th scope="col" className="numeric">{translate("estimatePanel.initialCost")}</th>
+              <th scope="col" className="numeric">{translate("estimatePanel.monthlyCost")}</th>
             </tr>
           </thead>
           <tbody>
@@ -279,17 +285,17 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
       <div className="est-foot">
         <span>
           {catalog.source === 'fetched' && catalog.fetchedAt
-            ? `単価は ${fmtCacheAge(new Date(catalog.fetchedAt))} に取得`
+            ? translate("estimatePanel.pricingRetrievedOn", { value0: fmtCacheAge(new Date(catalog.fetchedAt)) })
             // 「取得できていない」と「無料」を取り違えさせない。
-            : `単価は同梱の ${catalog.asOf} 版（まだ取得していません）`}
+            : translate("estimatePanel.bundledPricingFromNotYetUpdated", { value0: catalog.asOf })}
         </span>
         <button type="button" className="button small" onClick={refreshPricing} disabled={refreshing}>
-          {refreshing ? '更新中…' : '単価を更新'}
+          {refreshing ? translate("common.updating") : translate("estimatePanel.updatePricing")}
         </button>
         {catalog.stale && !refreshing && !refreshError && (
-          <strong>単価が古くなっています。</strong>
+          <strong>{translate("estimatePanel.pricingIsOutOfDate")}</strong>
         )}
-        {refreshError && <span className="est-foot-error">{refreshError}</span>}
+        {refreshError && <span className="est-foot-error">{localizeMessage(refreshError)}</span>}
       </div>
       {/* 「単価を更新」で新しくなるのは AWS の単価だけ。最小保存期間や
           Wasabi は料金 API が無く手で持っているので、取得日とは別に
@@ -297,13 +303,13 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
       <details className="est-manual">
         <summary>
           <ChevronRight size={14} aria-hidden="true" />
-          一部の値は料金 API から取れないため手入力です（{catalog.manualFacts.verifiedOn} 確認）
+          {translate("estimatePanel.manualPricesVerifiedOn", { value0: catalog.manualFacts.verifiedOn })}
         </summary>
         <ul>
-          {catalog.manualFacts.notes.map(n => <li key={n}>{n}</li>)}
+          {catalog.manualFacts.notes.map(note => <li key={note}>{localizeMessage(note)}</li>)}
         </ul>
         <p className="est-manual-sources">
-          出典:{' '}
+          {translate("estimatePanel.source2")}{' '}
           {catalog.manualFacts.sources.map(u => (
             <a key={u} href={u} target="_blank" rel="noreferrer noopener">{sourceLabel(u)}</a>
           ))}
@@ -311,9 +317,7 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
       </details>
 
       <p className="muted est-note">
-        所要時間は接続ごとの帯域設定から出しています。
-        実測を入れると精度が上がります（Settings → 接続）。
-      </p>
+        {translate("estimatePanel.durationIsEstimatedFromEachConnectionSBandwidth")}</p>
     </div>
   )
 }

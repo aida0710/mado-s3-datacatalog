@@ -1,6 +1,7 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSniffedText } from './useSniffedText'
+import { setLocale } from '../i18n/locale'
 
 vi.mock('./api/client', () => ({
   api: { readHead: vi.fn() },
@@ -8,7 +9,10 @@ vi.mock('./api/client', () => ({
 
 import { api } from './api/client'
 
-afterEach(() => vi.clearAllMocks())
+afterEach(() => {
+  vi.clearAllMocks()
+  setLocale('ja')
+})
 
 const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s)
 
@@ -37,6 +41,16 @@ describe('useSniffedText', () => {
     const { result } = renderHook(() => useSniffedText('/x'))
     await waitFor(() => expect(result.current.status).toBe('error'))
     expect(result.current).toEqual({ status: 'error', message: 'Not Found' })
+  })
+
+  it('言語を切り替えると取得済みのエラーを再取得せずに翻訳する', async () => {
+    setLocale('ja')
+    vi.mocked(api.readHead).mockRejectedValue(new Error('この接続では「ファイルのプレビュー」が無効になっています'))
+    const { result } = renderHook(() => useSniffedText('/x'))
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    act(() => setLocale('en'))
+    expect(result.current).toEqual({ status: 'error', message: '“File previews” is disabled for this connection.' })
+    expect(api.readHead).toHaveBeenCalledTimes(1)
   })
 
   it('先頭 TEXT_HEAD_BYTES だけ要求する', async () => {

@@ -100,6 +100,7 @@ describe('CapacityMetricsPage', () => {
     const user = userEvent.setup()
     mount(['storage:read', 'connections:manage'])
     await user.click(await screen.findByRole('button', { name: '今すぐ全バケットを計測' }))
+    expect(screen.getByRole('link', { name: '接続設定' })).toBeInTheDocument()
     await waitFor(() => expect(start).toHaveBeenCalledWith('c1'))
     expect(screen.getByText('2バケットの計測を開始しました。完了すると順次反映されます。')).toBeInTheDocument()
   })
@@ -124,7 +125,7 @@ describe('CapacityMetricsPage', () => {
     mount(['storage:read'])
     await screen.findByRole('heading', { name: 'archive' })
     expect(screen.queryByRole('button', { name: '今すぐ全バケットを計測' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'コネクション設定' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '接続設定' })).not.toBeInTheDocument()
   })
 
   it('メトリクス集計が無効なconnectionでは強制計測を無効にする', async () => {

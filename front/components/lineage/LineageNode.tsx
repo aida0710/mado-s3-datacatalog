@@ -1,9 +1,11 @@
+import { useLocale } from '../../i18n/useLocale'
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import type { LineageNodeData } from '../../lib/lineage/graphModel'
 import { LINEAGE_KIND_LABEL } from '../../lib/lineage/labels'
 
 // グラフの 1 項目。左の帯の色で種類 (data-kind) を、枠の色で選択中かを見分ける (lineage.css)。
 export function LineageNode({ data, selected }: NodeProps<Node<LineageNodeData, 'lineage'>>) {
+  useLocale()
   return (
     <div
       className="lineage-node-card"

@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type Cursor = { continuation?: string; startAfter?: string }
@@ -23,22 +25,23 @@ export function Pager({
   pageIdx, history, hasNext, cursorStuck, loading, isEmpty,
   totalLabel, entryCount, onPrev, onNext, onGoto,
 }: Props) {
+  useLocale()
   return (
     <>
       <div className="table-footer storage-pager">
         {/* 空のディレクトリのときは件数を出さない。 */}
         <span className="storage-pager-summary">
-          ページ {totalLabel}
-          {!isEmpty && ` · ${entryCount} 件`}
+          {translate("pager.page") + " "}{totalLabel}
+          {!isEmpty && translate("pager.items", { value0: entryCount })}
         </span>
-        <nav className="storage-pager-nav" aria-label="ページ送り">
+        <nav className="storage-pager-nav" aria-label={translate("pager.pagination")}>
           <button
             type="button"
             className="icon-button"
             onClick={onPrev}
             disabled={pageIdx === 0 || loading}
-            aria-label="前のページへ"
-            title="前のページへ"
+            aria-label={translate("common.previousPage")}
+            title={translate("common.previousPage")}
           >
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
@@ -67,8 +70,8 @@ export function Pager({
             className="icon-button"
             onClick={onNext}
             disabled={!hasNext || loading}
-            aria-label="次のページへ"
-            title="次のページへ"
+            aria-label={translate("common.nextPage")}
+            title={translate("common.nextPage")}
           >
             <ChevronRight size={16} aria-hidden="true" />
           </button>
@@ -82,11 +85,8 @@ export function Pager({
       {cursorStuck && (
         <p className="notice storage-warning">
           <span>
-            次へ進めません: server が cursor を進めずに同じトークンを返しています。
-            設定の <strong>ListObjects API バージョン</strong>{' '}
-            を <span className="mono">v1</span> に切り替えてみてください
-            (V1 only の S3 互換サーバで起こります)。
-          </span>
+            {translate("pager.cannotAdvanceTheServerReturnedTheSameCursor") + " "}<strong>{translate("common.listObjectsApiVersion")}</strong>{' '}
+            {translate("pager.to") + " "}<span className="mono">v1</span> {" " + translate("pager.inSettingsThisCanHappenWithV1Only")}</span>
         </p>
       )}
     </>

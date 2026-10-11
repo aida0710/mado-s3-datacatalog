@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, Headphones, Pause, Play, Square, Trash2, Volume2, VolumeX, X } from 'lucide-react'
 import {
@@ -34,6 +36,7 @@ function DeckAudio({
   onDuration: (id: string, durationSec: number) => void
   onArrive: (id: string, el: HTMLAudioElement) => void
 }) {
+  useLocale()
   const { src } = useAudioSrc(track)
   const elRef = useRef<HTMLAudioElement | null>(null)
   // ref callback は識別子が安定していないと再レンダーのたびに detach(null) →
@@ -84,6 +87,7 @@ const TRACK_WAVEFORM_HEIGHT = 28
 const TRACK_WAVEFORM_TOUCH_HEIGHT = 40
 
 export function PlayerDeck() {
+  useLocale()
   const { tracks, removeTrack, clear } = usePlayerDeck()
   const touch = useMediaQuery(narrowerThan('md'))
   const audioRefs = useRef(new Map<string, HTMLAudioElement>())
@@ -363,7 +367,7 @@ export function PlayerDeck() {
           {collapsed
             ? <ChevronUp size={16} aria-hidden="true" />
             : <ChevronDown size={16} aria-hidden="true" />}
-          <span>同期プレイヤー ({tracks.length})</span>
+          <span>{translate("playerDeck.synchronizedPlayer")}{tracks.length})</span>
         </button>
         <button
           type="button"
@@ -391,8 +395,7 @@ export function PlayerDeck() {
           }}
         >
           <Trash2 size={14} aria-hidden="true" />
-          クリア
-        </button>
+          {translate("common.clear")}</button>
       </div>
       {/* <audio> は折りたたみ状態に関わらず常にマウントする。
           {!collapsed && ...} の中に置くとたたんだ瞬間にアンマウントされて
@@ -428,10 +431,10 @@ export function PlayerDeck() {
               const channelsKnown = t.id in channelsById
               const splittable = canSplitChannels(channelsById[t.id])
               const lrDisabled = !ready || !channelsKnown || !splittable
-              const lrTitle = !ready ? '取得中'
-                : !channelsKnown ? 'チャンネル数を調べています'
-                : !splittable ? 'モノラルのため分割できません'
-                : '選んだチャンネルを左右両方から鳴らす'
+              const lrTitle = !ready ? translate("playerDeck.fetching")
+                : !channelsKnown ? translate("playerDeck.checkingChannelCount")
+                : !splittable ? translate("playerDeck.monoAudioCannotBeSplit")
+                : translate("playerDeck.playTheSelectedChannelThroughBothSpeakers")
               return (
               <li key={t.id} className="deck-track">
                 <div className="deck-track-name">
@@ -439,7 +442,7 @@ export function PlayerDeck() {
                   {/* tar 内エントリは blob 取得が終わるまで再生できない。無表示だと
                       再生を押しても鳴らない理由が見えないので、取得中を明示する。 */}
                   {t.entryPath != null && !readyIds.has(t.id) && (
-                    <span className="deck-track-status muted">取得中…</span>
+                    <span className="deck-track-status muted">{translate("playerDeck.fetching2")}</span>
                   )}
                 </div>
                 <div className="deck-track-wave">
@@ -460,7 +463,7 @@ export function PlayerDeck() {
                         type="button"
                         className="deck-button"
                         aria-pressed={mode === 'left'}
-                        aria-label="左チャンネル"
+                        aria-label={translate("playerDeck.leftChannel")}
                         title={lrTitle}
                         disabled={lrDisabled}
                         onClick={() => toggleChannel(t, 'left')}
@@ -469,7 +472,7 @@ export function PlayerDeck() {
                         type="button"
                         className="deck-button"
                         aria-pressed={mode === 'right'}
-                        aria-label="右チャンネル"
+                        aria-label={translate("playerDeck.rightChannel")}
                         title={lrTitle}
                         disabled={lrDisabled}
                         onClick={() => toggleChannel(t, 'right')}
@@ -480,8 +483,8 @@ export function PlayerDeck() {
                     type="button"
                     className="deck-button"
                     aria-pressed={muted.has(t.id)}
-                    aria-label="ミュート"
-                    title="ミュート"
+                    aria-label={translate("playerDeck.mute")}
+                    title={translate("playerDeck.mute")}
                     onClick={() => setMuted(cur => {
                       const next = new Set(cur)
                       if (next.has(t.id)) next.delete(t.id)
@@ -497,8 +500,8 @@ export function PlayerDeck() {
                     type="button"
                     className="deck-button"
                     aria-pressed={effectiveSoloId === t.id}
-                    aria-label="ソロ"
-                    title="ソロ"
+                    aria-label={translate("playerDeck.solo")}
+                    title={translate("playerDeck.solo")}
                     onClick={() => setSoloId(cur => (cur === t.id ? null : t.id))}
                   >
                     <Headphones size={14} aria-hidden="true" />
@@ -506,8 +509,8 @@ export function PlayerDeck() {
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label="削除"
-                    title="削除"
+                    aria-label={translate("common.delete")}
+                    title={translate("common.delete")}
                     onClick={() => {
                       removeTrack(t.id)
                       // 削除トラックに紐づく状態を漏れなく剪定する。soloId は
@@ -566,15 +569,15 @@ export function PlayerDeck() {
           </ul>
           <div className="deck-transport">
             {playing ? (
-              <button type="button" className="button small" aria-label="一時停止" title="一時停止" onClick={pauseAll}>
+              <button type="button" className="button small" aria-label={translate("playerDeck.pause")} title={translate("playerDeck.pause")} onClick={pauseAll}>
                 <Pause size={14} aria-hidden="true" />
               </button>
             ) : (
-              <button type="button" className="button small" aria-label="一括再生" title="一括再生" onClick={playAll}>
+              <button type="button" className="button small" aria-label={translate("playerDeck.playAll")} title={translate("playerDeck.playAll")} onClick={playAll}>
                 <Play size={14} aria-hidden="true" />
               </button>
             )}
-            <button type="button" className="button small" aria-label="停止" title="停止" onClick={stopAll}>
+            <button type="button" className="button small" aria-label={translate("playerDeck.stop")} title={translate("playerDeck.stop")} onClick={stopAll}>
               <Square size={14} aria-hidden="true" />
             </button>
             <span className="deck-time muted mono">{fmt(masterTime)} / {fmt(maxDuration)}</span>
@@ -585,7 +588,7 @@ export function PlayerDeck() {
               max={maxDuration || 0}
               step={0.1}
               value={masterTime}
-              aria-label="マスターシーク"
+              aria-label={translate("playerDeck.seekAllTracks")}
               onChange={e => seekAll(Number(e.target.value))}
             />
           </div>

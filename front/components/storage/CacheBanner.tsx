@@ -13,10 +13,13 @@
 // 残り時間が出せないので割合は出さない。0.1 秒で終わるバケットでは一瞬光るだけで
 // ちらつくため、CSS の animation-delay で 200ms 伏せている (JS タイマーを持たない)。
 
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { cacheAgeLevel } from '../../lib/cacheAgeLevel'
 import { fmtCacheAge } from '../../lib/format'
+import { TranslatedMessage } from '../../i18n/TranslatedMessage'
 
 interface Props {
   /** このページのデータを S3 から取得した時刻。null = まだ無い / invalidate 直後。 */
@@ -37,6 +40,7 @@ interface Props {
 // しても表示が追従するよう 1 分ごとに再描画する。絶対時刻も併記しているので
 // 実害は小さいが、見出しの情報が古いままなのは避ける。
 function useMinuteTick(): void {
+  useLocale()
   const [, setTick] = useState(0)
   useEffect(() => {
     const id = window.setInterval(() => setTick(t => t + 1), 60_000)
@@ -45,9 +49,15 @@ function useMinuteTick(): void {
 }
 
 export function CacheBanner({ fetchedAt, revalidating, onRefresh, compact, trailing }: Props) {
+  useLocale()
   useMinuteTick()
   const now = new Date()
   const age = fetchedAt ? cacheAgeLevel(fetchedAt, now) : null
+  const timestamp = fetchedAt && age && (
+    <time dateTime={fetchedAt.toISOString()} className="cache-banner-at" data-age={age.level} title={age.label}>
+      {fmtCacheAge(fetchedAt, now, { compact })}
+    </time>
+  )
 
   return (
     <div className={compact ? 'cache-banner cache-banner-compact' : 'cache-banner'} data-age={age?.level}>
@@ -57,8 +67,8 @@ export function CacheBanner({ fetchedAt, revalidating, onRefresh, compact, trail
           className="icon-button cache-banner-refresh"
           onClick={onRefresh}
           disabled={revalidating}
-          title="キャッシュを破棄して再読み込み"
-          aria-label="再読み込み"
+          title={translate("cacheBanner.clearCacheAndReload")}
+          aria-label={translate("cacheBanner.reload")}
         >
           <RefreshCw size={14} aria-hidden="true" className={revalidating ? 'spin' : undefined} />
         </button>
@@ -66,28 +76,20 @@ export function CacheBanner({ fetchedAt, revalidating, onRefresh, compact, trail
             ボタンは残す — ここで更新手段が消えると詰まったときに何もできない。 */}
         {fetchedAt && age && (
           <span>
-            <time
-              dateTime={fetchedAt.toISOString()}
-              className="cache-banner-at"
-              data-age={age.level}
-              title={age.label}
-            >
-              {fmtCacheAge(fetchedAt, now, { compact })}
-            </time>
-            {!compact && 'に取得した情報です'}
+            {compact ? timestamp : <TranslatedMessage message="cacheBanner.retrievedAt" values={{ value0: timestamp }} />}
           </span>
         )}
         {revalidating && (
           <span className="cache-banner-status" aria-live="polite">
             <span className="storage-pulse-dot" aria-hidden="true" />
-            {compact ? '更新中' : '最新の情報に更新しています'}
+            {compact ? translate("cacheBanner.updating") : translate("cacheBanner.updatingToTheLatestInformation")}
           </span>
         )}
         {trailing && <span className="cache-banner-trailing">{trailing}</span>}
       </p>
       {revalidating && (
         <div className="storage-busy-track cache-banner-track">
-          <div role="progressbar" aria-label="最新の情報を取得中" className="storage-busy-bar" />
+          <div role="progressbar" aria-label={translate("cacheBanner.fetchingTheLatestInformation")} className="storage-busy-bar" />
         </div>
       )}
     </div>

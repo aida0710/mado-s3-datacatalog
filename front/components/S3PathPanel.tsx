@@ -10,6 +10,9 @@
 // 末尾 `/` (= 実在ディレクトリ指定) や bucket 直下の場合は「開く」リンク + Enter で
 // 直接そのページへ遷移できる。
 
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useReducer, useRef, type KeyboardEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, File, Folder, Link2 } from 'lucide-react'
@@ -56,6 +59,7 @@ function reducer(s: State, a: Action): State {
 const SEARCH_DEBOUNCE_MS = 300
 
 export function S3PathPanel({ connectionId }: Props) {
+  useLocale()
   const [state, dispatch] = useReducer(reducer, initial)
   const { raw, loading, error, result } = state
   const navigate = useNavigate()
@@ -127,27 +131,27 @@ export function S3PathPanel({ connectionId }: Props) {
           <Link2 size={16} aria-hidden="true" />
           <input
             type="search"
-            placeholder="s3://bucket/key を貼付 (前方一致・フルキーで単一ファイルも検索可)"
+            placeholder={translate("sPathPanel.pasteS3BucketKeyPrefixSearchAFull")}
             value={raw}
             onChange={e => onChange(e.target.value)}
             onKeyDown={onKeyDown}
-            aria-label="S3 パスで移動"
+            aria-label={translate("sPathPanel.goToS3Path")}
             spellCheck={false}
           />
-          {loading && <span className="muted nowrap">検索中…</span>}
+          {loading && <span className="muted nowrap">{translate("common.searching")}</span>}
         </div>
         {canOpenDirectly && openHref && (
           <Link to={openHref} className="s3-path-open">
             <ArrowRight size={14} aria-hidden="true" />
-            {parsed!.bucket}/{parsed!.prefix} を開く
+            {translate("sPathPanel.openPath", { value0: `${parsed!.bucket}/${parsed!.prefix}` })}
           </Link>
         )}
       </div>
 
-      {error && <p className="notice error">{error}</p>}
+      {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {isEmpty && !loading && !error && (
-        <p className="muted s3-path-note">一致するパスがありません。</p>
+        <p className="muted s3-path-note">{translate("sPathPanel.noMatchingPaths")}</p>
       )}
 
       {result && (dirs.length > 0 || files.length > 0) && (
@@ -173,8 +177,7 @@ export function S3PathPanel({ connectionId }: Props) {
 
       {hasMore && (
         <p className="muted s3-path-note">
-          結果が多すぎます。パスをもう少し具体的に入力してください。
-        </p>
+          {translate("sPathPanel.tooManyResultsEnterAMoreSpecificPath")}</p>
       )}
     </section>
   )

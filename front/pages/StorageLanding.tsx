@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
@@ -15,6 +18,7 @@ function pickConnection(list: Connection[]): Connection | null {
 }
 
 export default function StorageLanding() {
+  useLocale()
   const [empty, setEmpty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -29,23 +33,21 @@ export default function StorageLanding() {
       .catch(e => setError((e as Error).message))
   }, [navigate])
 
-  if (error) return <p className="notice error">{error}</p>
-  if (!empty) return <p className="state-message">読み込み中…</p>
+  if (error) return <p className="notice error">{localizeMessage(error)}</p>
+  if (!empty) return <p className="state-message">{translate("common.loading")}</p>
   return (
     <>
       <header className="page-header">
-        <div><h1>Storage</h1></div>
+        <div><h1>{translate("common.storage")}</h1></div>
       </header>
       <div className="empty-state">
-        <h2>接続がまだありません</h2>
+        <h2>{translate("storageLanding.noConnectionsYet")}</h2>
         <p>
-          ここに表示する S3 互換ストレージはまだ登録されていません。<br />
-          設定ページから一つ追加してみましょう。
-        </p>
+          {translate("storageLanding.noS3CompatibleStorageHasBeenRegisteredHere")}<br />
+          {translate("storageLanding.addOneFromTheSettingsPage")}</p>
         <Link className="button primary" to="/settings">
           <Plus size={16} aria-hidden="true" />
-          接続を追加
-        </Link>
+          {translate("common.addConnection")}</Link>
       </div>
     </>
   )

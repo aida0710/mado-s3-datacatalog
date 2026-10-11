@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useId, useMemo } from 'react'
 import { CODE_LANGUAGES, highlightCode, type CodeLanguage } from '@mado/design-system/code'
 import { codeLanguageName, type CodeLanguageState } from '../lib/useCodeLanguage'
@@ -18,12 +20,12 @@ export function CodeView({ text, language, className }: { text: string; language
 
 /** プレビューの帯に置く「表示形式」の選択欄。自動のときは推測した形式を括弧に出す。 */
 export function CodeFormatSelect({ code }: { code: CodeLanguageState }) {
+  useLocale()
   const id = useId()
   return (
     <label className="code-format" htmlFor={id}>
-      表示形式
-      <select id={id} value={code.choice} onChange={event => code.setChoice(event.target.value as CodeLanguageState['choice'])}>
-        <option value="auto">{`自動（${codeLanguageName(code.detected)}）`}</option>
+      {translate("codeView.format")}<select id={id} value={code.choice} onChange={event => code.setChoice(event.target.value as CodeLanguageState['choice'])}>
+        <option value="auto">{translate("codeView.auto", { value0: codeLanguageName(code.detected) })}</option>
         {CODE_LANGUAGES.map(language => (
           <option key={language.id} value={language.id}>
             {codeLanguageName(language.id)}

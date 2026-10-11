@@ -1,3 +1,6 @@
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { Fragment, useEffect, useId, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search } from 'lucide-react'
 import { api } from '../../lib/api/client'
@@ -21,6 +24,7 @@ interface Props {
  * 640px 未満では説明とデータ形式を行の下に開く形にする (共通の部品の .responsive-table)。
  */
 export function LineageCatalog({ hasSelection, onSelect }: Props) {
+  useLocale()
   const [open, setOpen] = useState(!hasSelection)
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState('')
@@ -81,7 +85,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
   })
 
   return (
-    <section className="lineage-catalog" aria-label="登録済みデータセット">
+    <section className="lineage-catalog" aria-label={translate("lineageCatalog.registeredDatasets")}>
       <h2 className="lineage-catalog__heading">
         <button
           type="button"
@@ -92,8 +96,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
           {expanded
             ? <ChevronDown size={18} aria-hidden="true" />
             : <ChevronRight size={18} aria-hidden="true" />}
-          登録一覧・検索
-        </button>
+          {translate("lineageCatalog.browseAndSearchRegistry")}</button>
       </h2>
 
       {expanded && (
@@ -101,32 +104,32 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
           <div className="lineage-toolbar">
             <label className="lineage-search-field">
               <Search size={16} aria-hidden="true" />
-              <span className="sr-only">データセットを検索</span>
+              <span className="sr-only">{translate("lineageCatalog.searchDatasets")}</span>
               <input
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder="Podcast、英語、対話、s3://dataset/..."
+                placeholder={translate("lineageCatalog.podcastEnglishDialogueS3Dataset")}
                 autoComplete="off"
               />
             </label>
-            <span className="lineage-toolbar__status">{loading ? '検索中…' : `登録 ${total}件`}</span>
+            <span className="lineage-toolbar__status">{loading ? translate("common.searching") : translate("lineageCatalog.registered", { value0: total })}</span>
           </div>
 
-          {error && <p className="notice error" role="alert">{error}</p>}
+          {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
           {!loading && !error && results.length === 0 && (
-            <p className="state-message">条件に合うデータセットはありません。</p>
+            <p className="state-message">{translate("lineageCatalog.noDatasetsMatchTheseConditions")}</p>
           )}
           {results.length > 0 && (
             <div className="table-scroll">
               <table className="responsive-table">
                 <thead>
                   <tr>
-                    <th scope="col">データセット</th>
-                    <th scope="col" className="lineage-catalog__secondary">説明</th>
-                    <th scope="col" className="lineage-catalog__secondary">データ形式</th>
-                    <th scope="col" className="numeric">バージョン</th>
+                    <th scope="col">{translate("common.dataset")}</th>
+                    <th scope="col" className="lineage-catalog__secondary">{translate("common.description")}</th>
+                    <th scope="col" className="lineage-catalog__secondary">{translate("common.dataFormat")}</th>
+                    <th scope="col" className="numeric">{translate("common.version")}</th>
                     <th scope="col" className="responsive-table-toggle lineage-catalog__row-toggle">
-                      <span className="sr-only">詳細を表示</span>
+                      <span className="sr-only">{translate("common.showDetails")}</span>
                     </th>
                   </tr>
                 </thead>
@@ -135,8 +138,8 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                     const key = datasetKey(dataset)
                     const rowOpen = openRows.has(key)
                     const detailId = `${detailIdPrefix}-${index}`
-                    const description = dataset.description ?? <span className="muted">説明は未登録です。</span>
-                    const mediaType = dataset.mediaType ?? <span className="muted">データ形式未登録</span>
+                    const description = dataset.description ?? <span className="muted">{translate("lineageCatalog.noDescriptionRegistered")}</span>
+                    const mediaType = dataset.mediaType ?? <span className="muted">{translate("lineageCatalog.dataFormatNotRegistered")}</span>
                     return (
                       <Fragment key={key}>
                         <tr
@@ -151,15 +154,15 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                           </td>
                           <td className="lineage-catalog__secondary lineage-catalog__description">{description}</td>
                           <td className="lineage-catalog__secondary nowrap">{mediaType}</td>
-                          <td className="numeric nowrap">{dataset.versionCount}件</td>
+                          <td className="numeric nowrap">{dataset.versionCount}{translate("common.items", { count: dataset.versionCount })}</td>
                           <td className="responsive-table-toggle lineage-catalog__row-toggle">
                             <button
                               type="button"
                               className="icon-button"
                               aria-expanded={rowOpen}
                               aria-controls={detailId}
-                              aria-label={rowOpen ? '詳細を閉じる' : '詳細を表示'}
-                              title={rowOpen ? '詳細を閉じる' : '詳細を表示'}
+                              aria-label={rowOpen ? translate("common.hideDetails") : translate("common.showDetails")}
+                              title={rowOpen ? translate("common.hideDetails") : translate("common.showDetails")}
                               onClick={() => toggleRow(key)}
                             >
                               {rowOpen
@@ -172,8 +175,8 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                           <tr id={detailId} className="responsive-table-details lineage-catalog__details">
                             <td colSpan={3}>
                               <dl>
-                                <div><dt>説明</dt><dd>{description}</dd></div>
-                                <div><dt>データ形式</dt><dd>{mediaType}</dd></div>
+                                <div><dt>{translate("common.description")}</dt><dd>{description}</dd></div>
+                                <div><dt>{translate("common.dataFormat")}</dt><dd>{mediaType}</dd></div>
                               </dl>
                             </td>
                           </tr>
@@ -194,16 +197,16 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label="前へ"
-                    title="前へ"
+                    aria-label={translate("lineageCatalog.previous")}
+                    title={translate("lineageCatalog.previous")}
                     disabled={offset === 0 || loading}
                     onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))}
                   ><ChevronLeft size={16} aria-hidden="true" /></button>
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label="次へ"
-                    title="次へ"
+                    aria-label={translate("lineageCatalog.next")}
+                    title={translate("lineageCatalog.next")}
                     disabled={offset + results.length >= total || loading}
                     onClick={() => setOffset(value => value + PAGE_SIZE)}
                   ><ChevronRight size={16} aria-hidden="true" /></button>
