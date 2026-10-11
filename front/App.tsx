@@ -1,3 +1,5 @@
+import { useLocale } from './i18n/useLocale'
+import { translate } from './i18n/translate'
 import { lazy, Suspense, type CSSProperties, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage'
@@ -50,6 +52,7 @@ function MainContent({ children }: { children: ReactNode }) {
  * それ未満は上部バーのメニューボタンから開くドロワー)、その右に画面。
  */
 export default function App() {
+  useLocale()
   const navigation = useNavigation()
   return (
     <PlayerDeckProvider>
@@ -64,7 +67,7 @@ export default function App() {
             {navigation.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
             <div className="app-content">
               <MainContent>
-                <Suspense fallback={<p className="state-message">読み込み中…</p>}>
+                <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
                   <Routes>
                     <Route path="/"                  element={<HomePage />} />
                     <Route path="/edit-note"         element={<NoteEditPage />} />

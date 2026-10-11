@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
@@ -29,6 +31,7 @@ interface Props {
 }
 
 export function ReadmeView({ connectionId, bucket, prefix }: Props) {
+  useLocale()
   const caps = useCapabilities(connectionId)
   // 取得の失敗は「README なし」と分けて持つ。失敗を「なし」と見せると「作成」から
   // 書き始めて、既存の README を保存で上書きしてしまうため。
@@ -113,15 +116,15 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
   // prefix は `/` を含み得るので encPath で path segment ごとに encode。
   const editHref = `/storage/${encodeURIComponent(connectionId)}/edit-readme/${encodeURIComponent(bucket)}/${encPath(prefix)}`
 
-  const editLabel = data?.exists ? '編集' : '作成'
+  const editLabel = data?.exists ? translate("common.edit") : translate("common.create")
 
   return (
     <section className="readme-panel" aria-labelledby={headingId}>
       <div className="section-heading">
         <div className="readme-panel__title">
-          <h2 id={headingId}>README</h2>
+          <h2 id={headingId}>{translate("readmeView.readme")}</h2>
           {data?.exists && data.last_editor && (
-            <span className="muted">last by {data.last_editor}</span>
+            <span className="muted">{translate("common.lastBy") + " "}{data.last_editor}</span>
           )}
         </div>
         <div className="readme-panel__actions">
@@ -131,7 +134,7 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
                 className="icon-button"
                 to={editHref}
                 aria-label={editLabel}
-                title={`README を${editLabel}`}
+                title={translate("readmeView.readme2", { value0: editLabel })}
               >
                 {data.exists ? <Pencil size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
               </Link>
@@ -140,8 +143,8 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
               type="button"
               className="icon-button"
               onClick={() => setHistoryOpen(true)}
-              aria-label="履歴"
-              title="編集履歴を表示"
+              aria-label={translate("common.history")}
+              title={translate("common.showEditHistory")}
             >
               <History size={16} aria-hidden="true" />
             </button>
@@ -180,12 +183,12 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
                 aria-expanded={expanded}
               >
                 {expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
-                {expanded ? '折りたたむ' : 'すべて表示'}
+                {expanded ? translate("readmeView.collapse") : translate("readmeView.showAll")}
               </button>
             )}
           </>
         ) : (
-          <p className="muted">README なし</p>
+          <p className="muted">{translate("readmeView.noReadme")}</p>
         )}
       </div>
       {historyOpen && (

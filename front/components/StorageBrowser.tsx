@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { api } from '../lib/api/client'
@@ -104,6 +107,7 @@ function reducer(s: State, a: Action): State {
 }
 
 export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, selectedKey = null }: Props) {
+  useLocale()
   const tagsEnabled = useTagsEnabled()
   const [state, dispatch] = useReducer(reducer, initial)
   const { q, submittedQ, recursive, page, history, pageIdx, loading, error, revalidating } = state
@@ -362,10 +366,10 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
 
       {/* 進捗バー領域: 高さ 2px を常時確保しレイアウトシフトを避ける。 */}
       <div className="storage-busy-track storage-progress">
-        {loading && <div role="progressbar" aria-label="読み込み中" className="storage-busy-bar" />}
+        {loading && <div role="progressbar" aria-label={translate("storageBrowser.loading")} className="storage-busy-bar" />}
       </div>
 
-      {error && <p className="notice error">{error}</p>}
+      {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {/* 読み込み中も操作は塞がない。再読み込みはサーバーキャッシュを貫通するので
           dataset では 35 秒かかり、その間ずっと触れないのは実用に耐えない。
@@ -404,10 +408,10 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
         {isEmpty && !error && (
           <p className="state-message entry-empty">
             {isSearching
-              ? `「${submittedQ}」に一致するエントリはありません${recursive ? ' (再帰)' : ''}。`
+              ? translate("storageBrowser.noEntriesMatch", { value0: submittedQ, value1: recursive ? translate("storageBrowser.recursive") : '' })
               : recursive
-              ? 'このディレクトリ配下にエントリがありません。'
-              : '空のディレクトリです。'}
+              ? translate("storageBrowser.noEntriesUnderThisDirectory")
+              : translate("storageBrowser.thisDirectoryIsEmpty")}
           </p>
         )}
 

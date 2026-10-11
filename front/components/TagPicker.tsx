@@ -1,3 +1,7 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -24,6 +28,7 @@ interface Props {
 export function TagPicker({
   connectionId, bucket, kind, path, label, allTags, assignedTagIds, onChange, onClose,
 }: Props) {
+  useLocale()
   const titleId = useId()
   const [assigned, setAssigned] = useState<Set<string>>(new Set(assignedTagIds))
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -67,18 +72,18 @@ export function TagPicker({
   return (
     <Dialog
       titleId={titleId}
-      title="タグを編集"
+      title={translate("common.editTags")}
       subtitle={label}
       onClose={onClose}
       // 下の「閉じる」ボタンと読み上げの名前が重ならないよう、×と背景には別の名前を付ける。
-      closeLabel="タグの編集を閉じる"
+      closeLabel={translate("tagPicker.closeTagEditor")}
       narrowLayout="sheet"
-      footer={<button type="button" className="button" onClick={onClose}>閉じる</button>}
+      footer={<button type="button" className="button" onClick={onClose}>{translate("common.close")}</button>}
     >
       <div className="dialog-body">
         {allTags.length === 0 ? (
           <p className="muted">
-            タグがまだありません。<Link to="/settings/features">Settings</Link> で作成してください。
+            <TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate("common.settings")}</Link> }} />
           </p>
         ) : (
           <ul className="tag-picker-list">
@@ -99,7 +104,7 @@ export function TagPicker({
           </ul>
         )}
 
-        {error && <p className="notice error" aria-live="polite">{error}</p>}
+        {error && <p className="notice error" aria-live="polite">{localizeMessage(error)}</p>}
       </div>
     </Dialog>
   )

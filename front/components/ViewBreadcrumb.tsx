@@ -1,4 +1,7 @@
-import { useMemo, type ReactNode } from 'react'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
+import { type ReactNode } from 'react'
 import { useConnection } from '../lib/connectionContext'
 import { absoluteUrl } from '../lib/route'
 import { StorageHeader } from './Breadcrumb'
@@ -22,11 +25,12 @@ export function ViewBreadcrumb({
   /** h1 の下の補足 */
   description?: ReactNode
 }) {
+  useLocale()
   const connection = useConnection()
   const indexHref = `/storage/${encodeURIComponent(connectionId)}/`
 
-  const copyItems = useMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: 'Web URL をコピー', value: absoluteUrl(href) },
+  const copyItems = useLocalizedMemo<MenuItem[]>(() => [
+    { kind: 'copy', label: translate("common.copyWebUrl"), value: absoluteUrl(href) },
   ], [href])
 
   // 現在地 (h1) はリンクにしない (自分自身へのリンクになるため)。
@@ -36,9 +40,9 @@ export function ViewBreadcrumb({
       title={label}
       description={description}
       copyItems={copyItems}
-      copyLabel="このページの URL をコピー"
+      copyLabel={translate("viewBreadcrumb.copyThisPageSUrl")}
       upHref={indexHref}
-      upLabel="バケット一覧へ"
+      upLabel={translate("viewBreadcrumb.backToBuckets")}
     />
   )
 }

@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { Download, Pin, RotateCcw, X } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -38,6 +40,7 @@ export function PreviewDrawer({
   onResizeStart, onResizeKeyDown, onResetWidth, widthCustomized,
   entry, onEntryChange,
 }: Props) {
+  useLocale()
   const { pins, addPin } = usePinnedPreviews()
   const caps = useCapabilities(connectionId)
   if (!k) return null
@@ -48,7 +51,7 @@ export function PreviewDrawer({
   const alreadyPinned = pins.some(
     p => p.connectionId === connectionId && p.bucket === bucket && p.key === k && p.entryPath === undefined,
   )
-  const pinLabel = alreadyPinned ? 'ピン留め済み' : 'ピン留め'
+  const pinLabel = alreadyPinned ? translate("previewDrawer.pinned") : translate("common.pin")
   return (
     <aside className="drawer">
       {onResizeStart && (
@@ -56,7 +59,7 @@ export function PreviewDrawer({
           className="drawer-resize-handle"
           role="separator"
           aria-orientation="vertical"
-          aria-label="プレビュー幅を変更 (左右キーで調整)"
+          aria-label={translate("previewDrawer.resizePreviewUseLeftAndRightArrowKeys")}
           tabIndex={0}
           onPointerDown={onResizeStart}
           onKeyDown={onResizeKeyDown}
@@ -70,8 +73,8 @@ export function PreviewDrawer({
               type="button"
               className="icon-button drawer-reset"
               onClick={onResetWidth}
-              aria-label="プレビュー幅を既定に戻す"
-              title="プレビュー幅を既定に戻す"
+              aria-label={translate("previewDrawer.resetPreviewWidth")}
+              title={translate("previewDrawer.resetPreviewWidth")}
             >
               <RotateCcw size={16} aria-hidden="true" />
             </button>
@@ -95,8 +98,8 @@ export function PreviewDrawer({
               className="icon-button"
               href={api.downloadUrl(connectionId, bucket, k)}
               download={filename}
-              aria-label={`${filename} をダウンロード`}
-              title="ダウンロード"
+              aria-label={translate("common.download", { value0: filename })}
+              title={translate("common.download2")}
             >
               <Download size={16} aria-hidden="true" />
             </a>
@@ -105,8 +108,8 @@ export function PreviewDrawer({
             type="button"
             className="icon-button"
             onClick={onClose}
-            aria-label="Close preview"
-            title="閉じる"
+            aria-label={translate('previewDrawer.closePreview')}
+            title={translate("common.close")}
           >
             <X size={18} aria-hidden="true" />
           </button>
@@ -121,8 +124,9 @@ export function PreviewDrawer({
             「壊れている」と誤解されるため。 */}
         {((kind === 'archive' && !caps.archive) || (kind !== 'archive' && !caps.preview)) && (
           <p className="muted">
-            この接続では{kind === 'archive' ? '圧縮ファイルを開くこと' : 'ファイルのプレビュー'}が
-            無効になっています (Settings → 接続で変更できます)。
+            {translate("previewDrawer.operationDisabled", {
+              value0: kind === 'archive' ? translate("previewDrawer.openingArchives") : translate("previewDrawer.filePreviews"),
+            })}
           </p>
         )}
         {kind === 'unknown' && caps.preview && (

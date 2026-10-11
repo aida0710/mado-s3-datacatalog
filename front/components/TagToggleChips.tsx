@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { Check } from 'lucide-react'
 import type { Tag } from '../lib/api/types'
 import { TagColorDot } from './TagBadge'
@@ -13,6 +15,7 @@ interface Props {
  *  一覧の絞り込みとタグ検索で同じ見た目にする。選択中は地と枠をアクセントの色にし、
  *  色だけに頼らないようチェックの印も付ける。 */
 export function TagToggleChips({ tags, selected, onToggle, onClear }: Props) {
+  useLocale()
   return (
     <>
       {tags.map(tag => {
@@ -32,7 +35,7 @@ export function TagToggleChips({ tags, selected, onToggle, onClear }: Props) {
         )
       })}
       {selected.size > 0 && (
-        <button type="button" className="button small" onClick={onClear}>クリア</button>
+        <button type="button" className="button small" onClick={onClear}>{translate("common.clear")}</button>
       )}
     </>
   )

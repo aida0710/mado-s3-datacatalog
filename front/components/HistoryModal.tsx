@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import type { ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -23,6 +26,7 @@ interface Props extends HistorySource {
 export function HistoryModal({
   subtitle, titleId, title, currentBody, onClose, loadVersions, loadVersion,
 }: Props) {
+  useLocale()
   const { state, selectVersion } = useHistoryVersions({ loadVersions, loadVersion })
   const { versions, error, selectedId, selectedBody } = state
 
@@ -32,14 +36,14 @@ export function HistoryModal({
       title={title}
       subtitle={subtitle}
       onClose={onClose}
-      closeLabel="履歴を閉じる"
+      closeLabel={translate("historyModal.closeHistory")}
       size="extra-wide"
     >
       <div className="dialog-body">
-        {error && <p className="notice error">{error}</p>}
-        {!error && versions === null && <p className="state-message">読み込み中…</p>}
+        {error && <p className="notice error">{localizeMessage(error)}</p>}
+        {!error && versions === null && <p className="state-message">{translate("common.loading")}</p>}
         {!error && versions !== null && versions.length === 0 && (
-          <p className="state-message">履歴はありません。</p>
+          <p className="state-message">{translate("historyModal.noHistoryYet")}</p>
         )}
 
         {versions !== null && versions.length > 0 && (
@@ -55,7 +59,7 @@ export function HistoryModal({
                   >
                     <span className="history-version__editor">
                       {version.editor}
-                      {index === 0 && <span className="status-badge history-latest">最新</span>}
+                      {index === 0 && <span className="status-badge history-latest">{translate("historyModal.latest")}</span>}
                     </span>
                     <span className="muted">
                       {fmtDateTime(version.edited_at)} · {fmtSize(version.size_bytes)}
@@ -66,13 +70,13 @@ export function HistoryModal({
             </ul>
             <div className="history-preview">
               {selectedBody === null ? (
-                <p className="state-message">読み込み中…</p>
+                <p className="state-message">{translate("common.loading")}</p>
               ) : (
                 <>
                   {currentBody !== null && selectedBody.body === currentBody && (
                     <p className="notice history-match">
                       <Check size={14} aria-hidden="true" />
-                      <span>この版は現在の本文と一致します。</span>
+                      <span>{translate("historyModal.thisVersionMatchesTheCurrentContent")}</span>
                     </p>
                   )}
                   <div className="markdown-body">

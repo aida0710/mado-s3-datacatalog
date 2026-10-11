@@ -211,66 +211,16 @@ export const ALL_CAPABILITIES_ON: Capabilities = {
   audioInfo: true, audioSpectrogram: true, readmeRead: true, readmeWrite: true,
 }
 
-/** 設定画面での表示順とラベル。api/lib/capabilityGuard.ts の
- *  CAPABILITY_LABELS と文言を揃えること (403 のメッセージに出る)。 */
-export const CAPABILITY_UI: ReadonlyArray<{
-  key: Capability
-  label: string
-  help: string
-}> = [
-  { key: 'list',             label: 'バケット / オブジェクトの一覧',
-    help: '接続の基本機能。オフにするとこの接続では何も見られなくなります (完全に凍結したいとき用)。' },
-  { key: 'preview',          label: 'ファイルのプレビュー (テキスト / 画像 / 音声 / 動画)',
-    help: 'ファイル本体を読みます。Deep Archive など GetObject が失敗する / 課金されるバケットではオフに。' },
-  { key: 'download',         label: 'ファイルのダウンロード',
-    help: '行メニューやプレビューの DL ボタン。オフにするとボタンが消え、共有 URL を直接叩いても 403 になります。' },
-  { key: 'archive',          label: '圧縮ファイル (tar / tar.gz / tar.xz) を開く',
-    help: '中身の一覧と個別エントリのプレビュー。tar.gz / tar.xz はアーカイブ全体を読むので重いです。' },
-  { key: 'audioInfo',        label: '音声情報・波形の表示',
-    help: 'ファイル全体をダウンロードして解析します。大きい音声が多い接続では負荷が大きくなります。' },
-  { key: 'audioSpectrogram', label: 'スペクトログラムの表示',
-    help: '「音声情報・波形」がオフのときは解析自体が走らないので、こちらも表示されません。' },
-  { key: 'readmeRead',       label: 'README の読み込み',
-    help: '各ディレクトリの README.md を S3 から読みます (Mado 側の DB ではなくバケットの実体)。' },
-  { key: 'readmeWrite',      label: 'README の編集',
-    help: 'README.md をバケットに書き戻します。読み込みがオフだと選べません。' },
-]
-
 // ── 転送見積もりのプロファイル (spec: 2026-08-22-transfer-estimate-design.md) ──
 
 export const Provider = z.enum(['aws', 'wasabi', 'onprem', 'other'])
 export type Provider = z.infer<typeof Provider>
-
-export const PROVIDER_LABELS: Record<Provider, string> = {
-  aws:    'AWS S3',
-  wasabi: 'Wasabi',
-  onprem: '社内 / その他 (費用なし)',
-  other:  'その他',
-}
 
 export const StorageClassKey = z.enum([
   'STANDARD', 'INTELLIGENT_TIERING', 'STANDARD_IA', 'ONEZONE_IA',
   'GLACIER_IR', 'GLACIER', 'DEEP_ARCHIVE',
 ])
 export type StorageClassKey = z.infer<typeof StorageClassKey>
-
-/** 選択肢の並び。「速くて高い」→「遅くて安い」の順に並べる。 */
-export const STORAGE_CLASS_OPTIONS: Array<{ key: StorageClassKey; label: string; help: string }> = [
-  { key: 'STANDARD',            label: 'Standard',
-    help: '既定。取り出し料金も最小保存期間も無い。' },
-  { key: 'INTELLIGENT_TIERING', label: 'Intelligent-Tiering',
-    help: 'アクセス頻度で自動的に階層を移す。オブジェクトごとに監視料がかかる。' },
-  { key: 'STANDARD_IA',         label: 'Standard-IA',
-    help: '月額は約半分。読み出しに $/GB がかかり、最小 30 日・128KB 単位。' },
-  { key: 'ONEZONE_IA',          label: 'One Zone-IA',
-    help: '1 つの AZ にしか置かない。失っても再生成できるデータ向け。' },
-  { key: 'GLACIER_IR',          label: 'Glacier Instant Retrieval',
-    help: '取り出しは即時だが $/GB が高い。最小 90 日。' },
-  { key: 'GLACIER',             label: 'Glacier Flexible Retrieval',
-    help: '取り出しに数分〜数時間。最小 90 日。' },
-  { key: 'DEEP_ARCHIVE',        label: 'Glacier Deep Archive',
-    help: '最安。取り出しに十数時間かかり、最小 180 日。' },
-]
 
 /** 接続ごとの見積もり設定。値は「設定 + 推定 + 既定」を畳んだ実効値。 */
 export const ConnectionPricing = z.object({

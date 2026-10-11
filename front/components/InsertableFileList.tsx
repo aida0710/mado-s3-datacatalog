@@ -7,6 +7,9 @@
 // ディレクトリ行末尾の「開く」(矢印) → 内部 state で prefix を切替えてそのサブディレクトリの
 // 中身に進む。上部のパン屑で上位階層に戻れる。
 
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useState } from 'react'
 import { ChevronRight, File, Folder } from 'lucide-react'
 import type { z } from 'zod'
@@ -41,6 +44,7 @@ interface ListResult {
 }
 
 export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix, onInsert }: Props) {
+  useLocale()
   const [prefix, setPrefix] = useState(initialPrefix)
   // 応答を取得対象と一緒に保持する。prefix 切替時に effect 内で state を同期リセット
   // しなくても、旧ディレクトリの結果を新しい現在地へ一瞬表示せずに済む。
@@ -82,13 +86,13 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
 
   return (
     <div className="filelist">
-      <nav className="filelist__crumbs" aria-label="現在のディレクトリ">
+      <nav className="filelist__crumbs" aria-label={translate("insertableFileList.currentDirectory")}>
         <button
           type="button"
           className="filelist__crumb"
           onClick={() => goTo(-1)}
           disabled={crumbs.length === 0}
-          title="ルートへ"
+          title={translate("insertableFileList.goToRoot")}
         >
           {bucket}
         </button>
@@ -108,11 +112,11 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
       </nav>
 
       {error ? (
-        <p className="filelist__message filelist__error" role="alert">{error}</p>
+        <p className="filelist__message filelist__error" role="alert">{localizeMessage(error)}</p>
       ) : !data ? (
-        <p className="filelist__message muted">読み込み中…</p>
+        <p className="filelist__message muted">{translate("common.loading")}</p>
       ) : data.directories.length === 0 && data.files.length === 0 ? (
-        <p className="filelist__message muted">エントリなし</p>
+        <p className="filelist__message muted">{translate("insertableFileList.noEntries")}</p>
       ) : (
         <ul className="filelist__rows">
           {data.directories.map(d => {
@@ -124,7 +128,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
                   type="button"
                   className="filelist__name"
                   onClick={() => onInsert({ name: base, isDir: true, fullKey: d })}
-                  title="クリックして本文に挿入"
+                  title={translate("insertableFileList.clickToInsertIntoTheContent")}
                 >
                   <Folder size={14} aria-hidden="true" />
                   <span>{base}/</span>
@@ -133,8 +137,8 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
                   type="button"
                   className="icon-button filelist__open"
                   onClick={() => setPrefix(d)}
-                  title="このディレクトリへ潜る"
-                  aria-label={`${base} を開く`}
+                  title={translate("insertableFileList.openThisDirectory")}
+                  aria-label={translate("insertableFileList.open", { value0: base })}
                 >
                   <ChevronRight size={16} aria-hidden="true" />
                 </button>
@@ -149,7 +153,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
                   type="button"
                   className="filelist__name"
                   onClick={() => onInsert({ name: base, isDir: false, fullKey: f.key })}
-                  title="クリックして本文に挿入"
+                  title={translate("insertableFileList.clickToInsertIntoTheContent")}
                 >
                   <File size={14} aria-hidden="true" />
                   <span>{base}</span>
@@ -162,8 +166,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
 
       {data && (data.nextContinuation || data.nextStartAfter) && (
         <p className="filelist__hint muted">
-          続きあり — エントリが多いです。末端まで潜ってから挿入することをお勧めします。
-        </p>
+          {translate("insertableFileList.moreEntriesAreAvailableNavigateFurtherIntoThe")}</p>
       )}
     </div>
   )

@@ -1,3 +1,5 @@
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, PinOff } from 'lucide-react'
 import { usePlayerDeck } from '../lib/playerDeck'
@@ -29,6 +31,7 @@ function publishDockHeight(el: HTMLDivElement | null): (() => void) | undefined 
 // 左端はサイドバーの右に揃える (preview.css の .bottom-dock が .app-shell の
 // data-navigation を見て決める)。
 export function BottomDock() {
+  useLocale()
   const { tracks } = usePlayerDeck()
   const { pins, clearPins } = usePinnedPreviews()
   const [pinsCollapsed, setPinsCollapsed] = useState(false)
@@ -50,12 +53,11 @@ export function BottomDock() {
                 {pinsCollapsed
                   ? <ChevronUp size={16} aria-hidden="true" />
                   : <ChevronDown size={16} aria-hidden="true" />}
-                <span>ピン留め ({pins.length})</span>
+                <span>{translate("bottomDock.pinned")}{pins.length})</span>
               </button>
               <button type="button" className="button small" onClick={clearPins}>
                 <PinOff size={14} aria-hidden="true" />
-                全部外す
-              </button>
+                {translate("bottomDock.unpinAll")}</button>
             </div>
             {!pinsCollapsed && (
               <div className="pinned-grid">

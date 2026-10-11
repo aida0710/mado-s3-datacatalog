@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react'
 import { Menu, X } from 'lucide-react'
 import { NavigationLinkList } from './NavigationLinkList'
@@ -9,6 +11,7 @@ import { ProductLogo } from './ProductLogo'
  * ドロワーの外側やリンクを押しても閉じる。
  */
 export function NavigationDrawer() {
+  useLocale()
   const drawerId = useId()
   const drawerRef = useRef<HTMLDialogElement>(null)
   const [isOpen, setIsOpen] = useState(false)
@@ -28,7 +31,7 @@ export function NavigationDrawer() {
       <button
         type="button"
         className="icon-button navigation-toggle"
-        aria-label={isOpen ? 'メニューを閉じる' : 'メニューを開く'}
+        aria-label={isOpen ? translate("navigationDrawer.closeMenu") : translate("navigationDrawer.openMenu")}
         aria-expanded={isOpen}
         aria-controls={drawerId}
         onClick={() => setIsOpen(current => !current)}
@@ -39,7 +42,7 @@ export function NavigationDrawer() {
         ref={drawerRef}
         id={drawerId}
         className="navigation-drawer"
-        aria-label="メインナビゲーション"
+        aria-label={translate("common.mainNavigation")}
         onCancel={event => {
           event.preventDefault()
           setIsOpen(false)
@@ -53,7 +56,7 @@ export function NavigationDrawer() {
             <button
               type="button"
               className="icon-button"
-              aria-label="メニューを閉じる"
+              aria-label={translate("navigationDrawer.closeMenu")}
               onClick={() => setIsOpen(false)}
             >
               <X size={20} />

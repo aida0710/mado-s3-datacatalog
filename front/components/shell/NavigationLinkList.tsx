@@ -1,3 +1,5 @@
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { Link, useLocation } from 'react-router-dom'
 import { isCurrentLink, NAVIGATION_LINKS } from './navigationLinks'
 
@@ -6,9 +8,10 @@ import { isCurrentLink, NAVIGATION_LINKS } from './navigationLinks'
  * アイコンだけの列は名前を画面に出さないので、ツールチップ (title) で示す。
  */
 export function NavigationLinkList({ showsTitles = false }: { showsTitles?: boolean }) {
+  useLocale()
   const { pathname } = useLocation()
   return (
-    <nav aria-label="メインナビゲーション">
+    <nav aria-label={translate("common.mainNavigation")}>
       <div className="navigation-group">
         {NAVIGATION_LINKS.map(({ to, label, icon: Icon }) => (
           <Link

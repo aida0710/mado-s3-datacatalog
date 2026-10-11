@@ -1,3 +1,6 @@
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { api } from '../lib/api/client'
@@ -22,6 +25,7 @@ interface Props {
  * 形式などの情報の行を縦に並べる。
  */
 export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
+  useLocale()
   const audioRef = useRef<HTMLAudioElement>(null)
   const [analyze, setAnalyze] = useState<Analyze | null>(null)
   const [analyzing, setAnalyzing] = useState(true)
@@ -75,13 +79,13 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
 
   return (
     <div className="preview-stack preview-audio">
-      {srcLoading && <p className="muted">音声を取得中…</p>}
-      {srcError && <p className="notice error">音声を取得できません: {srcError}</p>}
+      {srcLoading && <p className="muted">{translate("previewAudio.fetchingAudio")}</p>}
+      {srcError && <p className="notice error">{translate("previewAudio.couldNotFetchAudio") + " "}{localizeMessage(srcError)}</p>}
       {src && <audio ref={audioRef} src={src} controls preload="metadata" />}
       {/* analyzing は初期値 true のまま据え置く (effect 内の同期 setState は
           react-hooks/set-state-in-effect に引っかかる) ので、権限側で出し分ける。 */}
-      {analyzing && caps.audioInfo && <p className="muted">解析中…</p>}
-      {error && <p className="preview-error">波形を表示できません: {error}</p>}
+      {analyzing && caps.audioInfo && <p className="muted">{translate("previewAudio.analyzing")}</p>}
+      {error && <p className="preview-error">{translate("previewAudio.couldNotDisplayWaveform") + " "}{localizeMessage(error)}</p>}
       {(showWaveform || showSpectrogram) && (
         <div className="preview-audio-timeline">
           {showWaveform && <Waveform peaks={analyze.peaks} progress={progress} onSeek={onSeek} />}
@@ -89,7 +93,7 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
             <img
               className="preview-spectrogram"
               src={api.spectrogramUrl(connectionId, analyze.cacheKey)}
-              alt="スペクトログラム"
+              alt={translate("previewAudio.spectrogram")}
             />
           )}
         </div>
