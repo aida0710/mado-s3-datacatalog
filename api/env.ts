@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+// Keep a login for one week, including time away from the browser.
+const DEFAULT_SESSION_LIFETIME_SECONDS = 7 * 24 * 60 * 60
+// offline_access lets an SSO session refresh short-lived access tokens without another login.
+const DEFAULT_OIDC_SCOPES = 'openid email profile offline_access'
+
 // `ENCRYPTION_KEY` は 64 桁の16進数 (32 バイトのエントロピー) が必須。
 // `openssl rand -hex 32` で生成できる。
 const hex32 = (name: string) =>
@@ -56,14 +61,14 @@ const baseSchema = z.object({
   AUTH_COOKIE_SECURE: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
-  AUTH_SESSION_IDLE_SECONDS: z.coerce.number().int().min(300).default(28_800),
-  AUTH_SESSION_ABSOLUTE_SECONDS: z.coerce.number().int().min(3600).default(604_800),
+  AUTH_SESSION_IDLE_SECONDS: z.coerce.number().int().min(300).default(DEFAULT_SESSION_LIFETIME_SECONDS),
+  AUTH_SESSION_ABSOLUTE_SECONDS: z.coerce.number().int().min(3600).default(DEFAULT_SESSION_LIFETIME_SECONDS),
   OIDC_ISSUER_URL: optionalUrl,
   OIDC_CLIENT_ID: optionalString,
   OIDC_CLIENT_SECRET: optionalString,
   OIDC_REDIRECT_URI: optionalUrl,
   OIDC_LABEL: z.string().min(1).default('SSO'),
-  OIDC_SCOPES: z.string().min(1).default('openid email profile'),
+  OIDC_SCOPES: z.string().min(1).default(DEFAULT_OIDC_SCOPES),
   OIDC_POST_LOGOUT_REDIRECT_URI: optionalUrl,
   OIDC_AUTO_LINK_VERIFIED_EMAIL: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
