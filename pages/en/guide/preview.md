@@ -14,9 +14,9 @@ Text and JSON appear in the panel on the right. Click **内容をコピー** (Co
 
 ## Open images
 
-Images open in the same preview. To save the original file, use **ダウンロード** (Download) in the header, the button with a down arrow.
+Images open in the same preview. To save the original file, use **ダウンロード** (Download), the button with a down arrow on the bar above the preview.
 
-<Screenshot src="/screenshots/image-preview.png" alt="Image preview showing spectrogram.png" caption="An image file opened in the preview. You can save the original file with the download button in the header." />
+<Screenshot src="/screenshots/image-preview.png" alt="Image preview showing spectrogram.png" caption="An image file opened in the preview. You can save the original file with the download button on the bar above." />
 
 ## Play and seek video
 
@@ -28,7 +28,7 @@ Whether a video plays depends not only on its file extension but also on its vid
 
 ## Change the width and pin previews side by side
 
-On a wide screen, drag the left edge of the preview to change its width. The browser remembers the width, and **↔** in the header resets it.
+On a wide screen, drag the left edge of the preview to change its width. The browser remembers the width. **プレビュー幅を既定に戻す** (Reset preview width), the rotating arrow button on the bar above, resets it; it appears only after you change the width.
 
 Click **ピン留め** (Pin) to keep the preview at the bottom of the screen. You can still see the pinned content after you open another file or move to another directory. For a tar file, you pin individual files inside it, not the whole archive.
 

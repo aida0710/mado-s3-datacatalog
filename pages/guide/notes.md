@@ -8,13 +8,13 @@ description: ディレクトリのREADMEと、チーム全体で共有するTeam
 
 ## ディレクトリのREADMEを書く
 
-Storageで対象のディレクトリを開き、READMEの **編集** を押します。まだREADMEがなければ **作成** から書けます。内容・ファイル形式・処理条件・利用上の注意などを記録してください。
+Storageで対象のディレクトリを開き、READMEの見出しの右にある **編集**（鉛筆のボタン）を押します。まだREADMEがなければ **作成**（＋のボタン）から書けます。内容・ファイル形式・処理条件・利用上の注意などを記録してください。
 
 <Screenshot src="/screenshots/storage-directory.png" alt="ファイル一覧の上に表示されたS3 README" caption="そのディレクトリの説明を、ファイルを開く前に読めます。" />
 
 <Screenshot src="/screenshots/readme-edit.png" alt="ファイル一覧とMarkdownエディタを並べたREADME編集画面" caption="左側のファイルを本文へ挿入しながら、Markdownを編集できます。" />
 
-READMEの本文はS3に書き戻します。そのため、書き込み可能な接続と、**READMEの編集** が許可された設定が必要です。
+READMEの本文はS3に書き戻します。そのため、書き込み可能な接続と、**README の編集** が許可された設定が必要です。
 
 ## Homeで共有ノートを書く
 

@@ -16,13 +16,13 @@ Open the mado URL in your browser. If your environment uses SSO, click the SSO b
 
 ## Open your first file from Storage
 
-1. Open **Storage** in the top bar. If there is a default connection, it opens automatically.
+1. Open **Storage** in the sidebar on the left (on a phone, open it from the menu button at the top left). If there is a default connection, it opens automatically.
 2. Select a bucket and move down through the directories.
 3. Click a file's row to open its preview on the right.
 
-To switch connections, use the **CONNECTION** menu at the top right. If there are no connections yet, an administrator needs to [register the storage](../setup/connections.md).
+To switch connections, use the **Connection** selector to the right of the page title. If there are no connections yet, an administrator needs to [register the storage](../setup/connections.md).
 
-<Screenshot src="/screenshots/storage-buckets.png" alt="Storage screen showing favorites and the bucket list" caption="Add buckets you use often to your favorites so you can open them from the top of the list." />
+<Screenshot src="/screenshots/storage-buckets.png" alt="Storage screen showing the buckets in use and the other buckets" caption="Check the buckets you use often so you can open them from the top of the list." />
 
 <Screenshot src="/screenshots/text-preview.png" alt="metadata.json opened to the right of the file list" caption="You can read JSON and text files in place and copy their contents." />
 

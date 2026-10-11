@@ -14,12 +14,12 @@ Open DataLineage, filter the catalog by name or namespace, and select a dataset.
 
 You can drag the graph to move it, and zoom in and out. Select a node to see its registered description and run information on the right.
 
-## Switch between the overall view and the per-version view
+## Switch between the whole dataset and inputs, outputs, and run history
 
 | View | Relationship |
 | --- | --- |
-| Logical | Dataset → Job → Dataset. The overall picture of data and processing |
-| Version | DatasetVersion → Run → DatasetVersion. Specific generated results and runs |
+| **データセット全体** (Whole dataset) | Dataset → Job → Dataset. The overall picture of data and processing |
+| **入出力と処理履歴** (Inputs, outputs, and run history) | DatasetVersion → Run → DatasetVersion. Specific generated results and runs |
 
 In a version's details, you can check registered information such as the content hash, the storage location, and the Run that generated it. If the storage location is linked to a mado connection, you can go to it in Storage. From Storage, you can also see the Lineage linked to the same storage location.
 

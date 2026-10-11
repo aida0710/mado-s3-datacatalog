@@ -18,7 +18,7 @@ If an S3-compatible implementation responds slowly to list requests, reduce the 
 
 ## Files added to S3 do not appear
 
-Click **↻** in the list to fetch the information from S3 again. The color and time on the list's bar show how long it has been since that information was fetched.
+Click **再読み込み** (Reload), the circular arrow button on the bar above the list, to fetch the information from S3 again. The color and time on the list's bar show how long it has been since that information was fetched.
 
 ## Preview or download actions are missing
 
@@ -42,7 +42,7 @@ Check that **音声情報・波形の表示** (Show audio info and waveform) and
 
 ## You cannot edit a README
 
-Check the Curator or Admin permission, the connection's **READMEの編集** (Edit README) setting, and S3 write permission on the endpoint. On connections where README reading is disabled, editing is not available either.
+Check the Curator or Admin permission, the connection's **README の編集** (Edit README) setting, and S3 write permission on the endpoint. On connections where **README の読み込み** (Read README) is disabled, editing is not available either.
 
 ## No data appears in Lineage
 
