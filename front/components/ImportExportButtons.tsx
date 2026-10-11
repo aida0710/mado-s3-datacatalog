@@ -1,12 +1,12 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useId, useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { readJsonFile, summaryText, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { Dialog } from './Dialog'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
-// The compact result row shows a few causes; the summary carries the total failure count.
+// 結果の一行に並べる失敗の理由の数。失敗の総数は要約の文に出す。
 const MAX_IMPORT_FAILURE_MESSAGES = 3
 
 interface Props {
@@ -30,7 +30,7 @@ interface Props {
 // 結果はボタンの下に一行で出す (見出しの右に置かれるので、重い通知の枠は使わない)。
 export function ImportExportButtons({
   what, onExport, onImport, onDone, replaceWarning,
-  exportLabel = translate("importExportButtons.export"), importLabel = translate("importExportButtons.import"),
+  exportLabel = translate('importExportButtons.export'), importLabel = translate('importExportButtons.import'),
 }: Props) {
   useLocale()
   const inputId = useId()
@@ -89,7 +89,7 @@ export function ImportExportButtons({
         disabled={busy}
       >
         <Upload size={14} aria-hidden="true" />
-        {busy ? translate("importExportButtons.importing") : importLabel}
+        {busy ? translate('importExportButtons.importing') : importLabel}
       </button>
       <input
         ref={inputRef}
@@ -97,7 +97,7 @@ export function ImportExportButtons({
         type="file"
         accept="application/json,.json"
         hidden
-        aria-label={translate("importExportButtons.import2", { value0: what })}
+        aria-label={translate('importExportButtons.import2', { value0: what })}
         onChange={e => {
           const f = e.target.files?.[0]
           if (f) void handleFile(f)
@@ -113,23 +113,23 @@ export function ImportExportButtons({
       {picked !== null && (
         <Dialog
           titleId={titleId}
-          title={translate("importExportButtons.howToImport", { value0: what })}
+          title={translate('importExportButtons.howToImport', { value0: what })}
           onClose={() => setPicked(null)}
           narrowLayout="sheet"
           footer={
             <>
-              <button type="button" className="button" onClick={() => setPicked(null)}>{translate("common.cancel")}</button>
-              <button type="button" className="button primary" onClick={() => void run('append')}>{translate("importExportButtons.append")}</button>
-              <button type="button" className="button danger" onClick={() => void run('replace')}>{translate("importExportButtons.replace")}</button>
+              <button type="button" className="button" onClick={() => setPicked(null)}>{translate('common.cancel')}</button>
+              <button type="button" className="button primary" onClick={() => void run('append')}>{translate('importExportButtons.append')}</button>
+              <button type="button" className="button danger" onClick={() => void run('replace')}>{translate('importExportButtons.replace')}</button>
             </>
           }
         >
           <div className="dialog-body import-export__choices">
             <p>
-              <strong>{translate("importExportButtons.append")}</strong> {" " + translate("importExportButtons.addItemsFromTheFileExistingItemsAre")}</p>
+              <strong>{translate('importExportButtons.append')}</strong> {translate('importExportButtons.addItemsFromTheFileExistingItemsAre')}</p>
             <p>
-              <strong>{translate("importExportButtons.replace")}</strong> {" " + translate("importExportButtons.matchTheContentsOfTheFile")}<strong>{translate("importExportButtons.existingItemsMissingFromTheFileWillBe")}</strong>
-              {translate("importExportButtons.itemsPresentInBothAreKeptWithoutBeing")}</p>
+              <strong>{translate('importExportButtons.replace')}</strong> {translate('importExportButtons.matchTheContentsOfTheFile')}<strong>{translate('importExportButtons.existingItemsMissingFromTheFileWillBe')}</strong>
+              {translate('importExportButtons.itemsPresentInBothAreKeptWithoutBeing')}</p>
             {replaceWarning && <p className="import-export__warning">{replaceWarning}</p>}
           </div>
         </Dialog>

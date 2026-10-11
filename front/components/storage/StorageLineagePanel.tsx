@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Database } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { StorageLineageResolution } from '../../lib/api/types'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -24,8 +24,8 @@ function versionHref(versionId: string): string {
 
 function locationRelation(matchType: 'exact' | 'prefix'): string {
   return matchType === 'exact'
-    ? translate("storageLineagePanel.thisLocationIsRegisteredAsStorage")
-    : translate("storageLineagePanel.underARegisteredStorageLocation")
+    ? translate('storageLineagePanel.thisLocationIsRegisteredAsStorage')
+    : translate('storageLineagePanel.underARegisteredStorageLocation')
 }
 
 export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
@@ -51,10 +51,10 @@ export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
 
   // .notice に近い区画 (左の線 + 淡い地)。README の補足として、その直後に置かれる。
   return (
-    <aside className="storage-lineage" aria-label={translate("storageLineagePanel.datasetsAssociatedWithThisLocation")}>
+    <aside className="storage-lineage" aria-label={translate('storageLineagePanel.datasetsAssociatedWithThisLocation')}>
       <span className="storage-lineage-label">
         <Database size={14} aria-hidden="true" />
-        {translate("common.dataset")}</span>
+        {translate('common.dataset')}</span>
       <div className="storage-lineage-matches">
         {resolution.matches.slice(0, 3).map(match => (
           <div className="storage-lineage-match" key={`${match.versionId}:${match.locationId}`}>
@@ -62,17 +62,17 @@ export function StorageLineagePanel({ connectionId, bucket, path }: Props) {
               <strong>{match.displayName ?? match.name}</strong>
               <span className="muted">
                 {locationRelation(match.matchType)}
-                {match.versionCount > 1 ? translate("storageLineagePanel.version", { value0: match.version }) : ''}
+                {match.versionCount > 1 ? translate('storageLineagePanel.version', { value0: match.version }) : ''}
               </span>
             </div>
             <div className="storage-lineage-actions">
-              <Link className="link-button" to={versionHref(match.versionId)}>{translate("storageLineagePanel.viewProcessingLineage")}</Link>
-              <Link className="link-button" to={lineageHref(match.namespace, match.name)}>{translate("storageLineagePanel.viewAllDatasets")}</Link>
+              <Link className="link-button" to={versionHref(match.versionId)}>{translate('storageLineagePanel.viewProcessingLineage')}</Link>
+              <Link className="link-button" to={lineageHref(match.namespace, match.name)}>{translate('storageLineagePanel.viewAllDatasets')}</Link>
             </div>
           </div>
         ))}
         {resolution.matches.length > 3 && (
-          <span className="muted">{translate("common.additionalItems", { value0: resolution.matches.length - 3 })}</span>
+          <span className="muted">{translate('common.additionalItems', { value0: resolution.matches.length - 3 })}</span>
         )}
       </div>
     </aside>

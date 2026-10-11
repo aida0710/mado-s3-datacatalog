@@ -4,8 +4,8 @@ import type { Capability, ConnectionConfig } from '../storage.js'
 export type GetConnectionConfig = (connectionId: string) => Promise<ConnectionConfig>
 
 /** 権限ごとの日本語ラベル。403 のメッセージに使う (UI がボタンを隠していても
- *  共有 Web URL を直に開いた人には理由が見えるように)。front 側の
- *  CAPABILITY_LABELS と文言を揃えること。 */
+ *  共有 Web URL を直に開いた人には理由が見えるように)。front は全文が一致したときだけ
+ *  英語に訳すので、変えるときは front/i18n/ja.ts の serverErrors.*Capability と en.ts も直すこと。 */
 export const CAPABILITY_LABELS: Record<Capability, string> = {
   list:             'バケット / オブジェクトの一覧',
   preview:          'ファイルのプレビュー',

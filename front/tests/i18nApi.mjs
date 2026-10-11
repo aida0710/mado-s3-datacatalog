@@ -1,9 +1,9 @@
-// Isolated API fixtures for the language-switching browser check.
+// 言語の切り替えのブラウザ試験で使う、本物の API を使わない応答の見本。
 export function createI18nApi() {
-  // Keep fixture listings valid throughout a browser check.
-  const LIST_CACHE_TTL_MS = 60 * 60 * 1000;
-  const now = new Date().toISOString();
-  const cache = { fetchedAt: now, expiresAt: new Date(Date.now() + LIST_CACHE_TTL_MS).toISOString(), hit: false };
+  // 試験の途中で一覧のキャッシュが古くならない長さにする。
+  const LIST_CACHE_TTL_MS = 60 * 60 * 1000
+  const now = new Date().toISOString()
+  const cache = { fetchedAt: now, expiresAt: new Date(Date.now() + LIST_CACHE_TTL_MS).toISOString(), hit: false }
   const connection = {
     id: 'sample-storage', name: 'Research storage', endpoint: 'https://storage.example.invalid',
     region: 'us-east-1', accessKeyIdMasked: '••••', forcePathStyle: true, listObjectsVersion: 'v2',
@@ -19,35 +19,35 @@ export function createI18nApi() {
         retrievalPerGb: 0, minDurationDays: 0, minBillableBytes: 0, perObjectOverheadBytes: 0,
         storageRateSource: 'none' },
     },
-  };
-  const state = { loggedIn: true, calls: [] };
+  }
+  const state = { loggedIn: true, calls: [] }
   const user = {
     id: '00000000-0000-4000-8000-000000000001', username: 'sample-user', email: null,
     displayName: 'Sample user', signatureName: 'Sample user', roles: ['admin'],
     permissions: ['users:manage', 'service_accounts:manage', 'audit:read'], mustChangePassword: false,
-  };
+  }
   async function route(route) {
-    const request = route.request();
-    const path = new URL(request.url()).pathname;
-    state.calls.push({ method: request.method(), path });
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    state.calls.push({ method: request.method(), path })
     const reply = (payload, status = 200) => route.fulfill({ status,
-      contentType: 'application/json', body: JSON.stringify(payload) });
-    if (path === '/api/auth/config') return reply({ localEnabled: true, oidc: { enabled: false } });
-    if (path === '/api/auth/me') return state.loggedIn ? reply({ user }) : reply({ error: 'unauthorized' }, 401);
-    if (path === '/api/internal/connections') return reply([connection]);
-    if (path === '/api/internal/connections/default') return reply(connection);
-    if (path === '/api/internal/settings') return reply({ tags_enabled: 'false' });
-    if (path === '/api/internal/notes/home') return reply({ exists: false });
-    if (path.endsWith('/buckets')) return reply({ buckets: [{ name: 'training-data', creationDate: now }], cache });
-    if (path.endsWith('/favorites')) return reply([]);
+      contentType: 'application/json', body: JSON.stringify(payload) })
+    if (path === '/api/auth/config') return reply({ localEnabled: true, oidc: { enabled: false } })
+    if (path === '/api/auth/me') return state.loggedIn ? reply({ user }) : reply({ error: 'unauthorized' }, 401)
+    if (path === '/api/internal/connections') return reply([connection])
+    if (path === '/api/internal/connections/default') return reply(connection)
+    if (path === '/api/internal/settings') return reply({ tags_enabled: 'false' })
+    if (path === '/api/internal/notes/home') return reply({ exists: false })
+    if (path.endsWith('/buckets')) return reply({ buckets: [{ name: 'training-data', creationDate: now }], cache })
+    if (path.endsWith('/favorites')) return reply([])
     if (path.endsWith('/list')) return reply({ directories: ['datasets/', 'models/'], files: [
       { key: 'manifest.json', size: 24576, lastModified: now },
       { key: '日本語の説明.txt', size: 1024, lastModified: now },
-    ], nextContinuation: null, nextStartAfter: null, cache });
-    if (path.endsWith('/readme')) return reply({ exists: false });
-    if (path.endsWith('/tags')) return reply(path === '/api/internal/tags' ? [] : {});
-    if (path.endsWith('/registry-status')) return reply({ linked: false });
-    return reply({ error: `Unexpected browser-test API: ${path}` }, 404);
+    ], nextContinuation: null, nextStartAfter: null, cache })
+    if (path.endsWith('/readme')) return reply({ exists: false })
+    if (path.endsWith('/tags')) return reply(path === '/api/internal/tags' ? [] : {})
+    if (path.endsWith('/registry-status')) return reply({ linked: false })
+    return reply({ error: `Unexpected browser-test API: ${path}` }, 404)
   }
-  return { route, state, connection };
+  return { route, state, connection }
 }

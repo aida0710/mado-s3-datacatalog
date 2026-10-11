@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useRef } from 'react'
 import { useDocumentTheme } from '../lib/useDocumentTheme'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   peaks: Array<[number, number]>
@@ -95,7 +95,7 @@ export function Waveform({ peaks, progress, onSeek, height = 64, durationRatio =
     <canvas
       ref={canvasRef}
       role="slider"
-      aria-label={translate("waveform.playbackPosition")}
+      aria-label={translate('waveform.playbackPosition')}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(progress * 100)}

@@ -1,6 +1,3 @@
-import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useCallback, useState, type KeyboardEvent } from 'react'
 import { api } from '../../lib/api/client'
 import { classify } from '../../lib/api/mime'
@@ -10,6 +7,9 @@ import { usePlayerDeck } from '../../lib/playerDeck'
 import { usePinnedPreviews } from '../../lib/pinnedPreviews'
 import { useCapabilities } from '../../lib/useCapabilities'
 import type { MenuItem } from '../CopyMenu'
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 // 一覧の行の URL・メニュー・タグ・選択の扱い。ここに寄せて、描画側 (EntryTable) は
 // 行の組み立てだけにする。
@@ -47,10 +47,10 @@ export function useDirectoryEntryActions({
   const s3Url = `s3://${bucket}/${directory}`
   const webUrl = absoluteUrl(href)
   const items = useLocalizedMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: translate("common.copyWebUrl"), value: webUrl },
-    { kind: 'copy', label: translate("common.copyS3Url"), value: s3Url },
+    { kind: 'copy', label: translate('common.copyWebUrl'), value: webUrl },
+    { kind: 'copy', label: translate('common.copyS3Url'), value: s3Url },
     ...(tagsEnabled
-      ? [{ kind: 'action' as const, label: translate("common.editTags"), onSelect: () => setPickerOpen(true) }]
+      ? [{ kind: 'action' as const, label: translate('common.editTags'), onSelect: () => setPickerOpen(true) }]
       : []),
   ], [webUrl, s3Url, tagsEnabled])
   return {
@@ -104,7 +104,7 @@ export function useFileEntryActions({
     // デッキ (同期再生) は音声本体を読むので preview 権限が要る。
     ...(isAudio && capabilities.preview ? [{
       kind: 'action' as const,
-      label: translate("common.addToPlayer"),
+      label: translate('common.addToPlayer'),
       onSelect: () => deck.addTrack({
         label: filename, connectionId, bucket, key: file.key,
       }),
@@ -114,17 +114,17 @@ export function useFileEntryActions({
     // バイナリをピンしてもカードに「プレビュー非対応」と出るだけで実害はない。
     {
       kind: 'action' as const,
-      label: translate("common.pin"),
+      label: translate('common.pin'),
       onSelect: () => pinned.addPin({ connectionId, bucket, key: file.key }),
     },
     ...(tagsEnabled
-      ? [{ kind: 'action' as const, label: translate("common.editTags"), onSelect: () => setPickerOpen(true) }]
+      ? [{ kind: 'action' as const, label: translate('common.editTags'), onSelect: () => setPickerOpen(true) }]
       : []),
     ...(capabilities.download
-      ? [{ kind: 'download' as const, label: translate("useEntryActions.downloadThisFile"), href: downloadUrl, filename }]
+      ? [{ kind: 'download' as const, label: translate('useEntryActions.downloadThisFile'), href: downloadUrl, filename }]
       : []),
-    { kind: 'copy',     label: translate("common.copyWebUrl"),           value: webUrl },
-    { kind: 'copy',     label: translate("common.copyS3Url"),            value: s3Url },
+    { kind: 'copy',     label: translate('common.copyWebUrl'),           value: webUrl },
+    { kind: 'copy',     label: translate('common.copyS3Url'),            value: s3Url },
   ], [
     isAudio, capabilities.preview, capabilities.download, tagsEnabled, deck, pinned,
     connectionId, bucket, file.key, downloadUrl, webUrl, s3Url, filename,

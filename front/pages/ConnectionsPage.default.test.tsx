@@ -45,7 +45,7 @@ describe('ConnectionsPage デフォルト切り替え', () => {
   it('デフォルト行にバッジ、他の行にボタンが出る', async () => {
     vi.mocked(api.listConnections).mockResolvedValue([connection('a', true), connection('b', false)])
     render(<MemoryRouter><ConnectionsPage /></MemoryRouter>)
-    await waitFor(() => expect(screen.getByText('既定')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('DEFAULT')).toBeInTheDocument())
     expect(screen.getAllByText('デフォルトにする')).toHaveLength(1)
   })
 

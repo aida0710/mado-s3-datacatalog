@@ -1,13 +1,13 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { TranslatedMessage } from '../i18n/TranslatedMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api/client'
 import type { Tag, TargetKind } from '../lib/api/types'
 import { Dialog } from './Dialog'
 import { TagBadge } from './TagBadge'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -72,18 +72,18 @@ export function TagPicker({
   return (
     <Dialog
       titleId={titleId}
-      title={translate("common.editTags")}
+      title={translate('common.editTags')}
       subtitle={label}
       onClose={onClose}
       // 下の「閉じる」ボタンと読み上げの名前が重ならないよう、×と背景には別の名前を付ける。
-      closeLabel={translate("tagPicker.closeTagEditor")}
+      closeLabel={translate('tagPicker.closeTagEditor')}
       narrowLayout="sheet"
-      footer={<button type="button" className="button" onClick={onClose}>{translate("common.close")}</button>}
+      footer={<button type="button" className="button" onClick={onClose}>{translate('common.close')}</button>}
     >
       <div className="dialog-body">
         {allTags.length === 0 ? (
           <p className="muted">
-            <TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate("common.settings")}</Link> }} />
+            <TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate('section.settings')}</Link> }} />
           </p>
         ) : (
           <ul className="tag-picker-list">

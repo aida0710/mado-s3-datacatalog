@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { Link, useLocation } from 'react-router-dom'
 import { isCurrentLink, NAVIGATION_LINKS } from './navigationLinks'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 /**
  * 画面の切り替えのリンク。サイドバー・アイコンだけの列・ドロワーで共通。
@@ -11,7 +11,7 @@ export function NavigationLinkList({ showsTitles = false }: { showsTitles?: bool
   useLocale()
   const { pathname } = useLocation()
   return (
-    <nav aria-label={translate("common.mainNavigation")}>
+    <nav aria-label={translate('common.mainNavigation')}>
       <div className="navigation-group">
         {NAVIGATION_LINKS.map(({ to, label, icon: Icon }) => (
           <Link

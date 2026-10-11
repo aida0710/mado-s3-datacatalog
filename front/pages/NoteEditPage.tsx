@@ -4,9 +4,6 @@
 // 保存後は navigate('/') でホームに戻る。ホームを開き直すと useRetryableLoad が取り直すので、
 // 明示的な refresh コールは不要。
 
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -17,6 +14,9 @@ import {
   MonacoMarkdownEditor,
   type MonacoMarkdownEditorHandle,
 } from '../components/MonacoMarkdownEditor'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 const loadHomeNote = () => api.note('home')
 
@@ -29,17 +29,17 @@ export default function NoteEditPage() {
   if (state.status === 'loading') {
     return (
       <>
-        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
-        <p className="state-message">{translate("common.loading")}</p>
+        <EditorPageHeader title={translate('noteEditPage.editNote')} description={translate('section.teamNote')} />
+        <p className="state-message">{translate('common.loading')}</p>
       </>
     )
   }
   if (state.status === 'failed') {
     return (
       <>
-        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
-        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry}>
-          {translate("common.editingIsDisabledUntilTheContentLoadsTo")}</LoadFailedNotice>
+        <EditorPageHeader title={translate('noteEditPage.editNote')} description={translate('section.teamNote')} />
+        <LoadFailedNotice subject={translate('section.teamNote')} reason={localizeMessage(state.reason)} onRetry={retry}>
+          {translate('common.editingIsDisabledUntilTheContentLoadsTo')}</LoadFailedNotice>
       </>
     )
   }
@@ -49,8 +49,8 @@ export default function NoteEditPage() {
 
   return (
     <EditorShell
-      title={translate("noteEditPage.editNote")}
-      description={translate("homePage.teamNote")}
+      title={translate('noteEditPage.editNote')}
+      description={translate('section.teamNote')}
       initialBody={data.exists ? data.body : ''}
       onSave={(body, editor) =>
         api.putNote('home', body, editor).then(() => undefined)
@@ -64,7 +64,7 @@ export default function NoteEditPage() {
           value={body}
           onChange={setBody}
           height="100%"
-          ariaLabel={translate("noteEditPage.noteContentMarkdown")}
+          ariaLabel={translate('noteEditPage.noteContentMarkdown')}
         />
       )}
     </EditorShell>

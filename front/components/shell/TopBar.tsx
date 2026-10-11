@@ -1,7 +1,4 @@
 import { LanguagePicker } from '../LanguagePicker'
-import { localizeMessage } from '../../i18n/localizeMessage'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LogOut, Moon, Sun } from 'lucide-react'
@@ -12,6 +9,9 @@ import { useTheme } from '../../lib/useTheme'
 import { useIsCompact } from '../../lib/useIsCompact'
 import { NavigationDrawer } from './NavigationDrawer'
 import { PRODUCT_FULL_NAME, ProductLogo } from './ProductLogo'
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 /**
  * 上部バー: アプリ名、テーマの切り替え、ログイン中の利用者とサインアウト。画面の切り替えは
@@ -24,24 +24,24 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
   const compact = useIsCompact()
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
-  const themeLabel = theme.theme === 'light' ? translate("topBar.switchToDarkTheme") : translate("topBar.switchToLightTheme")
+  const themeLabel = theme.theme === 'light' ? translate('topBar.switchToDarkTheme') : translate('topBar.switchToLightTheme')
   const signOut = async () => {
     setLoggingOut(true)
     setLogoutError(null)
     try {
       await logout()
     } catch (cause) {
-      setLogoutError(cause instanceof Error ? cause.message : translate("common.couldNotSignOut"))
+      setLogoutError(cause instanceof Error ? cause.message : translate('common.couldNotSignOut'))
     } finally {
       setLoggingOut(false)
     }
   }
   return (
     <>
-      <a className="skip-link" href="#content">{translate("topBar.skipToContent")}</a>
+      <a className="skip-link" href="#content">{translate('topBar.skipToContent')}</a>
       <header className="topbar">
         {navigation.mode === 'drawer' && <NavigationDrawer />}
-        <Link to="/" className="brand" aria-label={translate("topBar.goToHome", { value0: PRODUCT_FULL_NAME })}><ProductLogo compact={compact} /></Link>
+        <Link to="/" className="brand" aria-label={translate('topBar.goToHome', { value0: PRODUCT_FULL_NAME })}><ProductLogo compact={compact} /></Link>
         <div className="topbar-actions">
           <LanguagePicker />
           <button
@@ -58,7 +58,7 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
               <Link
                 to="/settings/account"
                 className="avatar"
-                aria-label={translate("topBar.sAccount", { value0: user.displayName })}
+                aria-label={translate('topBar.sAccount', { value0: user.displayName })}
                 title={user.displayName}
               >
                 {initials(user.displayName)}
@@ -66,8 +66,8 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
               <button
                 type="button"
                 className="icon-button"
-                aria-label={translate("common.signOut")}
-                title={translate("common.signOut")}
+                aria-label={translate('common.signOut')}
+                title={translate('common.signOut')}
                 disabled={loggingOut}
                 onClick={() => void signOut()}
               >

@@ -1,12 +1,12 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConnectionForm } from '../components/ConnectionForm'
 import { api } from '../lib/api/client'
 import type { Connection } from '../lib/api/types'
 import { invalidateCapabilitiesCache } from '../lib/useCapabilities'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface State {
   loading: boolean
@@ -41,7 +41,7 @@ export default function ConnectionEditorPage() {
       .then(connections => {
         if (!current) return
         const connection = connections.find(row => row.id === connectionId)
-        if (!connection) throw new Error(translate("connectionEditorPage.connectionNotFound"))
+        if (!connection) throw new Error(translate('connectionEditorPage.connectionNotFound'))
         dispatch({ type: 'loaded', connection })
       })
       .catch((cause: Error) => {
@@ -55,11 +55,11 @@ export default function ConnectionEditorPage() {
     navigate('/settings/connections')
   }
 
-  if (state.loading) return <p className="state-message">{translate("common.loading")}</p>
+  if (state.loading) return <p className="state-message">{translate('common.loading')}</p>
   if (state.error) return (
     <div>
       <p className="notice error" role="alert">{localizeMessage(state.error)}</p>
-      <Link className="button" to="/settings/connections">{translate("connectionEditorPage.backToConnections")}</Link>
+      <Link className="button" to="/settings/connections">{translate('connectionEditorPage.backToConnections')}</Link>
     </div>
   )
 

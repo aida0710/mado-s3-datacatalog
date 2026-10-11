@@ -1,8 +1,8 @@
+import { useState, type ReactNode } from 'react'
+import { Dialog } from './Dialog'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { useState, type ReactNode } from 'react'
-import { Dialog } from './Dialog'
 
 interface Props {
   titleId: string
@@ -41,9 +41,9 @@ export function DeleteConfirmDialog({ titleId, title, children, onConfirm, onCan
       narrowLayout="sheet"
       footer={
         <>
-          <button type="button" className="button" onClick={onCancel} disabled={busy}>{translate("common.cancel")}</button>
+          <button type="button" className="button" onClick={onCancel} disabled={busy}>{translate('common.cancel')}</button>
           <button type="button" className="button danger" onClick={() => void submit()} disabled={busy}>
-            {busy ? translate("deleteConfirmDialog.deleting") : translate("common.delete")}
+            {busy ? translate('deleteConfirmDialog.deleting') : translate('common.delete')}
           </button>
         </>
       }

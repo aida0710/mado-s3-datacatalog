@@ -101,15 +101,14 @@ describe('CopyMenu - 開く向き (portal + fixed)', () => {
   })
 })
 
-// スマホ幅で「横に突き抜ける」不具合の回帰テスト。right をトリガ右端に揃える
-// だけだと、トリガが画面左寄り (パンくず等) にあるとき right が大きくなりすぎ、
-// メニューの左端が負の座標へ回り込んで見切れる。
+// スマホ幅で「横に突き抜ける」不具合の回帰テスト。トリガーの右端にそろえるだけだと、
+// トリガーが画面左寄り (パンくず等) にあるとき、メニューの左端が負の座標へ回り込んで見切れる。
 describe('CopyMenu - 横方向の画面内収め', () => {
   const items: MenuItem[] = [
     { kind: 'copy', label: 'A', value: 'a' },
     { kind: 'copy', label: 'B', value: 'b' },
   ]
-  const MIN_W = 280
+  const MENU_MIN_WIDTH = 280
   const MARGIN = 8
 
   // jsdom の innerWidth は getter なので defineProperty で差し替える。
@@ -123,34 +122,29 @@ describe('CopyMenu - 横方向の画面内収め', () => {
     const user = userEvent.setup()
     render(<CopyMenu items={items} />)
     const trigger = screen.getByRole('button', { name: 'アクション' })
-    // rect() のトリガは left=0/right=20 — 画面左端。素朴に right = innerWidth - 20
-    // とすると左端が -260px になる。
+    // rect() のトリガは left=0/right=20 — 画面左端。素朴に右端をそろえると左端が -260px になる。
     vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(rect(80, 100))
     await user.click(trigger)
     const menu = screen.getByRole('menu')
 
-    const right = parseFloat(menu.style.right)
-    // 左端 = innerWidth - right - 幅。これが margin 以上なら画面内に収まっている。
-    expect(window.innerWidth - right - MIN_W).toBeGreaterThanOrEqual(MARGIN)
+    expect(parseFloat(menu.style.left)).toBeGreaterThanOrEqual(MARGIN)
   })
 
   it('phone 幅ではメニューを画面幅に縮める', async () => {
     const user = userEvent.setup()
-    setViewportWidth(360)
+    setViewportWidth(260)
     render(<CopyMenu items={items} />)
     const trigger = screen.getByRole('button', { name: 'アクション' })
     vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(rect(80, 100))
     await user.click(trigger)
     const menu = screen.getByRole('menu')
 
-    // 幅が viewport - 左右マージンを超えない。min-width も同じ上限で丸める
-    // (class の min-w-[280px] が残ると 360px 幅でもはみ出す)。
-    expect(parseFloat(menu.style.maxWidth)).toBeLessThanOrEqual(360 - MARGIN * 2)
-    expect(parseFloat(menu.style.minWidth)).toBeLessThanOrEqual(360 - MARGIN * 2)
-    expect(parseFloat(menu.style.right)).toBeGreaterThanOrEqual(MARGIN)
+    // 幅が画面の幅から左右の余白を引いた分を超えず、左端も画面内に収まる。
+    expect(parseFloat(menu.style.width)).toBe(260 - MARGIN * 2)
+    expect(parseFloat(menu.style.left)).toBe(MARGIN)
   })
 
-  it('広い画面でも幅は 480px で止める', async () => {
+  it('中身が狭ければ下限の幅で開く', async () => {
     const user = userEvent.setup()
     setViewportWidth(1600)
     render(<CopyMenu items={items} />)
@@ -159,9 +153,6 @@ describe('CopyMenu - 横方向の画面内収め', () => {
     await user.click(trigger)
     const menu = screen.getByRole('menu')
 
-    // デスクトップでは従来どおり 280〜480px。inline style が class の上限を
-    // 広げてしまわないことの確認。
-    expect(parseFloat(menu.style.maxWidth)).toBe(480)
-    expect(parseFloat(menu.style.minWidth)).toBe(280)
+    expect(parseFloat(menu.style.width)).toBe(MENU_MIN_WIDTH)
   })
 })

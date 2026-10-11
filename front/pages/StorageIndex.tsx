@@ -1,7 +1,3 @@
-import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import {useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
 import {Link, useNavigate, useSearchParams} from 'react-router-dom'
@@ -20,6 +16,10 @@ import {CopyMenu, type MenuItem} from '../components/CopyMenu'
 import {absoluteUrl} from '../lib/route'
 import type {ListBuckets, Tag} from '../lib/api/types'
 import {createRevalidationReceiver} from '../lib/revalidationReceiver'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface BucketRow {
     name: string;
@@ -162,7 +162,7 @@ export default function StorageIndex({connectionId}: Props) {
         return (
             <section>
                 {/* バケット画面と同じ見出し (パンくず / h1 / 接続先の切り替え・コピー・上へ)。 */}
-                <ViewBreadcrumb connectionId={connectionId} label={translate("storageIndex.searchTags")} href={`${indexHref}?view=tags`}/>
+                <ViewBreadcrumb connectionId={connectionId} label={translate('storageIndex.searchTags')} href={`${indexHref}?view=tags`}/>
                 <TagSearchView connectionId={connectionId}/>
             </section>
         )
@@ -186,7 +186,7 @@ export default function StorageIndex({connectionId}: Props) {
         <section className="storage-index">
             <header className="page-header">
                 <div>
-                    <h1>{translate("common.storage")}</h1>
+                    <h1>{translate('section.storage')}</h1>
                 </div>
                 {/* 右側の操作をひとまとめにして右寄せする。狭い画面では見出しの下へ回る。 */}
                 <div className="page-actions">
@@ -210,30 +210,30 @@ export default function StorageIndex({connectionId}: Props) {
             <nav className="storage-index-links">
                 <Link to="?view=capacity">
                     <Gauge size={14} aria-hidden="true"/>
-                    {translate("storageIndex.viewBucketCapacityMetrics")}</Link>
+                    {translate('storageIndex.viewBucketCapacityMetrics')}</Link>
                 {tagsEnabled && (
                     <Link to="?view=tags">
                         <Tags size={14} aria-hidden="true"/>
-                        {translate("storageIndex.searchTags")}</Link>
+                        {translate('storageIndex.searchTags')}</Link>
                 )}
             </nav>
 
             {error && <p className="notice error">{localizeMessage(error)}</p>}
             {loading && buckets.length === 0 && (
-                <p className="state-message">{translate("common.loading")}</p>
+                <p className="state-message">{translate('common.loading')}</p>
             )}
             {!loading && !error && buckets.length === 0 && (
-                <p className="state-message">{translate("common.noBucketsFound")}</p>
+                <p className="state-message">{translate('common.noBucketsFound')}</p>
             )}
 
             {favoriteRows.length > 0 && (
-                <BucketSection title={translate("storageIndex.bucketsInUse")}>
+                <BucketSection title={translate('storageIndex.bucketsInUse')}>
                     {favoriteRows.map(b => bucketRow(b, true))}
                 </BucketSection>
             )}
 
             {otherRows.length > 0 && (
-                <BucketSection title={translate("storageIndex.otherBuckets")}>
+                <BucketSection title={translate('storageIndex.otherBuckets')}>
                     {otherRows.map(b => bucketRow(b, false))}
                 </BucketSection>
             )}
@@ -253,10 +253,10 @@ function BucketSection({title, children}: { title: string; children: ReactNode }
                 <table className="bucket-table">
                     <thead>
                     <tr>
-                        <th scope="col" className="bucket-col-use"><span className="sr-only">{translate("storageIndex.inUse")}</span></th>
-                        <th scope="col">{translate("common.bucket")}</th>
-                        <th scope="col" className="bucket-col-date">{translate("storageIndex.createdAt")}</th>
-                        <th scope="col" className="bucket-col-actions"><span className="sr-only">{translate("common.actions")}</span></th>
+                        <th scope="col" className="bucket-col-use"><span className="sr-only">{translate('storageIndex.inUse')}</span></th>
+                        <th scope="col">{translate('common.bucket')}</th>
+                        <th scope="col" className="bucket-col-date">{translate('storageIndex.createdAt')}</th>
+                        <th scope="col" className="bucket-col-actions"><span className="sr-only">{translate('common.actions')}</span></th>
                     </tr>
                     </thead>
                     <tbody>{children}</tbody>
@@ -287,10 +287,10 @@ function BucketTableRow({
     const bucketHref = `/storage/${encodeURIComponent(connectionId)}/${encodeURIComponent(bucket.name)}/`
     const items = useLocalizedMemo<MenuItem[]>(() => [
         ...(tagsEnabled
-            ? [{kind: 'action' as const, label: translate("common.editTags"), onSelect: () => setPickerOpen(true)}]
+            ? [{kind: 'action' as const, label: translate('common.editTags'), onSelect: () => setPickerOpen(true)}]
             : []),
-        {kind: 'copy', label: translate("common.copyWebUrl"), value: absoluteUrl(bucketHref)},
-        {kind: 'copy', label: translate("common.copyS3Url"), value: `s3://${bucket.name}/`},
+        {kind: 'copy', label: translate('common.copyWebUrl'), value: absoluteUrl(bucketHref)},
+        {kind: 'copy', label: translate('common.copyS3Url'), value: `s3://${bucket.name}/`},
     ], [bucketHref, bucket.name, tagsEnabled])
 
     // 行のどこを押してもバケットへ入れるようにする (名前の文字列だけが当たり判定だと
@@ -309,7 +309,7 @@ function BucketTableRow({
                     <label
                         className="bucket-use"
                         htmlFor={checkboxId}
-                        title={inUse ? translate("storageIndex.removeFromBucketsInUse") : translate("storageIndex.addToBucketsInUse")}
+                        title={inUse ? translate('storageIndex.removeFromBucketsInUse') : translate('storageIndex.addToBucketsInUse')}
                     >
                         <input
                             id={checkboxId}

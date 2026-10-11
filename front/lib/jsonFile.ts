@@ -22,7 +22,7 @@ export async function readJsonFile(file: File): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown
   } catch {
-    throw new Error(translate("jsonFile.couldNotParseAsJson"))
+    throw new Error(translate('jsonFile.couldNotParseAsJson'))
   }
 }
 
@@ -38,10 +38,15 @@ export interface ImportSummary {
   failed: string[]
 }
 
+/** 取り込めなかった 1 件を「名前: 理由」の形で書く。ImportSummary.failed に入れる。 */
+export function describeImportFailure(label: string, error: unknown): string {
+  return `${label}: ${error instanceof Error ? error.message : String(error)}`
+}
+
 export function summaryText(s: ImportSummary): string {
-  const parts = [translate("jsonFile.added", { value0: s.added }), translate("jsonFile.skipped", { value0: s.skipped })]
-  if (s.removed) parts.push(translate("jsonFile.deleted", { value0: s.removed }))
-  if (s.failed.length > 0) parts.push(translate("jsonFile.failed", { value0: s.failed.length }))
+  const parts = [translate('jsonFile.added', { value0: s.added }), translate('jsonFile.skipped', { value0: s.skipped })]
+  if (s.removed) parts.push(translate('jsonFile.deleted', { value0: s.removed }))
+  if (s.failed.length > 0) parts.push(translate('jsonFile.failed', { value0: s.failed.length }))
   return parts.join(' / ')
 }
 

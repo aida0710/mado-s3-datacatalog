@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useId, useMemo } from 'react'
 import { CODE_LANGUAGES, highlightCode, type CodeLanguage } from '@mado/design-system/code'
 import { codeLanguageName, type CodeLanguageState } from '../lib/useCodeLanguage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 /**
  * 形式に合わせて色を付けたテキスト (@mado/design-system の code.css)。どちらのテーマでも
@@ -24,8 +24,8 @@ export function CodeFormatSelect({ code }: { code: CodeLanguageState }) {
   const id = useId()
   return (
     <label className="code-format" htmlFor={id}>
-      {translate("codeView.format")}<select id={id} value={code.choice} onChange={event => code.setChoice(event.target.value as CodeLanguageState['choice'])}>
-        <option value="auto">{translate("codeView.auto", { value0: codeLanguageName(code.detected) })}</option>
+      {translate('codeView.format')}<select id={id} value={code.choice} onChange={event => code.setChoice(event.target.value as CodeLanguageState['choice'])}>
+        <option value="auto">{translate('codeView.auto', { value0: codeLanguageName(code.detected) })}</option>
         {CODE_LANGUAGES.map(language => (
           <option key={language.id} value={language.id}>
             {codeLanguageName(language.id)}

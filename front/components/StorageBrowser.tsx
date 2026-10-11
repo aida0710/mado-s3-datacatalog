@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { api } from '../lib/api/client'
@@ -16,6 +13,9 @@ import { SearchBar } from './storage/SearchBar'
 import { TagFilterBar } from './storage/TagFilterBar'
 import { useTagsEnabled } from '../lib/useFeatureEnabled'
 import { createRevalidationReceiver } from '../lib/revalidationReceiver'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -366,7 +366,7 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
 
       {/* 進捗バー領域: 高さ 2px を常時確保しレイアウトシフトを避ける。 */}
       <div className="storage-busy-track storage-progress">
-        {loading && <div role="progressbar" aria-label={translate("storageBrowser.loading")} className="storage-busy-bar" />}
+        {loading && <div role="progressbar" aria-label={translate('storageBrowser.loading')} className="storage-busy-bar" />}
       </div>
 
       {error && <p className="notice error">{localizeMessage(error)}</p>}
@@ -408,10 +408,10 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
         {isEmpty && !error && (
           <p className="state-message entry-empty">
             {isSearching
-              ? translate("storageBrowser.noEntriesMatch", { value0: submittedQ, value1: recursive ? translate("storageBrowser.recursive") : '' })
+              ? translate('storageBrowser.noEntriesMatch', { value0: submittedQ, value1: recursive ? translate('storageBrowser.recursive') : '' })
               : recursive
-              ? translate("storageBrowser.noEntriesUnderThisDirectory")
-              : translate("storageBrowser.thisDirectoryIsEmpty")}
+              ? translate('storageBrowser.noEntriesUnderThisDirectory')
+              : translate('storageBrowser.thisDirectoryIsEmpty')}
           </p>
         )}
 
