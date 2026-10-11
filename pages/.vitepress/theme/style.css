@@ -157,6 +157,15 @@ body {
 .VPNavBarExtra .button {
   color: var(--header-text-muted) !important;
 }
+/* 言語の切り替え。VitePress の既定は明るい地向けの濃い色で、暗い上部バーではほとんど見えない。 */
+.VPNavBarTranslations .button,
+.VPNavBarTranslations .text {
+  color: var(--header-text-muted) !important;
+}
+.VPNavBarTranslations .button:hover .text,
+.VPNavBarTranslations .button[aria-expanded='true'] .text {
+  color: var(--header-text-strong) !important;
+}
 .VPNavBarHamburger .top,
 .VPNavBarHamburger .middle,
 .VPNavBarHamburger .bottom {
@@ -169,7 +178,11 @@ body {
   border-color: var(--header-border) !important;
   color: var(--header-text) !important;
 }
-/* スマホのメニューの GitHub のアイコン。VitePress の既定の灰色は暗い地では見えにくい。 */
+/* スマホのメニューの言語の切り替えと GitHub のアイコン。VitePress の既定の色は暗い地では見えにくい。 */
+.VPNavScreenTranslations .title,
+.VPNavScreenTranslations .link {
+  color: var(--header-text) !important;
+}
 .VPNavScreenSocialLinks .VPSocialLink {
   color: var(--header-text-muted) !important;
 }
