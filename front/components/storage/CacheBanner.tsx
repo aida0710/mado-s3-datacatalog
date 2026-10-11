@@ -13,12 +13,12 @@
 // 残り時間が出せないので割合は出さない。0.1 秒で終わるバケットでは一瞬光るだけで
 // ちらつくため、CSS の animation-delay で 200ms 伏せている (JS タイマーを持たない)。
 
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { cacheAgeLevel } from '../../lib/cacheAgeLevel'
 import { fmtCacheAge } from '../../lib/format'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 import { TranslatedMessage } from '../../i18n/TranslatedMessage'
 
 interface Props {
@@ -67,8 +67,8 @@ export function CacheBanner({ fetchedAt, revalidating, onRefresh, compact, trail
           className="icon-button cache-banner-refresh"
           onClick={onRefresh}
           disabled={revalidating}
-          title={translate("cacheBanner.clearCacheAndReload")}
-          aria-label={translate("cacheBanner.reload")}
+          title={translate('cacheBanner.clearCacheAndReload')}
+          aria-label={translate('cacheBanner.reload')}
         >
           <RefreshCw size={14} aria-hidden="true" className={revalidating ? 'spin' : undefined} />
         </button>
@@ -82,14 +82,14 @@ export function CacheBanner({ fetchedAt, revalidating, onRefresh, compact, trail
         {revalidating && (
           <span className="cache-banner-status" aria-live="polite">
             <span className="storage-pulse-dot" aria-hidden="true" />
-            {compact ? translate("cacheBanner.updating") : translate("cacheBanner.updatingToTheLatestInformation")}
+            {compact ? translate('cacheBanner.updating') : translate('cacheBanner.updatingToTheLatestInformation')}
           </span>
         )}
         {trailing && <span className="cache-banner-trailing">{trailing}</span>}
       </p>
       {revalidating && (
         <div className="storage-busy-track cache-banner-track">
-          <div role="progressbar" aria-label={translate("cacheBanner.fetchingTheLatestInformation")} className="storage-busy-bar" />
+          <div role="progressbar" aria-label={translate('cacheBanner.fetchingTheLatestInformation')} className="storage-busy-bar" />
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useRef, useState } from 'react'
 import { NAVIGATION_WIDTH } from '../../lib/navigationWidth'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 /**
  * 名前つきサイドバーの右の境目。ドラッグするか、フォーカスして ←/→ (Home/End で最小/最大) で
@@ -28,7 +28,7 @@ export function NavigationResizeHandle({
       className="navigation-resize-handle"
       role="separator"
       aria-orientation="vertical"
-      aria-label={translate("navigationResizeHandle.sidebarWidth")}
+      aria-label={translate('navigationResizeHandle.sidebarWidth')}
       aria-valuemin={NAVIGATION_WIDTH.min}
       aria-valuemax={NAVIGATION_WIDTH.max}
       aria-valuenow={width}

@@ -53,7 +53,7 @@ function localizeServerMessage(message: string): string | null {
       if (capabilityKey) values.value0 = catalog[capabilityKey]
     }
     if (template.key === 'transferWarnings.ratesUnavailable') {
-      // The server uses this fixed label when region metadata is absent.
+      // リージョンが分からないとき、サーバーはこの決まった文字列を入れてくる。
       const unknownRegionLabels = [japaneseMessages['connectionForm.unknown'], englishMessages['connectionForm.unknown']]
       if (unknownRegionLabels.includes(values.value0)) values.value0 = catalog['connectionForm.unknown']
     }
@@ -62,7 +62,7 @@ function localizeServerMessage(message: string): string | null {
   return null
 }
 
-/** Errors and notices can outlive the language in which they were first produced. */
+/** 表示中のエラーやお知らせを今の言語で出し直す。作ったときの言語のまま画面に残るため。 */
 export function localizeMessage(message: string): string
 export function localizeMessage(message: string | null): string | null
 export function localizeMessage(message: string | null): string | null {

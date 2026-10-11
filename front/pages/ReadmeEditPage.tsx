@@ -4,9 +4,6 @@
 //
 // 保存後は元の StorageBucket ページに戻る。
 
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -20,6 +17,9 @@ import {
   MonacoMarkdownEditor,
   type MonacoMarkdownEditorHandle,
 } from '../components/MonacoMarkdownEditor'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props { connectionId: string }
 
@@ -45,14 +45,14 @@ export default function ReadmeEditPage({ connectionId }: Props) {
   const { state, retry } = useRetryableLoad(bucket && caps.readmeWrite ? loadLatestReadme : null)
 
   if (!bucket) {
-    return <p className="state-message">{translate("readmeEditPage.noBucketSpecified")}</p>
+    return <p className="state-message">{translate('readmeEditPage.noBucketSpecified')}</p>
   }
 
   // 見出しの下に出す場所。bucket と prefix を / で繋ぐ。空 prefix は (root) と表記。
   const readmeLocation = prefix
     ? `${bucket} / ${prefix.replace(/\/$/, '')}`
     : `${bucket} / (root)`
-  const title = translate("readmeEditPage.editReadme")
+  const title = translate('readmeEditPage.editReadme')
   const description = <span className="mono">{readmeLocation}</span>
 
   // 導線は ReadmeView 側で隠しているが、URL を直に開かれた場合の受け皿。
@@ -61,7 +61,7 @@ export default function ReadmeEditPage({ connectionId }: Props) {
     return (
       <>
         <EditorPageHeader title={title} description={description} />
-        <p className="state-message">{translate("readmeEditPage.readmeEditingIsDisabledForThisConnection")}</p>
+        <p className="state-message">{translate('readmeEditPage.readmeEditingIsDisabledForThisConnection')}</p>
       </>
     )
   }
@@ -69,7 +69,7 @@ export default function ReadmeEditPage({ connectionId }: Props) {
     return (
       <>
         <EditorPageHeader title={title} description={description} />
-        <p className="state-message">{translate("common.loading")}</p>
+        <p className="state-message">{translate('common.loading')}</p>
       </>
     )
   }
@@ -78,7 +78,7 @@ export default function ReadmeEditPage({ connectionId }: Props) {
       <>
         <EditorPageHeader title={title} description={description} />
         <LoadFailedNotice subject="README" reason={localizeMessage(state.reason)} onRetry={retry}>
-          {translate("common.editingIsDisabledUntilTheContentLoadsTo")}</LoadFailedNotice>
+          {translate('common.editingIsDisabledUntilTheContentLoadsTo')}</LoadFailedNotice>
       </>
     )
   }
@@ -122,7 +122,7 @@ export default function ReadmeEditPage({ connectionId }: Props) {
           value={body}
           onChange={setBody}
           height="100%"
-          ariaLabel={translate("readmeEditPage.readmeContentMarkdown")}
+          ariaLabel={translate('readmeEditPage.readmeContentMarkdown')}
         />
       )}
     </EditorShell>

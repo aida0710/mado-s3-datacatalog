@@ -1,11 +1,10 @@
-import { setLocale } from './i18n/locale'
+import '@testing-library/jest-dom/vitest'
 import { afterEach } from 'vitest'
+import { setLocale } from './i18n/locale'
 
-// Existing screen tests explicitly exercise Japanese, independently of the test browser locale.
+// 既存の画面のテストは日本語の文言で書いてあるので、テスト環境のブラウザの言語によらず日本語で描く。
 setLocale('ja')
 afterEach(() => setLocale('ja'))
-
-import '@testing-library/jest-dom/vitest'
 
 // jsdom には matchMedia が無い。テストはすべて desktop (>= sm) 想定で書かれて
 // いるので、どのクエリに対しても matches=true を返す no-op を入れる。

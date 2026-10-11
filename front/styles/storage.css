@@ -202,8 +202,6 @@ tr.selected .storage-meter {
 }
 .copy-menu-list {
   z-index: 65;
-  min-width: 280px;
-  max-width: 480px;
   overflow-y: auto;
   padding: 4px 0;
   border: 1px solid var(--border);

@@ -1,15 +1,15 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Check, Globe } from 'lucide-react'
+import { useAnchoredPopover } from '../lib/useAnchoredPopover'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 import { LANGUAGES } from '../i18n/languages'
-import { useAnchoredPopover } from '../lib/useAnchoredPopover'
 
-// Match the shared popover width; two language buttons fit within this height.
+// 幅は共通のポップオーバーにそろえる。高さは言語のボタン2つが収まる分。
 const LANGUAGE_MENU_MIN_WIDTH = 220
 const LANGUAGE_MENU_MAX_HEIGHT = 160
 
-/** Available before sign-in as well as in the application header. */
+/** 表示言語の切り替え。上部バーに加え、ログイン前の画面でも使う。 */
 export function LanguagePicker() {
   const { locale, setLocale } = useLocale()
   const [isOpen, setIsOpen] = useState(false)

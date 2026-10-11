@@ -1,5 +1,3 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { StorageFileEntry, Tag } from '../../lib/api/types'
@@ -10,6 +8,8 @@ import { CopyMenu } from '../CopyMenu'
 import { EntryLabel } from './EntryLabel'
 import { EntryTagPicker } from './EntryTagPicker'
 import { useDirectoryEntryActions, useFileEntryActions, type EntryTagProps } from './useEntryActions'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 // 一覧の表 (共通の部品の table)。1 行 40px 前後に詰め、名前の列にアイコン・名前・タグ、
 // 右にサイズ・更新日、右端に操作のメニュー。行のどこを押しても、ディレクトリは開き、
@@ -142,10 +142,10 @@ export function EntryTable({
       <table>
         <thead>
           <tr>
-            <th scope="col">{translate("common.name")}</th>
-            {!compact && <th scope="col" className="numeric entry-col-size">{translate("common.size")}</th>}
-            {!compact && <th scope="col" className="entry-col-modified">{translate("entryTable.modified")}</th>}
-            <th scope="col" className="entry-col-actions"><span className="sr-only">{translate("common.actions")}</span></th>
+            <th scope="col">{translate('entryTable.name')}</th>
+            {!compact && <th scope="col" className="numeric entry-col-size">{translate('entryTable.size')}</th>}
+            {!compact && <th scope="col" className="entry-col-modified">{translate('entryTable.modified')}</th>}
+            <th scope="col" className="entry-col-actions"><span className="sr-only">{translate('common.actions')}</span></th>
           </tr>
         </thead>
         <tbody>

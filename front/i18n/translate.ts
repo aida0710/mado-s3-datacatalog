@@ -13,7 +13,7 @@ type TranslationArguments<Key extends MessageKey> =
     ? [values?: Record<string, string | number>]
     : [values: Record<InterpolationNames<typeof japaneseMessages[Key]>, string | number> & { count?: number }]
 
-// Use an explicit count for suffixes, and the first interpolation value for full count messages.
+// 英語の単数形は、count を渡されたらそれで、無ければ最初の差し込み値 (件数を含む文) で選ぶ。
 export function getMessageTemplate(key: MessageKey, values: Record<string, unknown> = {}): string {
   if (getLocale() === 'ja') return japaneseMessages[key]
   const countValue = values.count ?? values.value0
@@ -23,7 +23,7 @@ export function getMessageTemplate(key: MessageKey, values: Record<string, unkno
   return count === 1 ? singularEnglishMessages[key] ?? englishMessages[key] : englishMessages[key]
 }
 
-/** Only named interpolation values are replaced; user text is never interpreted as markup. */
+/** 名前の付いた差し込み位置だけを値で置き換える。利用者の文字列をマークアップとして解釈しない。 */
 export function fillMessage(key: MessageKey, values: Record<string, string | number>): string {
   return getMessageTemplate(key, values).replace(/\{(value\d+)\}/g, (placeholder, name: string) =>
     values[name] === undefined ? placeholder : String(values[name]),

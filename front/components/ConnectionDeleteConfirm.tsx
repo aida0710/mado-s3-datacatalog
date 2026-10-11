@@ -1,7 +1,7 @@
+import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { TranslatedMessage } from '../i18n/TranslatedMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 
 interface Props {
   name: string
@@ -14,7 +14,7 @@ export function ConnectionDeleteConfirm({ name, onConfirm, onCancel }: Props) {
   return (
     <DeleteConfirmDialog
       titleId="connection-delete-title"
-      title={translate("common.deleteConnection")}
+      title={translate('common.deleteConnection')}
       onConfirm={onConfirm}
       onCancel={onCancel}
     >

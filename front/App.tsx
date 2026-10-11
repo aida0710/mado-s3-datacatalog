@@ -1,5 +1,3 @@
-import { useLocale } from './i18n/useLocale'
-import { translate } from './i18n/translate'
 import { lazy, Suspense, type CSSProperties, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage'
@@ -13,6 +11,8 @@ import { BottomDock } from './components/BottomDock'
 import { NavigationSidebar } from './components/shell/NavigationSidebar'
 import { TopBar } from './components/shell/TopBar'
 import './App.css'
+import { useLocale } from './i18n/useLocale'
+import { translate } from './i18n/translate'
 
 // NoteEditPage は Monaco エディタを抱える重量級ページ (~1MB)。
 // ホーム閲覧だけのユーザに Monaco をロードさせないよう、別チャンクに切り出す。
@@ -67,7 +67,7 @@ export default function App() {
             {navigation.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
             <div className="app-content">
               <MainContent>
-                <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
+                <Suspense fallback={<p className="state-message">{translate('common.loading')}</p>}>
                   <Routes>
                     <Route path="/"                  element={<HomePage />} />
                     <Route path="/edit-note"         element={<NoteEditPage />} />

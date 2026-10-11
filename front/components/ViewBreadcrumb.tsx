@@ -1,11 +1,11 @@
-import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { type ReactNode } from 'react'
 import { useConnection } from '../lib/connectionContext'
 import { absoluteUrl } from '../lib/route'
 import { StorageHeader } from './Breadcrumb'
 import type { MenuItem } from './CopyMenu'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // Storage 配下の「バケットではないビュー」(タグ検索・容量メトリクス) の見出し。
 // バケット画面の Breadcrumb と同じ形 (パンくず / h1 / 接続先の切り替え・コピー・上へ) に
@@ -30,7 +30,7 @@ export function ViewBreadcrumb({
   const indexHref = `/storage/${encodeURIComponent(connectionId)}/`
 
   const copyItems = useLocalizedMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: translate("common.copyWebUrl"), value: absoluteUrl(href) },
+    { kind: 'copy', label: translate('common.copyWebUrl'), value: absoluteUrl(href) },
   ], [href])
 
   // 現在地 (h1) はリンクにしない (自分自身へのリンクになるため)。
@@ -40,9 +40,9 @@ export function ViewBreadcrumb({
       title={label}
       description={description}
       copyItems={copyItems}
-      copyLabel={translate("viewBreadcrumb.copyThisPageSUrl")}
+      copyLabel={translate('viewBreadcrumb.copyThisPageSUrl')}
       upHref={indexHref}
-      upLabel={translate("viewBreadcrumb.backToBuckets")}
+      upLabel={translate('viewBreadcrumb.backToBuckets')}
     />
   )
 }

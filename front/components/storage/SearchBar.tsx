@@ -1,6 +1,6 @@
+import { Search, X } from 'lucide-react'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
-import { Search, X } from 'lucide-react'
 
 interface Props {
   q: string
@@ -23,19 +23,19 @@ export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecurs
         <input
           type="search"
           placeholder={recursive
-            ? translate("searchBar.searchThisDirectoryRecursivelyPrefixMatch")
-            : translate("searchBar.searchThisDirectoryPrefixMatch")}
+            ? translate('searchBar.searchThisDirectoryRecursivelyPrefixMatch')
+            : translate('searchBar.searchThisDirectoryPrefixMatch')}
           value={q}
           onChange={e => onChangeQ(e.target.value)}
-          aria-label={translate("searchBar.searchDirectory")}
+          aria-label={translate('searchBar.searchDirectory')}
         />
         {isSearching && (
           <button
             type="button"
             className="icon-button"
             onClick={onClear}
-            aria-label={translate("searchBar.clearSearch")}
-            title={translate("searchBar.clearSearch")}
+            aria-label={translate('searchBar.clearSearch')}
+            title={translate('searchBar.clearSearch')}
           >
             <X size={15} aria-hidden="true" />
           </button>
@@ -47,7 +47,7 @@ export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecurs
           checked={recursive}
           onChange={e => onToggleRecursive(e.target.checked)}
         />
-        {translate("searchBar.recursiveSearch")}</label>
+        {translate('searchBar.recursiveSearch')}</label>
     </>
   )
 }

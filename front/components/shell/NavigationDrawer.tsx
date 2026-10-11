@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react'
 import { Menu, X } from 'lucide-react'
 import { NavigationLinkList } from './NavigationLinkList'
 import { ProductLogo } from './ProductLogo'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 /**
  * md (900px) 未満の画面の切り替え。上部バーのメニューボタンで左からドロワーを開く。
@@ -31,7 +31,7 @@ export function NavigationDrawer() {
       <button
         type="button"
         className="icon-button navigation-toggle"
-        aria-label={isOpen ? translate("navigationDrawer.closeMenu") : translate("navigationDrawer.openMenu")}
+        aria-label={isOpen ? translate('navigationDrawer.closeMenu') : translate('navigationDrawer.openMenu')}
         aria-expanded={isOpen}
         aria-controls={drawerId}
         onClick={() => setIsOpen(current => !current)}
@@ -42,7 +42,7 @@ export function NavigationDrawer() {
         ref={drawerRef}
         id={drawerId}
         className="navigation-drawer"
-        aria-label={translate("common.mainNavigation")}
+        aria-label={translate('common.mainNavigation')}
         onCancel={event => {
           event.preventDefault()
           setIsOpen(false)
@@ -56,7 +56,7 @@ export function NavigationDrawer() {
             <button
               type="button"
               className="icon-button"
-              aria-label={translate("navigationDrawer.closeMenu")}
+              aria-label={translate('navigationDrawer.closeMenu')}
               onClick={() => setIsOpen(false)}
             >
               <X size={20} />

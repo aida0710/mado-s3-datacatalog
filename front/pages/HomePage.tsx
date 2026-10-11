@@ -1,7 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { lazy, Suspense, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
@@ -11,6 +7,10 @@ import { History, Pencil } from 'lucide-react'
 import { api } from '../lib/api/client'
 import { useRetryableLoad } from '../lib/useRetryableLoad'
 import { LoadFailedNotice } from '../components/LoadFailedNotice'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // 履歴モーダルはボタンを押した後にだけ描画する。React.lazy() で別チャンクへ。
 const NoteHistoryModal = lazy(() =>
@@ -27,15 +27,15 @@ function formatEditedAt(iso: string): string {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hourCycle: 'h23',
   })
 }
 
 // 最後に編集した人と日時を、見出しの下の一行にする。片方しか無ければある方だけで書く。
 function lastEditedSummary(editor: string | null, when: string | null): string | null {
-  if (editor && when) return translate("homePage.updatedByAt", { value0: editor, value1: when })
-  if (editor) return translate("homePage.updatedBy", { value0: editor })
-  if (when) return translate("homePage.updatedAt", { value0: when })
+  if (editor && when) return translate('homePage.updatedByAt', { value0: editor, value1: when })
+  if (editor) return translate('homePage.updatedBy', { value0: editor })
+  if (when) return translate('homePage.updatedAt', { value0: when })
   return null
 }
 
@@ -52,10 +52,10 @@ export default function HomePage() {
       <>
         <header className="page-header">
           <div>
-            <h1>{translate("homePage.teamNote")}</h1>
+            <h1>{translate('section.teamNote')}</h1>
           </div>
         </header>
-        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry} />
+        <LoadFailedNotice subject={translate('section.teamNote')} reason={localizeMessage(state.reason)} onRetry={retry} />
       </>
     )
   }
@@ -73,22 +73,22 @@ export default function HomePage() {
     <>
       <header className="page-header">
         <div>
-          <h1>{translate("homePage.teamNote")}</h1>
+          <h1>{translate('section.teamNote')}</h1>
           {summary && <p className="page-description">{summary}</p>}
         </div>
         <div className="page-actions">
           <Link className="button" to="/edit-note">
             <Pencil size={15} aria-hidden="true" />
-            {data.exists ? translate("common.edit") : translate("common.create")}
+            {data.exists ? translate('common.edit') : translate('common.create')}
           </Link>
           <button
             type="button"
             className="button"
             onClick={() => setHistoryOpen(true)}
-            title={translate("common.showEditHistory")}
+            title={translate('common.showEditHistory')}
           >
             <History size={15} aria-hidden="true" />
-            {translate("common.history")}</button>
+            {translate('common.history')}</button>
         </div>
       </header>
 
@@ -103,15 +103,15 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="empty-state">
-          <h2>{translate("homePage.noContentYet")}</h2>
-          <p>{translate("homePage.allMembersCanContributeToTheSameNote")}</p>
+          <h2>{translate('homePage.noContentYet')}</h2>
+          <p>{translate('homePage.allMembersCanContributeToTheSameNote')}</p>
           <ul>
-            <li>{translate("homePage.informationAboutOtherApplications")}</li>
-            <li>{translate("homePage.storageConnectionNotesWhereToFindData")}</li>
+            <li>{translate('homePage.informationAboutOtherApplications')}</li>
+            <li>{translate('homePage.storageConnectionNotesWhereToFindData')}</li>
           </ul>
           <Link className="button primary" to="/edit-note">
             <Pencil size={15} aria-hidden="true" />
-            {translate("homePage.writeTheFirstNote")}</Link>
+            {translate('homePage.writeTheFirstNote')}</Link>
         </div>
       )}
 
