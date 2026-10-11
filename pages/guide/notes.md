@@ -16,9 +16,9 @@ Storageで対象のディレクトリを開き、READMEの見出しの右にあ�
 
 READMEの本文はS3に書き戻します。そのため、書き込み可能な接続と、**README の編集** が許可された設定が必要です。
 
-## Homeで共有ノートを書く
+## HomeでTeam noteを書く
 
-Homeにはmado全体でひとつの共有ノートがあります。ストレージの用途、作業手順、チーム内の連絡など、ディレクトリに属さない内容を置けます。
+Homeにはmado全体でひとつのTeam noteがあります。ストレージの用途、作業手順、チーム内の連絡など、ディレクトリに属さない内容を置けます。
 
 <Screenshot src="/screenshots/home.png" alt="接続の用途と確認手順を書いたTeam note" caption="Team noteはチーム全体で共有するメモ。本文はmadoのDBに保存します。" />
 

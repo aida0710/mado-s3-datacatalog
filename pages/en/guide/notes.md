@@ -8,22 +8,22 @@ Write descriptions of a directory in its **S3 README**, and team-wide announceme
 
 ## Write a directory README
 
-Open the directory in Storage and click **編集** (Edit), the pencil button to the right of the README heading. If there is no README yet, you can write one from **作成** (Create), the plus button. Record things such as the contents, file formats, processing conditions, and notes on usage.
+Open the directory in Storage and click **Edit**, the pencil button to the right of the README heading. If there is no README yet, you can write one from **Create**, the plus button. Record things such as the contents, file formats, processing conditions, and notes on usage.
 
-<Screenshot src="/screenshots/storage-directory.png" alt="S3 README shown above the file list" caption="You can read the description of a directory before opening any of its files." />
+<Screenshot src="/screenshots/en/storage-directory.png" alt="S3 README shown above the file list" caption="You can read the description of a directory before opening any of its files." />
 
-<Screenshot src="/screenshots/readme-edit.png" alt="README editing screen with the file list and the Markdown editor side by side" caption="You can edit Markdown while inserting files from the list on the left into the body." />
+<Screenshot src="/screenshots/en/readme-edit.png" alt="README editing screen with the file list and the Markdown editor side by side" caption="You can edit Markdown while inserting files from the list on the left into the body." />
 
-The README body is written back to S3. This requires a writable connection and a setting that allows **README の編集** (Edit README).
+The README body is written back to S3. This requires a writable connection and a setting that allows **Edit READMEs**.
 
 ## Write the Team note on Home
 
 Home has one Team note shared across all of mado. You can put content there that does not belong to a directory, such as what each storage is used for, work procedures, and team announcements.
 
-<Screenshot src="/screenshots/home.png" alt="Team note describing what each connection is for and how to check it" caption="The Team note is a memo shared across the team. Its body is stored in mado's database." />
+<Screenshot src="/screenshots/en/home.png" alt="Team note describing what each connection is for and how to check it" caption="The Team note is a memo shared across the team. Its body is stored in mado's database." />
 
 ## Check changes in the history
 
-Click **履歴** (History) to see who edited, when, and the past versions of the body. The signature you set in Account is used as your name on edits.
+Click **History** to see who edited, when, and the past versions of the body. The signature you set in Account is used as your name on edits.
 
-<Screenshot src="/screenshots/readme-history.png" alt="README edit history" caption="Open the history when you want to see how something was updated." />
+<Screenshot src="/screenshots/en/readme-history.png" alt="README edit history" caption="Open the history when you want to see how something was updated." />
