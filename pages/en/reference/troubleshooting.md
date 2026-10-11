@@ -8,7 +8,7 @@ You can check the version and commit in **About** in Settings. When you report a
 
 ## A connection does not appear in the list
 
-Check that an administrator has registered the connection in **Settings → Connections**. If it is registered, ask the administrator whether you are on its whitelist. Opening the URL of a connection you are not allowed to see returns 404.
+Check that an administrator has registered the connection in **Settings → Connections**. If it is registered, ask the administrator whether you are on its allowlist. Opening the URL of a connection you are not allowed to see returns 404.
 
 ## Buckets or files cannot be retrieved
 
@@ -18,7 +18,7 @@ If an S3-compatible implementation responds slowly to list requests, reduce the 
 
 ## Files added to S3 do not appear
 
-Click **再読み込み** (Reload), the circular arrow button on the bar above the list, to fetch the information from S3 again. The color and time on the list's bar show how long it has been since that information was fetched.
+Click **Reload**, the circular arrow button on the bar above the list, to fetch the information from S3 again. The color and time on the list's bar show how long it has been since that information was fetched.
 
 ## Preview or download actions are missing
 
@@ -38,11 +38,11 @@ If an error is shown, check its message. If the S3 object has been updated, relo
 
 ## Waveforms or spectrograms are not shown
 
-Check that **音声情報・波形の表示** (Show audio info and waveform) and **スペクトログラムの表示** (Show spectrogram) are enabled in the connection settings. The input limit for analysis is 2 GiB for standalone audio files and 100 MiB for audio inside uncompressed tar files. For large audio files, only direct playback may be available.
+Check that **Audio information and waveforms** and **Spectrograms** are enabled in the connection settings. The input limit for analysis is 2 GiB for standalone audio files and 100 MiB for audio inside uncompressed tar files. For large audio files, only direct playback may be available.
 
 ## You cannot edit a README
 
-Check the Curator or Admin permission, the connection's **README の編集** (Edit README) setting, and S3 write permission on the endpoint. On connections where **README の読み込み** (Read README) is disabled, editing is not available either.
+Check the Curator or Admin permission, the connection's **Edit READMEs** setting, and S3 write permission on the endpoint. On connections where **Read READMEs** is disabled, editing is not available either.
 
 ## No data appears in Lineage
 

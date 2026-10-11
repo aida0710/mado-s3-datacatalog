@@ -21,7 +21,7 @@ const content = computed(() => homeContent(lang.value))
           <a class="home-button" :href="withBase(content.secondaryAction.link)">{{ content.secondaryAction.text }}</a>
         </div>
       </div>
-      <Screenshot src="/screenshots/storage-directory.png" :alt="content.hero.alt" :caption="content.hero.caption" eager />
+      <Screenshot :src="`${content.screenshotDirectory}/storage-directory.png`" :alt="content.hero.alt" :caption="content.hero.caption" eager />
     </section>
 
     <nav class="home-entries" :aria-label="content.entriesLabel">
@@ -42,7 +42,7 @@ const content = computed(() => homeContent(lang.value))
           <p>{{ feature.description }}</p>
           <a :href="withBase(feature.link)">{{ feature.action }} →</a>
         </div>
-        <Screenshot :src="`/screenshots/${feature.image}.png`" :alt="feature.alt" :caption="feature.alt" />
+        <Screenshot :src="`${content.screenshotDirectory}/${feature.image}.png`" :alt="feature.alt" :caption="feature.alt" />
       </article>
     </section>
 

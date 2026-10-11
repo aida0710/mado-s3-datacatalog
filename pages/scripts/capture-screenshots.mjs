@@ -6,9 +6,24 @@ import { chromium } from 'playwright'
 import { fulfillSampleApi, SAMPLE_BUCKET, SAMPLE_PREFIX } from './screenshot-fixtures.mjs'
 
 const projectRoot = fileURLToPath(new URL('../../', import.meta.url))
-const outputDirectory = join(projectRoot, 'pages/public/screenshots')
+// 撮る画面の言語。日本語は screenshots/、英語は screenshots/en/ に置き、ドキュメントの言語ごとに使い分ける。
+const language = process.env.MADO_SCREENSHOT_LANGUAGE === 'en' ? 'en' : 'ja'
+const outputDirectory = join(projectRoot, 'pages/public/screenshots', language === 'en' ? 'en' : '')
 const captureDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date())
 const artifactDirectory = join(projectRoot, 'artifacts/docs', captureDate)
+// 画面を操作するときのボタンや見出しの名前。front/i18n/ja.ts・en.ts の表記と同じにする。
+const LABELS = {
+  ja: {
+    browserLocale: 'ja-JP', actions: 'アクション', addToPlayer: 'デッキに追加', synchronizedPlayer: /同期プレイヤー \(2\)/,
+    allowedOperations: 'この接続で許可する操作', pin: 'ピン留め', spectrogram: 'スペクトログラム', history: /履歴/,
+    breakdown: '内訳', transferEstimate: '移送の見積もり',
+  },
+  en: {
+    browserLocale: 'en-US', actions: 'Actions', addToPlayer: 'Add to player', synchronizedPlayer: /Synchronized player \(2\)/,
+    allowedOperations: 'Allowed operations', pin: 'Pin', spectrogram: 'Spectrogram', history: /History/,
+    breakdown: 'Breakdown', transferEstimate: 'Transfer estimate',
+  },
+}[language]
 const appUrl = process.env.MADO_SCREENSHOT_URL ?? 'http://127.0.0.1:15378'
 const selectedScreenshots = new Set((process.env.MADO_SCREENSHOT_FILTER ?? '').split(',').filter(Boolean))
 // プレビュー・容量・Settingsの小さな文字まで読める幅で、すべての画像を揃える。
@@ -63,8 +78,8 @@ const directoryPath = `/storage/demo/${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`
 const previewPath = filename => `${directoryPath}?preview=${encodeURIComponent(SAMPLE_PREFIX + filename)}`
 
 async function openSamplePage({ path, login = false }) {
-  const context = await browser.newContext({ viewport, locale: 'ja-JP', timezoneId: 'Asia/Tokyo', reducedMotion: 'reduce' })
-  await context.route(url => url.pathname.startsWith('/api/'), route => fulfillSampleApi({ route, media, login, unhandled }))
+  const context = await browser.newContext({ viewport, locale: LABELS.browserLocale, timezoneId: 'Asia/Tokyo', reducedMotion: 'reduce' })
+  await context.route(url => url.pathname.startsWith('/api/'), route => fulfillSampleApi({ route, media, login, unhandled, language }))
   const page = await context.newPage()
   page.on('pageerror', error => pageErrors.push(error.message))
   await page.goto(new URL(path, appUrl).href)
@@ -100,10 +115,10 @@ async function captureAudioDeck() {
     // 同じ画面操作を使い、トラックごとの状態を実装から作る。
     for (const filename of ['original.wav', 'processed.wav']) {
       const row = page.locator('tr').filter({ hasText: filename })
-      await row.getByRole('button', { name: 'アクション' }).click()
-      await page.getByRole('menuitem', { name: 'デッキに追加' }).click()
+      await row.getByRole('button', { name: LABELS.actions }).click()
+      await page.getByRole('menuitem', { name: LABELS.addToPlayer }).click()
     }
-    await page.getByText(/同期プレイヤー \(2\)/).waitFor()
+    await page.getByText(LABELS.synchronizedPlayer).waitFor()
     await saveScreenshot({ page, name: 'audio-deck' })
   } finally {
     await page.context().close()
@@ -116,14 +131,14 @@ try {
   await capturePage({ name: 'connections', path: '/settings/connections' })
   await capturePage({ name: 'connection-edit', path: '/settings/connections/demo' })
   await capturePage({ name: 'connection-capabilities', path: '/settings/connections/demo', prepare: async page => {
-    await page.getByText('この接続で許可する操作', { exact: true }).scrollIntoViewIfNeeded()
+    await page.getByText(LABELS.allowedOperations, { exact: true }).scrollIntoViewIfNeeded()
   } })
   await capturePage({ name: 'storage-buckets', path: '/storage/demo/' })
   await capturePage({ name: 'storage-directory', path: directoryPath })
   await capturePage({ name: 'text-preview', path: previewPath('metadata.json') })
   await capturePage({ name: 'image-preview', path: previewPath('spectrogram.png') })
   await capturePage({ name: 'pinned-preview', path: previewPath('metadata.json'), prepare: async page => {
-    await page.getByRole('button', { name: 'ピン留め', exact: true }).click()
+    await page.getByRole('button', { name: LABELS.pin, exact: true }).click()
     await page.locator('tr').filter({ hasText: 'spectrogram.png' }).click()
     // 画像が読み込まれてから撮る。読み込み前だとプレビューの枠が空のまま写る。
     await page.locator('.preview-image').evaluate(image => image.complete || new Promise(resolve => image.addEventListener('load', resolve, { once: true })))
@@ -133,7 +148,7 @@ try {
     await page.waitForFunction(() => document.querySelector('video')?.videoWidth > 0)
   } })
   await capturePage({ name: 'audio-preview', path: previewPath('original.wav'), prepare: async page => {
-    await page.getByAltText('スペクトログラム').waitFor()
+    await page.getByAltText(LABELS.spectrogram).waitFor()
   } })
   await capturePage({ name: 'tar-list', path: previewPath('dataset-00001.tar') })
   await capturePage({ name: 'tar-entry', path: `${previewPath('dataset-00001.tar')}&entry=sample-001.json` })
@@ -149,23 +164,23 @@ try {
     await page.locator('.monaco-editor').first().waitFor()
   } })
   await capturePage({ name: 'readme-history', path: directoryPath, prepare: async page => {
-    await page.getByRole('button', { name: /履歴/ }).first().click()
+    await page.getByRole('button', { name: LABELS.history }).first().click()
     await page.getByText('Sample team', { exact: true }).last().waitFor()
   } })
   await capturePage({ name: 'scan', path: directoryPath, prepare: async page => {
-    await page.getByRole('button', { name: '内訳', exact: true }).click()
+    await page.getByRole('button', { name: LABELS.breakdown, exact: true }).click()
     await page.getByText('12,408', { exact: true }).first().waitFor()
   } })
   await capturePage({ name: 'estimate', path: directoryPath, prepare: async page => {
-    await page.getByRole('button', { name: '内訳', exact: true }).click()
-    await page.getByRole('tab', { name: '移送の見積もり' }).click()
+    await page.getByRole('button', { name: LABELS.breakdown, exact: true }).click()
+    await page.getByRole('tab', { name: LABELS.transferEstimate }).click()
     await page.getByRole('button', { name: /Archive storage/ }).click()
   } })
 
   await captureAudioDeck()
 } finally {
   await browser.close()
-  await writeFile(join(artifactDirectory, 'screenshot-manifest.json'), JSON.stringify({ capturedAt: new Date().toISOString(), screenshots, unhandled, pageErrors }, null, 2))
+  await writeFile(join(artifactDirectory, `screenshot-manifest-${language}.json`), JSON.stringify({ capturedAt: new Date().toISOString(), language, screenshots, unhandled, pageErrors }, null, 2))
 }
 
 if (unhandled.length || pageErrors.length) {
