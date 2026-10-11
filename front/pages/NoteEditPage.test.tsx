@@ -32,7 +32,7 @@ describe('NoteEditPage — 取得の失敗', () => {
     noteMock.mockRejectedValue(new Error('Internal Server Error'))
     renderNoteEditPage()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('共有ノートを読み込めませんでした（Internal Server Error）')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Team noteを読み込めませんでした（Internal Server Error）')
     expect(screen.getByText('既存の本文を上書きしないよう、読み込めるまで編集できません。')).toBeInTheDocument()
     expect(screen.queryByLabelText('ノート本文 (Markdown)')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '保存' })).not.toBeInTheDocument()

@@ -83,7 +83,7 @@ export function TagPicker({
       <div className="dialog-body">
         {allTags.length === 0 ? (
           <p className="muted">
-            <TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate("common.settings")}</Link> }} />
+            <TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate('section.settings')}</Link> }} />
           </p>
         ) : (
           <ul className="tag-picker-list">

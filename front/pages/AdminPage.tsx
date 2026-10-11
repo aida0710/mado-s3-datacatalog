@@ -845,10 +845,10 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page">
-      <nav className="tabs access-tabs" aria-label={translate('settingsPage.access')}>
-        {canUsers && <NavLink to="/settings/access/users" className="tab">{translate("adminPage.users")}</NavLink>}
+      <nav className="tabs access-tabs" aria-label={translate('section.access')}>
+        {canUsers && <NavLink to="/settings/access/users" className="tab">{translate('section.users')}</NavLink>}
         {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">{translate("adminPage.serviceAccounts")}</NavLink>}
-        {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate("adminPage.audit")}</NavLink>}
+        {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate('section.audit')}</NavLink>}
       </nav>
       <Routes>
         <Route index element={<Navigate to={defaultPath} replace />} />

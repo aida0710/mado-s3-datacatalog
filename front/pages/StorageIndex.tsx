@@ -186,7 +186,7 @@ export default function StorageIndex({connectionId}: Props) {
         <section className="storage-index">
             <header className="page-header">
                 <div>
-                    <h1>{translate("common.storage")}</h1>
+                    <h1>{translate('section.storage')}</h1>
                 </div>
                 {/* 右側の操作をひとまとめにして右寄せする。狭い画面では見出しの下へ回る。 */}
                 <div className="page-actions">

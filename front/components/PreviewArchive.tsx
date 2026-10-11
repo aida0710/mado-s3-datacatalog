@@ -262,8 +262,8 @@ export function PreviewArchive({ connectionId, bucket, k, initialEntry = null, o
           <table className="preview-archive-table">
             <thead>
               <tr>
-                <th>{translate("common.name")}</th>
-                <th className="numeric">{translate("common.size")}</th>
+                <th>{translate('entryTable.name')}</th>
+                <th className="numeric">{translate('entryTable.size')}</th>
                 <th></th>
               </tr>
             </thead>

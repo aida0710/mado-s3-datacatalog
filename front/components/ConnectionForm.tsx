@@ -148,7 +148,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
         <input
           value={region}
           onChange={e => dispatch({ type: 'setField', field: 'region', value: e.target.value })}
-          placeholder={translate("common.auto")}
+          placeholder="auto"
           autoComplete="off"
           spellCheck={false}
         />

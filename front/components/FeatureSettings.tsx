@@ -88,7 +88,7 @@ export function FeatureSettings() {
 
   return (
     <section className="settings-column">
-      <SettingsSectionHeader title={translate("featureSettings.features")} />
+      <SettingsSectionHeader title={translate('section.features')} />
 
       {state.error && <p className="notice error">{localizeMessage(state.error)}</p>}
 

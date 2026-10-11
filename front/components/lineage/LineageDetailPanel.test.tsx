@@ -50,7 +50,7 @@ describe('LineageDetailPanel', () => {
     expect(screen.getByText('sha256:manifest')).toBeInTheDocument()
     expect(screen.getByLabelText('補足情報 JSON').textContent).toBe(JSON.stringify(version.metadata, null, 2))
     expect(screen.getByText('2026-01-09頃（厳密な時刻は不明）')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'この保存場所をストレージで開く' }))
+    expect(screen.getByRole('link', { name: 'この保存場所をStorageで開く' }))
       .toHaveAttribute('href', '/storage/connection%201/dataset/callhome/raw/')
   })
 
@@ -67,7 +67,7 @@ describe('LineageDetailPanel', () => {
         />
       </MemoryRouter>,
     )
-    expect(screen.queryByRole('link', { name: 'この保存場所をストレージで開く' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'この保存場所をStorageで開く' })).toBeNull()
   })
 
   it('README の根拠・実行設定・取得元を出す', () => {

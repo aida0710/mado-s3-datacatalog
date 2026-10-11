@@ -33,7 +33,9 @@ try {
   await screenshot('catalog-en');
   const calls = api.state.calls.length;
   await switchLanguage(page, '日本語');
-  await page.getByRole('link', { name: '設定', exact: true }).waitFor();
+  // 区分の名前 (Settings など) は日本語の画面でも英語のままなので、言語ボタンの名前で切り替わりを待つ。
+  await page.getByRole('button', { name: /^表示言語:/ }).waitFor();
+  await page.getByRole('link', { name: 'Settings', exact: true }).waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'), 'ja');
   assert.equal(await page.evaluate(() => localStorage.getItem('mado.locale')), 'ja');
   await page.getByText('日本語の説明.txt', { exact: true }).first().waitFor();

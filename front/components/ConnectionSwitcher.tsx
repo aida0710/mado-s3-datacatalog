@@ -54,13 +54,13 @@ export function ConnectionSwitcher() {
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
-        <span className="connection-switcher-label">{translate("common.connection")}</span>
+        <span className="connection-switcher-label">{translate('connectionSwitcher.connection')}</span>
         <span className="connection-switcher-name">{current.name}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
         <div className="popover connection-switcher-menu" role="menu">
-          <div className="connection-switcher-heading">{translate("connectionsPage.connections")}</div>
+          <div className="connection-switcher-heading">{translate('section.connections')}</div>
           {list === null && <div className="connection-switcher-note">{translate("common.loading")}</div>}
           {list !== null && others.length === 0 && (
             <div className="connection-switcher-note">{translate("connectionSwitcher.noOtherConnections")}</div>

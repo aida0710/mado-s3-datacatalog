@@ -155,7 +155,7 @@ export default function LineagePage() {
     <section className="lineage-page touch-targets">
       <header className="page-header">
         <div>
-          <h1>{translate("common.dataLineage")}</h1>
+          <h1>{translate('section.dataLineage')}</h1>
         </div>
         {canCurate && (
           <div className="page-actions">

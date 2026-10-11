@@ -29,7 +29,7 @@ export default function NoteEditPage() {
   if (state.status === 'loading') {
     return (
       <>
-        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
+        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate('section.teamNote')} />
         <p className="state-message">{translate("common.loading")}</p>
       </>
     )
@@ -37,8 +37,8 @@ export default function NoteEditPage() {
   if (state.status === 'failed') {
     return (
       <>
-        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate("homePage.teamNote")} />
-        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry}>
+        <EditorPageHeader title={translate("noteEditPage.editNote")} description={translate('section.teamNote')} />
+        <LoadFailedNotice subject={translate('section.teamNote')} reason={localizeMessage(state.reason)} onRetry={retry}>
           {translate("common.editingIsDisabledUntilTheContentLoadsTo")}</LoadFailedNotice>
       </>
     )
@@ -50,7 +50,7 @@ export default function NoteEditPage() {
   return (
     <EditorShell
       title={translate("noteEditPage.editNote")}
-      description={translate("homePage.teamNote")}
+      description={translate('section.teamNote')}
       initialBody={data.exists ? data.body : ''}
       onSave={(body, editor) =>
         api.putNote('home', body, editor).then(() => undefined)

@@ -74,7 +74,7 @@ export default function StoragePage({ connectionId }: Props) {
     return (
       <>
         <header className="page-header">
-          <div><h1>{translate("common.storage")}</h1></div>
+          <div><h1>{translate('section.storage')}</h1></div>
         </header>
         <div className="empty-state">
           <h2>{error ? localizeMessage(error) : translate('common.unknown')}</h2>

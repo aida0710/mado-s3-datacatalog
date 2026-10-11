@@ -31,17 +31,17 @@ describe('AdminPage', () => {
       </AuthContext.Provider>,
     )
 
-    const nav = screen.getByRole('navigation', { name: 'アクセス管理' })
-    expect(nav).toHaveTextContent('ユーザー')
+    const nav = screen.getByRole('navigation', { name: 'Access' })
+    expect(nav).toHaveTextContent('Users')
     expect(nav).toHaveTextContent('Service Accounts')
-    expect(nav).toHaveTextContent('監査ログ')
+    expect(nav).toHaveTextContent('Audit')
     expect(screen.queryByRole('heading', { name: 'ユーザーとAPIアクセスの管理' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Access' })).not.toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'ユーザーを追加' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Local Users' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Pipeline Service Accounts' })).not.toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Viewer — 閲覧のみ' })).toBeInTheDocument()
-    expect(screen.getByText('ストレージとデータリネージを閲覧できます。')).toBeInTheDocument()
+    expect(screen.getByText('StorageとDataLineageを閲覧できます。')).toBeInTheDocument()
   })
 
   it('Service Accountsタブ直下で見出しを重複させない', async () => {

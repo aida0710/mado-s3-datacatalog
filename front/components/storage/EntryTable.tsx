@@ -142,8 +142,8 @@ export function EntryTable({
       <table>
         <thead>
           <tr>
-            <th scope="col">{translate("common.name")}</th>
-            {!compact && <th scope="col" className="numeric entry-col-size">{translate("common.size")}</th>}
+            <th scope="col">{translate('entryTable.name')}</th>
+            {!compact && <th scope="col" className="numeric entry-col-size">{translate('entryTable.size')}</th>}
             {!compact && <th scope="col" className="entry-col-modified">{translate("entryTable.modified")}</th>}
             <th scope="col" className="entry-col-actions"><span className="sr-only">{translate("common.actions")}</span></th>
           </tr>

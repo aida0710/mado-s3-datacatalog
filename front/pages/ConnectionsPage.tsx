@@ -253,7 +253,7 @@ export default function ConnectionsPage() {
           <span className="connection-name">
             <strong>{connection.name}</strong>
             {connection.isDefault && (
-              <span className="status-badge connection-default" title={translate("connectionsPage.theStorageTabOpensThisConnection")}>
+              <span className="status-badge connection-default" title={translate("connectionsPage.storageOpensThisConnection")}>
                 {translate("connectionsPage.default")}</span>
             )}
             {connection.visibility.mode === 'whitelist' && (

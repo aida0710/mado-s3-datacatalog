@@ -38,7 +38,7 @@ export default function StorageLanding() {
   return (
     <>
       <header className="page-header">
-        <div><h1>{translate("common.storage")}</h1></div>
+        <div><h1>{translate('section.storage')}</h1></div>
       </header>
       <div className="empty-state">
         <h2>{translate("storageLanding.noConnectionsYet")}</h2>

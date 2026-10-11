@@ -278,7 +278,7 @@ export function TagSearchView({ connectionId }: Props) {
 
       {allTags.length === 0 ? (
         <p className="state-message">
-          <span><TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate("common.settings")}</Link> }} /></span>
+          <span><TranslatedMessage message="common.createTagsInSettings" values={{ value0: <Link to="/settings/features">{translate('section.settings')}</Link> }} /></span>
         </p>
       ) : (
         <>

@@ -394,7 +394,7 @@ export default function LineageRegisterPage() {
   if (!allowed) {
     return (
       <section className="lineage-register-page">
-        <header className="page-header"><div><h1>{translate("common.dataLineage")}</h1></div></header>
+        <header className="page-header"><div><h1>{translate('section.dataLineage')}</h1></div></header>
         <p className="notice error">{translate("lineageRegisterPage.youDoNotHavePermissionToRegisterManually")}</p>
       </section>
     )
@@ -403,7 +403,7 @@ export default function LineageRegisterPage() {
   return (
     <section className="lineage-register-page touch-targets">
       <header className="page-header">
-        <div><h1>{translate("common.dataLineage")}</h1></div>
+        <div><h1>{translate('section.dataLineage')}</h1></div>
         <div className="page-actions">
           <Link className="button" to="/lineage">
             <ArrowLeft size={16} aria-hidden="true" />

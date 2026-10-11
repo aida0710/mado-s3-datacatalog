@@ -52,10 +52,10 @@ export default function HomePage() {
       <>
         <header className="page-header">
           <div>
-            <h1>{translate("homePage.teamNote")}</h1>
+            <h1>{translate('section.teamNote')}</h1>
           </div>
         </header>
-        <LoadFailedNotice subject={translate("homePage.teamNote")} reason={localizeMessage(state.reason)} onRetry={retry} />
+        <LoadFailedNotice subject={translate('section.teamNote')} reason={localizeMessage(state.reason)} onRetry={retry} />
       </>
     )
   }
@@ -73,7 +73,7 @@ export default function HomePage() {
     <>
       <header className="page-header">
         <div>
-          <h1>{translate("homePage.teamNote")}</h1>
+          <h1>{translate('section.teamNote')}</h1>
           {summary && <p className="page-description">{summary}</p>}
         </div>
         <div className="page-actions">
