@@ -65,8 +65,7 @@ docker compose -f compose.dev.yaml ps
 
 まずStorageを使うサービスを起動します。PostgreSQLがhealthyになったら、初期Adminを作成します。OpenLineageの受け付けは、Registryへの接続設定を済ませてから `docker compose -f compose.dev.yaml up -d --build api-lineage` で起動できます。
 
-## 初期Adminを作成する
-
+## 初期Adminを作成する {#initial-admin}
 ```bash
 docker compose -f compose.dev.yaml exec api-internal \
   npm run auth:bootstrap-admin:dev -- --username admin
