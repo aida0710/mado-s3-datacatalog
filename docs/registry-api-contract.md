@@ -45,6 +45,23 @@ Storage matches must additionally contain version/location IDs, version, and
 location URI. Responses may use camelCase or the documented snake_case aliases.
 Unknown additional fields are ignored.
 
+## OpenLineage retries
+
+`POST /v1/ingest/openlineage` must accept retries of the same event, including
+its original `eventTime`, `run.runId`, and dataset version references. Repeating
+an accepted event must return `accepted: true`, `duplicate: true`, and the same
+`eventId` and `runId`, without creating another Run or DatasetVersion. Deduplicate
+the event payload independently of the service-account key ID so rotating a key
+does not create another record. Check the current principal's namespace
+permissions on every request, including retries.
+
+`run.runId` identifies one Run. A dataset's namespace, name, and version identify
+one DatasetVersion; a conflicting redefinition must return 409. Mado forwards
+the validated event unchanged and preserves the Registry's duplicate result.
+Verify these guarantees against the chosen Registry before enabling ML Tracking
+delivery; Mado's adapter tests do not validate an operator-supplied Registry's
+database behavior.
+
 Before starting Mado, validate both health and token authentication against the
 chosen implementation. A health-only stub is not compatible: all endpoints
 used by the enabled Mado features must satisfy this contract.

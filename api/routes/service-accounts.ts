@@ -27,7 +27,7 @@ const PatchAccount = z.object({
 const CreateKey = z.object({
   name: z.string().trim().min(1).max(128),
   scopes: z.array(z.enum(SERVICE_KEY_SCOPES)).length(1),
-  namespaces: z.array(z.string().min(1).max(512)).max(128).default([]),
+  namespaces: z.array(z.string().trim().min(1).max(512)).max(128).default([]),
   expiresAt: z.string().datetime().nullable().optional(),
 }).refine(key => {
   const isLineageKey = key.scopes.some(scope => scope === 'lineage:write' || scope === 'lineage:read')

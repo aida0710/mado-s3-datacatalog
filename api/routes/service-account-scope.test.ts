@@ -39,6 +39,7 @@ describe('Service Accountの新しいread scope', () => {
     const { issue, issueKey } = application()
     for (const body of [
       { name: 'missing', scopes: ['lineage:read'] },
+      { name: 'blank namespace', scopes: ['lineage:read'], namespaces: ['  '] },
       { name: 'metrics namespace', scopes: ['metrics:read'], namespaces: ['speech'] },
       { name: 'mixed', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'] },
     ]) expect((await issue(body)).status).toBe(400)
