@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { api } from '../lib/api/client'
 import { HistoryModal } from './HistoryModal'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -28,7 +28,7 @@ export function ReadmeHistoryModal({ connectionId, bucket, prefix, currentBody, 
   )
   return (
     <HistoryModal
-      title={translate("readmeHistoryModal.readmeHistory")}
+      title={translate('readmeHistoryModal.readmeHistory')}
       titleId="readme-history-title"
       subtitle={`${bucket} / ${prefix || '(root)'}`}
       currentBody={currentBody}

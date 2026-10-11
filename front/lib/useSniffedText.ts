@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
 import { api } from './api/client'
 import { looksBinary, TEXT_HEAD_BYTES } from './textSniff'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
 
 export type SniffedText =
   | { status: 'loading' }

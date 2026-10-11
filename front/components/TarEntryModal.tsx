@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, Link, Pin } from 'lucide-react'
@@ -19,6 +17,8 @@ import { PreviewAudio } from './PreviewAudio'
 import { CopyContentButton } from './PreviewText'
 import { PreviewVideo } from './PreviewVideo'
 import { UnsupportedPreview } from './UnsupportedPreview'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -52,10 +52,10 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
   const copyItems: MenuItem[] = [
     {
       kind: 'copy',
-      label: translate("common.copyWebUrl"),
+      label: translate('common.copyWebUrl'),
       value: absoluteUrl(tarEntryWebUrl({ connectionId, bucket, tarKey: archiveKey, entryPath: entry.name })),
     },
-    { kind: 'copy', label: translate("common.copyRawDataUrl"), value: absoluteUrl(url) },
+    { kind: 'copy', label: translate('common.copyRawDataUrl'), value: absoluteUrl(url) },
   ]
   // エントリの操作。本文の種別によらず、本文の上の帯の右端に並べる。
   const actions = (
@@ -64,18 +64,18 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
         type="button"
         className="icon-button"
         onClick={() => addPin({ connectionId, bucket, key: archiveKey, entryPath: entry.name })}
-        aria-label={translate("common.pin")}
-        title={translate("common.pin")}
+        aria-label={translate('common.pin')}
+        title={translate('common.pin')}
       >
         <Pin size={16} aria-hidden="true" />
       </button>
-      <CopyMenu items={copyItems} trigger={<Link size={16} aria-hidden="true" />} ariaLabel={translate("tarEntryModal.copyUrl")} />
+      <CopyMenu items={copyItems} trigger={<Link size={16} aria-hidden="true" />} ariaLabel={translate('tarEntryModal.copyUrl')} />
       <a
         className="icon-button"
         href={url}
         download={entry.name.split('/').pop()}
-        aria-label={translate("common.download", { value0: entry.name })}
-        title={translate("common.download2")}
+        aria-label={translate('common.download', { value0: entry.name })}
+        title={translate('common.download2')}
       >
         <Download size={16} aria-hidden="true" />
       </a>
@@ -153,7 +153,7 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
       <>
         <EntryToolbar>{actions}</EntryToolbar>
         {sniffed.status === 'error' && <p className="notice error">{sniffed.message}</p>}
-        {sniffed.status === 'loading' && <p className="muted">{translate("common.loading")}</p>}
+        {sniffed.status === 'loading' && <p className="muted">{translate('common.loading')}</p>}
         {sniffed.status === 'binary' && <UnsupportedPreview />}
       </>
     )
@@ -181,7 +181,7 @@ function LoadedText({ name, text, actions }: { name: string; text: string; actio
       <EntryToolbar
         info={
           <>
-            <span className="muted mono">{translate("tarEntryModal.rows", { value0: lines })}</span>
+            <span className="muted mono">{translate('tarEntryModal.rows', { value0: lines })}</span>
             <CodeFormatSelect code={code} />
           </>
         }

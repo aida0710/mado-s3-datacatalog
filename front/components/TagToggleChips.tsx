@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { Check } from 'lucide-react'
 import type { Tag } from '../lib/api/types'
 import { TagColorDot } from './TagBadge'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   tags: Tag[]
@@ -35,7 +35,7 @@ export function TagToggleChips({ tags, selected, onToggle, onClear }: Props) {
         )
       })}
       {selected.size > 0 && (
-        <button type="button" className="button small" onClick={onClear}>{translate("common.clear")}</button>
+        <button type="button" className="button small" onClick={onClear}>{translate('common.clear')}</button>
       )}
     </>
   )

@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
@@ -15,6 +13,8 @@ import { LoadFailedNotice } from './LoadFailedNotice'
 import { useCapabilities } from '../lib/useCapabilities'
 import { failedLoad, LOADING, type LoadState } from '../lib/loadState'
 import { createRevalidationReceiver } from '../lib/revalidationReceiver'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // 履歴ビューワは「ボタンを押した後にだけ」マウントされる。
 // React.lazy() で別チャンクに分け、初回ロード時の JS / CSS 量を絞る。
@@ -116,15 +116,15 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
   // prefix は `/` を含み得るので encPath で path segment ごとに encode。
   const editHref = `/storage/${encodeURIComponent(connectionId)}/edit-readme/${encodeURIComponent(bucket)}/${encPath(prefix)}`
 
-  const editLabel = data?.exists ? translate("common.edit") : translate("common.create")
+  const editLabel = data?.exists ? translate('common.edit') : translate('common.create')
 
   return (
     <section className="readme-panel" aria-labelledby={headingId}>
       <div className="section-heading">
         <div className="readme-panel__title">
-          <h2 id={headingId}>{translate("readmeView.readme")}</h2>
+          <h2 id={headingId}>{translate('readmeView.readme')}</h2>
           {data?.exists && data.last_editor && (
-            <span className="muted">{translate("common.lastBy") + " "}{data.last_editor}</span>
+            <span className="muted">{translate('common.lastBy')}{' '}{data.last_editor}</span>
           )}
         </div>
         <div className="readme-panel__actions">
@@ -134,7 +134,7 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
                 className="icon-button"
                 to={editHref}
                 aria-label={editLabel}
-                title={translate("readmeView.readme2", { value0: editLabel })}
+                title={translate('readmeView.readme2', { value0: editLabel })}
               >
                 {data.exists ? <Pencil size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
               </Link>
@@ -143,8 +143,8 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
               type="button"
               className="icon-button"
               onClick={() => setHistoryOpen(true)}
-              aria-label={translate("common.history")}
-              title={translate("common.showEditHistory")}
+              aria-label={translate('common.history')}
+              title={translate('common.showEditHistory')}
             >
               <History size={16} aria-hidden="true" />
             </button>
@@ -183,12 +183,12 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
                 aria-expanded={expanded}
               >
                 {expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
-                {expanded ? translate("readmeView.collapse") : translate("readmeView.showAll")}
+                {expanded ? translate('readmeView.collapse') : translate('readmeView.showAll')}
               </button>
             )}
           </>
         ) : (
-          <p className="muted">{translate("readmeView.noReadme")}</p>
+          <p className="muted">{translate('readmeView.noReadme')}</p>
         )}
       </div>
       {historyOpen && (

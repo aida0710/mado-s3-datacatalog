@@ -1,11 +1,11 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, Settings } from 'lucide-react'
 import { api } from '../lib/api/client'
 import type { Connection } from '../lib/api/types'
 import { useConnection } from '../lib/connectionContext'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 /**
  * 見出しの右に置く接続先の切り替え。押すとほかの接続の一覧 (.popover) を開く。
@@ -61,9 +61,9 @@ export function ConnectionSwitcher() {
       {open && (
         <div className="popover connection-switcher-menu" role="menu">
           <div className="connection-switcher-heading">{translate('section.connections')}</div>
-          {list === null && <div className="connection-switcher-note">{translate("common.loading")}</div>}
+          {list === null && <div className="connection-switcher-note">{translate('common.loading')}</div>}
           {list !== null && others.length === 0 && (
-            <div className="connection-switcher-note">{translate("connectionSwitcher.noOtherConnections")}</div>
+            <div className="connection-switcher-note">{translate('connectionSwitcher.noOtherConnections')}</div>
           )}
           {others.map(c => (
             <button
@@ -89,7 +89,7 @@ export function ConnectionSwitcher() {
             onClick={() => setOpen(false)}
           >
             <Settings size={14} aria-hidden="true" />
-            {translate("connectionSwitcher.manageConnections")}</Link>
+            {translate('connectionSwitcher.manageConnections')}</Link>
         </div>
       )}
     </div>

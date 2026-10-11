@@ -1,11 +1,11 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { api } from '../lib/api/client'
 import type { Connection } from '../lib/api/types'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // Storage タブの入口。デフォルト接続 → created_at 最古 → 0 件なら空状態、へ振り分ける。
 // 接続の切り替えは画面右上の CONN スイッチャーが担うため、選択画面はもう無い。
@@ -34,20 +34,20 @@ export default function StorageLanding() {
   }, [navigate])
 
   if (error) return <p className="notice error">{localizeMessage(error)}</p>
-  if (!empty) return <p className="state-message">{translate("common.loading")}</p>
+  if (!empty) return <p className="state-message">{translate('common.loading')}</p>
   return (
     <>
       <header className="page-header">
         <div><h1>{translate('section.storage')}</h1></div>
       </header>
       <div className="empty-state">
-        <h2>{translate("storageLanding.noConnectionsYet")}</h2>
+        <h2>{translate('storageLanding.noConnectionsYet')}</h2>
         <p>
-          {translate("storageLanding.noS3CompatibleStorageHasBeenRegisteredHere")}<br />
-          {translate("storageLanding.addOneFromTheSettingsPage")}</p>
+          {translate('storageLanding.noS3CompatibleStorageHasBeenRegisteredHere')}<br />
+          {translate('storageLanding.addOneFromTheSettingsPage')}</p>
         <Link className="button primary" to="/settings">
           <Plus size={16} aria-hidden="true" />
-          {translate("common.addConnection")}</Link>
+          {translate('common.addConnection')}</Link>
       </div>
     </>
   )

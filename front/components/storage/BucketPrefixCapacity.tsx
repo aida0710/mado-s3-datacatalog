@@ -4,10 +4,6 @@
 // 推移グラフは行を開いたときだけ取得する。1 バケットに数十行あり、全部の履歴を
 // 一覧と一緒に返すと応答が大きくなりすぎるため。
 
-import { localizeMessage } from '../../i18n/localizeMessage'
-import { getIntlLocale } from '../../i18n/locale'
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { lazy, Suspense, useEffect, useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react'
@@ -15,6 +11,10 @@ import { api } from '../../lib/api/client'
 import type { CapacityPoint, CapacityPrefixSummary } from '../../lib/api/types'
 import { fmtCapacityBytes, fmtCapacityDelta } from '../../lib/format'
 import { storageDirectoryHref } from '../../lib/route'
+import { localizeMessage } from '../../i18n/localizeMessage'
+import { getIntlLocale } from '../../i18n/locale'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 const CapacityHistoryChart = lazy(() => import('./CapacityHistoryChart'))
 
@@ -48,7 +48,7 @@ export function BucketPrefixCapacity({
   if (prefixes.length === 0) {
     return (
       <p className="muted capacity-prefixes-empty">
-        {translate("bucketPrefixCapacity.noBreakdownByImmediateSubdirectoryIsAvailableThere")}</p>
+        {translate('bucketPrefixCapacity.noBreakdownByImmediateSubdirectoryIsAvailableThere')}</p>
     )
   }
 
@@ -58,20 +58,20 @@ export function BucketPrefixCapacity({
   const restObjects = bucketObjectCount - prefixes.reduce((sum, prefix) => sum + prefix.objectCount, 0)
 
   return (
-    <section className="capacity-prefixes" aria-label={translate("bucketPrefixCapacity.capacityByImmediateSubdirectoryOf", { value0: bucket })}>
+    <section className="capacity-prefixes" aria-label={translate('bucketPrefixCapacity.capacityByImmediateSubdirectoryOf', { value0: bucket })}>
       <div className="capacity-prefixes-heading">
-        <h4>{translate("bucketPrefixCapacity.immediateSubdirectories")}</h4>
-        <p className="muted">{translate("bucketPrefixCapacity.largestDirectories", { value0: prefixes.length.toLocaleString(getIntlLocale()) })}</p>
+        <h4>{translate('bucketPrefixCapacity.immediateSubdirectories')}</h4>
+        <p className="muted">{translate('bucketPrefixCapacity.largestDirectories', { value0: prefixes.length.toLocaleString(getIntlLocale()) })}</p>
       </div>
       <div className="table-scroll">
-        <table aria-label={translate("bucketPrefixCapacity.immediateSubdirectoriesOf", { value0: bucket })}>
+        <table aria-label={translate('bucketPrefixCapacity.immediateSubdirectoriesOf', { value0: bucket })}>
           <thead>
             <tr>
-              <th scope="col">{translate("common.directory")}</th>
-              <th scope="col" className="numeric">{translate("common.capacity")}</th>
-              <th scope="col" className="capacity-col-share">{translate("bucketPrefixCapacity.share")}</th>
-              <th scope="col" className="numeric capacity-col-delta">{translate("common.changeSincePrevious")}</th>
-              <th scope="col" className="numeric capacity-col-objects">{translate("common.objectCount")}</th>
+              <th scope="col">{translate('common.directory')}</th>
+              <th scope="col" className="numeric">{translate('common.capacity')}</th>
+              <th scope="col" className="capacity-col-share">{translate('bucketPrefixCapacity.share')}</th>
+              <th scope="col" className="numeric capacity-col-delta">{translate('common.changeSincePrevious')}</th>
+              <th scope="col" className="numeric capacity-col-objects">{translate('common.objectCount')}</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +90,7 @@ export function BucketPrefixCapacity({
             ))}
             {hiddenCount === 0 && restBytes > 0 && (
               <tr>
-                <td className="muted capacity-rest-name">{translate("bucketPrefixCapacity.rootFilesAndOtherDirectories")}</td>
+                <td className="muted capacity-rest-name">{translate('bucketPrefixCapacity.rootFilesAndOtherDirectories')}</td>
                 <td className="numeric mono nowrap">{fmtCapacityBytes(restBytes)}</td>
                 <td className="capacity-col-share">
                   <ShareBar share={bucketTotalBytes > 0 ? restBytes / bucketTotalBytes : 0} />
@@ -104,7 +104,7 @@ export function BucketPrefixCapacity({
       </div>
       {prefixes.length > INITIAL_VISIBLE_PREFIXES && (
         <button type="button" className="button small capacity-prefixes-more" onClick={() => setShowAll(value => !value)}>
-          {showAll ? translate("bucketPrefixCapacity.showOnlyTheTop", { value0: INITIAL_VISIBLE_PREFIXES }) : translate("bucketPrefixCapacity.showMore", { value0: hiddenCount.toLocaleString(getIntlLocale()) })}
+          {showAll ? translate('bucketPrefixCapacity.showOnlyTheTop', { value0: INITIAL_VISIBLE_PREFIXES }) : translate('bucketPrefixCapacity.showMore', { value0: hiddenCount.toLocaleString(getIntlLocale()) })}
         </button>
       )}
     </section>
@@ -133,7 +133,7 @@ function PrefixRow({ connectionId, bucket, prefix, share, open, onToggle, days, 
               className="capacity-prefix-toggle"
               aria-expanded={open}
               aria-controls={trendId}
-              title={translate("bucketPrefixCapacity.showHistory")}
+              title={translate('bucketPrefixCapacity.showHistory')}
               onClick={onToggle}
             >
               {open
@@ -144,9 +144,9 @@ function PrefixRow({ connectionId, bucket, prefix, share, open, onToggle, days, 
             <Link
               className="capacity-open-link"
               to={storageDirectoryHref(connectionId, bucket, prefix.prefix)}
-              aria-label={translate("bucketPrefixCapacity.open", { value0: prefix.prefix })}
+              aria-label={translate('bucketPrefixCapacity.open', { value0: prefix.prefix })}
             >
-              {translate("common.open")}<ArrowRight size={12} aria-hidden="true" />
+              {translate('common.open')}<ArrowRight size={12} aria-hidden="true" />
             </Link>
           </span>
         </td>
@@ -204,12 +204,12 @@ function PrefixTrend({ connectionId, bucket, prefix, days, intervalSeconds }: {
   }, [connectionId, bucket, prefix, days])
 
   if (error) return <p className="notice error">{localizeMessage(error)}</p>
-  if (!points) return <p className="capacity-chart-placeholder">{translate("bucketPrefixCapacity.loadingHistory")}</p>
+  if (!points) return <p className="capacity-chart-placeholder">{translate('bucketPrefixCapacity.loadingHistory')}</p>
   if (points.length < 2) {
-    return <p className="capacity-chart-empty">{translate("common.aGraphIsAvailableAfterTwoMeasurements")}</p>
+    return <p className="capacity-chart-empty">{translate('common.aGraphIsAvailableAfterTwoMeasurements')}</p>
   }
   return (
-    <Suspense fallback={<p className="capacity-chart-placeholder">{translate("common.loadingGraph")}</p>}>
+    <Suspense fallback={<p className="capacity-chart-placeholder">{translate('common.loadingGraph')}</p>}>
       <CapacityHistoryChart points={points} intervalSeconds={intervalSeconds} capacityBytes={null} label={`${bucket}/${prefix}`} />
     </Suspense>
   )

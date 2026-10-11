@@ -1,17 +1,17 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer } from 'react'
 import { api } from '../lib/api/client'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // 機能の全体トグル。app_settings の 1 行 = 1 機能で、値は 'true' / 'false' の文字列。
 // 「行が無い / 'false' 以外」は有効 — 設定行を消しても既存機能が消えないように。
 const FEATURES = [
   {
     key: 'tags_enabled',
-    get label() { return translate("featureSettings.showTags") },
-    get help() { return translate("featureSettings.disablingThisHidesTagBadgesFiltersSearchAnd") },
+    get label() { return translate('featureSettings.showTags') },
+    get help() { return translate('featureSettings.disablingThisHidesTagBadgesFiltersSearchAnd') },
   },
 ] as const
 

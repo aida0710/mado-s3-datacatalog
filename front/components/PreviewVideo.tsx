@@ -1,8 +1,8 @@
+import { api } from '../lib/api/client'
+import { useMediaSrc } from '../lib/useMediaSrc'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { api } from '../lib/api/client'
-import { useMediaSrc } from '../lib/useMediaSrc'
 
 interface Props {
   connectionId: string
@@ -21,11 +21,11 @@ export function PreviewVideo({ connectionId, bucket, k, entryPath }: Props) {
 
   return (
     <div className="preview-stack">
-      {loading && <p className="muted">{translate("previewVideo.fetchingVideo")}</p>}
-      {error && <p className="notice error">{translate("previewVideo.couldNotFetchVideo") + " "}{localizeMessage(error)}</p>}
+      {loading && <p className="muted">{translate('previewVideo.fetchingVideo')}</p>}
+      {error && <p className="notice error">{translate('previewVideo.couldNotFetchVideo')}{' '}{localizeMessage(error)}</p>}
       {src && (
         <video
-          aria-label={translate("previewVideo.videoPreviewOf", { value0: label })}
+          aria-label={translate('previewVideo.videoPreviewOf', { value0: label })}
           className="preview-video"
           src={src}
           controls

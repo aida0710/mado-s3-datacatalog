@@ -13,14 +13,14 @@
 //     useBlocker で confirm ダイアログを挟む
 //   - 保存成功直後は justSavedRef で 1 度だけ素通しさせる (保存→ホーム遷移を阻害しない)
 
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, ChevronUp, Folder } from 'lucide-react'
 import { getEditorName, setEditorName } from '../lib/editorName'
 import { useAuth } from '../lib/auth-context'
 import { useBlocker } from 'react-router-dom'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   title: string
@@ -95,7 +95,7 @@ export function EditorShell({
 
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      const ok = window.confirm(translate("editorShell.youHaveUnsavedChangesLeaveThisPage"))
+      const ok = window.confirm(translate('editorShell.youHaveUnsavedChangesLeaveThisPage'))
       if (ok) blocker.proceed()
       else blocker.reset()
     }
@@ -117,7 +117,7 @@ export function EditorShell({
   }
 
   const handleCancel = () => {
-    if (dirty && !window.confirm(translate("editorShell.youHaveUnsavedChangesLeaveThisPage"))) return
+    if (dirty && !window.confirm(translate('editorShell.youHaveUnsavedChangesLeaveThisPage'))) return
     justSavedRef.current = true  // confirm 済みなので blocker は素通し
     onCancel()
   }
@@ -137,7 +137,7 @@ export function EditorShell({
             aria-controls="editpage-sidebar"
           >
             <Folder size={14} aria-hidden="true" />
-            {sidebarOpen ? translate("common.close") : translate("editorShell.browseFiles")}
+            {sidebarOpen ? translate('common.close') : translate('editorShell.browseFiles')}
             {sidebarOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
           </button>
         )}
@@ -160,27 +160,27 @@ export function EditorShell({
       {error && <p className="notice error editpage__error" role="alert">{localizeMessage(error)}</p>}
       <footer className="editpage__bar">
         <label className="field editpage__name">
-          <span>{translate("editorShell.editorName")}</span>
+          <span>{translate('editorShell.editorName')}</span>
           <input
             value={editor}
             onChange={e => setLocalEditor(e.target.value)}
             readOnly={auth.enabled}
-            placeholder={translate("common.exampleEditor")}
+            placeholder={translate('common.exampleEditor')}
             autoComplete="nickname"
             spellCheck={false}
-            aria-label={translate("editorShell.editorName")}
+            aria-label={translate('editorShell.editorName')}
           />
         </label>
         <div className="editpage__actions">
           <button type="button" onClick={handleCancel} disabled={saving} className="button">
-            {translate("common.cancel")}</button>
+            {translate('common.cancel')}</button>
           <button
             type="button"
             onClick={save}
             disabled={saving || !editor}
             className="button primary"
           >
-            {saving ? translate("common.saving") : translate("common.save")}
+            {saving ? translate('common.saving') : translate('common.save')}
           </button>
         </div>
       </footer>

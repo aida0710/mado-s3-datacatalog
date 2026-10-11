@@ -22,7 +22,7 @@ export async function readJsonFile(file: File): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown
   } catch {
-    throw new Error(translate("jsonFile.couldNotParseAsJson"))
+    throw new Error(translate('jsonFile.couldNotParseAsJson'))
   }
 }
 
@@ -39,9 +39,9 @@ export interface ImportSummary {
 }
 
 export function summaryText(s: ImportSummary): string {
-  const parts = [translate("jsonFile.added", { value0: s.added }), translate("jsonFile.skipped", { value0: s.skipped })]
-  if (s.removed) parts.push(translate("jsonFile.deleted", { value0: s.removed }))
-  if (s.failed.length > 0) parts.push(translate("jsonFile.failed", { value0: s.failed.length }))
+  const parts = [translate('jsonFile.added', { value0: s.added }), translate('jsonFile.skipped', { value0: s.skipped })]
+  if (s.removed) parts.push(translate('jsonFile.deleted', { value0: s.removed }))
+  if (s.failed.length > 0) parts.push(translate('jsonFile.failed', { value0: s.failed.length }))
   return parts.join(' / ')
 }
 

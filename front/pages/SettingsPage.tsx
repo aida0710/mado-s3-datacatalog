@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { lazy, Suspense, useLayoutEffect, useRef } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { About } from '../components/About'
@@ -10,6 +8,8 @@ import { useTagsEnabled } from '../lib/useFeatureEnabled'
 import { useAuth } from '../lib/auth-context'
 import ConnectionEditorPage from './ConnectionEditorPage'
 import ConnectionsPage from './ConnectionsPage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 const AdminPage = lazy(() => import('./AdminPage'))
 
@@ -82,7 +82,7 @@ export default function SettingsPage() {
         <Route path="connections/:connectionId" element={<ConnectionEditorPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="access/*" element={
-          <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
+          <Suspense fallback={<p className="state-message">{translate('common.loading')}</p>}>
             <AdminPage />
           </Suspense>
         } />

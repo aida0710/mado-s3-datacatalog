@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, PinOff } from 'lucide-react'
 import { usePlayerDeck } from '../lib/playerDeck'
@@ -7,6 +5,8 @@ import { usePinnedPreviews } from '../lib/pinnedPreviews'
 import { classify } from '../lib/api/mime'
 import { PlayerDeck } from './PlayerDeck'
 import { PinnedPreviewCard } from './PinnedPreviewCard'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // ドックの高さを <html> の --bottom-dock-height に書く。画面に貼り付くプレビューのドロワーが
 // この分だけ低くなり、下端がドックの裏に隠れない。ドックが消えたら変数も消す。
@@ -53,11 +53,11 @@ export function BottomDock() {
                 {pinsCollapsed
                   ? <ChevronUp size={16} aria-hidden="true" />
                   : <ChevronDown size={16} aria-hidden="true" />}
-                <span>{translate("bottomDock.pinned")}{pins.length})</span>
+                <span>{translate('bottomDock.pinned')}{pins.length})</span>
               </button>
               <button type="button" className="button small" onClick={clearPins}>
                 <PinOff size={14} aria-hidden="true" />
-                {translate("bottomDock.unpinAll")}</button>
+                {translate('bottomDock.unpinAll')}</button>
             </div>
             {!pinsCollapsed && (
               <div className="pinned-grid">

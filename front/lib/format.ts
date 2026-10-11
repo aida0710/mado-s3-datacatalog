@@ -143,7 +143,7 @@ export function fmtCacheAge(d: Date, now: Date = new Date(), opts: CacheAgeOptio
 
   const min = Math.floor((now.getTime() - d.getTime()) / 60_000)
   const rel =
-    min < 1  ? translate("format.justNow")
+    min < 1  ? translate('format.justNow')
     : min < 60 ? formatTimeAgo(min, 'minute')
     : min < 60 * 24 ? formatTimeAgo(Math.floor(min / 60), 'hour')
     : formatTimeAgo(Math.floor(min / (60 * 24)), 'day')

@@ -1,5 +1,5 @@
-import { translate } from '../../i18n/translate'
 import { HardDrive, House, Network, Settings, type LucideIcon } from 'lucide-react'
+import { translate } from '../../i18n/translate'
 
 export interface NavigationLink {
   to: string

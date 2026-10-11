@@ -1,6 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { localizeMessage } from '../i18n/localizeMessage'
-import { translate } from '../i18n/translate'
 import { lazy, Suspense, useEffect, useReducer } from 'react'
 import { Route, Routes, Link, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -8,6 +5,9 @@ import type { Connection } from '../lib/api/types'
 import { ConnectionContext } from '../lib/connectionContext'
 import StorageIndex from './StorageIndex'
 import StorageBucket from './StorageBucket'
+import { useLocale } from '../i18n/useLocale'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { translate } from '../i18n/translate'
 
 // README 編集ページは Monaco エディタを抱えるので別チャンクに切り出す。
 // 編集ボタンを押さないユーザに ~1MB のロードを発生させないため。
@@ -47,7 +47,7 @@ function reducer(s: State, a: Action): State {
     case 'loadErr':
       return { ...s, error: a.error, loading: false }
     case 'notFound':
-      return { connection: null, error: translate("storagePage.connectionNotFound", { value0: a.connectionId }), loading: false }
+      return { connection: null, error: translate('storagePage.connectionNotFound', { value0: a.connectionId }), loading: false }
   }
 }
 
@@ -68,7 +68,7 @@ export default function StoragePage({ connectionId }: Props) {
   }, [connectionId])
 
   if (loading) {
-    return <p className="state-message">{translate("common.loading")}</p>
+    return <p className="state-message">{translate('common.loading')}</p>
   }
   if (error || !connection) {
     return (
@@ -78,14 +78,14 @@ export default function StoragePage({ connectionId }: Props) {
         </header>
         <div className="empty-state">
           <h2>{error ? localizeMessage(error) : translate('common.unknown')}</h2>
-          <Link className="button primary" to="/storage">{translate("storagePage.backToConnections")}</Link>
+          <Link className="button primary" to="/storage">{translate('storagePage.backToConnections')}</Link>
         </div>
       </>
     )
   }
   return (
     <ConnectionContext.Provider value={connection}>
-      <Suspense fallback={<p className="state-message">{translate("common.loading")}</p>}>
+      <Suspense fallback={<p className="state-message">{translate('common.loading')}</p>}>
         <Routes>
           <Route path="/"                       element={<StorageIndexRoute connectionId={connectionId} />} />
           {/* edit-readme は固定セグメントから始まるので :bucket/* より specificity が高く、

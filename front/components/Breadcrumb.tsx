@@ -1,6 +1,3 @@
-import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { Fragment, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUp, ChevronRight, Copy } from 'lucide-react'
@@ -8,6 +5,9 @@ import { useConnection } from '../lib/connectionContext'
 import { absoluteUrl, encPath } from '../lib/route'
 import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { CopyMenu, type MenuItem } from './CopyMenu'
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 export interface Crumb {
   label: string
@@ -42,7 +42,7 @@ export function StorageHeader({
   return (
     <header className="page-header">
       <div>
-        <nav className="eyebrow storage-crumbs" aria-label={translate("breadcrumb.breadcrumbs")}>
+        <nav className="eyebrow storage-crumbs" aria-label={translate('breadcrumb.breadcrumbs')}>
           {crumbs.map((crumb, index) => (
             <Fragment key={crumb.to}>
               {index > 0 && (
@@ -107,8 +107,8 @@ export function Breadcrumb({
   // 接続ルート (バケット一覧) には出ない。深い階層ではそのディレクトリ URL をコピーできる。
   const dirHref = `${bucketHref}${encPath(prefix)}`
   const copyItems = useLocalizedMemo<MenuItem[]>(() => [
-    { kind: 'copy', label: translate("common.copyWebUrl"), value: absoluteUrl(dirHref) },
-    { kind: 'copy', label: translate("common.copyS3Url"),  value: `s3://${bucket}/${prefix}` },
+    { kind: 'copy', label: translate('common.copyWebUrl'), value: absoluteUrl(dirHref) },
+    { kind: 'copy', label: translate('common.copyS3Url'),  value: `s3://${bucket}/${prefix}` },
   ], [dirHref, bucket, prefix])
 
   return (
@@ -117,9 +117,9 @@ export function Breadcrumb({
       title={segments.at(-1) ?? bucket}
       description={description}
       copyItems={copyItems}
-      copyLabel={translate("breadcrumb.copyThisDirectorySUrl")}
+      copyLabel={translate('breadcrumb.copyThisDirectorySUrl')}
       upHref={parentPath(connectionId, bucket, prefix)}
-      upLabel={translate("breadcrumb.goToParentDirectory")}
+      upLabel={translate('breadcrumb.goToParentDirectory')}
     />
   )
 }

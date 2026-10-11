@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import type { Tag } from '../../lib/api/types'
 import { TagToggleChips } from '../TagToggleChips'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 interface Props {
   tags: Tag[]              // 今表示中の行に実際に出現する候補タグのみ
@@ -17,7 +17,7 @@ export function TagFilterBar({ tags, selected, onToggle, onClear }: Props) {
   if (tags.length === 0) return null
   return (
     <div className="storage-toolbar-item">
-      <span className="muted">{translate("tagFilterBar.filterByTag")}</span>
+      <span className="muted">{translate('tagFilterBar.filterByTag')}</span>
       <TagToggleChips tags={tags} selected={selected} onToggle={onToggle} onClear={onClear} />
     </div>
   )

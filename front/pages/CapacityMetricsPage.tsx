@@ -1,7 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { getIntlLocale } from '../i18n/locale'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, RefreshCw } from 'lucide-react'
@@ -13,6 +9,10 @@ import { fmtCapacityBytes, fmtCapacityDelta } from '../lib/format'
 import { storageDirectoryHref } from '../lib/route'
 import { ViewBreadcrumb } from '../components/ViewBreadcrumb'
 import { BucketPrefixCapacity } from '../components/storage/BucketPrefixCapacity'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { getIntlLocale } from '../i18n/locale'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 const CapacityHistoryChart = lazy(() => import('../components/storage/CapacityHistoryChart'))
 const DAYS = [7, 30, 90, 400] as const
@@ -99,7 +99,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
     setNotice(null)
     try {
       const result = await api.startCapacityScan(connectionId)
-      setNotice(translate("capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement", { value0: result.jobs.length.toLocaleString(getIntlLocale()) }))
+      setNotice(translate('capacityMetricsPage.startedMeasuringBucketsResultsAppearAsEachMeasurement', { value0: result.jobs.length.toLocaleString(getIntlLocale()) }))
       setOverview(await api.capacityOverview(connectionId, days))
       setClock(Date.now())
       setError(null)
@@ -122,28 +122,28 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
     <section>
       <ViewBreadcrumb
         connectionId={connectionId}
-        label={translate("capacityMetricsPage.bucketCapacityMetrics")}
+        label={translate('capacityMetricsPage.bucketCapacityMetrics')}
         href={`/storage/${encodeURIComponent(connectionId)}/?view=capacity`}
-        description={translate("capacityMetricsPage.displaysCompleteScanResultsForEveryBucketIn")}
+        description={translate('capacityMetricsPage.displaysCompleteScanResultsForEveryBucketIn')}
       />
 
       {scanActive && <ScanActivity jobs={scanJobs} now={clock} />}
 
       {overview && (
         <dl className="capacity-summary">
-          <Metric label={translate("capacityMetricsPage.totalBucketCapacity")} value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
-          <Metric label={translate("capacityMetricsPage.totalBucketObjectCount")} value={measuredCount ? totalObjects.toLocaleString(getIntlLocale()) : '—'} />
-          <Metric label={translate("capacityMetricsPage.measurementCoverage")} value={translate("capacityMetricsPage.buckets", { value0: measuredCount.toLocaleString(getIntlLocale()), value1: bucketCount.toLocaleString(getIntlLocale()) })} />
+          <Metric label={translate('capacityMetricsPage.totalBucketCapacity')} value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
+          <Metric label={translate('capacityMetricsPage.totalBucketObjectCount')} value={measuredCount ? totalObjects.toLocaleString(getIntlLocale()) : '—'} />
+          <Metric label={translate('capacityMetricsPage.measurementCoverage')} value={translate('capacityMetricsPage.buckets', { value0: measuredCount.toLocaleString(getIntlLocale()), value1: bucketCount.toLocaleString(getIntlLocale()) })} />
         </dl>
       )}
 
       {/* 期間の切り替えと、計測の予定・今すぐ計測・表示の更新。一覧の上の帯と同じ形。
           見出しの右はどの Storage の画面でも同じ (接続先・コピー・上へ) にしておく。 */}
       <div className="capacity-toolbar">
-        <div className="capacity-period" role="group" aria-label={translate("capacityMetricsPage.timeRange")}>
+        <div className="capacity-period" role="group" aria-label={translate('capacityMetricsPage.timeRange')}>
           {DAYS.map(value => (
             <button key={value} type="button" className="button small" aria-pressed={days === value} onClick={() => updateDays(value)}>
-              {value === 400 ? translate("capacityMetricsPage.allTime") : translate("capacityMetricsPage.days", { value0: value })}
+              {value === 400 ? translate('capacityMetricsPage.allTime') : translate('capacityMetricsPage.days', { value0: value })}
             </button>
           ))}
         </div>
@@ -151,9 +151,9 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
           {overview && (
             <p className="muted">
               {overview.tracking.enabled
-                ? translate("capacityMetricsPage.measureAllBucketsEveryHours", { value0: Math.round(overview.tracking.intervalSeconds / 3600) })
-                : translate("capacityMetricsPage.periodicMeasurementsStopped")}
-              {canManage && <> · <Link to={`/settings/connections/${encodeURIComponent(connectionId)}`}>{translate("capacityMetricsPage.connectionSettings")}</Link></>}
+                ? translate('capacityMetricsPage.measureAllBucketsEveryHours', { value0: Math.round(overview.tracking.intervalSeconds / 3600) })
+                : translate('capacityMetricsPage.periodicMeasurementsStopped')}
+              {canManage && <> · <Link to={`/settings/connections/${encodeURIComponent(connectionId)}`}>{translate('capacityMetricsPage.connectionSettings')}</Link></>}
             </p>
           )}
           {canManage && (
@@ -163,7 +163,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
               disabled={scanning || scanActive || !connection.scanEnabled || connection.capacityMetricsEnabled === false}
               onClick={() => void scanAll()}
             >
-              {scanning ? translate("capacityMetricsPage.starting") : scanActive ? translate("capacityMetricsPage.measuring") : translate("capacityMetricsPage.measureAllBucketsNow")}
+              {scanning ? translate('capacityMetricsPage.starting') : scanActive ? translate('capacityMetricsPage.measuring') : translate('capacityMetricsPage.measureAllBucketsNow')}
             </button>
           )}
           <button
@@ -171,8 +171,8 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
             className="icon-button"
             disabled={loading}
             onClick={() => void refresh()}
-            aria-label={translate("capacityMetricsPage.refreshView")}
-            title={translate("capacityMetricsPage.refreshView")}
+            aria-label={translate('capacityMetricsPage.refreshView')}
+            title={translate('capacityMetricsPage.refreshView')}
           >
             <RefreshCw size={16} aria-hidden="true" className={loading ? 'spin' : undefined} />
           </button>
@@ -181,8 +181,8 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
 
       {notice && <p className="notice">{localizeMessage(notice)}</p>}
       {error && <p className="notice error">{localizeMessage(error)}</p>}
-      {loading && !overview && <p className="state-message">{translate("common.loading")}</p>}
-      {!loading && overview?.buckets.length === 0 && <p className="state-message">{translate("common.noBucketsFound")}</p>}
+      {loading && !overview && <p className="state-message">{translate('common.loading')}</p>}
+      {!loading && overview?.buckets.length === 0 && <p className="state-message">{translate('common.noBucketsFound')}</p>}
 
       {overview && (
         <div className="capacity-buckets" aria-busy={loading}>
@@ -211,12 +211,12 @@ function compareBucketCapacity(a: CapacityBucketHistory, b: CapacityBucketHistor
   return a.bucket.localeCompare(b.bucket)
 }
 
-// A minute is displayed as its ordinal number, starting with the first minute.
+// 経過時間は「何分目」で出す (始まった直後が 1 分目)。
 const MILLISECONDS_PER_MINUTE = 60_000
 
 function currentMinute(startedAt: string, now: number): string {
   const elapsed = Math.max(0, now - new Date(startedAt).getTime())
-  return translate("capacityMetricsPage.currentMinute", { value0: Math.floor(elapsed / MILLISECONDS_PER_MINUTE) + 1 })
+  return translate('capacityMetricsPage.currentMinute', { value0: Math.floor(elapsed / MILLISECONDS_PER_MINUTE) + 1 })
 }
 
 function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
@@ -228,8 +228,8 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
       <div className="notice capacity-activity" role="status" aria-live="polite">
         <span className="storage-pulse-dot" aria-hidden="true" />
         <div>
-          <p className="capacity-activity-title">{translate("capacityMetricsPage.waitingForMeasurementToStart")}</p>
-          <p className="muted">{translate("capacityMetricsPage.bucketsQueued", { value0: queuedCount.toLocaleString(getIntlLocale()) })}</p>
+          <p className="capacity-activity-title">{translate('capacityMetricsPage.waitingForMeasurementToStart')}</p>
+          <p className="muted">{translate('capacityMetricsPage.bucketsQueued', { value0: queuedCount.toLocaleString(getIntlLocale()) })}</p>
         </div>
       </div>
     )
@@ -238,9 +238,9 @@ function ScanActivity({ jobs, now }: { jobs: CapacityScanJob[]; now: number }) {
     <div className="notice capacity-activity" role="status" aria-live="polite">
       <span className="storage-pulse-dot" aria-hidden="true" />
       <div>
-        <p className="capacity-activity-title" title={running.bucket}>{translate("capacityMetricsPage.scanning", { value0: running.bucket })}</p>
+        <p className="capacity-activity-title" title={running.bucket}>{translate('capacityMetricsPage.scanning', { value0: running.bucket })}</p>
         <p className="muted mono">
-          {translate("capacityMetricsPage.scanProgress", {
+          {translate('capacityMetricsPage.scanProgress', {
             value0: currentMinute(running.startedAt ?? running.createdAt, now),
             value1: running.objectCount.toLocaleString(getIntlLocale()),
             value2: queuedCount.toLocaleString(getIntlLocale()),
@@ -268,28 +268,28 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <div className="capacity-bucket-actions">
           {scanJob && (
             <span className={`status-badge ${scanJob.status === 'running' ? 'status-running' : 'status-queued'}`}>
-              {scanJob.status === 'running' ? translate("capacityMetricsPage.scanningItems", { value0: scanJob.objectCount.toLocaleString(getIntlLocale()) }) : translate("capacityMetricsPage.waitingForMeasurement")}
+              {scanJob.status === 'running' ? translate('capacityMetricsPage.scanningItems', { value0: scanJob.objectCount.toLocaleString(getIntlLocale()) }) : translate('capacityMetricsPage.waitingForMeasurement')}
             </span>
           )}
           <Link className="capacity-open-link" to={storageDirectoryHref(connectionId, history.bucket, '')}>
-            {translate("common.open")}<ArrowRight size={12} aria-hidden="true" />
+            {translate('common.open')}<ArrowRight size={12} aria-hidden="true" />
           </Link>
         </div>
       </div>
       <dl className="capacity-metrics">
-        <CompactMetric label={translate("capacityMetricsPage.currentCapacity")} value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
-        <CompactMetric label={translate("common.changeSincePrevious")} value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
-        <CompactMetric label={translate("common.objectCount")} value={latest ? latest.objectCount.toLocaleString(getIntlLocale()) : '—'} />
-        <CompactMetric label={translate("capacityMetricsPage.lastRetrieved")} value={latest ? new Date(latest.collectedAt).toLocaleString(getIntlLocale()) : '—'} />
+        <CompactMetric label={translate('capacityMetricsPage.currentCapacity')} value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
+        <CompactMetric label={translate('common.changeSincePrevious')} value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
+        <CompactMetric label={translate('common.objectCount')} value={latest ? latest.objectCount.toLocaleString(getIntlLocale()) : '—'} />
+        <CompactMetric label={translate('capacityMetricsPage.lastRetrieved')} value={latest ? new Date(latest.collectedAt).toLocaleString(getIntlLocale()) : '—'} />
       </dl>
       {history.lastError && !scanJob && <p className="notice error">{localizeMessage(history.lastError)}</p>}
       <div className="capacity-chart">
         {history.points.length >= 2 ? (
-          <Suspense fallback={<p className="capacity-chart-placeholder">{translate("common.loadingGraph")}</p>}>
+          <Suspense fallback={<p className="capacity-chart-placeholder">{translate('common.loadingGraph')}</p>}>
             <CapacityHistoryChart points={history.points} intervalSeconds={intervalSeconds} capacityBytes={null} label={history.bucket} />
           </Suspense>
         ) : (
-          <p className="capacity-chart-empty">{translate("common.aGraphIsAvailableAfterTwoMeasurements")}</p>
+          <p className="capacity-chart-empty">{translate('common.aGraphIsAvailableAfterTwoMeasurements')}</p>
         )}
       </div>
       {latest && (

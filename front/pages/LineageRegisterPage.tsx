@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, CircleCheck, Info } from 'lucide-react'
@@ -20,13 +17,16 @@ import {
   VersionPicker,
   type VersionChoice,
 } from '../components/lineage/ManualLineagePicker'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 type RegistrationKind = 'dataset' | 'location' | 'run'
 
 const REGISTRATION_KINDS: Array<{ value: RegistrationKind; label: string }> = [
-  { value: 'dataset', get label() { return translate("common.dataset") } },
-  { value: 'location', get label() { return translate("common.storageLocations") } },
-  { value: 'run', get label() { return translate("lineageRegisterPage.processingHistory") } },
+  { value: 'dataset', get label() { return translate('common.dataset') } },
+  { value: 'location', get label() { return translate('common.storageLocations') } },
+  { value: 'run', get label() { return translate('lineageRegisterPage.processingHistory') } },
 ]
 
 function text(form: FormData, name: string): string {
@@ -75,30 +75,30 @@ function ConnectionLocationFields({ connections }: { connections: Connection[] }
   return (
     <div className="lineage-form-grid lineage-form-grid--3">
       <label className="field">
-        <span>{translate("common.connection")}</span>
+        <span>{translate('common.connection')}</span>
         <select name="connectionId" required defaultValue="">
-          <option value="" disabled>{translate("lineageRegisterPage.selectAConnection")}</option>
+          <option value="" disabled>{translate('lineageRegisterPage.selectAConnection')}</option>
           {connections.map(connection => <option key={connection.id} value={connection.id}>{connection.name}</option>)}
         </select>
       </label>
       <label className="field">
-        <span>{translate("common.bucket")}</span>
+        <span>{translate('common.bucket')}</span>
         <input name="bucket" required placeholder="dataset" />
       </label>
       <label className="field">
-        <span>{translate("lineageRegisterPage.path")}</span>
+        <span>{translate('lineageRegisterPage.path')}</span>
         <input name="key" placeholder="podcast/raw/" />
       </label>
       <label className="field">
-        <span>{translate("common.status")}</span>
+        <span>{translate('common.status')}</span>
         <select name="status" defaultValue="available">
-          <option value="available">{translate("common.available")}</option>
-          <option value="archived">{translate("common.archived")}</option>
-          <option value="missing">{translate("lineageRegisterPage.notFound")}</option>
-          <option value="unknown">{translate("common.unknown")}</option>
+          <option value="available">{translate('common.available')}</option>
+          <option value="archived">{translate('common.archived')}</option>
+          <option value="missing">{translate('lineageRegisterPage.notFound')}</option>
+          <option value="unknown">{translate('common.unknown')}</option>
         </select>
       </label>
-      <label className="checkbox-field lineage-form-wide"><input name="isPrimary" type="checkbox" /> {" " + translate("lineageRegisterPage.setAsPrimaryStorageLocation")}</label>
+      <label className="checkbox-field lineage-form-wide"><input name="isPrimary" type="checkbox" /> {translate('lineageRegisterPage.setAsPrimaryStorageLocation')}</label>
     </div>
   )
 }
@@ -107,8 +107,8 @@ function EvidenceField() {
   useLocale()
   return (
     <label className="field">
-      <span>{translate("lineageRegisterPage.evidenceUrls")}</span>
-      <textarea name="evidenceRefs" rows={3} placeholder={translate("lineageRegisterPage.readmesNotionPagesOrPurchaseRecordsOnePer")} />
+      <span>{translate('lineageRegisterPage.evidenceUrls')}</span>
+      <textarea name="evidenceRefs" rows={3} placeholder={translate('lineageRegisterPage.readmesNotionPagesOrPurchaseRecordsOnePer')} />
     </label>
   )
 }
@@ -130,7 +130,7 @@ function ResultNotice({ message, to }: { message: string; to?: string }) {
     <div className="notice success" role="status">
       <CircleCheck size={16} aria-hidden="true" />
       <span>{message}</span>
-      {to && <Link to={to}>{translate("lineageRegisterPage.viewRegistrationDetails")}</Link>}
+      {to && <Link to={to}>{translate('lineageRegisterPage.viewRegistrationDetails')}</Link>}
     </div>
   )
 }
@@ -151,7 +151,7 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (target === 'existing' && !dataset?.datasetId) {
-      setError(translate("lineageRegisterPage.selectAnExistingDataset"))
+      setError(translate('lineageRegisterPage.selectAnExistingDataset'))
       return
     }
     const form = new FormData(event.currentTarget)
@@ -189,7 +189,7 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
       const version = result.version as Record<string, unknown> | undefined
       setResultVersionId(typeof version?.id === 'string' ? version.id : null)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
+      setError(reason instanceof Error ? reason.message : translate('lineageRegisterPage.couldNotRegister'))
     } finally {
       setSaving(false)
     }
@@ -198,76 +198,76 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
   return (
     <form className="lineage-register-form" onSubmit={submit}>
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>{translate("common.dataset")}</h2></div>
-        <div className="lineage-segmented lineage-form-switch" role="group" aria-label={translate("lineageRegisterPage.datasetRegistrationMethod")}>
-          <button type="button" aria-pressed={target === 'new'} onClick={() => { setTarget('new'); setDataset(null) }}>{translate("lineageRegisterPage.createNew")}</button>
-          <button type="button" aria-pressed={target === 'existing'} onClick={() => setTarget('existing')}>{translate("lineageRegisterPage.addAVersionToAnExistingDataset")}</button>
+        <div className="section-heading"><h2>{translate('common.dataset')}</h2></div>
+        <div className="lineage-segmented lineage-form-switch" role="group" aria-label={translate('lineageRegisterPage.datasetRegistrationMethod')}>
+          <button type="button" aria-pressed={target === 'new'} onClick={() => { setTarget('new'); setDataset(null) }}>{translate('lineageRegisterPage.createNew')}</button>
+          <button type="button" aria-pressed={target === 'existing'} onClick={() => setTarget('existing')}>{translate('lineageRegisterPage.addAVersionToAnExistingDataset')}</button>
         </div>
         {target === 'existing' ? <DatasetPicker value={dataset} onChange={setDataset} /> : (
           <div className="lineage-form-grid">
-            <label className="field"><span>{translate("common.displayName")}</span><input name="displayName" required placeholder={translate("lineageRegisterPage.japanesePodcastSource")} /></label>
-            <label className="field"><span>{translate("common.datasetKey")}</span><input name="datasetKey" required placeholder="podcast/ja/raw" /></label>
-            <label className="field"><span>{translate("common.namespace")}</span><input name="namespace" required placeholder="mdx-speech" /></label>
-            <label className="field"><span>{translate("common.technicalName")}</span><input name="name" required placeholder="podcast/ja/raw" /></label>
-            <label className="field"><span>{translate("common.dataFormat")}</span><input name="mediaType" placeholder="audio" /></label>
-            <label className="field"><span>{translate("common.administrator")}</span><input name="owner" /></label>
-            <label className="field lineage-form-wide"><span>{translate("common.aliases")}</span><input name="aliases" placeholder={translate("lineageRegisterPage.podcastJaJapanesePodcast")} /></label>
-            <label className="field lineage-form-wide"><span>{translate("common.description")}</span><textarea name="description" rows={3} /></label>
+            <label className="field"><span>{translate('common.displayName')}</span><input name="displayName" required placeholder={translate('lineageRegisterPage.japanesePodcastSource')} /></label>
+            <label className="field"><span>{translate('common.datasetKey')}</span><input name="datasetKey" required placeholder="podcast/ja/raw" /></label>
+            <label className="field"><span>{translate('common.namespace')}</span><input name="namespace" required placeholder="mdx-speech" /></label>
+            <label className="field"><span>{translate('common.technicalName')}</span><input name="name" required placeholder="podcast/ja/raw" /></label>
+            <label className="field"><span>{translate('common.dataFormat')}</span><input name="mediaType" placeholder="audio" /></label>
+            <label className="field"><span>{translate('common.administrator')}</span><input name="owner" /></label>
+            <label className="field lineage-form-wide"><span>{translate('common.aliases')}</span><input name="aliases" placeholder={translate('lineageRegisterPage.podcastJaJapanesePodcast')} /></label>
+            <label className="field lineage-form-wide"><span>{translate('common.description')}</span><textarea name="description" rows={3} /></label>
           </div>
         )}
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>{translate("common.version")}</h2></div>
+        <div className="section-heading"><h2>{translate('common.version')}</h2></div>
         <div className="lineage-form-grid">
-          <label className="field"><span>{translate("common.version")}</span><input name="version" required placeholder="2026-08-27" /></label>
-          <label className="field"><span>{translate("common.contentHash")}</span><input name="contentHash" placeholder="sha256:..." /></label>
-          <label className="field"><span>{translate("common.fileManifestUri")}</span><input name="manifestUri" placeholder="s3://.../manifest.jsonl" /></label>
-          <label className="field"><span>{translate("common.fileManifestHash")}</span><input name="manifestHash" placeholder="sha256:..." /></label>
-          <label className="field lineage-form-wide"><span>{translate("common.schemaUri")}</span><input name="schemaUri" /></label>
+          <label className="field"><span>{translate('common.version')}</span><input name="version" required placeholder="2026-08-27" /></label>
+          <label className="field"><span>{translate('common.contentHash')}</span><input name="contentHash" placeholder="sha256:..." /></label>
+          <label className="field"><span>{translate('common.fileManifestUri')}</span><input name="manifestUri" placeholder="s3://.../manifest.jsonl" /></label>
+          <label className="field"><span>{translate('common.fileManifestHash')}</span><input name="manifestHash" placeholder="sha256:..." /></label>
+          <label className="field lineage-form-wide"><span>{translate('common.schemaUri')}</span><input name="schemaUri" /></label>
         </div>
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>{translate("common.storageLocations")}</h2></div>
-        <label className="checkbox-field"><input type="checkbox" checked={withLocation} onChange={event => setWithLocation(event.target.checked)} /> {" " + translate("lineageRegisterPage.alsoRegisterAStorageLocation")}</label>
+        <div className="section-heading"><h2>{translate('common.storageLocations')}</h2></div>
+        <label className="checkbox-field"><input type="checkbox" checked={withLocation} onChange={event => setWithLocation(event.target.checked)} /> {translate('lineageRegisterPage.alsoRegisterAStorageLocation')}</label>
         {withLocation && <div className="lineage-form-subsection"><ConnectionLocationFields connections={connections} /></div>}
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>{translate("lineageRegisterPage.provenanceAndProcessing")}</h2></div>
-        <label className="checkbox-field"><input type="checkbox" checked={withSource} onChange={event => setWithSource(event.target.checked)} /> {" " + translate("lineageRegisterPage.recordPurchaseOrCollectionSource")}</label>
+        <div className="section-heading"><h2>{translate('lineageRegisterPage.provenanceAndProcessing')}</h2></div>
+        <label className="checkbox-field"><input type="checkbox" checked={withSource} onChange={event => setWithSource(event.target.checked)} /> {translate('lineageRegisterPage.recordPurchaseOrCollectionSource')}</label>
         {withSource && (
           <div className="lineage-form-subsection">
             <div className="lineage-form-grid">
-              <label className="field"><span>{translate("lineageRegisterPage.sourceKey")}</span><input name="sourceKey" required placeholder="vendor/corpus-name" /></label>
-              <label className="field"><span>{translate("common.type")}</span><select name="sourceKind" defaultValue="purchased"><option value="purchased">{translate("common.purchased")}</option><option value="crawled">{translate("common.collected")}</option><option value="provided">{translate("common.provided")}</option><option value="database">{translate("common.database")}</option><option value="generated">{translate("common.generated")}</option><option value="other">{translate("common.other")}</option></select></label>
-              <label className="field"><span>{translate("lineageRegisterPage.name")}</span><input name="sourceName" required /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.uri")}</span><input name="sourceUri" placeholder="https://..." /></label>
-              <label className="field"><span>{translate("common.provider")}</span><input name="vendor" /></label>
-              <label className="field"><span>{translate("common.productName")}</span><input name="product" /></label>
-              <label className="field"><span>{translate("common.licenseReference")}</span><input name="licenseRef" /></label>
-              <label className="field"><span>{translate("common.contractReference")}</span><input name="contractRef" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.sourceKey')}</span><input name="sourceKey" required placeholder="vendor/corpus-name" /></label>
+              <label className="field"><span>{translate('common.type')}</span><select name="sourceKind" defaultValue="purchased"><option value="purchased">{translate('common.purchased')}</option><option value="crawled">{translate('common.collected')}</option><option value="provided">{translate('common.provided')}</option><option value="database">{translate('common.database')}</option><option value="generated">{translate('common.generated')}</option><option value="other">{translate('common.other')}</option></select></label>
+              <label className="field"><span>{translate('lineageRegisterPage.name')}</span><input name="sourceName" required /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.uri')}</span><input name="sourceUri" placeholder="https://..." /></label>
+              <label className="field"><span>{translate('common.provider')}</span><input name="vendor" /></label>
+              <label className="field"><span>{translate('common.productName')}</span><input name="product" /></label>
+              <label className="field"><span>{translate('common.licenseReference')}</span><input name="licenseRef" /></label>
+              <label className="field"><span>{translate('common.contractReference')}</span><input name="contractRef" /></label>
             </div>
           </div>
         )}
-        <label className="checkbox-field"><input type="checkbox" checked={withProcessing} onChange={event => setWithProcessing(event.target.checked)} /> {" " + translate("lineageRegisterPage.recordTheProcessThatProducedThisVersion")}</label>
+        <label className="checkbox-field"><input type="checkbox" checked={withProcessing} onChange={event => setWithProcessing(event.target.checked)} /> {translate('lineageRegisterPage.recordTheProcessThatProducedThisVersion')}</label>
         {withProcessing && (
           <div className="lineage-form-subsection">
-            <VersionListPicker values={inputs} onChange={setInputs} label={translate("lineageRegisterPage.inputData")} />
+            <VersionListPicker values={inputs} onChange={setInputs} label={translate('lineageRegisterPage.inputData')} />
             <div className="lineage-form-grid">
-              <label className="field"><span>{translate("lineageRegisterPage.processingName")}</span><input name="transformationName" required placeholder={translate("lineageRegisterPage.neMoCuratorQualityFilter")} /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.processingKey")}</span><input name="transformationKey" required placeholder="nemo-curator-quality-filter" /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.processingNamespace")}</span><input name="jobNamespace" required placeholder="mdx-speech" /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.processingTechnicalName")}</span><input name="jobName" required placeholder="nemo-curator-quality-filter" /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.codeRepository")}</span><input name="codeRepository" placeholder="https://github.com/..." /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.defaultCodeReference")}</span><input name="defaultCodeRef" placeholder="commit / tag" /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.gitSha")}</span><input name="gitSha" /></label>
-              <label className="field"><span>{translate("common.containerImage")}</span><input name="containerDigest" /></label>
-              <label className="field"><span>{translate("common.configurationFileUri")}</span><input name="configUri" /></label>
-              <label className="field"><span>{translate("common.configurationFileHash")}</span><input name="configHash" /></label>
-              <label className="field"><span>{translate("lineageRegisterPage.executionTime")}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate("common.unknown")}</option><option value="known">{translate("lineageRegisterPage.known")}</option></select></label>
-              {timeStatus === 'known' && <label className="field"><span>{translate("lineageRegisterPage.dateAndTime")}</span><input name="occurredAt" type="datetime-local" required /></label>}
+              <label className="field"><span>{translate('lineageRegisterPage.processingName')}</span><input name="transformationName" required placeholder={translate('lineageRegisterPage.neMoCuratorQualityFilter')} /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.processingKey')}</span><input name="transformationKey" required placeholder="nemo-curator-quality-filter" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.processingNamespace')}</span><input name="jobNamespace" required placeholder="mdx-speech" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.processingTechnicalName')}</span><input name="jobName" required placeholder="nemo-curator-quality-filter" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.codeRepository')}</span><input name="codeRepository" placeholder="https://github.com/..." /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.defaultCodeReference')}</span><input name="defaultCodeRef" placeholder="commit / tag" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.gitSha')}</span><input name="gitSha" /></label>
+              <label className="field"><span>{translate('common.containerImage')}</span><input name="containerDigest" /></label>
+              <label className="field"><span>{translate('common.configurationFileUri')}</span><input name="configUri" /></label>
+              <label className="field"><span>{translate('common.configurationFileHash')}</span><input name="configHash" /></label>
+              <label className="field"><span>{translate('lineageRegisterPage.executionTime')}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate('common.unknown')}</option><option value="known">{translate('lineageRegisterPage.known')}</option></select></label>
+              {timeStatus === 'known' && <label className="field"><span>{translate('lineageRegisterPage.dateAndTime')}</span><input name="occurredAt" type="datetime-local" required /></label>}
             </div>
           </div>
         )}
@@ -275,11 +275,11 @@ function DatasetRegistrationForm({ connections }: { connections: Connection[] })
       </section>
 
       <section className="lineage-form-section">
-        <div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
-        <p className="muted">{translate("lineageRegisterPage.savingRegistersTheDataInTheRegistryIf")}</p>
+        <div className="section-heading"><h2>{translate('lineageRegisterPage.review')}</h2></div>
+        <p className="muted">{translate('lineageRegisterPage.savingRegistersTheDataInTheRegistryIf')}</p>
         {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-        {resultVersionId && <ResultNotice message={translate("lineageRegisterPage.dataVersionRegistered")} to={`/lineage?mode=versions&versionId=${encodeURIComponent(resultVersionId)}`} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("lineageRegisterPage.register")}</button>
+        {resultVersionId && <ResultNotice message={translate('lineageRegisterPage.dataVersionRegistered')} to={`/lineage?mode=versions&versionId=${encodeURIComponent(resultVersionId)}`} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate('lineageRegisterPage.registering') : translate('lineageRegisterPage.register')}</button>
       </section>
     </form>
   )
@@ -293,26 +293,26 @@ function LocationRegistrationForm({ connections }: { connections: Connection[] }
   const [done, setDone] = useState(false)
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!version) return setError(translate("lineageRegisterPage.selectADataVersion"))
+    if (!version) return setError(translate('lineageRegisterPage.selectADataVersion'))
     const form = new FormData(event.currentTarget)
     setSaving(true); setError(null); setDone(false)
     try {
       await api.registerManualLocation({ versionId: version.id, location: storageInput(form), evidenceRefs: evidence(form) })
       setDone(true)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
+      setError(reason instanceof Error ? reason.message : translate('lineageRegisterPage.couldNotRegister'))
     } finally { setSaving(false) }
   }
   return (
     <form className="lineage-register-form" onSubmit={submit}>
-      <Guidance title={translate("lineageRegisterPage.useThisWhenCopyingTheSameContentTo")}>{translate("lineageRegisterPage.addsAStorageLocationToTheSameVersion")}</Guidance>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.version")}</h2></div><VersionPicker value={version} onChange={setVersion} /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.storageLocations")}</h2></div><ConnectionLocationFields connections={connections} /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.evidence")}</h2></div><EvidenceField /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
+      <Guidance title={translate('lineageRegisterPage.useThisWhenCopyingTheSameContentTo')}>{translate('lineageRegisterPage.addsAStorageLocationToTheSameVersion')}</Guidance>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('common.version')}</h2></div><VersionPicker value={version} onChange={setVersion} /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('common.storageLocations')}</h2></div><ConnectionLocationFields connections={connections} /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('lineageRegisterPage.evidence')}</h2></div><EvidenceField /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('lineageRegisterPage.review')}</h2></div>
         {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-        {done && <ResultNotice message={translate("lineageRegisterPage.storageLocationAdded")} to={version ? `/lineage?mode=versions&versionId=${encodeURIComponent(version.id)}` : undefined} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("lineageRegisterPage.addStorageLocation")}</button>
+        {done && <ResultNotice message={translate('lineageRegisterPage.storageLocationAdded')} to={version ? `/lineage?mode=versions&versionId=${encodeURIComponent(version.id)}` : undefined} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate('lineageRegisterPage.registering') : translate('lineageRegisterPage.addStorageLocation')}</button>
       </section>
     </form>
   )
@@ -328,8 +328,8 @@ function RunRegistrationForm() {
   const [runId, setRunId] = useState<string | null>(null)
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (inputs.length === 0 || outputs.length === 0) return setError(translate("lineageRegisterPage.selectAtLeastOneInputAndOneOutput"))
-    if (inputs.some(input => outputs.some(output => output.id === input.id))) return setError(translate("lineageRegisterPage.theSameVersionCannotBeBothAnInput"))
+    if (inputs.length === 0 || outputs.length === 0) return setError(translate('lineageRegisterPage.selectAtLeastOneInputAndOneOutput'))
+    if (inputs.some(input => outputs.some(output => output.id === input.id))) return setError(translate('lineageRegisterPage.theSameVersionCannotBeBothAnInput'))
     const form = new FormData(event.currentTarget)
     const input: ManualLineageRegistrationInput = {
       transformation: transformation(form), inputVersionIds: inputs.map(item => item.id), outputVersionIds: outputs.map(item => item.id),
@@ -342,37 +342,37 @@ function RunRegistrationForm() {
       const result = await api.registerManualLineage(input)
       setRunId(typeof result.id === 'string' ? result.id : 'registered')
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : translate("lineageRegisterPage.couldNotRegister"))
+      setError(reason instanceof Error ? reason.message : translate('lineageRegisterPage.couldNotRegister'))
     } finally { setSaving(false) }
   }
   const outputLink = outputs[0] ? `/lineage?mode=versions&versionId=${encodeURIComponent(outputs[0].id)}` : undefined
   return (
     <form className="lineage-register-form" onSubmit={submit}>
-      <Guidance title={translate("lineageRegisterPage.addProcessingHistoryBetweenExistingDatasets")}>{translate("lineageRegisterPage.leaveUnknownExecutionTimesUnknownDoNotRegister")}</Guidance>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.inputsAndOutputs")}</h2></div>
-        <div className="lineage-form-grid lineage-form-grid--top"><VersionListPicker values={inputs} onChange={setInputs} label={translate("lineageRegisterPage.inputData")} /><VersionListPicker values={outputs} onChange={setOutputs} label={translate("lineageRegisterPage.outputData")} /></div>
+      <Guidance title={translate('lineageRegisterPage.addProcessingHistoryBetweenExistingDatasets')}>{translate('lineageRegisterPage.leaveUnknownExecutionTimesUnknownDoNotRegister')}</Guidance>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('lineageRegisterPage.inputsAndOutputs')}</h2></div>
+        <div className="lineage-form-grid lineage-form-grid--top"><VersionListPicker values={inputs} onChange={setInputs} label={translate('lineageRegisterPage.inputData')} /><VersionListPicker values={outputs} onChange={setOutputs} label={translate('lineageRegisterPage.outputData')} /></div>
       </section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("common.processing")}</h2></div>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('common.processing')}</h2></div>
         <div className="lineage-form-grid">
-          <label className="field"><span>{translate("lineageRegisterPage.processingName")}</span><input name="transformationName" required /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.processingKey")}</span><input name="transformationKey" required /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.processingNamespace")}</span><input name="jobNamespace" required /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.processingTechnicalName")}</span><input name="jobName" required /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.codeRepository")}</span><input name="codeRepository" /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.defaultCodeReference")}</span><input name="defaultCodeRef" /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.gitSha")}</span><input name="gitSha" /></label>
-          <label className="field"><span>{translate("common.containerImage")}</span><input name="containerDigest" /></label>
-          <label className="field"><span>{translate("common.configurationFileUri")}</span><input name="configUri" /></label>
-          <label className="field"><span>{translate("common.configurationFileHash")}</span><input name="configHash" /></label>
-          <label className="field"><span>{translate("lineageRegisterPage.executionTime")}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate("common.unknown")}</option><option value="known">{translate("lineageRegisterPage.known")}</option></select></label>
-          {timeStatus === 'known' && <label className="field"><span>{translate("lineageRegisterPage.dateAndTime")}</span><input name="occurredAt" type="datetime-local" required /></label>}
+          <label className="field"><span>{translate('lineageRegisterPage.processingName')}</span><input name="transformationName" required /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.processingKey')}</span><input name="transformationKey" required /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.processingNamespace')}</span><input name="jobNamespace" required /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.processingTechnicalName')}</span><input name="jobName" required /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.codeRepository')}</span><input name="codeRepository" /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.defaultCodeReference')}</span><input name="defaultCodeRef" /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.gitSha')}</span><input name="gitSha" /></label>
+          <label className="field"><span>{translate('common.containerImage')}</span><input name="containerDigest" /></label>
+          <label className="field"><span>{translate('common.configurationFileUri')}</span><input name="configUri" /></label>
+          <label className="field"><span>{translate('common.configurationFileHash')}</span><input name="configHash" /></label>
+          <label className="field"><span>{translate('lineageRegisterPage.executionTime')}</span><select value={timeStatus} onChange={event => setTimeStatus(event.target.value as 'known' | 'unknown')}><option value="unknown">{translate('common.unknown')}</option><option value="known">{translate('lineageRegisterPage.known')}</option></select></label>
+          {timeStatus === 'known' && <label className="field"><span>{translate('lineageRegisterPage.dateAndTime')}</span><input name="occurredAt" type="datetime-local" required /></label>}
         </div>
       </section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.evidence")}</h2></div><EvidenceField /></section>
-      <section className="lineage-form-section"><div className="section-heading"><h2>{translate("lineageRegisterPage.review")}</h2></div>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('lineageRegisterPage.evidence')}</h2></div><EvidenceField /></section>
+      <section className="lineage-form-section"><div className="section-heading"><h2>{translate('lineageRegisterPage.review')}</h2></div>
         {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-        {runId && <ResultNotice message={translate("lineageRegisterPage.processingHistoryRegistered")} to={outputLink} />}
-        <button className="button primary" type="submit" disabled={saving}>{saving ? translate("lineageRegisterPage.registering") : translate("common.registerProcessingHistory")}</button>
+        {runId && <ResultNotice message={translate('lineageRegisterPage.processingHistoryRegistered')} to={outputLink} />}
+        <button className="button primary" type="submit" disabled={saving}>{saving ? translate('lineageRegisterPage.registering') : translate('common.registerProcessingHistory')}</button>
       </section>
     </form>
   )
@@ -395,7 +395,7 @@ export default function LineageRegisterPage() {
     return (
       <section className="lineage-register-page">
         <header className="page-header"><div><h1>{translate('section.dataLineage')}</h1></div></header>
-        <p className="notice error">{translate("lineageRegisterPage.youDoNotHavePermissionToRegisterManually")}</p>
+        <p className="notice error">{translate('lineageRegisterPage.youDoNotHavePermissionToRegisterManually')}</p>
       </section>
     )
   }
@@ -407,10 +407,10 @@ export default function LineageRegisterPage() {
         <div className="page-actions">
           <Link className="button" to="/lineage">
             <ArrowLeft size={16} aria-hidden="true" />
-            {translate("lineageRegisterPage.backToList")}</Link>
+            {translate('lineageRegisterPage.backToList')}</Link>
         </div>
       </header>
-      <nav className="tabs" aria-label={translate("lineageRegisterPage.registrationType")}>
+      <nav className="tabs" aria-label={translate('lineageRegisterPage.registrationType')}>
         {REGISTRATION_KINDS.map(item => (
           <button
             key={item.value}

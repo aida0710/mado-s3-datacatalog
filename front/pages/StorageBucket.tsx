@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Gauge } from 'lucide-react'
@@ -10,6 +8,8 @@ import { PreviewDrawer } from '../components/PreviewDrawer'
 import { StorageLineagePanel } from '../components/storage/StorageLineagePanel'
 import { fileLinkToDirRedirect } from '../lib/route'
 import { useDrawerResize } from '../lib/useDrawerResize'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props { connectionId: string }
 
@@ -89,7 +89,7 @@ export default function StorageBucket({ connectionId }: Props) {
             to={`/storage/${encodeURIComponent(connectionId)}/?view=capacity&bucket=${encodeURIComponent(bucket)}`}
           >
             <Gauge size={14} aria-hidden="true" />
-            {translate("storageBucket.viewBucketCapacityMetrics")}</Link>
+            {translate('storageBucket.viewBucketCapacityMetrics')}</Link>
         )}
       />
       {/* README はリスト幅に依存させない (常に full width)。identity を key にして、

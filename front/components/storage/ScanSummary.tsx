@@ -4,10 +4,10 @@
 // 結果がボタンの向こうに隠れているのはもったいないので、走査済みなら
 // 数字をその場に出す。未走査のときだけ誘い文句になる。
 
-import { useLocale } from '../../i18n/useLocale'
-import { translate } from '../../i18n/translate'
 import { fmtSize } from '../../lib/format'
 import type { ScanResult } from '../../lib/api/types'
+import { useLocale } from '../../i18n/useLocale'
+import { translate } from '../../i18n/translate'
 
 interface Props {
   /** 最後に成功した走査の結果。null = まだ走査していない。 */
@@ -25,32 +25,32 @@ export function ScanSummary({ result, running, onOpen }: Props) {
   if (running) {
     return (
       <button type="button" className="link-button" onClick={onOpen}>
-        {translate("scanSummary.scanningDirectory")}</button>
+        {translate('scanSummary.scanningDirectory')}</button>
     )
   }
 
   if (!result) {
     return (
       <button type="button" className="link-button" onClick={onOpen}>
-        {translate("scanSummary.summarizeDirectory")}</button>
+        {translate('scanSummary.summarizeDirectory')}</button>
     )
   }
 
   return (
     <span className="scan-summary">
-      {translate("scanSummary.directoryContents")}{' '}
-      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {" " + translate("common.items2", { count: result.objectCount })}{' '}
+      {translate('scanSummary.directoryContents')}{' '}
+      <strong className="mono">{result.objectCount.toLocaleString()}</strong> {translate('common.items2', { count: result.objectCount })}{' '}
       <strong className="mono">{fmtSize(result.totalBytes)}</strong>
       {result.partial && (
         <span
           className="scan-summary-partial"
-          title={translate("scanSummary.anErrorOccurredDuringTheScanTheSummary")}
-          aria-label={translate("scanSummary.partialSummary")}
+          title={translate('scanSummary.anErrorOccurredDuringTheScanTheSummary')}
+          aria-label={translate('scanSummary.partialSummary')}
         >
           *
         </span>
       )}
-      <button type="button" className="link-button" onClick={onOpen}>{translate("common.breakdown")}</button>
+      <button type="button" className="link-button" onClick={onOpen}>{translate('common.breakdown')}</button>
     </span>
   )
 }

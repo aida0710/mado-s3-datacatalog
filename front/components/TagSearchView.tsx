@@ -1,7 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { TranslatedMessage } from '../i18n/TranslatedMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useId, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api/client'
@@ -11,6 +7,10 @@ import { Dialog } from './Dialog'
 import { TagToggleChips } from './TagToggleChips'
 import { ImportExportButtons } from './ImportExportButtons'
 import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { TranslatedMessage } from '../i18n/TranslatedMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // 「どの場所にどのタグが付いているか」の入出力形式。
 //
@@ -87,7 +87,7 @@ function searchReducer(s: SearchState, a: SearchAction): SearchState {
 }
 
 const KIND_LABEL: Record<Hit['kind'], string> = {
-  get bucket() { return translate("common.bucket") }, get prefix() { return translate("common.directory") }, get file() { return translate("tagSearchView.file") },
+  get bucket() { return translate('common.bucket') }, get prefix() { return translate('common.directory') }, get file() { return translate('tagSearchView.file') },
 }
 
 // タグ検索。Storage (バケット一覧) からリンクで開く独立したビュー。
@@ -148,7 +148,7 @@ export function TagSearchView({ connectionId }: Props) {
   const handleImport = async (data: unknown, mode: ImportMode): Promise<ImportSummary> => {
     const d = data as Partial<TagAssignmentsExport> | null
     if (d?.mado !== 'tag-assignments' || d.version !== 1 || !Array.isArray(d.assignments)) {
-      throw new Error(translate("tagSearchView.thisIsNotAMadoTagAssignmentExport"))
+      throw new Error(translate('tagSearchView.thisIsNotAMadoTagAssignmentExport'))
     }
 
     // 名前 → タグ。取り込み先に無い名前は、作ってよいか聞いてから作る。
@@ -161,7 +161,7 @@ export function TagSearchView({ connectionId }: Props) {
       const create = await askCreateMissing(missing)
       if (!create) {
         // 作らない場合、そのタグの割り当ては入れられないので失敗として数える。
-        summary.failed.push(translate("tagSearchView.unregisteredTags", { value0: missing.join(', ') }))
+        summary.failed.push(translate('tagSearchView.unregisteredTags', { value0: missing.join(', ') }))
       } else {
         const colorOf = new Map((d.tags ?? []).map(t => [t.name, t.color]))
         for (const name of missing) {
@@ -210,7 +210,7 @@ export function TagSearchView({ connectionId }: Props) {
       const tag = typeof a?.tag === 'string' ? byName.get(a.tag) : undefined
       const parsed = typeof a?.target === 'string' ? parseS3Path(a.target) : null
       if (!parsed) {
-        summary.failed.push(translate("tagSearchView.someItemsCannotBeReadAsTargets", { value0: String(a?.target) }))
+        summary.failed.push(translate('tagSearchView.someItemsCannotBeReadAsTargets', { value0: String(a?.target) }))
         continue
       }
       if (!tag) { summary.skipped++; continue }
@@ -242,12 +242,12 @@ export function TagSearchView({ connectionId }: Props) {
             <TagToggleChips
               tags={allTags} selected={selected} onToggle={toggle} onClear={() => setSelected(new Set())}
             />
-            {loading && <span className="muted">{translate("common.searching")}</span>}
+            {loading && <span className="muted">{translate('common.searching')}</span>}
           </div>
         )}
         <div className="storage-toolbar-item storage-toolbar-end">
           <ImportExportButtons
-            what={translate("tagSearchView.tagAssignments")}
+            what={translate('tagSearchView.tagAssignments')}
             onExport={() => { void handleExport() }}
             onImport={handleImport}
             onDone={() => setSelected(new Set(selected))}
@@ -258,20 +258,20 @@ export function TagSearchView({ connectionId }: Props) {
       {pendingMissing && (
         <Dialog
           titleId={missingTitleId}
-          title={translate("tagSearchView.someTagsAreNotRegistered")}
+          title={translate('tagSearchView.someTagsAreNotRegistered')}
           subtitle={pendingMissing.names.join(' / ')}
           onClose={() => answerMissing(false)}
           narrowLayout="sheet"
           footer={(
             <>
-              <button type="button" className="button" onClick={() => answerMissing(false)}>{translate("tagSearchView.skipCreatingTags")}</button>
-              <button type="button" className="button primary" onClick={() => answerMissing(true)}>{translate("tagSearchView.createTagsAndImport")}</button>
+              <button type="button" className="button" onClick={() => answerMissing(false)}>{translate('tagSearchView.skipCreatingTags')}</button>
+              <button type="button" className="button primary" onClick={() => answerMissing(true)}>{translate('tagSearchView.createTagsAndImport')}</button>
             </>
           )}
         >
           <div className="dialog-body">
             <p className="tag-search-prompt">
-              {translate("tagSearchView.creatingTagsRegistersThemBeforeImportingAssignmentsIf")}</p>
+              {translate('tagSearchView.creatingTagsRegistersThemBeforeImportingAssignmentsIf')}</p>
           </div>
         </Dialog>
       )}
@@ -285,11 +285,11 @@ export function TagSearchView({ connectionId }: Props) {
           {error && <p className="notice error">{localizeMessage(error)}</p>}
 
           {selected.size === 0 && !error && (
-            <p className="state-message">{translate("tagSearchView.selectATagToListItsLocations")}</p>
+            <p className="state-message">{translate('tagSearchView.selectATagToListItsLocations')}</p>
           )}
 
           {hits !== null && hits.length === 0 && !loading && !error && (
-            <p className="state-message">{translate("tagSearchView.noMatchesInThisConnection")}</p>
+            <p className="state-message">{translate('tagSearchView.noMatchesInThisConnection')}</p>
           )}
 
           {hits !== null && hits.length > 0 && (
@@ -298,8 +298,8 @@ export function TagSearchView({ connectionId }: Props) {
                 <table>
                   <thead>
                     <tr>
-                      <th scope="col">{translate("tagSearchView.location")}</th>
-                      <th scope="col" className="tag-search-kind">{translate("tagSearchView.type")}</th>
+                      <th scope="col">{translate('tagSearchView.location')}</th>
+                      <th scope="col" className="tag-search-kind">{translate('tagSearchView.type')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -318,7 +318,7 @@ export function TagSearchView({ connectionId }: Props) {
                 </table>
               </div>
               <div className="table-footer">
-                <span>{hits.length} {translate("common.items", { count: hits.length })}</span>
+                <span>{hits.length} {translate('common.items', { count: hits.length })}</span>
               </div>
             </div>
           )}

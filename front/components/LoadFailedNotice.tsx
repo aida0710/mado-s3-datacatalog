@@ -1,8 +1,8 @@
+import type { ReactNode } from 'react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 import { localizeMessage } from '../i18n/localizeMessage'
-import type { ReactNode } from 'react'
-import { AlertCircle, RefreshCw } from 'lucide-react'
 
 interface Props {
   /** 読み込めなかったもの（例: 'README'）。 */
@@ -21,12 +21,12 @@ export function LoadFailedNotice({ subject, reason, onRetry, children }: Props) 
     <div className="notice error" role="alert">
       <AlertCircle size={16} aria-hidden="true" />
       <span>
-        {translate("loadFailedNotice.loadFailed", { value0: subject })}{reason && translate('common.parenthetical', { value0: localizeMessage(reason) })}
+        {translate('loadFailedNotice.loadFailed', { value0: subject })}{reason && translate('common.parenthetical', { value0: localizeMessage(reason) })}
         {children && <span className="load-failed__note">{children}</span>}
       </span>
       <button type="button" className="button small" onClick={onRetry}>
         <RefreshCw size={14} aria-hidden="true" />
-        {translate("loadFailedNotice.retry")}</button>
+        {translate('loadFailedNotice.retry')}</button>
     </div>
   )
 }

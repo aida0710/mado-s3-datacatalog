@@ -1,9 +1,9 @@
-import { localizeMessage } from '../i18n/localizeMessage'
 import { LoginHeader } from '../components/shell/LoginHeader'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useState, type FormEvent } from 'react'
 import { fetchApi } from '../lib/api/http'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 /** ログイン画面とパスワード変更画面の見出しの id。重ねて出すときの dialog の名前にも使う。 */
 export const AUTH_TITLE_ID = 'auth-title'
@@ -43,10 +43,10 @@ export function LoginPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: form.get('identifier'), password: form.get('password') }),
       })
-      if (!response.ok) throw new Error(translate("loginPage.incorrectUsernameEmailAddressOrPassword"))
+      if (!response.ok) throw new Error(translate('loginPage.incorrectUsernameEmailAddressOrPassword'))
       await onLoggedIn()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("loginPage.couldNotSignIn"))
+      setError(cause instanceof Error ? cause.message : translate('loginPage.couldNotSignIn'))
     } finally {
       setBusy(false)
     }
@@ -61,16 +61,16 @@ export function LoginPage({
     <main className="login-page">
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
         <LoginHeader />
-        <h1 id={AUTH_TITLE_ID}>{translate("loginPage.signIn")}</h1>
+        <h1 id={AUTH_TITLE_ID}>{translate('loginPage.signIn')}</h1>
         {(sessionExpired || idpLogoutIncomplete || overlay) && (
           <div className="login-lead">
-            {sessionExpired && <p role="status">{translate("loginPage.yourSessionHasExpiredSignInAgain")}</p>}
+            {sessionExpired && <p role="status">{translate('loginPage.yourSessionHasExpiredSignInAgain')}</p>}
             {idpLogoutIncomplete && (
               <p role="status">
-                {translate("loginPage.youHaveSignedOutOfMadoButCould", { value0: config.oidc.label ?? 'SSO' })}
+                {translate('loginPage.youHaveSignedOutOfMadoButCould', { value0: config.oidc.label ?? 'SSO' })}
               </p>
             )}
-            {overlay && <p>{translate("loginPage.signInWithTheSameAccountToReturn")}</p>}
+            {overlay && <p>{translate('loginPage.signInWithTheSameAccountToReturn')}</p>}
           </div>
         )}
 
@@ -82,20 +82,20 @@ export function LoginPage({
               target={overlay ? '_blank' : undefined}
               rel={overlay ? 'noopener' : undefined}
             >
-              {translate("loginPage.continueWith", { value0: config.oidc.label ?? 'SSO' })}</a>
+              {translate('loginPage.continueWith', { value0: config.oidc.label ?? 'SSO' })}</a>
             {overlay && (
-              <p className="login-note">{translate("loginPage.signInInANewTabThenReturn")}</p>
+              <p className="login-note">{translate('loginPage.signInInANewTabThenReturn')}</p>
             )}
           </>
         )}
-        {config.oidc.enabled && config.localEnabled && <div className="login-or"><span>{translate("loginPage.or")}</span></div>}
+        {config.oidc.enabled && config.localEnabled && <div className="login-or"><span>{translate('loginPage.or')}</span></div>}
 
         {config.localEnabled && (
           <form onSubmit={login}>
-            <label className="field"><span>{translate("loginPage.usernameOrEmailAddress")}</span><input name="identifier" autoComplete="username" required /></label>
-            <label className="field"><span>{translate("loginPage.password")}</span><input name="password" type="password" autoComplete="current-password" required /></label>
+            <label className="field"><span>{translate('loginPage.usernameOrEmailAddress')}</span><input name="identifier" autoComplete="username" required /></label>
+            <label className="field"><span>{translate('loginPage.password')}</span><input name="password" type="password" autoComplete="current-password" required /></label>
             {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-            <button type="submit" className="button primary" disabled={busy}>{busy ? translate("loginPage.checking") : translate("loginPage.signIn")}</button>
+            <button type="submit" className="button primary" disabled={busy}>{busy ? translate('loginPage.checking') : translate('loginPage.signIn')}</button>
           </form>
         )}
       </section>
@@ -114,7 +114,7 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
     const newPassword = String(form.get('newPassword') ?? '')
     const confirmation = String(form.get('confirmation') ?? '')
     if (newPassword !== confirmation) {
-      setError(translate("common.theNewPasswordsDoNotMatch"))
+      setError(translate('common.theNewPasswordsDoNotMatch'))
       return
     }
     setBusy(true)
@@ -127,10 +127,10 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
-      if (!response.ok) throw new Error(translate("common.couldNotChangePassword"))
+      if (!response.ok) throw new Error(translate('common.couldNotChangePassword'))
       await onChanged()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate("common.couldNotChangePassword"))
+      setError(cause instanceof Error ? cause.message : translate('common.couldNotChangePassword'))
     } finally {
       setBusy(false)
     }
@@ -140,14 +140,14 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
         <LoginHeader />
         <p className="login-eyebrow">{translate('loginPage.firstSignIn')}</p>
-        <h1 id={AUTH_TITLE_ID}>{translate("common.changePassword")}</h1>
-        <div className="login-lead"><p>{translate("loginPage.updateYourInitialPasswordOnThisScreen")}</p></div>
+        <h1 id={AUTH_TITLE_ID}>{translate('common.changePassword')}</h1>
+        <div className="login-lead"><p>{translate('loginPage.updateYourInitialPasswordOnThisScreen')}</p></div>
         <form onSubmit={submit}>
-          <label className="field"><span>{translate("common.currentPassword")}</span><input name="currentPassword" type="password" autoComplete="current-password" required /></label>
-          <label className="field"><span>{translate("common.newPasswordAtLeast12Characters")}</span><input name="newPassword" type="password" autoComplete="new-password" minLength={12} required /></label>
-          <label className="field"><span>{translate("common.confirmNewPassword")}</span><input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
+          <label className="field"><span>{translate('common.currentPassword')}</span><input name="currentPassword" type="password" autoComplete="current-password" required /></label>
+          <label className="field"><span>{translate('common.newPasswordAtLeast12Characters')}</span><input name="newPassword" type="password" autoComplete="new-password" minLength={12} required /></label>
+          <label className="field"><span>{translate('common.confirmNewPassword')}</span><input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
           {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-          <button type="submit" className="button primary" disabled={busy}>{busy ? translate("common.updating") : translate("loginPage.changeAndContinue")}</button>
+          <button type="submit" className="button primary" disabled={busy}>{busy ? translate('common.updating') : translate('loginPage.changeAndContinue')}</button>
         </form>
       </section>
     </main>

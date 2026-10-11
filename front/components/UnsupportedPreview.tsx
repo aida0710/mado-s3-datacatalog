@@ -6,6 +6,6 @@ export function UnsupportedPreview() {
   useLocale()
   return (
     <p className="muted">
-      {translate("unsupportedPreview.thisFileTypeCannotBePreviewedUseThe")}</p>
+      {translate('unsupportedPreview.thisFileTypeCannotBePreviewedUseThe')}</p>
   )
 }

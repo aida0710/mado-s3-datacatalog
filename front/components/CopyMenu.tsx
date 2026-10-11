@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import {
   memo, useCallback, useEffect, useLayoutEffect, useRef, useState,
   type CSSProperties, type KeyboardEvent, type ReactNode,
@@ -7,6 +5,8 @@ import {
 import { createPortal } from 'react-dom'
 import { Check, Ellipsis, X } from 'lucide-react'
 import { copyToClipboard } from '../lib/clipboard'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 export type MenuItem =
   | { kind: 'copy'; label: string; value: string }
@@ -52,7 +52,7 @@ const stopRowKeys = (e: KeyboardEvent) => {
 //
 // memo でラップ: 一覧の各行は items を useMemo で安定化して渡すので、親の再レンダ時
 // (loading フラグ更新等) に各 CopyMenu を再描画しなくて済む。
-export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = translate("copyMenu.actions") }: Props) {
+export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = translate('copyMenu.actions') }: Props) {
   useLocale()
   const [open, setOpen] = useState(false)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -155,7 +155,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
   const onCopy = async (label: string, value: string) => {
     setOpen(false)
     const ok = await copyToClipboard(value)
-    showFeedback(ok ? label : translate("common.copyFailed"), ok)
+    showFeedback(ok ? label : translate('common.copyFailed'), ok)
   }
 
   let triggerContent = trigger ?? <Ellipsis size={16} aria-hidden="true" />

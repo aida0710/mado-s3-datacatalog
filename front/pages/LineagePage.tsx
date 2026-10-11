@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { LoaderCircle, Plus } from 'lucide-react'
@@ -16,6 +13,9 @@ import { LineageToolbar } from '../components/lineage/LineageToolbar'
 import { LineageDetailPanel, type LineageDetail } from '../components/lineage/LineageDetailPanel'
 import { LineageCatalog } from '../components/lineage/LineageCatalog'
 import { useAuth } from '../lib/auth-context'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface GraphState {
   loading: boolean
@@ -161,7 +161,7 @@ export default function LineagePage() {
           <div className="page-actions">
             <Link className="button primary" to="/lineage/register">
               <Plus size={16} aria-hidden="true" />
-              {translate("lineagePage.registerManually")}</Link>
+              {translate('lineagePage.registerManually')}</Link>
           </div>
         )}
       </header>
@@ -189,14 +189,14 @@ export default function LineagePage() {
       {projectionProblem && (
         <div className="notice lineage-warning" role="status">
           <span>
-            <strong>{translate("lineagePage.graphSynchronization") + " "}{projectionStateLabel(projection.state)}</strong>
-            {' '}{localizeMessage(projection.message ?? translate("lineagePage.eventsArePendingSynchronization", { value0: projection.pendingEvents ?? 0 }))}
+            <strong>{translate('lineagePage.graphSynchronization')}{' '}{projectionStateLabel(projection.state)}</strong>
+            {' '}{localizeMessage(projection.message ?? translate('lineagePage.eventsArePendingSynchronization', { value0: projection.pendingEvents ?? 0 }))}
           </span>
         </div>
       )}
       {graphState.data?.truncated && (
         <div className="notice lineage-warning" role="status">
-          <span>{translate("lineagePage.onlyPartOfTheGraphIsShownExpand")}</span>
+          <span>{translate('lineagePage.onlyPartOfTheGraphIsShownExpand')}</span>
         </div>
       )}
       {graphState.data?.warnings.map((warning, index) => (
@@ -205,22 +205,22 @@ export default function LineagePage() {
 
       {!ready && (
         <div className="empty-state">
-          <h2>{route.mode === 'logical' ? translate("lineagePage.selectADatasetFromTheRegistry") : translate("lineagePage.specifyADataVersion")}</h2>
+          <h2>{route.mode === 'logical' ? translate('lineagePage.selectADatasetFromTheRegistry') : translate('lineagePage.specifyADataVersion')}</h2>
           <p>{route.mode === 'logical'
-            ? translate("lineagePage.searchByNameDescriptionOrS3UriNamespace")
-            : translate("lineagePage.selectADatasetAndSwitchToInputsOutputs")}</p>
+            ? translate('lineagePage.searchByNameDescriptionOrS3UriNamespace')
+            : translate('lineagePage.selectADatasetAndSwitchToInputsOutputs')}</p>
         </div>
       )}
       {graphState.loading && (
         <p className="state-message">
           <LoaderCircle className="spin" size={18} aria-hidden="true" />
-          {translate("common.loadingGraph")}</p>
+          {translate('common.loadingGraph')}</p>
       )}
       {graphState.error && <p className="notice error" role="alert">{localizeMessage(graphState.error)}</p>}
       {graphState.data && graphState.data.nodes.length === 0 && (
         <div className="empty-state">
-          <h2>{translate("lineagePage.noProcessingRelationshipsYet")}</h2>
-          <p>{translate("lineagePage.onceProcessingHistoryIsRegisteredTheFlowFrom")}</p>
+          <h2>{translate('lineagePage.noProcessingRelationshipsYet')}</h2>
+          <p>{translate('lineagePage.onceProcessingHistoryIsRegisteredTheFlowFrom')}</p>
         </div>
       )}
 

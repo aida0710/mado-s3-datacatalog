@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { Download, Pin, RotateCcw, X } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -11,6 +9,8 @@ import { PreviewImage } from './PreviewImage'
 import { PreviewAudio } from './PreviewAudio'
 import { PreviewVideo } from './PreviewVideo'
 import { PreviewArchive } from './PreviewArchive'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -51,7 +51,7 @@ export function PreviewDrawer({
   const alreadyPinned = pins.some(
     p => p.connectionId === connectionId && p.bucket === bucket && p.key === k && p.entryPath === undefined,
   )
-  const pinLabel = alreadyPinned ? translate("previewDrawer.pinned") : translate("common.pin")
+  const pinLabel = alreadyPinned ? translate('previewDrawer.pinned') : translate('common.pin')
   return (
     <aside className="drawer">
       {onResizeStart && (
@@ -59,7 +59,7 @@ export function PreviewDrawer({
           className="drawer-resize-handle"
           role="separator"
           aria-orientation="vertical"
-          aria-label={translate("previewDrawer.resizePreviewUseLeftAndRightArrowKeys")}
+          aria-label={translate('previewDrawer.resizePreviewUseLeftAndRightArrowKeys')}
           tabIndex={0}
           onPointerDown={onResizeStart}
           onKeyDown={onResizeKeyDown}
@@ -73,8 +73,8 @@ export function PreviewDrawer({
               type="button"
               className="icon-button drawer-reset"
               onClick={onResetWidth}
-              aria-label={translate("previewDrawer.resetPreviewWidth")}
-              title={translate("previewDrawer.resetPreviewWidth")}
+              aria-label={translate('previewDrawer.resetPreviewWidth')}
+              title={translate('previewDrawer.resetPreviewWidth')}
             >
               <RotateCcw size={16} aria-hidden="true" />
             </button>
@@ -98,8 +98,8 @@ export function PreviewDrawer({
               className="icon-button"
               href={api.downloadUrl(connectionId, bucket, k)}
               download={filename}
-              aria-label={translate("common.download", { value0: filename })}
-              title={translate("common.download2")}
+              aria-label={translate('common.download', { value0: filename })}
+              title={translate('common.download2')}
             >
               <Download size={16} aria-hidden="true" />
             </a>
@@ -109,7 +109,7 @@ export function PreviewDrawer({
             className="icon-button"
             onClick={onClose}
             aria-label={translate('previewDrawer.closePreview')}
-            title={translate("common.close")}
+            title={translate('common.close')}
           >
             <X size={18} aria-hidden="true" />
           </button>
@@ -124,8 +124,8 @@ export function PreviewDrawer({
             「壊れている」と誤解されるため。 */}
         {((kind === 'archive' && !caps.archive) || (kind !== 'archive' && !caps.preview)) && (
           <p className="muted">
-            {translate("previewDrawer.operationDisabled", {
-              value0: kind === 'archive' ? translate("previewDrawer.openingArchives") : translate("previewDrawer.filePreviews"),
+            {translate('previewDrawer.operationDisabled', {
+              value0: kind === 'archive' ? translate('previewDrawer.openingArchives') : translate('previewDrawer.filePreviews'),
             })}
           </p>
         )}

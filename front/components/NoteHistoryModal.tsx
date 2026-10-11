@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useCallback } from 'react'
 import { api } from '../lib/api/client'
 import { HistoryModal } from './HistoryModal'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   slug: string
@@ -19,7 +19,7 @@ export function NoteHistoryModal({ slug, currentBody, onClose }: Props) {
   const loadVersion = useCallback((id: number) => api.noteHistoryVersion(slug, id), [slug])
   return (
     <HistoryModal
-      title={translate("noteHistoryModal.teamNoteHistory")}
+      title={translate('noteHistoryModal.teamNoteHistory')}
       titleId="note-history-title"
       subtitle={slug}
       currentBody={currentBody}

@@ -1,6 +1,3 @@
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../lib/api/client'
@@ -11,6 +8,9 @@ import { TagBadge } from './TagBadge'
 import { ImportExportButtons } from './ImportExportButtons'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
 import { downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 // エクスポート形式。id は書き出さない — インポート先で採番するため
 // (id は nanoid で、環境をまたいで意味を持たない)。同一性は name で見る。
@@ -66,7 +66,7 @@ function TagForm({
   const [error, setError] = useReducer((_: string | null, v: string | null) => v, null)
 
   const submit = async () => {
-    if (!name.trim()) { setError(translate("common.enterAName")); return }
+    if (!name.trim()) { setError(translate('common.enterAName')); return }
     setSaving(true)
     setError(null)
     try {
@@ -81,26 +81,26 @@ function TagForm({
   return (
     <Dialog
       titleId="tag-form-title"
-      title={initialValue.name ? translate("common.editTags") : translate("tagsSettings.addTag")}
+      title={initialValue.name ? translate('common.editTags') : translate('tagsSettings.addTag')}
       onClose={onCancel}
       dismissible={!saving}
       narrowLayout="sheet"
       footer={
         <>
-          <button type="button" className="button" onClick={onCancel} disabled={saving}>{translate("common.cancel")}</button>
+          <button type="button" className="button" onClick={onCancel} disabled={saving}>{translate('common.cancel')}</button>
           <button type="button" className="button primary" onClick={() => void submit()} disabled={saving}>
-            {saving ? translate("common.saving") : translate("common.save")}
+            {saving ? translate('common.saving') : translate('common.save')}
           </button>
         </>
       }
     >
       <div className="dialog-body tag-form">
         <label className="field">
-          <span>{translate("common.name")}</span>
+          <span>{translate('common.name')}</span>
           <input value={name} onChange={e => setName(e.target.value)} autoComplete="off" spellCheck={false} />
         </label>
         <label className="field">
-          <span>{translate("tagsSettings.color")}</span>
+          <span>{translate('tagsSettings.color')}</span>
           <input type="color" value={color} onChange={e => setColor(e.target.value)} />
         </label>
         {error && <p className="notice error" aria-live="polite">{localizeMessage(error)}</p>}
@@ -116,11 +116,11 @@ function DeleteConfirm({
   return (
     <DeleteConfirmDialog
       titleId="tag-delete-title"
-      title={translate("common.deleteTag")}
+      title={translate('common.deleteTag')}
       onConfirm={onConfirm}
       onCancel={onCancel}
     >
-      {translate("tagsSettings.confirmDeletion", { value0: tag.name })}
+      {translate('tagsSettings.confirmDeletion', { value0: tag.name })}
     </DeleteConfirmDialog>
   )
 }
@@ -149,7 +149,7 @@ export function TagsSettings() {
   const handleImport = async (data: unknown, mode: ImportMode): Promise<ImportSummary> => {
     const d = data as Partial<TagsExport>
     if (d?.mado !== 'tags' || !Array.isArray(d.tags)) {
-      throw new Error(translate("tagsSettings.thisIsNotAMadoTagExportFile"))
+      throw new Error(translate('tagsSettings.thisIsNotAMadoTagExportFile'))
     }
     const existing = new Set(tags.map(t => t.name))
     const summary: ImportSummary = { added: 0, skipped: 0, removed: 0, failed: [] }
@@ -172,7 +172,7 @@ export function TagsSettings() {
     }
     for (const t of d.tags) {
       if (typeof t?.name !== 'string' || typeof t?.color !== 'string') {
-        summary.failed.push(translate("tagsSettings.someItemsHaveNonStringNameOrColor"))
+        summary.failed.push(translate('tagsSettings.someItemsHaveNonStringNameOrColor'))
         continue
       }
       if (existing.has(t.name)) { summary.skipped++; continue }
@@ -190,28 +190,28 @@ export function TagsSettings() {
   return (
     <section className="settings-column">
       <SettingsSectionHeader
-        title={translate("tagsSettings.manageTags")}
+        title={translate('tagsSettings.manageTags')}
         actions={
           <>
             <ImportExportButtons
-              what={translate("tagsSettings.tags")}
-              replaceWarning={translate("tagsSettings.assignmentsToDeletedTagsAreRemovedAutomaticallyCascading")}
+              what={translate('tagsSettings.tags')}
+              replaceWarning={translate('tagsSettings.assignmentsToDeletedTagsAreRemovedAutomaticallyCascading')}
               onExport={handleExport}
               onImport={handleImport}
               onDone={refresh}
             />
             <button type="button" className="button primary small" onClick={() => dispatch({ type: 'openAdd' })}>
               <Plus size={14} aria-hidden="true" />
-              {translate("common.add")}</button>
+              {translate('common.add')}</button>
           </>
         }
       />
 
-      {loading && <p className="muted">{translate("common.loading")}</p>}
+      {loading && <p className="muted">{translate('common.loading')}</p>}
       {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {!loading && tags.length === 0 && (
-        <p className="state-message">{translate("tagsSettings.noTagsYet")}</p>
+        <p className="state-message">{translate('tagsSettings.noTagsYet')}</p>
       )}
 
       {tags.length > 0 && (
@@ -219,8 +219,8 @@ export function TagsSettings() {
           <table className="tags-table">
             <thead>
               <tr>
-                <th scope="col">{translate("tagsSettings.tags")}</th>
-                <th scope="col" className="row-actions"><span className="sr-only">{translate("common.actions")}</span></th>
+                <th scope="col">{translate('tagsSettings.tags')}</th>
+                <th scope="col" className="row-actions"><span className="sr-only">{translate('common.actions')}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -230,14 +230,14 @@ export function TagsSettings() {
                   <td className="row-actions">
                     <span className="row-actions__buttons">
                       <button type="button" className="button small" onClick={() => dispatch({ type: 'openEdit', tag })}>
-                        {translate("common.edit")}</button>
+                        {translate('common.edit')}</button>
                       <button
                         type="button"
                         className="button small danger"
-                        aria-label={translate("tagsSettings.delete", { value0: tag.name })}
+                        aria-label={translate('tagsSettings.delete', { value0: tag.name })}
                         onClick={() => dispatch({ type: 'openDelete', tag })}
                       >
-                        {translate("common.delete")}</button>
+                        {translate('common.delete')}</button>
                     </span>
                   </td>
                 </tr>

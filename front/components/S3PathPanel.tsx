@@ -10,9 +10,6 @@
 // 末尾 `/` (= 実在ディレクトリ指定) や bucket 直下の場合は「開く」リンク + Enter で
 // 直接そのページへ遷移できる。
 
-import { localizeMessage } from '../i18n/localizeMessage'
-import { useLocale } from '../i18n/useLocale'
-import { translate } from '../i18n/translate'
 import { useEffect, useReducer, useRef, type KeyboardEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, File, Folder, Link2 } from 'lucide-react'
@@ -20,6 +17,9 @@ import type { z } from 'zod'
 import { api } from '../lib/api/client'
 import { StorageList } from '../lib/api/types'
 import { encPath, fileLinkToDirRedirect, parseS3Path } from '../lib/route'
+import { localizeMessage } from '../i18n/localizeMessage'
+import { useLocale } from '../i18n/useLocale'
+import { translate } from '../i18n/translate'
 
 interface Props {
   connectionId: string
@@ -131,19 +131,19 @@ export function S3PathPanel({ connectionId }: Props) {
           <Link2 size={16} aria-hidden="true" />
           <input
             type="search"
-            placeholder={translate("sPathPanel.pasteS3BucketKeyPrefixSearchAFull")}
+            placeholder={translate('sPathPanel.pasteS3BucketKeyPrefixSearchAFull')}
             value={raw}
             onChange={e => onChange(e.target.value)}
             onKeyDown={onKeyDown}
-            aria-label={translate("sPathPanel.goToS3Path")}
+            aria-label={translate('sPathPanel.goToS3Path')}
             spellCheck={false}
           />
-          {loading && <span className="muted nowrap">{translate("common.searching")}</span>}
+          {loading && <span className="muted nowrap">{translate('common.searching')}</span>}
         </div>
         {canOpenDirectly && openHref && (
           <Link to={openHref} className="s3-path-open">
             <ArrowRight size={14} aria-hidden="true" />
-            {translate("sPathPanel.openPath", { value0: `${parsed!.bucket}/${parsed!.prefix}` })}
+            {translate('sPathPanel.openPath', { value0: `${parsed!.bucket}/${parsed!.prefix}` })}
           </Link>
         )}
       </div>
@@ -151,7 +151,7 @@ export function S3PathPanel({ connectionId }: Props) {
       {error && <p className="notice error">{localizeMessage(error)}</p>}
 
       {isEmpty && !loading && !error && (
-        <p className="muted s3-path-note">{translate("sPathPanel.noMatchingPaths")}</p>
+        <p className="muted s3-path-note">{translate('sPathPanel.noMatchingPaths')}</p>
       )}
 
       {result && (dirs.length > 0 || files.length > 0) && (
@@ -177,7 +177,7 @@ export function S3PathPanel({ connectionId }: Props) {
 
       {hasMore && (
         <p className="muted s3-path-note">
-          {translate("sPathPanel.tooManyResultsEnterAMoreSpecificPath")}</p>
+          {translate('sPathPanel.tooManyResultsEnterAMoreSpecificPath')}</p>
       )}
     </section>
   )
