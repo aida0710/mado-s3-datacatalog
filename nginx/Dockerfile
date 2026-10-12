@@ -19,7 +19,7 @@ RUN npm run build
 # nginxinc/nginx-unprivileged は default で nginx user (uid 101) として
 # 8080/8081 で listen する。port 80 は privileged なので非 root では bind できない。
 # 8080はintranet UI、8081はhost TLS proxy専用のOpenLineage入口。
-FROM nginxinc/nginx-unprivileged:alpine@sha256:d9083fe47768377ef55dedafd67d4da7c2f2bc2bece7554954f29359deb0dce9 AS release
+FROM nginxinc/nginx-unprivileged:alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083 AS release
 ARG MADO_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
