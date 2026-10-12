@@ -45,6 +45,38 @@ Storage matches must additionally contain version/location IDs, version, and
 location URI. Responses may use camelCase or the documented snake_case aliases.
 Unknown additional fields are ignored.
 
+## Dataset identities for `lineage:read`
+
+To enable Mado's Service Account read API, dataset search results and dataset
+details must also include a UUID `datasetId` (`dataset_id` or `id` is accepted).
+ML Tracking uses the search result's UUID to fetch dataset details; summaries
+without an ID cannot be imported. The detail's ID must match the requested
+dataset ID. Each version in the detail must contain its own UUID `id` and a
+`datasetId` matching that dataset.
+
+`GET /v1/dataset-versions/{id}` must return the requested version UUID as `id`
+and its parent dataset UUID as `datasetId`. Mado resolves that parent dataset
+to check the read key's allowed namespaces before returning the version.
+Missing or inconsistent identities are rejected with 502 by the read API;
+Mado does not infer an upstream identity from the request URL.
+
+## OpenLineage retries
+
+`POST /v1/ingest/openlineage` must accept retries of the same event, including
+its original `eventTime`, `run.runId`, and dataset version references. Repeating
+an accepted event must return `accepted: true`, `duplicate: true`, and the same
+`eventId` and `runId`, without creating another Run or DatasetVersion. Deduplicate
+the event payload independently of the service-account key ID so rotating a key
+does not create another record. Check the current principal's namespace
+permissions on every request, including retries.
+
+`run.runId` identifies one Run. A dataset's namespace, name, and version identify
+one DatasetVersion; a conflicting redefinition must return 409. Mado forwards
+the validated event unchanged and preserves the Registry's duplicate result.
+Verify these guarantees against the chosen Registry before enabling ML Tracking
+delivery; Mado's adapter tests do not validate an operator-supplied Registry's
+database behavior.
+
 Before starting Mado, validate both health and token authentication against the
 chosen implementation. A health-only stub is not compatible: all endpoints
 used by the enabled Mado features must satisfy this contract.
