@@ -1,9 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../lib/auth-context'
 import AdminPage from './AdminPage'
+import { setLocale } from '../i18n/locale'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -16,6 +17,16 @@ const auth: AuthContextValue = {
   },
   logout: async () => {},
   reload: async () => {},
+}
+
+function renderServiceAccountsPage() {
+  return render(
+    <AuthContext.Provider value={auth}>
+      <MemoryRouter initialEntries={['/settings/access/service-accounts']}>
+        <Routes><Route path="/settings/access/*" element={<AdminPage />} /></Routes>
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  )
 }
 
 describe('AdminPage', () => {
@@ -48,13 +59,7 @@ describe('AdminPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ accounts: [] }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     }))
-    render(
-      <AuthContext.Provider value={auth}>
-        <MemoryRouter initialEntries={['/settings/access/service-accounts']}>
-          <Routes><Route path="/settings/access/*" element={<AdminPage />} /></Routes>
-        </MemoryRouter>
-      </AuthContext.Provider>,
-    )
+    renderServiceAccountsPage()
 
     expect(await screen.findByRole('heading', { name: 'Service Accountを追加' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Pipeline Service Accounts' })).not.toBeInTheDocument()
@@ -72,13 +77,7 @@ describe('AdminPage', () => {
         status: issuing ? 201 : 200, headers: { 'Content-Type': 'application/json' },
       })
     })
-    render(
-      <AuthContext.Provider value={auth}>
-        <MemoryRouter initialEntries={['/settings/access/service-accounts']}>
-          <Routes><Route path="/settings/access/*" element={<AdminPage />} /></Routes>
-        </MemoryRouter>
-      </AuthContext.Provider>,
-    )
+    renderServiceAccountsPage()
 
     await screen.findByRole('option', { name: 'prometheus' })
     await userEvent.selectOptions(screen.getByRole('combobox', { name: /^Service Account/ }), 'sa-1')
@@ -93,6 +92,39 @@ describe('AdminPage', () => {
     expect(issueRequest[0]).toBe('/api/internal/service-accounts/sa-1/keys')
     expect(JSON.parse(String(issueRequest[1]!.body)))
       .toEqual({ name: 'grafana', scopes: ['metrics:read'], namespaces: [] })
+  })
+
+  it('データセット参照キーの日英切り替えで入力を保ち、許可Namespaceだけを送る', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const issuing = init?.method === 'POST'
+      return new Response(JSON.stringify(issuing
+        ? { key: { name: 'tracking', token: 'mado_lin_read_fixture.secret' } }
+        : { accounts: [{ id: 'sa-1', name: 'ML Tracking', description: '', status: 'active' }] }), {
+        status: issuing ? 201 : 200, headers: { 'Content-Type': 'application/json' },
+      })
+    })
+    renderServiceAccountsPage()
+
+    await screen.findByRole('option', { name: 'ML Tracking' })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /^Service Account/ }), 'sa-1')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /^用途/ }), 'lineage:read')
+    expect(screen.getByRole('option', { name: 'データセット参照（lineage:read）' })).toBeInTheDocument()
+    expect(screen.getByText(/許可したNamespaceのデータセットとバージョン・保存先URI/)).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('textbox', { name: '許可するNamespace' }), 'speech, podcast')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Key名' }), 'tracking')
+
+    act(() => setLocale('en'))
+    expect(screen.getByRole('option', { name: 'Read datasets (lineage:read)' })).toBeInTheDocument()
+    expect(screen.getByText(/including URIs in restricted Storage connections/)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Allowed namespaces' })).toHaveValue('speech, podcast')
+    expect(screen.getByRole('textbox', { name: 'Key name' })).toHaveValue('tracking')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show key once' }))
+    expect(await screen.findByText('mado_lin_read_fixture.secret')).toBeInTheDocument()
+    const issueRequest = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')!
+    expect(JSON.parse(String(issueRequest[1]!.body)))
+      .toEqual({ name: 'tracking', scopes: ['lineage:read'], namespaces: ['speech', 'podcast'] })
   })
 
   it('ユーザー行を展開して編集・再発行・削除を管理できる', async () => {

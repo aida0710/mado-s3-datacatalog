@@ -23,14 +23,16 @@ const PatchAccount = z.object({
 })
 // keyは用途ごとに発行し、1本に1つのscopeだけを付ける。書き込み用のkeyが漏れても
 // Madoのデータを読めないようにするため。
-// namespaceはOpenLineageの書き込み先を絞るためのもの。lineage:writeには必須、
-// それ以外のscopeのkeyには意味がないので受け付けない。
+// Lineageの読み書きはNamespaceで制限する。容量metricsにはNamespaceがない。
 const CreateKey = z.object({
   name: z.string().trim().min(1).max(128),
   scopes: z.array(z.enum(SERVICE_KEY_SCOPES)).length(1),
-  namespaces: z.array(z.string().min(1).max(512)).max(128).default([]),
+  namespaces: z.array(z.string().trim().min(1).max(512)).max(128).default([]),
   expiresAt: z.string().datetime().nullable().optional(),
-}).refine(key => key.scopes.includes('lineage:write') === key.namespaces.length > 0)
+}).refine(key => {
+  const isLineageKey = key.scopes.some(scope => scope === 'lineage:write' || scope === 'lineage:read')
+  return isLineageKey ? key.namespaces.length > 0 : key.namespaces.length === 0
+})
 
 export function mountServiceAccountRoutes(app: Hono, deps: ServiceAccountsDeps): void {
   app.use('/service-accounts', requirePermission('service_accounts:manage'))
