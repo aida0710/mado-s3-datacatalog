@@ -91,6 +91,7 @@ describe('Service Account Dataset API', () => {
       { path: `/lineage/datasets/${datasetId}`, getDataset: async () => ({ ...dataset, versions: [{ ...version, datasetId: otherId }] }), getVersion: async () => version },
       { path: `/lineage/versions/${versionId}`, getDataset: async () => dataset, getVersion: async () => ({ ...version, id: otherId }) },
       { path: `/lineage/versions/${versionId}`, getDataset: async () => ({ ...dataset, datasetId: otherId }), getVersion: async () => version },
+      { path: `/lineage/versions/${versionId}`, getDataset: async () => ({ ...dataset, datasetId: null }), getVersion: async () => version },
     ]
     for (const invalidResponse of invalidResponses) {
       const { app } = fixture({ registry: {

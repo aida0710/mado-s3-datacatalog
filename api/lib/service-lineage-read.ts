@@ -1,5 +1,6 @@
 import { RegistryClientError, type RegistryClient } from './registry-client.js'
 import type { DatasetDetail, DatasetVersionDetail, RegistryDatasetSummary } from '../shared/lineage-types.js'
+import { namespaceAllowed } from './namespace-allowlist.js'
 
 export type ServiceLineageRegistry = Pick<RegistryClient, 'searchDatasets' | 'getDataset' | 'getVersion'>
 
@@ -8,10 +9,6 @@ export class ServiceLineageAccessError extends Error {
     super('Namespace is outside this Service Account key')
     this.name = 'ServiceLineageAccessError'
   }
-}
-
-function allowsNamespace(namespaces: readonly string[], namespace: string): boolean {
-  return namespaces.includes('*') || namespaces.includes(namespace)
 }
 
 function requireMatchingIdentity(actual: string | null, expected: string): void {
@@ -58,18 +55,18 @@ export function createServiceLineageRead(registry: ServiceLineageRegistry) {
   async function authorizedDataset(id: string, namespaces: readonly string[]): Promise<DatasetDetail> {
     const dataset = await registry.getDataset(id)
     requireMatchingIdentity(dataset.datasetId, id)
-    if (!allowsNamespace(namespaces, dataset.namespace)) throw new ServiceLineageAccessError()
+    if (!namespaceAllowed(dataset.namespace, namespaces)) throw new ServiceLineageAccessError()
     return dataset
   }
 
   return {
     async catalog(query: { q: string; namespace?: string; limit: number; offset: number }, namespaces: readonly string[]) {
       if (!query.namespace && !namespaces.includes('*')) throw new ServiceLineageAccessError()
-      if (query.namespace && !allowsNamespace(namespaces, query.namespace)) throw new ServiceLineageAccessError()
+      if (query.namespace && !namespaceAllowed(query.namespace, namespaces)) throw new ServiceLineageAccessError()
       const catalog = await registry.searchDatasets(query)
       // Validate upstream filtering too: a Registry implementation must not broaden the key's allow list.
       const containsDisallowedDataset = catalog.results.some(dataset =>
-        !allowsNamespace(namespaces, dataset.namespace) ||
+        !namespaceAllowed(dataset.namespace, namespaces) ||
         (query.namespace && dataset.namespace !== query.namespace),
       )
       if (containsDisallowedDataset) throw new ServiceLineageAccessError()

@@ -45,6 +45,21 @@ Storage matches must additionally contain version/location IDs, version, and
 location URI. Responses may use camelCase or the documented snake_case aliases.
 Unknown additional fields are ignored.
 
+## Dataset identities for `lineage:read`
+
+To enable Mado's Service Account read API, dataset search results and dataset
+details must also include a UUID `datasetId` (`dataset_id` or `id` is accepted).
+ML Tracking uses the search result's UUID to fetch dataset details; summaries
+without an ID cannot be imported. The detail's ID must match the requested
+dataset ID. Each version in the detail must contain its own UUID `id` and a
+`datasetId` matching that dataset.
+
+`GET /v1/dataset-versions/{id}` must return the requested version UUID as `id`
+and its parent dataset UUID as `datasetId`. Mado resolves that parent dataset
+to check the read key's allowed namespaces before returning the version.
+Missing or inconsistent identities are rejected with 502 by the read API;
+Mado does not infer an upstream identity from the request URL.
+
 ## OpenLineage retries
 
 `POST /v1/ingest/openlineage` must accept retries of the same event, including
