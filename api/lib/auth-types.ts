@@ -23,7 +23,7 @@ export interface SessionPrincipal {
  * Service Account keyへ付けられるscope。Madoが保存しているデータは読み取りだけを開き、
  * 書き込みはRegistryへのOpenLineage投入口 (`lineage:write`) に限る。
  */
-export const SERVICE_KEY_SCOPES = ['lineage:write', 'metrics:read'] as const
+export const SERVICE_KEY_SCOPES = ['lineage:write', 'lineage:read', 'metrics:read'] as const
 export type ServiceKeyScope = typeof SERVICE_KEY_SCOPES[number]
 
 export interface ServicePrincipal {

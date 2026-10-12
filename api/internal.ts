@@ -55,6 +55,7 @@ import { mountStorageCapacityRoutes } from './routes/storage-capacity.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { createCapacityMetricsCollector } from './lib/capacity-metrics.js'
 import { mountMetricsRoutes } from './routes/metrics.js'
+import { mountServiceLineageRoutes } from './routes/service-lineage.js'
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
@@ -306,6 +307,12 @@ const madoApi = new Hono()
 mountMetricsRoutes(madoApi, {
   authenticate: token => serviceAccounts.authenticate(token),
   collectors: [createCapacityMetricsCollector(capacityStore)],
+})
+mountServiceLineageRoutes(madoApi, {
+  authenticate: token => serviceAccounts.authenticate(token),
+  registry: env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN
+    ? createRegistryClient({ baseUrl: env.DATASET_REGISTRY_URL, token: env.DATASET_REGISTRY_TOKEN })
+    : null,
 })
 app.route('/api/mado', madoApi)
 

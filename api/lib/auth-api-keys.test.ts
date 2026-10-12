@@ -15,13 +15,13 @@ beforeEach(async () => {
 afterAll(() => closePools(pools))
 
 describe('ServiceAccountStore', () => {
-  it('key秘密を一度だけ返し、scope/namespace認証とrevokeを行う', async () => {
+  it.each(['lineage:write', 'lineage:read'])('%sの秘密を一度だけ返し、Namespace認証とrevokeを行う', async scope => {
     const admin = await auth.createUser({ email: 'admin@example.com', displayName: 'Admin', roles: ['admin'] })
     const account = await store.createAccount({ name: 'nemo', createdBy: admin.id })
     const key = await store.issueKey({
       accountId: account.id,
       name: 'prod',
-      scopes: ['lineage:write'],
+      scopes: [scope],
       namespaces: ['speech'],
       createdBy: admin.id,
     })
@@ -35,7 +35,7 @@ describe('ServiceAccountStore', () => {
     const principal = await store.authenticate(key.token)
     expect(principal).toMatchObject({
       serviceAccountId: account.id,
-      scopes: ['lineage:write'],
+      scopes: [scope],
       namespaces: ['speech'],
     })
     expect(await store.authenticate(`${key.token}x`)).toBeNull()

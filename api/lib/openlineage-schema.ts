@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { namespaceAllowed } from './namespace-allowlist.js'
+
+export { namespaceAllowed } from './namespace-allowlist.js'
 
 const NonEmpty = z.string().trim().min(1).max(1024)
 const Facets = z.record(z.string(), z.unknown()).default({})
@@ -105,10 +108,6 @@ export function writableNamespaces(event: OpenLineageEvent): string[] {
       .filter(dataset => dataset.namespace !== 'external-source')
       .map(dataset => dataset.namespace),
   ])]
-}
-
-export function namespaceAllowed(namespace: string, allowed: readonly string[]): boolean {
-  return allowed.includes('*') || allowed.includes(namespace)
 }
 
 export function forbiddenWritableNamespaces(

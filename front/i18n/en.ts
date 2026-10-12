@@ -15,6 +15,8 @@ export const englishMessages = {
   "adminPage.adminFullAdministration": "Admin — Full administration",
   "adminPage.allStatuses": "All statuses",
   "adminPage.allowedNamespaces": "Allowed namespaces",
+  'adminPage.readDatasetsLineageRead': 'Read datasets (lineage:read)',
+  'adminPage.canReadDatasetsInAllowedNamespaces': 'Read datasets, versions, and storage URIs in the allowed namespaces, including URIs in restricted Storage connections. Object contents and credentials are excluded.',
   "adminPage.applyOpenLineageEvent": "Apply OpenLineage event",
   "adminPage.assignTag": "Assign tag",
   "adminPage.authentication": "Authentication",

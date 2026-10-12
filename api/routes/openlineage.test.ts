@@ -106,6 +106,30 @@ describe('OpenLineage 受け口', () => {
     expect(recordUse).not.toHaveBeenCalled()
   })
 
+  it('同じeventを再送してもRunとバージョン参照を変えず、重複結果を返す', async () => {
+    const reg = registry()
+    const accepted = {
+      accepted: true, duplicate: false, eventId: 'evt-1',
+      runId: event().run.runId, projection: 'pending' as const, warnings: [],
+    }
+    vi.mocked(reg.ingestOpenLineage)
+      .mockResolvedValueOnce(accepted)
+      .mockResolvedValueOnce({ ...accepted, duplicate: true })
+    const recordUse = vi.fn().mockResolvedValue(undefined)
+    const app = new Hono()
+    mountOpenLineageRoutes(app, { auth: auth({ recordUse }), registry: reg })
+
+    expect((await app.request(request(event()))).status).toBe(200)
+    const retry = await app.request(request(event()))
+    expect(retry.status).toBe(200)
+    expect(await retry.json()).toEqual({ ...accepted, duplicate: true })
+    const [firstEvent] = vi.mocked(reg.ingestOpenLineage).mock.calls[0]
+    const [retriedEvent] = vi.mocked(reg.ingestOpenLineage).mock.calls[1]
+    expect(firstEvent).toEqual(event())
+    expect(retriedEvent).toEqual(firstEvent)
+    expect(recordUse).toHaveBeenCalledTimes(1)
+  })
+
   it('lineage:write scopeなしを拒否する', async () => {
     const reg = registry()
     const app = new Hono()
