@@ -14,7 +14,7 @@ not build application source on the deployment host.
 4. Provide a compatible Dataset Registry API and token. It is an external
    prerequisite and is not contained in this archive; Marquez is optional for
    the browser graph. No official Registry distribution is included in Mado
-   v1.0.0. Use `REGISTRY_API_CONTRACT.md` to validate an existing external
+   v0.1.0. Use `REGISTRY_API_CONTRACT.md` to validate an existing external
    service and obtain its Bearer token from that service's operator. Leave
    neither Registry value blank.
 5. Run `docker compose -f compose.yaml config` and review the resolved config.
