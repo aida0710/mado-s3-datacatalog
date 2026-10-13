@@ -23,13 +23,13 @@ workflowは各imageへSBOMとprovenanceを付け、digest固定の`compose.yaml`
 準備状況だけを確認する場合:
 
 ```bash
-scripts/release/publish.sh --verify-only v1.0.0
+scripts/release/publish.sh --verify-only v0.1.0
 ```
 
 実際に公開するときだけ、次を実行する。annotated tagをoriginへpushした時点でrelease workflowが開始する。
 
 ```bash
-scripts/release/publish.sh v1.0.0
+scripts/release/publish.sh v0.1.0
 ```
 
 scriptは既存tagを移動・削除せず、dirty tree、remote mainとの差、同一SHAの成功CI不足を拒否する。workflowはまずtagとcommitで一意なstaging imageをbuildし、匿名でdigest pullできること、bundle、checksum、artifact attestationを検証してからversion tagへ昇格し、GitHub Releaseを最後に公開する。GHCRの3 package間にtransactionはないため、tag昇格途中の失敗は同じworkflowを再実行してroll-forwardする。再実行時は既存のimmutable staging digestを再buildせず再利用するため、artifact保持期限を過ぎてもpartial promotionを同じdigest群で再開できる。既存version tagが同じdigestなら再利用し、異なるdigestなら停止する。staging tagとversion tagは書き換えない。
@@ -37,7 +37,7 @@ scriptは既存tagを移動・削除せず、dirty tree、remote mainとの差�
 手動で再開する場合は、workflow自体のrefも同じrelease tagへ固定する。`main`を選んだworkflow dispatchはsource provenanceが一致しないため拒否される。
 
 ```bash
-gh workflow run release.yml --ref v1.0.0 -f tag=v1.0.0
+gh workflow run release.yml --ref v0.1.0 -f tag=v0.1.0
 ```
 
 再開時はGHCRをHTTP 404まで確認できた場合だけ新規buildへ進む。新規imageはまずtagなしdigestとしてpushし、attestation作成後にだけstaging tagを付けるため、build成功・attestation失敗でも再実行を妨げる未検証staging tagは残らない。既存staging digestはrelease workflow、release tag ref、source commitを指定してattestation検証し、検証済みdigestだけを再利用する。version tagの存在確認も200/404以外はfail-closeする。
@@ -45,8 +45,8 @@ gh workflow run release.yml --ref v1.0.0 -f tag=v1.0.0
 bundleの真正性は次で確認できる。
 
 ```bash
-gh attestation verify mado-v1.0.0.tar.gz --repo aida0710/mado-s3-datacatalog
-sha256sum -c mado-v1.0.0.tar.gz.sha256
+gh attestation verify mado-v0.1.0.tar.gz --repo aida0710/mado-s3-datacatalog
+sha256sum -c mado-v0.1.0.tar.gz.sha256
 ```
 
 ## Repository設定

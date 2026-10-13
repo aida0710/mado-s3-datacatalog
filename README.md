@@ -306,7 +306,7 @@ Service Account keyでMado自身のデータを読む入口は`/api/mado/`にま
 
 ### OSSリリース
 
-MadoはSemVerを採用し、最初の正式版候補を`v1.0.0`とします。GitHub上のannotated tagだけがrelease workflowを起動し、通常の`main` pushや社内deployからOSS releaseが始まることはありません。
+MadoはSemVerを採用し、最初のリリースを`v0.1.0`とします。GitHub上のannotated tagだけがrelease workflowを起動し、通常の`main` pushや社内deployからOSS releaseが始まることはありません。
 
 公開時は同一commitからLinux amd64/arm64対応のcompiled OCI imageを3つ作り、GHCRへ配置します。
 
