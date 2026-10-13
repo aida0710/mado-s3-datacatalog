@@ -1,7 +1,7 @@
 {
   "name": "mado-pages",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vitepress dev --host 127.0.0.1",
