@@ -65,6 +65,10 @@ export interface MarquezClientOptions {
   fetch?: typeof fetch
 }
 
+export interface MarquezNamespaceClient {
+  listNamespaces(query: { limit: number; offset: number }): Promise<string[]>
+}
+
 function apiRoot(baseUrl: string): string {
   const trimmed = baseUrl.replace(/\/+$/, '')
   return trimmed.endsWith('/api/v1') ? `${trimmed}/` : `${trimmed}/api/v1/`
@@ -78,7 +82,7 @@ export function marquezNodeId(
   return `${kind}:${namespace}:${name}`
 }
 
-export function createMarquezClient(options: MarquezClientOptions): MarquezClient {
+export function createMarquezClient(options: MarquezClientOptions): MarquezClient & MarquezNamespaceClient {
   const doFetch = options.fetch ?? globalThis.fetch
   const root = apiRoot(options.baseUrl)
   const timeoutMs = options.timeoutMs ?? 5_000
@@ -114,6 +118,17 @@ export function createMarquezClient(options: MarquezClientOptions): MarquezClien
   }
 
   return {
+    async listNamespaces(query) {
+      const url = new URL('namespaces', root)
+      url.searchParams.set('limit', String(query.limit))
+      url.searchParams.set('offset', String(query.offset))
+      // Marquez 0.50 returns { namespaces: [{ name, ... }] }; do not treat a broken response as an empty list.
+      const body = await get<{ namespaces?: Array<{ name?: unknown }> }>(url)
+      if (!Array.isArray(body?.namespaces) || body.namespaces.some(namespace => typeof namespace?.name !== 'string' || !namespace.name)) {
+        throw new MarquezClientError('Marquez returned invalid namespaces', 'invalid_response')
+      }
+      return body.namespaces.map(namespace => namespace.name as string)
+    },
     getGraph: (node, depth) => {
       const url = new URL('lineage', root)
       url.searchParams.set('nodeId', marquezNodeId(node.kind, node.namespace, node.name))

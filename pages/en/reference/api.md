@@ -1,23 +1,32 @@
 ---
-description: Service Account key scopes and namespaces, sending OpenLineage events, and Prometheus capacity metrics.
+description: Creating, regenerating, and disabling access tokens, scopes and namespaces, sending OpenLineage events, and Prometheus capacity metrics.
 ---
 
-# Use the API with a Service Account
+# Use the API with an access token
 
-Sending OpenLineage events from pipelines and fetching metrics from Prometheus both use Service Account keys. You don't need to pass anyone's login credentials to scripts.
+Reading datasets, sending OpenLineage events from pipelines, and fetching metrics from Prometheus use access tokens. You don't need to pass anyone's login credentials to scripts.
 
-<Screenshot src="/screenshots/en/service-accounts.png" alt="Screen for managing the audio-pipeline Service Account" caption="Manage accounts and keys in Settings → Access → Service Accounts." />
+<Screenshot src="/screenshots/en/service-accounts.png" alt="Access token permissions and status in a single list" caption="Manage token permissions and status in Settings → Access → Access Tokens." />
 
-## Issue a key for each purpose
+## Create a token
 
-An Admin creates a Service Account and issues a key with the required scopes and namespaces. The key value is shown only once, when the key is issued. Store it in the secret manager on the sending side.
+An Admin opens **Create access token** in **Settings → Access → Access Tokens**, then enters a name and selects the allowed operations. There is no separate account to create.
+
+You can select both **Read datasets** and **Send DataLineage**. A namespace groups datasets and jobs, for example `speech` or `podcast`, independently of S3 connections and buckets. Use **Search namespaces** to filter the list and check the names to allow. Your selection is retained across searches. For a name missing from the list, enter it in the search field and choose **Add**. Select **Allow all namespaces** only when you need access to every namespace. A token used only for capacity metrics does not need a namespace.
+
+<Screenshot src="/screenshots/en/access-token-create.png" alt="Token creation with a searchable namespace checklist" caption="Filter the list and check the namespaces to allow. Selected names are retained across searches." />
+
+The value is shown only once, when issued. Save it in the integration’s secret manager. An expiration date is optional.
 
 | Scope | Purpose | Endpoint |
 | --- | --- | --- |
+| `lineage:read` | Read datasets and versions | `GET /api/mado/lineage/catalog` and detail endpoints |
 | `lineage:write` | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
 | `metrics:read` | Get capacity metrics for all connections | `GET /api/mado/metrics/capacity` |
 
-`/api/mado/`, which returns mado's own data, accepts GET only. Use keys with separate scopes for sending OpenLineage events and for fetching metrics. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by an allowlist.
+`/api/mado/`, which returns mado's own data, accepts GET only. One token can combine the scopes it needs. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by an allowlist. Capacity metrics are not limited by namespace, even when combined with lineage scopes.
+
+For ML Tracking, you can use the same value in both its read-key and write-key fields when the token allows dataset reads and lineage writes.
 
 ## Send OpenLineage events
 
@@ -59,6 +68,13 @@ scrape_configs:
 
 Replace `mado.example.com` with your actual UI hostname. For the list of metrics returned, see the [capacity metrics specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/mdx/README.md#prometheus-metrics).
 
-## Revoke keys you no longer use
+## Edit, regenerate, or disable a token
 
-Revoke the key in Service Accounts. To change scopes or namespaces, issue a new key and switch the sending side to it.
+Open the **…** menu beside a token.
+
+- **Edit** changes the name, purpose note, permissions, namespaces, or expiration date. The value stays the same.
+- **Regenerate** immediately invalidates the old value and shows a new value once. Permissions, expiration, and disabled status are preserved. Update the integration with the new value.
+- **Disable / Enable** pauses or resumes use of the same value.
+- **Delete** permanently ends access and removes the token from the list. Audit history is retained.
+
+Existing Service Account keys appear in the same list, with their values and permissions preserved.

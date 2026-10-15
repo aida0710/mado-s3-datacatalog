@@ -2,6 +2,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { createMarquezClient, marquezNodeId } from './marquez-client.js'
 
 describe('Marquez 読み取り client', () => {
+  it('Namespace一覧をページ指定で取得し、壊れた応答を空一覧と扱わない', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ namespaces: [{ name: 'speech' }, { name: 'podcast' }] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ namespaces: [{ wrong: 'field' }] })))
+    const client = createMarquezClient({ baseUrl: 'http://marquez:5000/api/v1', fetch })
+    expect(await client.listNamespaces({ limit: 1000, offset: 1000 })).toEqual(['speech', 'podcast'])
+    const url = new URL(String(fetch.mock.calls[0][0]))
+    expect(url.pathname).toBe('/api/v1/namespaces')
+    expect(url.searchParams.get('limit')).toBe('1000')
+    expect(url.searchParams.get('offset')).toBe('1000')
+    await expect(client.listNamespaces({ limit: 1000, offset: 0 })).rejects.toMatchObject({ code: 'invalid_response' })
+  })
   it('structured identityからnodeIdを作り、GET以外を持たない', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(
       JSON.stringify({ graph: [] }),

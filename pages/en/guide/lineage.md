@@ -27,6 +27,6 @@ In a version's details, you can check registered information such as the content
 
 A Curator or Admin can register datasets, storage locations, and processing history from the screen. Use this when organizing existing data.
 
-To send continuously from a pipeline, use a Service Account key with `lineage:write`. [API settings](../reference/api.md) covers how to specify the destination and scope.
+To send continuously from a pipeline, use a access token with `lineage:write`. [API settings](../reference/api.md) covers how to specify the destination and scope.
 
 If no Lineage information is registered, mado does not infer the lineage on its own. Check the registration status and the projection status.

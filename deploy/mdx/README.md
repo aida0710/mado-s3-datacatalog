@@ -10,7 +10,7 @@ Do not point the public vhost at `:8080`.
 
 ## Prometheus metrics
 
-Service Account keys read Mado's own data under `/api/mado/`; every route
+Access tokens read Mado's own data under `/api/mado/`; every route
 there is read-only and nginx passes only GET. Prometheus reads Mado metrics from
 the intranet host at `https://mado.internal.dubguild.com/api/mado/metrics/<area>`.
 Each area has its own path so that it can be scraped at a rate that matches how
@@ -22,11 +22,10 @@ UFW through DNAT, so the host firewall could not restrict it. The public
 OpenLineage listener (`:8081`) returns 404 for these paths. The Prometheus host
 must be inside the edge ACL and resolve the private DNS name.
 
-Scraping requires a Service Account key with the `metrics:read` scope. Issue it
-in Settings → Access → Service Accounts with the purpose
-`Prometheus収集（metrics:read）`. Keys that return Mado data are read-only. Do
-not reuse an OpenLineage (`lineage:write`) key; each key carries only the scope
-it needs. A `metrics:read` key reads every connection's bucket names and sizes,
+Scraping requires an access token with the `metrics:read` scope. Issue it
+in Settings → Access → Access Tokens and select **容量メトリクス取得**
+(**Read capacity metrics** in English). A token can combine scopes; a dedicated
+Prometheus token only needs `metrics:read`. This scope reads every connection's bucket names and sizes,
 including connections limited by a user allowlist, so decide who can view the
 Grafana dashboards with that in mind.
 
