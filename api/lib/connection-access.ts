@@ -1,11 +1,11 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import type { Pool } from 'pg'
-import { hasPermission } from './auth-types.js'
-import { getSessionPrincipal } from './rbac.js'
+import { hasPermission, type RequestPrincipal } from './auth-types.js'
+import { getRequestPrincipal } from './rbac.js'
 
 /** 認証無効の開発環境と接続管理者は全接続へアクセスできる。 */
 export function managesConnections(c: Context): boolean {
-  const principal = getSessionPrincipal(c)
+  const principal = getRequestPrincipal(c)
   return principal === null || hasPermission(principal, 'connections:manage')
 }
 
@@ -15,8 +15,14 @@ export async function canAccessConnection(
   c: Context,
   connectionId: string,
 ): Promise<boolean> {
+  const caller = getRequestPrincipal(c)
+  if (caller?.kind === 'service_account') {
+    return caller.connections !== null
+      && (caller.connections.includes('*') || caller.connections.includes(connectionId))
+  }
   if (managesConnections(c)) return true
-  const principal = getSessionPrincipal(c)!
+  const principal = getRequestPrincipal(c)!
+  if (principal.kind !== 'user') return false
   const result = await pool.query(
     `SELECT 1
        FROM storage_connections connection
@@ -35,9 +41,13 @@ export async function canAccessConnection(
 }
 
 /** nullは「管理者なので全件」。通常Userは利用可能なconnection IDだけを返す。 */
-export async function visibleConnectionIds(pool: Pool, c: Context): Promise<Set<string> | null> {
-  if (managesConnections(c)) return null
-  const principal = getSessionPrincipal(c)!
+export async function connectionIdsForPrincipal(pool: Pool, caller: RequestPrincipal | null): Promise<Set<string> | null> {
+  if (caller?.kind === 'service_account') {
+    return caller.connections?.includes('*') ? null : new Set(caller.connections ?? [])
+  }
+  if (caller === null || hasPermission(caller, 'connections:manage')) return null
+  const principal = caller
+  if (principal.kind !== 'user') return new Set()
   const result = await pool.query<{ id: string }>(
     `SELECT connection.id
        FROM storage_connections connection
@@ -50,6 +60,10 @@ export async function visibleConnectionIds(pool: Pool, c: Context): Promise<Set<
     [principal.user.id],
   )
   return new Set(result.rows.map(row => row.id))
+}
+
+export function visibleConnectionIds(pool: Pool, c: Context): Promise<Set<string> | null> {
+  return connectionIdsForPrincipal(pool, getRequestPrincipal(c))
 }
 
 export function requireConnectionAccess(pool: Pool): MiddlewareHandler {

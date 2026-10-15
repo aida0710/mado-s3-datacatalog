@@ -6,7 +6,8 @@ import {
 import type { Hono } from 'hono'
 import { z } from 'zod'
 import type { Pools } from '../db.js'
-import { getSessionPrincipal } from '../lib/rbac.js'
+import { getRequestPrincipal } from '../lib/rbac.js'
+import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import type { ResponseCache } from '../lib/storage-cache.js'
 import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
@@ -108,10 +109,10 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
       return c.json({ error: parsed.error.message }, 400)
     }
     const { bucket, prefix, body } = parsed.data
-    const principal = getSessionPrincipal(c)
-    const editor = principal?.user.signatureName ?? parsed.data.editor
+    const principal = getRequestPrincipal(c)
+    const editor = principalEditor(principal) ?? parsed.data.editor
     if (!editor) return c.json({ error: 'editor is required' }, 400)
-    const actorUserId = principal?.user.id ?? null
+    const actorUserId = principalUserId(principal)
     const Key = prefix + 'README.md'
     const buf = Buffer.from(body, 'utf-8')
     return withReadmeWriteLock(`${connectionId}\0${bucket}\0${Key}`, async () => {

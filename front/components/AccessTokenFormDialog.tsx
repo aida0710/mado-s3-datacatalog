@@ -1,5 +1,7 @@
 import { Dialog } from './Dialog'
 import { NamespaceSelector } from './NamespaceSelector'
+import { InternalPermissionSelector } from './InternalPermissionSelector'
+import { TokenConnectionSelector } from './TokenConnectionSelector'
 import { useAccessTokenForm } from '../lib/useAccessTokenForm'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -34,8 +36,9 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
         <label className="field"><span>{translate('accessTokens.description')}</span>
           <input value={form.description} onChange={event => form.setDescription(event.target.value)} maxLength={TOKEN_DESCRIPTION_MAX_LENGTH} disabled={form.busy} />
         </label>
+        <InternalPermissionSelector selected={form.permissions} onToggle={form.togglePermission} onPreset={form.applyPreset} disabled={form.busy} />
         <fieldset className="access-token-permissions" disabled={form.busy}>
-          <legend>{translate('accessTokens.permissions')}</legend>
+          <legend>{translate('accessTokens.integrations')}</legend>
           {(Object.keys(accessTokenScopeLabels) as AccessTokenScope[]).map(scope => <label key={scope}>
             <input type="checkbox" checked={form.scopes.includes(scope)} onChange={() => form.toggleScope(scope)} />
             <span>{translate(accessTokenScopeLabels[scope])}</span>
@@ -43,6 +46,7 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
           {form.scopes.includes('lineage:read') && <p className="muted">{translate('accessTokens.readHelp')}</p>}
           {form.scopes.includes('metrics:read') && <p className="muted">{translate('accessTokens.metricsHelp')}</p>}
         </fieldset>
+        {form.showsConnections && <TokenConnectionSelector selected={form.connections} onChange={form.setConnections} disabled={form.busy} />}
         {form.includesLineage && <NamespaceSelector selected={form.namespaces} onChange={form.setNamespaces} disabled={form.busy} />}
         <label className="field"><span>{translate('accessTokens.expiresAt')}</span>
           <input type="datetime-local" aria-label={translate('accessTokens.expiresAt')} aria-describedby="access-token-expiry-help" value={form.expiry} onChange={event => form.setExpiry(event.target.value)} disabled={form.busy} />

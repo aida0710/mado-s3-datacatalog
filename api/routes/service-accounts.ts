@@ -28,6 +28,10 @@ const CreateKey = serviceKeyPermissions.safeExtend({
 })
 
 export function mountServiceAccountRoutes(app: Hono, deps: ServiceAccountsDeps): void {
+  app.use('/service-accounts*', async (c, next) => {
+    if (!getSessionPrincipal(c)) return c.json({ error: 'use access-tokens for token management' }, 403)
+    return next()
+  })
   app.use('/service-accounts', requirePermission('service_accounts:manage'))
   app.use('/service-accounts/*', requirePermission('service_accounts:manage'))
 

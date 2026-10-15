@@ -1,6 +1,6 @@
 // api/internal.ts
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { loadEnv } from './env.js'
 import { createPools, closePools } from './db.js'
 import { createCrypto } from './crypto.js'
@@ -8,7 +8,7 @@ import { createStorageFactory } from './storage.js'
 import { requireSafeOrigin } from './lib/originCheck.js'
 import { mountStorageCapabilityGuards } from './lib/storage-capability-routes.js'
 import {
-  canAccessConnection, requireConnectionAccess, requireConnectionQueryAccess, visibleConnectionIds,
+  canAccessConnection, connectionIdsForPrincipal, requireConnectionAccess, requireConnectionQueryAccess, visibleConnectionIds,
 } from './lib/connection-access.js'
 import { explainStorageError } from './lib/storageError.js'
 import { mountStorageListRoutes } from './routes/storage-list.js'
@@ -38,8 +38,11 @@ import { createAuditWriter } from './lib/audit.js'
 import { auditActivity } from './lib/audit-activity.js'
 import { createServiceAccountStore } from './lib/auth-api-keys.js'
 import { createOidcProvider } from './lib/auth-oidc.js'
-import { requirePasswordChangeComplete, requireSession } from './lib/auth-middleware.js'
-import { requirePermission } from './lib/rbac.js'
+import { requirePasswordChangeComplete } from './lib/auth-middleware.js'
+import { requireInternalApiAuthentication } from './lib/internal-api-auth.js'
+import { createInternalTokenAuthenticator } from './lib/internal-token-authenticator.js'
+import { requireInternalApiPermission } from './lib/internal-api-permission-policy.js'
+import { getRequestPrincipal } from './lib/rbac.js'
 import { mountAuthRoutes } from './routes/auth.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountServiceAccountRoutes } from './routes/service-accounts.js'
@@ -51,6 +54,7 @@ import { createRegistryClient } from './lib/registry-client.js'
 import { createMarquezClient } from './lib/marquez-client.js'
 import { createLineageService, type StorageBindingResolver } from './lib/lineage-service.js'
 import { mountLineageRoutes } from './routes/lineage.js'
+import { createNamespaceLineagePolicy } from './lib/namespace-lineage-policy.js'
 import { mountLineageCurationRoutes } from './routes/lineage-curation.js'
 import { requestLogger } from './lib/request-logger.js'
 import { createCapacityStore } from './lib/capacity-store.js'
@@ -75,6 +79,7 @@ const audit = createAuditWriter(pools.rw)
 const users = createUserStore(pools.rw)
 const credentials = createCredentialStore(pools.rw)
 const serviceAccounts = createServiceAccountStore(pools.rw)
+const authenticateInternalToken = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: token => serviceAccounts.authenticate(token) })
 const sessionCookie = sessionCookieName(env.AUTH_COOKIE_SECURE)
 const oidcEnabled = authEnabled && (env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid')
 if (oidcEnabled && (!env.OIDC_ISSUER_URL || !env.OIDC_CLIENT_ID
@@ -157,41 +162,27 @@ if (authEnabled) {
 }
 
 const api = new Hono()
-api.use('*', requireSafeOrigin(env.ALLOWED_ORIGINS))
+const safeInternalOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
 if (authEnabled) {
-  api.use('*', requireSession(sessions, {
-    idleSeconds: env.AUTH_SESSION_IDLE_SECONDS,
-    cookieName: sessionCookie,
-  }))
-  // 成功した変更だけを残せるよう、権限checkより先に変更intentを開始する。
+  api.use('*', requireInternalApiAuthentication({ sessions, authenticateToken: authenticateInternalToken,
+    idleSeconds: env.AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
+  api.use('*', (context, next) => getRequestPrincipal(context)?.kind === 'service_account'
+    ? next() : safeInternalOrigin(context, next))
   api.use('*', auditActivity(audit))
   api.use('*', requirePasswordChangeComplete())
-  // すべてのbuilt-in roleが持つbaseline。Roleなしuserへの意図しない公開を防ぐ。
-  api.use('*', requirePermission('storage:read'))
-
-  // 既存routeのmethod単位RBAC。connection capabilityとは別の「誰が操作できるか」。
-  api.on('POST', '/connections', requirePermission('connections:manage'))
-  api.on('GET', '/connections/access-users', requirePermission('connections:manage'))
-  api.on(['PUT', 'DELETE'], '/connections/:id', requirePermission('connections:manage'))
-  api.on('PUT', '/connections/:id/default', requirePermission('connections:manage'))
-  api.on('PUT', '/notes/:slug', requirePermission('content:write'))
-  api.on('PUT', '/storage/:connectionId/readme', requirePermission('content:write'))
-  api.on('POST', '/tags', requirePermission('content:write'))
-  api.on(['PUT', 'DELETE'], '/tags/:id', requirePermission('content:write'))
-  api.on(['PUT', 'DELETE'], '/storage/:connectionId/favorites/:bucket', requirePermission('content:write'))
-  api.on(['PUT', 'DELETE'], '/storage/:connectionId/tags', requirePermission('content:write'))
-  api.on('PUT', '/settings/:key', requirePermission('settings:manage'))
-  api.on('POST', '/storage/:connectionId/scan', requirePermission('jobs:operate'))
-  api.on('POST', '/storage/:connectionId/capacity/scan', requirePermission('connections:manage'))
-  api.on('POST', '/pricing/refresh', requirePermission('jobs:operate'))
-  api.on('POST', '/jobs/:id/cancel', requirePermission('jobs:operate'))
-  api.use('/lineage/*', requirePermission('lineage:read'))
+  api.use('*', requireInternalApiPermission())
+} else {
+  api.use('*', safeInternalOrigin)
 }
 
 // ホワイトリスト接続は、一覧から隠すだけでなく全Storage APIのURL直打ちも遮断する。
 // 非許可Userへは存在を明かさないため403ではなく404を返す。
 if (authEnabled) {
   api.use('/storage/:connectionId/*', requireConnectionAccess(pools.ro))
+  api.use('/connections/:connectionId', async (context, next) => {
+    if (getRequestPrincipal(context)?.kind !== 'service_account') return next()
+    return requireConnectionAccess(pools.ro)(context, next)
+  })
   api.use('/lineage/resolve-location', requireConnectionQueryAccess(pools.ro))
 }
 
@@ -275,12 +266,18 @@ if (env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN && env.MARQUEZ_URL) {
       return result.rows[0]?.registry_storage_system_key ?? null
     },
   }
+  const namespacePolicy = (context: Context) => {
+    const principal = getRequestPrincipal(context)
+    return principal?.kind === 'service_account' ? createNamespaceLineagePolicy(registry, principal.namespaces) : null
+  }
   mountLineageRoutes(api, {
+    namespacePolicy,
     service: createLineageService({ registry, marquez, bindings }),
     visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
   })
   if (authEnabled) {
     mountLineageCurationRoutes(api, {
+      namespacePolicy,
       registry,
       pool: pools.ro,
       audit,
@@ -302,6 +299,7 @@ if (authEnabled) {
   mountServiceAccountRoutes(api, { store: serviceAccounts, audit })
   const accessTokens = createAccessTokenStore(pools.rw)
   mountAccessTokenRoutes(api, { store: accessTokens, audit,
+    visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
     namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
       marquez: env.MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MARQUEZ_URL }) : null }) })
   mountAuditRoutes(api, { pool: pools.ro })
@@ -309,12 +307,11 @@ if (authEnabled) {
 
 app.route('/api/internal', api)
 
-// Service Account keyでMado自身のデータを読む入口。すべて読み取り専用で、browser sessionの
-// `/api/internal`とは分ける。公開用の:8081には載せない。
+// 連携用の読み取りAPI。既存のscopeとURLを維持し、公開用の:8081には載せない。
 const madoApi = new Hono()
 mountServiceAccessTokenRoutes(madoApi, { authenticate: token => serviceAccounts.authenticate(token) })
 mountMetricsRoutes(madoApi, {
-  authenticate: token => serviceAccounts.authenticate(token),
+  authenticate: authenticateInternalToken,
   collectors: [createCapacityMetricsCollector(capacityStore)],
 })
 mountServiceLineageRoutes(madoApi, {

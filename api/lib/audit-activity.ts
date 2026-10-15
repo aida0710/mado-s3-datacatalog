@@ -1,6 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import type { AuditEventInput, AuditWriter } from './audit.js'
-import { getSessionPrincipal } from './rbac.js'
+import { getRequestPrincipal } from './rbac.js'
+import { principalActor } from './principal-actor.js'
 import { requestMetadata } from './request-metadata.js'
 
 interface Activity {
@@ -130,12 +131,12 @@ export function auditActivity(audit: AuditWriter): MiddlewareHandler {
   return async (c, next) => {
     const activity = classifyActivity(c.req.method, c.req.path)
     if (!activity) return next()
-    const principal = getSessionPrincipal(c)
+    const principal = getRequestPrincipal(c)
     if (!principal) return next()
 
     const metadata = requestMetadata(c)
     const intentId = await audit.start({
-      actor: { type: 'user', userId: principal.user.id },
+      actor: principalActor(principal),
       action: activity.action,
       resourceType: activity.resourceType,
       resourceId: activity.resourceId,

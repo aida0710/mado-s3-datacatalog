@@ -58,9 +58,52 @@ try {
   assert.equal(await page.getByRole('combobox').count(), 0)
   await screenshot('access-tokens-list-ja')
 
+  console.log('Access tokens: internal API permissions and explicit connection selection')
+  await page.setViewportSize({ width: 1440, height: 1280 })
+  await page.getByRole('button', { name: 'アクセストークンを作成', exact: true }).click()
+  const internal = page.getByRole('dialog')
+  assert.equal(await internal.getByRole('checkbox').filter({ visible: true }).count() > 0, true)
+  assert.equal(await internal.locator('input[type="checkbox"]:checked').count(), 0)
+  await internal.getByRole('textbox', { name: '名前', exact: true }).fill('内部APIの自動処理')
+  await internal.getByRole('group', { name: 'Storage', exact: true }).getByRole('checkbox', { name: '読み取り', exact: true }).check()
+  const notes = internal.getByRole('group', { name: 'Notes', exact: true })
+  await notes.getByRole('checkbox', { name: '読み取り', exact: true }).check()
+  await notes.getByRole('checkbox', { name: '編集', exact: true }).check()
+  await internal.getByRole('searchbox', { name: '接続を検索', exact: true }).fill('Speech')
+  await internal.getByRole('checkbox', { name: 'Speech Storage speech0001', exact: true }).check()
+  await internal.getByRole('searchbox', { name: '接続を検索', exact: true }).fill('Backup')
+  assert.equal(await internal.getByRole('checkbox', { name: 'Backup Storage backup0001', exact: true }).isChecked(), false)
+  await internal.getByRole('searchbox', { name: '接続を検索', exact: true }).fill('')
+  assert.equal(await internal.getByRole('checkbox', { name: 'Speech Storage speech0001', exact: true }).isChecked(), true)
+  await internal.locator('.internal-permissions').scrollIntoViewIfNeeded()
+  await screenshot('internal-api-permissions-ja')
+  await screenshot('internal-api-permission-matrix-ja', internal.locator('.internal-permissions__rows'))
+  await internal.locator('.token-connections').scrollIntoViewIfNeeded()
+  await screenshot('internal-api-connections-ja', internal.locator('.token-connections'))
+  await internal.getByRole('button', { name: '発行する', exact: true }).click()
+  const internalValue = await readOneTimeValue()
+  const internalHeaders = { Authorization: `Bearer ${internalValue}`, 'Content-Type': 'application/json' }
+  for (const [path, method, status] of [
+    ['/notes/home', 'GET', 200], ['/notes/home', 'PUT', 200],
+    ['/storage/speech0001/buckets', 'GET', 200], ['/storage/backup0001/buckets', 'GET', 404],
+    ['/connections', 'POST', 403], ['/users', 'GET', 403],
+  ]) {
+    const response = await fetch(`${api}/api/internal${path}`, { method, headers: internalHeaders,
+      ...(method === 'PUT' ? { body: JSON.stringify({ body: 'Browser verification' }) } : {}) })
+    assert.equal(response.status, status, `${method} ${path}`)
+  }
+  const internalRow = page.getByRole('article', { name: '内部APIの自動処理', exact: true })
+  await internalRow.locator('summary').click()
+  await internalRow.getByRole('button', { name: '削除', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '削除', exact: true }).click()
+  await internalRow.waitFor({ state: 'detached' })
+  assert.equal((await fetch(`${api}/api/internal/notes/home`, { headers: internalHeaders })).status, 401)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+
   console.log('Access tokens: issue one credential for dataset reads and lineage writes')
   await page.getByRole('button', { name: 'アクセストークンを作成', exact: true }).click()
   const create = page.getByRole('dialog')
+  await create.getByRole('button', { name: 'ML Tracking連携', exact: true }).click()
   await create.getByRole('textbox', { name: '名前', exact: true }).fill(tokenName)
   await create.getByRole('textbox', { name: '用途のメモ', exact: true }).fill('データセット参照とDataLineageの送信')
   const namespaceSearch = create.getByRole('searchbox', { name: 'Namespaceを検索', exact: true })
@@ -82,7 +125,7 @@ try {
   await create.getByRole('button', { name: '発行する', exact: true }).click()
   const original = await readOneTimeValue()
   await row().waitFor()
-  const metadata = await (await fetch(`${api}/api/internal/access-tokens`)).json()
+  const metadata = await page.evaluate(async () => (await fetch('/api/internal/access-tokens')).json())
   assert.deepEqual(metadata.tokens.find(token => token.name === tokenName).namespaces, ['podcast', 'speech'])
   await probe(original, 'lineage:read', 200)
   await probe(original, 'lineage:write', 200)
@@ -113,6 +156,7 @@ try {
   await openActions()
   await row().getByRole('button', { name: '編集', exact: true }).click()
   await page.getByRole('dialog').getByRole('checkbox', { name: '容量メトリクス取得', exact: true }).check()
+  await page.getByRole('dialog').getByRole('checkbox', { name: 'すべての接続を許可', exact: true }).check()
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click()
   await row().getByText('容量メトリクス取得', { exact: true }).waitFor()
   await probe(regenerated, 'metrics:read', 200)
@@ -134,21 +178,25 @@ try {
   await screenshot('access-tokens-list-en')
   await page.getByRole('button', { name: 'Create access token', exact: true }).click()
   await page.getByRole('dialog').getByRole('textbox', { name: 'Name', exact: true }).fill('Language check')
+  await screenshot('internal-api-permissions-en')
+  await page.getByRole('dialog').getByRole('button', { name: 'ML Tracking integration', exact: true }).click()
   await page.getByRole('dialog').getByRole('checkbox', { name: 'speech', exact: true }).waitFor()
   await screenshot('access-tokens-create-en')
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click()
   await switchLanguage('日本語')
   await page.getByRole('button', { name: 'ダークテーマにする', exact: true }).click()
   await page.setViewportSize({ width: 320, height: 800 })
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+  await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth + 1)
   await screenshot('access-tokens-mobile-dark')
   await page.getByRole('button', { name: 'アクセストークンを作成', exact: true }).click()
   const mobileDialog = page.getByRole('dialog')
+  await screenshot('internal-api-permissions-mobile-dark')
+  await mobileDialog.getByRole('button', { name: 'ML Tracking連携', exact: true }).click()
   const mobileSearch = mobileDialog.getByRole('searchbox', { name: 'Namespaceを検索', exact: true })
   await mobileSearch.fill('spe')
   await mobileDialog.getByRole('checkbox', { name: 'speech', exact: true }).check()
   await mobileDialog.getByRole('checkbox', { name: 'speech', exact: true }).scrollIntoViewIfNeeded()
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+  await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth + 1)
   await screenshot('access-tokens-namespace-mobile-dark')
   await screenshot('namespace-selector-mobile', mobileDialog.getByRole('group', { name: '許可Namespace', exact: true }))
   await mobileDialog.getByRole('button', { name: 'キャンセル', exact: true }).click()
@@ -157,7 +205,10 @@ try {
   await screenshot('access-tokens-actions-dark')
   assert.deepEqual(pageErrors, [])
   if (directory) await writeFile(`${directory}/browser-result.json`, JSON.stringify({
-    checks: ['namespace search and checkbox selection', 'selection retained across searches', 'flat list', 'read/write with one token', 'regeneration', 'disable/enable', 'permission updates', 'delete/cancel', 'old URL', 'English/Japanese', '320px/dark', 'no credentials in screenshots'],
+    checks: ['initial permissions empty', 'internal API read and write', 'connection search and selection retained',
+      'outside connection denied', 'administration denied', 'deleted token denied',
+      'namespace search and checkbox selection', 'selection retained across searches', 'flat list', 'read/write with one token',
+      'regeneration', 'disable/enable', 'permission updates', 'delete/cancel', 'old URL', 'English/Japanese', '320px/dark', 'no credentials in screenshots'],
     pageErrors,
   }, null, 2))
   console.log('Access-token browser checks passed; screenshots contain no credential values.')

@@ -102,6 +102,7 @@ services:
       - "5173:5173"
     volumes:
       - ./front:/app
+      - ./api/shared/access-token-permissions.ts:/api/shared/access-token-permissions.ts:ro
       - /app/node_modules
       # vite.config がコミット情報を読むため host の .git を read-only で渡す。
       - ./.git:/app/.git:ro

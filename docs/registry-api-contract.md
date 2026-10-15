@@ -60,6 +60,13 @@ to check the read key's allowed namespaces before returning the version.
 Missing or inconsistent identities are rejected with 502 by the read API;
 Mado does not infer an upstream identity from the request URL.
 
+For namespace-restricted internal graph reads, version and run nodes must include
+their canonical UUID as `node.data.id`. Mado authorizes these IDs against Registry
+details instead of parsing opaque node IDs. Nodes without this field or outside
+the token's namespaces are omitted and the graph is marked truncated. Tokens with
+all namespaces and browser sessions retain the original graph's nodes and edges.
+Mado connection references in graph metadata follow the caller's connection visibility.
+
 ## OpenLineage retries
 
 `POST /v1/ingest/openlineage` must accept retries of the same event, including

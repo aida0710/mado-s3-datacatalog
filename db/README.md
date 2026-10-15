@@ -133,6 +133,23 @@ deployment. The migration preserves credentials, permissions, and actor IDs.
 Update both `api-internal` and `api-lineage` to enforce per-token disabling
 on both listeners.
 
+### Internal API tokens (after v0.2.0)
+
+Apply `039_internal_api_tokens.sql` as the database administrator before starting
+the updated internal API. For older databases, apply `038_access_tokens.sql` first.
+
+```sh
+docker compose -f compose.prod.yaml exec -T postgres \
+  psql -v ON_ERROR_STOP=1 -1 -U postgres -d dashboard \
+  -f /migrations/039_internal_api_tokens.sql
+```
+
+Existing tokens receive no internal API permissions. Their hashes, scopes,
+namespaces and unrestricted integration metrics access are preserved. The new
+permission and connection tables are private to the dashboard roles; the public
+OpenLineage role and worker do not need access. See
+[the permission contract](../docs/internal-api-permissions.md).
+
 ## Manual setup (non-Docker)
 
 If you don't use Docker, do the equivalent by hand against any local Postgres 14+:

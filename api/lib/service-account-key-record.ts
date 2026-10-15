@@ -15,7 +15,7 @@ export async function insertServiceAccountKey(database: Queryable, input: {
   scopes: string[]
   namespaces: string[]
   expiresAt?: Date | null
-  createdBy: string
+  createdBy: string | null
 }): Promise<IssuedServiceAccountKey> {
   const id = newId()
   const tokenPrefix = `${SERVICE_KEY_TOKEN_PREFIX}${id.replaceAll('-', '').slice(0, PUBLIC_ID_LENGTH)}`

@@ -25,9 +25,11 @@ must be inside the edge ACL and resolve the private DNS name.
 Scraping requires an access token with the `metrics:read` scope. Issue it
 in Settings → Access → Access Tokens and select **容量メトリクス取得**
 (**Read capacity metrics** in English). A token can combine scopes; a dedicated
-Prometheus token only needs `metrics:read`. This scope reads every connection's bucket names and sizes,
-including connections limited by a user allowlist, so decide who can view the
-Grafana dashboards with that in mind.
+Prometheus token only needs `metrics:read` and its allowed connections. New tokens
+select connections explicitly, including restricted connections when granted.
+Connection names, bucket/prefix metrics and tracking settings all use that
+selection. Existing tokens keep their previous all-connections scope until their
+connection selection is changed.
 
 ```yaml
 scrape_configs:

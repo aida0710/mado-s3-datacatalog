@@ -4,7 +4,9 @@ import type { Pool } from 'pg'
 import { z } from 'zod'
 import type { AuditWriter } from '../lib/audit.js'
 import { requestMetadata } from '../lib/request-metadata.js'
-import { getSessionPrincipal, requirePermission } from '../lib/rbac.js'
+import { getRequestPrincipal, requirePermission } from '../lib/rbac.js'
+import { principalActor, principalRegistryId } from '../lib/principal-actor.js'
+import { LineageNamespaceError, type NamespaceLineagePolicy } from '../lib/namespace-lineage-policy.js'
 import type {
   RegistryClient,
   RegistryManualLocationInput,
@@ -141,6 +143,7 @@ interface StorageBindingRow {
 
 export interface LineageCurationDeps {
   registry: RegistryClient
+  namespacePolicy?: (c: Context) => NamespaceLineagePolicy | null
   pool: Pool
   audit: AuditWriter
   /** 保存場所に使う接続を、利用者が使えるか。ホワイトリスト接続を body の ID で指定させないため。 */
@@ -241,6 +244,7 @@ function processingInput(value: z.infer<typeof ProcessingFields>): Record<string
 }
 
 function mutationError(c: Context, error: unknown): Response {
+  if (error instanceof LineageNamespaceError) return c.json({ error: error.message }, error.status)
   if (!(error instanceof RegistryClientError)) throw error
   if (error.status === 404) return c.json({ error: '指定したDatasetまたはVersionが見つかりません。' }, 404)
   if (error.status === 409) return c.json({ error: '同じ識別子または保存場所がすでに登録されています。' }, 409)
@@ -259,14 +263,17 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
     await deps.canAccessConnection(c, location.connectionId) ? locationInput(deps.pool, location) : null
 
   app.patch('/lineage/curation/datasets/:datasetId', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const datasetId = c.req.param('datasetId')
     if (!Uuid.safeParse(datasetId).success) return c.json({ error: 'Dataset IDを確認してください。' }, 400)
     const parsed = DatasetUpdate.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
     return withDatasetMutationLock(datasetId, async () => {
       try {
-        const current = await deps.registry.getDataset(datasetId)
+        const policy = deps.namespacePolicy?.(c)
+        const current = policy && !policy.unrestricted
+          ? await policy.dataset(datasetId)
+          : await deps.registry.getDataset(datasetId)
         const unchanged = Object.entries(parsed.data).every(([key, value]) => {
           const existing = current[key as keyof typeof current]
           return Array.isArray(value) && Array.isArray(existing)
@@ -278,7 +285,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
         const result = await deps.registry.updateDataset(datasetId, parsed.data)
         markAuditChangeCommitted(c)
         await writeDedicatedAudit(c, deps.audit, {
-          actor: { type: 'user', userId: principal.user.id },
+          actor: principalActor(principal),
           action: 'lineage.dataset.update', outcome: 'success',
           resourceType: 'dataset', resourceId: datasetId,
           details: { changedFields: Object.keys(parsed.data) },
@@ -292,7 +299,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   })
 
   app.post('/lineage/curation/datasets', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const parsed = DatasetRegistration.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
     const location = parsed.data.location
@@ -301,6 +308,8 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
       return c.json({ error: 'この接続はDataset Registryへ紐付けられていません。' }, 422)
     }
     try {
+      const policy = deps.namespacePolicy?.(c)
+      await policy?.authorizeDatasetRegistration(parsed.data)
       const result = await deps.registry.registerManualDataset({
         registration_key: `mado-manual-${randomUUID()}`,
         ...(parsed.data.datasetId ? { dataset_id: parsed.data.datasetId } : {}),
@@ -326,13 +335,13 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
         ...(parsed.data.source ? { source: sourceInput(parsed.data.source) } : {}),
         ...(parsed.data.processing ? { processing: processingInput(parsed.data.processing) } : {}),
         evidence_refs: parsed.data.evidenceRefs,
-        submitted_by: principal.user.id,
+        submitted_by: principalRegistryId(principal),
       })
       markAuditChangeCommitted(c)
       const dataset = result.dataset as Record<string, unknown> | undefined
       const version = result.version as Record<string, unknown> | undefined
       await writeDedicatedAudit(c, deps.audit, {
-        actor: { type: 'user', userId: principal.user.id },
+        actor: principalActor(principal),
         action: 'lineage.dataset.register', outcome: 'success',
         resourceType: 'dataset', resourceId: typeof dataset?.datasetId === 'string'
           ? dataset.datasetId : typeof dataset?.dataset_id === 'string' ? dataset.dataset_id : null,
@@ -356,21 +365,23 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   })
 
   app.post('/lineage/curation/locations', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const parsed = LocationRegistration.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
     const location = await accessibleLocationInput(c, parsed.data.location)
     if (!location) return c.json({ error: 'この接続はDataset Registryへ紐付けられていません。' }, 422)
     try {
+      const policy = deps.namespacePolicy?.(c)
+      if (policy && !policy.unrestricted) await policy.version(parsed.data.versionId)
       const result = await deps.registry.registerManualLocation({
         version_id: parsed.data.versionId,
         location,
         evidence_refs: parsed.data.evidenceRefs,
-        submitted_by: principal.user.id,
+        submitted_by: principalRegistryId(principal),
       })
       markAuditChangeCommitted(c)
       await writeDedicatedAudit(c, deps.audit, {
-        actor: { type: 'user', userId: principal.user.id },
+        actor: principalActor(principal),
         action: 'lineage.location.register', outcome: 'success',
         resourceType: 'dataset_version', resourceId: parsed.data.versionId,
         details: { storageUri: location.uri, evidenceRefs: parsed.data.evidenceRefs },
@@ -383,10 +394,12 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   })
 
   app.post('/lineage/curation/runs', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const parsed = LineageRegistration.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
     try {
+      const policy = deps.namespacePolicy?.(c)
+      await policy?.authorizeRunRegistration(parsed.data)
       const result = await deps.registry.registerManualLineage({
         run_key: `mado-manual-${randomUUID()}`,
         transformation: transformationInput(parsed.data.transformation),
@@ -405,11 +418,11 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
         evidence_refs: parsed.data.evidenceRefs,
         execution_time_status: parsed.data.executionTimeStatus,
         occurred_at: parsed.data.occurredAt,
-        submitted_by: principal.user.id,
+        submitted_by: principalRegistryId(principal),
       })
       markAuditChangeCommitted(c)
       await writeDedicatedAudit(c, deps.audit, {
-        actor: { type: 'user', userId: principal.user.id },
+        actor: principalActor(principal),
         action: 'lineage.run.register', outcome: 'success',
         resourceType: 'run', resourceId: typeof result.id === 'string' ? result.id : null,
         details: {

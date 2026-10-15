@@ -22,13 +22,27 @@ Adminが**Settings → Access → Access Tokens**の**アクセストークン�
 | --- | --- | --- |
 | `lineage:read` | データセットとバージョンの参照 | `GET /api/mado/lineage/catalog`など |
 | `lineage:write` | OpenLineageイベントの送信 | `POST /api/openlineage/v1/lineage` |
-| `metrics:read` | 全接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
+| `metrics:read` | 許可した接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
 
-mado自身のデータを返す `/api/mado/` はGETだけです。一つのトークンに必要なscopeを組み合わせられます。`metrics:read`はホワイトリストで利用者を限定した接続も含め、全接続のバケット名・容量を読み取れます。参照・送信と組み合わせた場合も、容量取得はNamespaceでは制限されません。
+連携用の `/api/mado/` はGETだけです。一つのトークンに必要なscopeを組み合わせられます。容量取得は選択した接続が対象で、Namespaceでは制限されません。既存トークンの全接続参照は維持されます。
 
 `GET /api/mado/access-token`は、scopeを問わず、呼び出したトークン自身の名前・scope・Namespace・有効期限を返します（`namespaces`の`["*"]`は全Namespace）。ほかのトークンの情報や、トークンの値は返しません。連携先が、許可されたNamespaceを利用者に入力させずに知るための入口です。
 
 ML Trackingでデータセットを参照し、実験のDataLineageを送る場合は、**データセット参照**と**DataLineageの送信**を許可したトークンを、ML Trackingの［連携］の「アクセストークン」に設定します。Namespaceは入力しません。ML Trackingがこの入口から許可範囲を読みます。
+
+## 内部APIを使う
+
+Storage・README・Notes・DataLineage・ジョブ・接続・設定など、画面と同じ内部APIをトークンで利用できます。新規作成は権限未選択から始まり、機能ごとに読み取り・編集・削除・実行・管理を選びます。必要ならプリセットを使い、対象の接続・Namespaceを検索してチェックします。
+
+<Screenshot src="/screenshots/token-permissions.png" alt="機能ごとの操作権限と接続を選ぶ画面" caption="機能ごとに操作を選び、許可する接続をチェックします。" />
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $MADO_API_TOKEN" \
+  "$MADO_URL/api/internal/connections"
+```
+
+この例には`permissions: ["connections:read"]`と接続の選択が必要です。内部APIの権限は上記の連携scopeと別に設定します。トークン管理も許可できますが、自分より強いトークンの発行・再発行はできません。ユーザーの変更には管理者プリセットの全権限・全対象が必要です。ログイン・SSO・自分のパスワード変更はブラウザ専用です。[権限の一覧と対象制限](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md)を参照してください。
 
 ## OpenLineageイベントを送信する
 

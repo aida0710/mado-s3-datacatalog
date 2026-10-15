@@ -22,13 +22,27 @@ The value is shown only once, when issued. Save it in the integration’s secret
 | --- | --- | --- |
 | `lineage:read` | Read datasets and versions | `GET /api/mado/lineage/catalog` and detail endpoints |
 | `lineage:write` | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
-| `metrics:read` | Get capacity metrics for all connections | `GET /api/mado/metrics/capacity` |
+| `metrics:read` | Get capacity metrics for allowed connections | `GET /api/mado/metrics/capacity` |
 
-`/api/mado/`, which returns mado's own data, accepts GET only. One token can combine the scopes it needs. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by an allowlist. Capacity metrics are not limited by namespace, even when combined with lineage scopes.
+The integration API `/api/mado/` accepts GET only. One token can combine scopes. Capacity metrics use the selected connections, independently of namespaces. Existing tokens retain their previous access to all connections.
 
 `GET /api/mado/access-token` returns the calling token's own name, scopes, namespaces, and expiration, whatever its scopes (`["*"]` in `namespaces` means all namespaces). It never returns other tokens or token values. Integrations use it to learn the allowed namespaces without asking people to type them.
 
 For ML Tracking, enter a token that allows **Read datasets** and **Send DataLineage** in the **Access token** field of its **Integrations**. You do not enter namespaces: ML Tracking reads them from this endpoint.
+
+## Use internal APIs
+
+Tokens can use the same internal APIs as the UI for Storage, READMEs, Notes, DataLineage, jobs, connections and settings. New tokens start with no permissions. Select read, edit, delete, run or manage actions for each feature, optionally using a preset, then search and check the allowed connections and namespaces.
+
+<Screenshot src="/screenshots/en/token-permissions.png" alt="Choosing actions for each feature" caption="Choose each allowed action and select the connections the token may use." />
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $MADO_API_TOKEN" \
+  "$MADO_URL/api/internal/connections"
+```
+
+This example needs `permissions: ["connections:read"]` and selected connections. Internal permissions are separate from integration scopes above. Token management can be granted, but callers cannot issue or regenerate stronger tokens. User administration requires the Administrator preset's full permissions and targets. Login, SSO and self-service password changes remain browser-only. See the [permission and target reference](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md).
 
 ## Send OpenLineage events
 
