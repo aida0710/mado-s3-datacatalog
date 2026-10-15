@@ -117,6 +117,22 @@ docker compose -f compose.prod.yaml up -d
 
 There is no migration-tracking table; which files have been applied is determined by inspecting the schema. Use `compose.dev.yaml` and `-d dashboard_test` for the dev / test databases.
 
+### Access tokens (v0.2.0)
+
+For a database already using the v0.1.0 schema, back up the database and apply
+`038_access_tokens.sql` before starting either new API:
+
+```sh
+docker compose -f compose.prod.yaml exec -T postgres \
+  psql -v ON_ERROR_STOP=1 -1 -U postgres -d dashboard \
+  -f /migrations/038_access_tokens.sql
+```
+
+Use `compose.yaml` for a release bundle or `compose.mdx.yaml` for an MDX
+deployment. The migration preserves credentials, permissions, and actor IDs.
+Update both `api-internal` and `api-lineage` to enforce per-token disabling
+on both listeners.
+
 ## Manual setup (non-Docker)
 
 If you don't use Docker, do the equivalent by hand against any local Postgres 14+:
