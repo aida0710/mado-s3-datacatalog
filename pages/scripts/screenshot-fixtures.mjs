@@ -86,7 +86,7 @@ const SAMPLE_TEXT = {
     },
     denoiseJob: { label: 'ノイズ除去', description: '音声から背景ノイズを除去' },
     estimateNote: 'スクリーンショット用のサンプル見積もり',
-    serviceAccountDescription: '音声処理のOpenLineage送信',
+    accessTokenDescription: '音声処理のOpenLineage送信',
     missingResponse: 'この画面用のサンプル応答はありません',
   },
   en: {
@@ -131,7 +131,7 @@ You can follow how the data was processed from **DataLineage**.`,
     },
     denoiseJob: { label: 'Noise reduction', description: 'Removes background noise from audio' },
     estimateNote: 'Sample estimate for screenshots',
-    serviceAccountDescription: 'Sends OpenLineage events from audio processing',
+    accessTokenDescription: 'Sends OpenLineage events from audio processing',
     missingResponse: 'There is no sample response for this screen',
   },
 }
@@ -230,7 +230,12 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (path.endsWith('/notes/home/history')) return sendJson({ versions: [{ id: 3, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 }] })
   if (path.endsWith('/notes/home/history/3')) return sendJson({ id: 3, slug: 'home', body: text.noteBody, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 })
   if (path === '/api/internal/users') return sendJson({ users: [user, { ...user, id: 'sample-viewer', username: 'demo-viewer', displayName: 'Sample viewer', email: 'viewer@example.com', roles: ['viewer'], status: 'active' }].map(item => ({ ...item, status: 'active' })) })
-  if (path === '/api/internal/service-accounts') return sendJson({ accounts: [{ id: 'sample-pipeline', name: 'audio-pipeline', description: text.serviceAccountDescription, status: 'active' }] })
+  if (path === '/api/internal/access-tokens') return sendJson({ tokens: [{
+    id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'audio-pipeline',
+    description: text.accessTokenDescription, tokenPrefix: 'mado_lin_samplepipeline',
+    scopes: ['lineage:read', 'lineage:write'], namespaces: ['sample-audio'], status: 'active',
+    createdAt: capturedAt, expiresAt: null, regeneratedAt: null, lastUsedAt: capturedAt, revision: 1,
+  }] })
   if (path === '/api/internal/audit-events') return sendJson({ events: [], nextBeforeId: null })
   if (path === '/api/internal/lineage/catalog') {
     const datasets = registryDatasets(text)

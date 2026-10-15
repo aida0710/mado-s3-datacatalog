@@ -64,18 +64,18 @@ Pipeline
                       └─ Marquez: 再構築可能な論理グラフ
 ```
 
-### 2.1 Service Accountを発行する
+### 2.1 アクセストークンを発行する
 
 管理者がMadoの次の画面で発行します。
 
 ```text
-Settings → Access → Service Accounts
+Settings → Access → Access Tokens
 ```
 
-1. Pipeline単位のService Accountを作る。
-2. `lineage:write` scopeを持つLineage API keyを発行する。
-3. Pipelineが書くnamespaceをallow listへ入れる。
-4. 画面に一度だけ表示されるkeyをsecret managerへ保存する。
+1. 「アクセストークンを作成」で名前を入力する。
+2. 「DataLineageの送信」（`lineage:write`）を選び、Pipelineが書くNamespaceを指定する。
+3. 必要なら「データセット参照」も同じトークンに許可する。
+4. 発行時に一度だけ表示される値をsecret managerへ保存する。
 
 Job namespaceと、全output Datasetのnamespaceに書き込み権限が必要です。Inputが別namespaceにあり、
 まだRegistryへ登録されていない場合は、そのinput namespaceも必要です。最初から`*`を渡すのではなく、

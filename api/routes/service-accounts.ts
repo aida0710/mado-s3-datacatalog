@@ -2,7 +2,7 @@ import type { Hono } from 'hono'
 import { z } from 'zod'
 import type { AuditWriter } from '../lib/audit.js'
 import type { ServiceAccountStore } from '../lib/auth-api-keys.js'
-import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
+import { serviceKeyPermissions } from '../lib/service-key-permissions.js'
 import { getSessionPrincipal, requirePermission } from '../lib/rbac.js'
 import { requestMetadata } from '../lib/request-metadata.js'
 import { markAuditChangeCommitted, writeDedicatedAudit } from '../lib/audit-activity.js'
@@ -21,17 +21,10 @@ const PatchAccount = z.object({
   description: z.string().trim().max(2048).optional(),
   status: z.enum(['active', 'disabled']).optional(),
 })
-// keyは用途ごとに発行し、1本に1つのscopeだけを付ける。書き込み用のkeyが漏れても
-// Madoのデータを読めないようにするため。
-// Lineageの読み書きはNamespaceで制限する。容量metricsにはNamespaceがない。
-const CreateKey = z.object({
+// Keep the legacy endpoint compatible while allowing the same combinations as access tokens.
+const CreateKey = serviceKeyPermissions.safeExtend({
   name: z.string().trim().min(1).max(128),
-  scopes: z.array(z.enum(SERVICE_KEY_SCOPES)).length(1),
-  namespaces: z.array(z.string().trim().min(1).max(512)).max(128).default([]),
   expiresAt: z.string().datetime().nullable().optional(),
-}).refine(key => {
-  const isLineageKey = key.scopes.some(scope => scope === 'lineage:write' || scope === 'lineage:read')
-  return isLineageKey ? key.namespaces.length > 0 : key.namespaces.length === 0
 })
 
 export function mountServiceAccountRoutes(app: Hono, deps: ServiceAccountsDeps): void {

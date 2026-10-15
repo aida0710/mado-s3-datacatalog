@@ -43,6 +43,8 @@ import { requirePermission } from './lib/rbac.js'
 import { mountAuthRoutes } from './routes/auth.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountServiceAccountRoutes } from './routes/service-accounts.js'
+import { mountAccessTokenRoutes } from './routes/access-tokens.js'
+import { createAccessTokenStore } from './lib/access-token-store.js'
 import { mountAuditRoutes } from './routes/audit.js'
 import { createRegistryClient } from './lib/registry-client.js'
 import { createMarquezClient } from './lib/marquez-client.js'
@@ -296,6 +298,7 @@ if (authEnabled) {
     ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
   })
   mountServiceAccountRoutes(api, { store: serviceAccounts, audit })
+  mountAccessTokenRoutes(api, { store: createAccessTokenStore(pools.rw), audit })
   mountAuditRoutes(api, { pool: pools.ro })
 }
 

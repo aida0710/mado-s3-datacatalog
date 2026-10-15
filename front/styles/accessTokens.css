@@ -1,0 +1,36 @@
+.access-token-list { display: grid; gap: 12px; }
+.access-token-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.access-token-row h3 { margin: 0 0 6px; font-size: 14px; }
+.access-token-row p { margin: 4px 0; font-size: 12px; }
+.access-token-identity, .access-token-grants { min-width: 0; }
+.access-token-identity code { font-size: 11px; }
+.access-token-controls { display: flex; align-items: flex-start; gap: 12px; }
+.access-token-scope-list { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; }
+.access-token-actions { position: relative; }
+.access-token-actions summary { display: flex; padding: 4px; cursor: pointer; list-style: none; }
+.access-token-actions summary::-webkit-details-marker { display: none; }
+.access-token-menu {
+  position: absolute; top: 100%; right: 0; z-index: 20;
+  display: flex; flex-direction: column; min-width: 150px;
+}
+.access-token-menu button { text-align: start; white-space: nowrap; }
+.access-token-form { display: grid; gap: 16px; }
+.access-token-permissions { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border); }
+.access-token-permissions legend { padding: 0 4px; font-size: 12px; }
+.access-token-permissions label { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.access-token-permissions input { flex: 0 0 auto; width: auto; }
+.access-token-permissions p { font-size: 12px; margin: 8px 0 0; }
+@media (width < 640px) {
+  .access-token-row { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+  .access-token-grants { grid-column: 1 / -1; grid-row: 2; }
+  .access-token-actions summary { min-width: var(--tap-target); min-height: var(--tap-target); justify-content: center; align-items: center; }
+  .access-token-menu button { min-height: var(--tap-target); }
+}

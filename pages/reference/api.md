@@ -1,23 +1,30 @@
 ---
-description: Service Account keyのscopeとnamespace、OpenLineageイベントの送信、Prometheus容量メトリクス。
+description: アクセストークンの発行・再発行・無効化と、scope・Namespace、OpenLineageイベントの送信、Prometheus容量メトリクス。
 ---
 
-# Service AccountからAPIを使う
+# アクセストークンでAPIを使う
 
-PipelineからのOpenLineage送信と、Prometheusからのメトリクス取得はService Account keyを使います。人のログイン情報をスクリプトへ渡す必要はありません。
+データセットの参照、PipelineからのOpenLineage送信、Prometheusからのメトリクス取得はアクセストークンを使います。人のログイン情報をスクリプトへ渡す必要はありません。
 
-<Screenshot src="/screenshots/service-accounts.png" alt="audio-pipelineのService Accountを管理する画面" caption="Settings → Access → Service Accountsからアカウントとkeyを管理します。" />
+<Screenshot src="/screenshots/service-accounts.png" alt="アクセストークンの権限と有効状態を一覧する画面" caption="Settings → Access → Access Tokensで、トークンごとの権限と有効状態を管理します。" />
 
-## 用途ごとにkeyを発行する
+## トークンを作成する
 
-AdminがService Accountを作成し、必要なscopeとnamespaceを指定してkeyを発行します。keyの値は発行時に一度だけ表示されます。送信側のシークレット管理へ保存してください。
+Adminが**Settings → Access → Access Tokens**の**アクセストークンを作成**を開き、名前と許可する操作を指定します。アカウントを別に作る操作はありません。
+
+**データセット参照**と**DataLineageの送信**は両方選べます。Namespaceはデータセットや処理のグループ名です。例えば、音声を`speech`、Podcastを`podcast`に分けられます。S3の接続やバケットとは別の分類です。参照・送信を許可するNamespaceをカンマで区切って入力してください。`*`は全Namespaceを許可します。容量取得だけを選ぶ場合、Namespaceは不要です。
+
+値は発行時に一度だけ表示されます。連携先のシークレット管理へ保存してください。有効期限は任意です。
 
 | Scope | 用途 | 入口 |
 | --- | --- | --- |
+| `lineage:read` | データセットとバージョンの参照 | `GET /api/mado/lineage/catalog`など |
 | `lineage:write` | OpenLineageイベントの送信 | `POST /api/openlineage/v1/lineage` |
 | `metrics:read` | 全接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
 
-mado自身のデータを返す `/api/mado/` はGETだけです。OpenLineage送信とメトリクス取得には、別々のscopeのkeyを使います。`metrics:read` はホワイトリストで利用者を限定した接続も含め、全接続のバケット名・容量を読み取れます。
+mado自身のデータを返す `/api/mado/` はGETだけです。一つのトークンに必要なscopeを組み合わせられます。`metrics:read`はホワイトリストで利用者を限定した接続も含め、全接続のバケット名・容量を読み取れます。参照・送信と組み合わせた場合も、容量取得はNamespaceでは制限されません。
+
+ML Trackingでデータセットを参照し、実験のDataLineageを送る場合は、参照と送信を許可した同じ値を参照用キーと送信用キーの両方に設定できます。
 
 ## OpenLineageイベントを送信する
 
@@ -59,6 +66,13 @@ scrape_configs:
 
 `mado.example.com` を実際のUI用hostnameへ置き換えます。返すメトリクスの一覧は[容量メトリクスの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
-## 使わなくなったkeyは失効する
+## トークンを編集・再発行・無効化する
 
-Service Accountsから対象のkeyを失効します。scopeやnamespaceを変えるときは、新しいkeyを発行して送信側を切り替えます。
+一覧の各トークンの**…**から操作します。
+
+- **編集**: 名前・用途のメモ・権限・Namespace・有効期限を変更します。値は変わりません。
+- **再発行**: 以前の値を直ちに失効し、新しい値を一度だけ表示します。権限・有効期限・無効状態は引き継ぎます。連携先の値も更新してください。
+- **無効にする / 有効にする**: 同じ値の利用を一時停止・再開します。
+- **削除**: 利用を終了し、一覧から取り除きます。元には戻せません。監査用の操作履歴は残ります。
+
+既存のService Account keyも同じ一覧から管理できます。値と権限はそのまま引き継ぎます。

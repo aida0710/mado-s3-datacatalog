@@ -2,7 +2,7 @@
 description: DatasetとJob、DatasetVersionとRunをグラフで辿り、データの処理と保存先を確認する。
 ---
 
-# Dataset Lineageでデータの来歴を辿る
+# DataLineageでデータのつながりを辿る
 
 DataLineageでは、元データ、処理、生成されたデータのつながりを見られます。メタデータの正本はDataset Registryで、OpenLineageイベントや手動登録した情報を表示します。
 
@@ -27,6 +27,6 @@ DataLineageを開き、カタログで名前やnamespaceを絞って対象を選
 
 CuratorまたはAdminは、画面からデータセット・保存場所・処理履歴を登録できます。既存データを整理するときに使います。
 
-Pipelineからの継続的な送信は、`lineage:write` のService Account keyを使います。[APIの設定](../reference/api.md)に、送信先とscopeの指定をまとめています。
+Pipelineからの継続的な送信は、`lineage:write` のアクセストークンを使います。[APIの設定](../reference/api.md)に、送信先とscopeの指定をまとめています。
 
-Lineageの情報が未登録なら、madoが来歴を自動推測することはありません。登録状況と投影の状態を確認してください。
+Lineageの情報が未登録なら、madoがDataLineageを自動推測することはありません。登録状況と投影の状態を確認してください。

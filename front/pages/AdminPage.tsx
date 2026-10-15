@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent, type MouseEvent } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Copy, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { SecretNotice } from '../components/SecretNotice'
+import AccessTokensPage from './AccessTokensPage'
 import { fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
 import { narrowerThan } from '../lib/breakpoints'
@@ -19,13 +21,6 @@ interface UserRow {
   status: 'active' | 'disabled'
   roles: string[]
   authMethods: Array<'local' | 'sso'>
-}
-
-interface ServiceAccountRow {
-  id: string
-  name: string
-  description: string
-  status: 'active' | 'disabled'
 }
 
 interface AuditEventRow {
@@ -50,6 +45,13 @@ interface AuditPage {
 }
 
 const ACTION_LABELS: Record<string, string> = {
+  get 'access_token.create'() { return translate('accessTokens.audit.create') },
+  get 'access_token.update'() { return translate('accessTokens.audit.update') },
+  get 'access_token.enable'() { return translate('accessTokens.audit.enable') },
+  get 'access_token.disable'() { return translate('accessTokens.audit.disable') },
+  get 'access_token.regenerate'() { return translate('accessTokens.audit.regenerate') },
+  get 'access_token.delete'() { return translate('accessTokens.audit.delete') },
+  get 'access_token.manage'() { return translate('accessTokens.audit.manage') },
   get 'auth.password.change'() { return translate('adminPage.changePassword') },
   get 'auth.profile.update'() { return translate('adminPage.updateAccountSettings') },
   get 'auth.bootstrap_admin'() { return translate('adminPage.createInitialAdministrator') },
@@ -113,15 +115,6 @@ const ROLE_OPTIONS = [
 ] as const
 
 type RoleId = (typeof ROLE_OPTIONS)[number]['id']
-
-// Service Account keyの用途。Madoのデータへは読み取りのscopeだけを開く。
-const KEY_SCOPE_OPTIONS = [
-  { scope: 'lineage:write', get label() { return translate('adminPage.sendOpenLineageLineageWrite') }, get help() { return translate('adminPage.canWriteLineageOnlyToAllowedNamespaces') } },
-  { scope: 'lineage:read', get label() { return translate('adminPage.readDatasetsLineageRead') }, get help() { return translate('adminPage.canReadDatasetsInAllowedNamespaces') } },
-  { scope: 'metrics:read', get label() { return translate('adminPage.prometheusCollectionMetricsRead') }, get help() { return translate('adminPage.canReadBucketNamesAndCapacitiesForEvery') } },
-] as const
-
-type KeyScope = (typeof KEY_SCOPE_OPTIONS)[number]['scope']
 
 interface UsersResponse {
   users: UserRow[]
@@ -201,32 +194,6 @@ function RowToggle({ open, controls, onToggle }: { open: boolean; controls: stri
     >
       {open ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
     </button>
-  )
-}
-
-/** 一度だけ表示する秘密の値 (一時パスワード・API key)。閉じたら二度と出ない。 */
-function SecretNotice({ secret, note, onClose }: {
-  secret: { label: string; value: string }
-  note: string
-  onClose: () => void
-}) {
-  useLocale()
-  const ref = useRef<HTMLDivElement>(null)
-  // 一覧の下の行やフォームから発行すると、ここは画面の外にあることが多い。見えるところまで送る。
-  useEffect(() => {
-    ref.current?.scrollIntoView?.({ block: 'nearest' })
-  }, [secret.value])
-  return (
-    <div ref={ref} className="secret-notice" role="status">
-      <strong>{secret.label} — {note}</strong>
-      <code>{secret.value}</code>
-      <span className="secret-notice__actions">
-        <button type="button" className="button small" onClick={() => void navigator.clipboard.writeText(secret.value)}>
-          <Copy size={14} aria-hidden="true" />
-          {translate('adminPage.copy')}</button>
-        <button type="button" className="button small" onClick={onClose}>{translate('common.close')}</button>
-      </span>
-    </div>
   )
 }
 
@@ -545,143 +512,6 @@ function UsersPage() {
   )
 }
 
-function ServiceAccountsPage() {
-  useLocale()
-  const [accounts, setAccounts] = useState<ServiceAccountRow[]>([])
-  const [notice, setNotice] = useState<string | null>(null)
-  const [secret, setSecret] = useState<{ label: string; value: string } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [keyScope, setKeyScope] = useState<KeyScope>('lineage:write')
-
-  const reload = useCallback(async () => {
-    setError(null)
-    try {
-      const body = await jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
-      setAccounts(body.accounts)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadServiceAccounts'))
-    }
-  }, [])
-
-  useEffect(() => {
-    let current = true
-    jsonRequest<{ accounts: ServiceAccountRow[] }>('/api/internal/service-accounts')
-      .then(body => { if (current) setAccounts(body.accounts) })
-      .catch(cause => {
-        if (current) setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadServiceAccounts'))
-      })
-    return () => { current = false }
-  }, [])
-
-  const createAccount = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formElement = event.currentTarget
-    const form = new FormData(formElement)
-    setError(null)
-    try {
-      await jsonRequest('/api/internal/service-accounts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.get('name'), description: form.get('description') }),
-      })
-      formElement.reset()
-      setNotice(translate('adminPage.serviceAccountCreated'))
-      await reload()
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotCreate'))
-    }
-  }
-
-  const issueKey = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formElement = event.currentTarget
-    const form = new FormData(formElement)
-    const accountId = String(form.get('accountId') ?? '')
-    // Lineageの参照・送信先をNamespaceで制限する。容量metricsにはNamespaceがない。
-    const namespaces = keyScope !== 'metrics:read'
-      ? String(form.get('namespaces') ?? '').split(',').map(value => value.trim()).filter(Boolean)
-      : []
-    setError(null)
-    try {
-      const body = await jsonRequest<{ key: { name: string; token: string } }>(
-        `/api/internal/service-accounts/${encodeURIComponent(accountId)}/keys`,
-        {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: form.get('name'), scopes: [keyScope], namespaces }),
-        },
-      )
-      setSecret({ label: body.key.name, value: body.key.token })
-      formElement.reset()
-      setNotice(null)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotIssueKey'))
-    }
-  }
-
-  return (
-    <section className="admin-accounts">
-      {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
-      {notice && <p className="notice success" role="status">{localizeMessage(notice)}</p>}
-      {secret && <SecretNotice secret={secret} note={translate('adminPage.thisKeyIsShownOnlyOnce')} onClose={() => setSecret(null)} />}
-      {accounts.length > 0 && (
-        <div className="table-scroll">
-          <table className="admin-accounts-table">
-            <thead>
-              <tr>
-                <th scope="col">{translate('common.name')}</th>
-                <th scope="col">{translate('adminPage.purpose')}</th>
-                <th scope="col">{translate('common.status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map(account => (
-                <tr key={account.id}>
-                  <td className="break-word"><strong>{account.name}</strong></td>
-                  <td className={account.description ? undefined : 'muted'}>{account.description || translate('adminPage.noDescription')}</td>
-                  <td><StatusBadge status={account.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <div className="admin-forms">
-        <section className="admin-section">
-          <form onSubmit={createAccount} aria-labelledby="admin-create-account-title">
-            <div className="section-heading"><h2 id="admin-create-account-title">{translate('adminPage.addServiceAccount')}</h2></div>
-            <label className="field"><span>{translate('adminPage.serviceAccountName')}</span><input name="name" placeholder={translate('adminPage.eGNemoCuratorProduction')} required /></label>
-            <label className="field"><span>{translate('adminPage.purposeOptional')}</span><input name="description" placeholder={translate('adminPage.eGProductionAudioPreprocessingPipeline')} /></label>
-            <button type="submit" className="button primary">{translate('common.create')}</button>
-          </form>
-        </section>
-        <section className="admin-section">
-          <form onSubmit={issueKey} aria-labelledby="admin-issue-key-title">
-            <div className="section-heading"><h2 id="admin-issue-key-title">{translate('adminPage.issueApiKey2')}</h2></div>
-            <label className="field">
-              <span>{translate('adminPage.serviceAccount')}</span>
-              <select name="accountId" required defaultValue="">
-                <option value="" disabled>{translate('adminPage.selectAnOption')}</option>
-                {accounts.filter(a => a.status === 'active').map(account => <option key={account.id} value={account.id}>{account.name}</option>)}
-              </select>
-            </label>
-            <label className="field">
-              <span>{translate('adminPage.purpose')}</span>
-              <select name="scope" value={keyScope} onChange={event => setKeyScope(event.target.value as KeyScope)}>
-                {KEY_SCOPE_OPTIONS.map(option => <option key={option.scope} value={option.scope}>{option.label}</option>)}
-              </select>
-              <small className="muted">{KEY_SCOPE_OPTIONS.find(option => option.scope === keyScope)?.help}</small>
-            </label>
-            <label className="field"><span>{translate('adminPage.keyName')}</span><input name="name" placeholder={translate('adminPage.eGProduction202608')} required /></label>
-            {keyScope !== 'metrics:read' && (
-              <label className="field"><span>{translate('adminPage.allowedNamespaces')}</span><input name="namespaces" placeholder={translate('adminPage.speechPodcastCommaSeparated')} required /></label>
-            )}
-            <button type="submit" className="button primary">{translate('adminPage.showKeyOnce')}</button>
-          </form>
-        </section>
-      </div>
-    </section>
-  )
-}
-
 function AuditTarget({ event }: { event: AuditEventRow }) {
   useLocale()
   return <>{event.details?.target?.displayName ?? event.resource_id ?? event.resource_type ?? '—'}</>
@@ -836,11 +666,11 @@ export default function AdminPage() {
   useLocale()
   const { user } = useAuth()
   const canUsers = user?.permissions.includes('users:manage') ?? false
-  const canAccounts = user?.permissions.includes('service_accounts:manage') ?? false
+  const canTokens = user?.permissions.includes('service_accounts:manage') ?? false
   const canAudit = user?.permissions.includes('audit:read') ?? false
-  const defaultPath = canUsers ? 'users' : canAccounts ? 'service-accounts' : 'audit'
+  const defaultPath = canUsers ? 'users' : canTokens ? 'tokens' : 'audit'
 
-  if (!canUsers && !canAccounts && !canAudit) {
+  if (!canUsers && !canTokens && !canAudit) {
     return <Navigate to="/settings/account" replace />
   }
 
@@ -848,13 +678,14 @@ export default function AdminPage() {
     <div className="admin-page">
       <nav className="tabs access-tabs" aria-label={translate('section.access')}>
         {canUsers && <NavLink to="/settings/access/users" className="tab">{translate('section.users')}</NavLink>}
-        {canAccounts && <NavLink to="/settings/access/service-accounts" className="tab">{translate('adminPage.serviceAccounts')}</NavLink>}
+        {canTokens && <NavLink to="/settings/access/tokens" className="tab">{translate('section.accessTokens')}</NavLink>}
         {canAudit && <NavLink to="/settings/access/audit" className="tab">{translate('section.audit')}</NavLink>}
       </nav>
       <Routes>
         <Route index element={<Navigate to={defaultPath} replace />} />
         <Route path="users" element={canUsers ? <UsersPage /> : <Navigate to={defaultPath} replace />} />
-        <Route path="service-accounts" element={canAccounts ? <ServiceAccountsPage /> : <Navigate to={defaultPath} replace />} />
+        <Route path="tokens" element={canTokens ? <AccessTokensPage /> : <Navigate to={defaultPath} replace />} />
+        <Route path="service-accounts" element={<Navigate to="../tokens" replace />} />
         <Route path="audit" element={canAudit ? <AuditPageView /> : <Navigate to={defaultPath} replace />} />
         <Route path="*" element={<Navigate to={defaultPath} replace />} />
       </Routes>

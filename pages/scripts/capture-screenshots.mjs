@@ -159,7 +159,7 @@ try {
     await page.locator('.react-flow__node').first().waitFor()
   } })
   await capturePage({ name: 'access-users', path: '/settings/access/users' })
-  await capturePage({ name: 'service-accounts', path: '/settings/access/service-accounts' })
+  await capturePage({ name: 'service-accounts', path: '/settings/access/tokens' })
   await capturePage({ name: 'readme-edit', path: `/storage/demo/edit-readme/${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`, prepare: async page => {
     await page.locator('.monaco-editor').first().waitFor()
   } })
