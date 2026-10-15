@@ -5,7 +5,7 @@ const repository = 'https://github.com/aida0710/mado-s3-datacatalog'
 const base = '/mado-s3-datacatalog/'
 const siteUrl = 'https://aida0710.github.io/mado-s3-datacatalog/'
 
-const jaDescription = '複数のS3互換ストレージを横断して、ファイルの中身・容量・データの来歴を確認するWebツール。'
+const jaDescription = '複数のS3互換ストレージを横断して、ファイルの中身・容量・DataLineageを確認するWebツール。'
 const enDescription = 'A web tool for browsing several S3-compatible storages and checking file contents, capacity, and data lineage.'
 
 type Language = 'ja' | 'en'
@@ -32,7 +32,7 @@ const sidebarSections: Array<{ text: Record<Language, string>; items: Array<{ te
     { text: { ja: '認証とアクセス権限', en: 'Authentication and access' }, link: '/setup/auth' },
   ] },
   { text: { ja: 'リファレンス', en: 'Reference' }, items: [
-    { text: { ja: 'Service AccountとAPI', en: 'Service Accounts and API' }, link: '/reference/api' },
+    { text: { ja: 'アクセストークンとAPI', en: 'Access tokens and API' }, link: '/reference/api' },
     { text: { ja: '困ったときは', en: 'Troubleshooting' }, link: '/reference/troubleshooting' },
     { text: { ja: '構成と開発', en: 'Architecture and development' }, link: '/reference/development' },
   ] },

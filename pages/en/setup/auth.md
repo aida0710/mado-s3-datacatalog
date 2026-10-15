@@ -35,7 +35,7 @@ Manage users in **Settings → Access → Users**.
 | Viewer | Viewing Storage and Lineage |
 | Curator | Viewing, editing READMEs and notes, and registering and correcting Lineage |
 | Operator | Viewing and operating jobs |
-| Admin | All permissions, including managing connections, settings, users, and Service Accounts, and viewing the audit log |
+| Admin | All permissions, including managing connections, settings, users, and access tokens, and viewing the audit log |
 
 If a user has multiple roles, they get the combined permissions of those roles. Operations disabled on a connection and access to connections hidden from the user are restricted separately.
 
@@ -45,6 +45,6 @@ Removing a user from an SSO group does not necessarily end their existing mado s
 
 In production, use HTTPS and set `AUTH_COOKIE_SECURE=true`. The authentication-disabled mode is meant for existing development and LAN environments and cannot be started in production mode.
 
-## Use Service Accounts for pipelines
+## Use access tokens for pipelines
 
-Keep authentication for pipelines and Prometheus separate from people's browser sessions. Issue Service Account keys per scope and use them as described in the [API guide](../reference/api.md).
+Keep authentication for pipelines and Prometheus separate from people's browser sessions. Create tokens with the required permissions in **Settings → Access → Access Tokens**. One token can allow both reads and writes. See the [API guide](../reference/api.md).
