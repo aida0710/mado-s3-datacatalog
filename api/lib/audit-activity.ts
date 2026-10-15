@@ -108,6 +108,9 @@ export function classifyActivity(method: string, pathname: string): Activity | n
     }
   }
   // These routes already record successful mutations with richer details.
+  if (p[0] === 'access-tokens' && ['POST', 'PATCH', 'DELETE'].includes(verb)) {
+    return { action: 'access_token.manage', resourceType: 'access_token', resourceId: decoded(p[1]), dedicatedSuccessAudit: true }
+  }
   if (p[0] === 'users' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(verb)) {
     return { action: 'user.manage', resourceType: 'user', resourceId: decoded(p[1]), dedicatedSuccessAudit: true }
   }

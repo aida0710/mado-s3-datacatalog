@@ -1,11 +1,9 @@
 import type { Pool } from 'pg'
 import { withTransaction } from '../db.js'
 import type { ServicePrincipal } from './auth-types.js'
-import { equalDigest, newId, randomToken, sha256 } from './auth-crypto.js'
+import { equalDigest, newId, sha256 } from './auth-crypto.js'
+import { insertServiceAccountKey } from './service-account-key-record.js'
 
-// token の接頭辞。最初の用途 (lineage) から lin と付けたが、今は scope に関係なく全 key に付く。
-// 公開済みの Pipeline 設定と DB の CHECK 制約がこの形を前提にしているので変えない。
-const SERVICE_KEY_TOKEN_PREFIX = 'mado_lin_'
 const SERVICE_KEY_PREFIX_PATTERN = /^mado_lin_[A-Za-z0-9_-]{8,32}$/
 // last_used_at の更新を、request ごとではなくこの間隔に間引いて書き込みを減らす。
 const LAST_USED_UPDATE_INTERVAL_SECONDS = 300
@@ -171,6 +169,9 @@ export function createServiceAccountStore(pool: Pool): ServiceAccountStore {
           RETURNING id, name, description, status, created_at, updated_at`,
         values,
       )
+      if (changedFields.includes('status')) {
+        await client.query('UPDATE service_account_keys SET revision = revision + 1 WHERE service_account_id = $1', [id])
+      }
       return { before, account: toAccount(updated.rows[0]), changedFields }
     }),
 
@@ -182,35 +183,11 @@ export function createServiceAccountStore(pool: Pool): ServiceAccountStore {
       return r.rows.map(toKey)
     },
 
-    issueKey: input => withTransaction(pool, async client => {
-      const id = newId()
-      const publicId = id.replaceAll('-', '').slice(0, 16)
-      const tokenPrefix = `${SERVICE_KEY_TOKEN_PREFIX}${publicId}`
-      const secret = randomToken(32)
-      const r = await client.query<KeyRow>(
-        `INSERT INTO service_account_keys
-           (id, service_account_id, name, token_prefix, secret_hash, created_by, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, service_account_id, name, token_prefix, secret_hash,
-                   created_at, expires_at, revoked_at, last_used_at,
-                   ARRAY[]::text[] AS scopes, ARRAY[]::text[] AS namespaces`,
-        [id, input.accountId, input.name.trim(), tokenPrefix, sha256(secret), input.createdBy, input.expiresAt ?? null],
-      )
-      const scopes = [...new Set(input.scopes)].sort()
-      const namespaces = [...new Set(input.namespaces)].sort()
-      for (const scope of scopes) {
-        await client.query(`INSERT INTO service_account_key_scopes (key_id, scope) VALUES ($1, $2)`, [id, scope])
-      }
-      for (const namespace of namespaces) {
-        await client.query(`INSERT INTO service_account_key_namespaces (key_id, namespace) VALUES ($1, $2)`, [id, namespace])
-      }
-      const key = toKey({ ...r.rows[0], scopes, namespaces })
-      return { ...key, token: `${tokenPrefix}.${secret}` }
-    }),
+    issueKey: input => withTransaction(pool, client => insertServiceAccountKey(client, input)),
 
     async revokeKey(accountId, keyId) {
       const r = await pool.query(
-        `UPDATE service_account_keys SET revoked_at = COALESCE(revoked_at, now())
+        `UPDATE service_account_keys SET revoked_at = COALESCE(revoked_at, now()), revision = revision + 1
           WHERE id = $1 AND service_account_id = $2 AND revoked_at IS NULL`,
         [keyId, accountId],
       )
@@ -230,7 +207,7 @@ export function createServiceAccountStore(pool: Pool): ServiceAccountStore {
         account_status: 'active' | 'disabled'
       }>(
         `${KEY_WITH_ACCOUNT_SELECT}
-          WHERE k.token_prefix = $1 AND k.revoked_at IS NULL
+          WHERE k.token_prefix = $1 AND k.revoked_at IS NULL AND k.disabled_at IS NULL
             AND (k.expires_at IS NULL OR k.expires_at > now())`,
         [prefix],
       )

@@ -35,15 +35,19 @@ describe('Service Accountの新しいread scope', () => {
     expect(issueKey).toHaveBeenCalledWith(expect.objectContaining({ scopes: ['lineage:read'], namespaces: ['speech'] }))
     expect(audit.write).toHaveBeenCalledWith(expect.objectContaining({ action: 'service_account.key.issue', details: expect.objectContaining({ scopes: ['lineage:read'] }) }))
   })
-  it('Namespaceのないread key、metricsへNamespaceを付けたkey、複数用途keyは発行しない', async () => {
+  it('Namespaceのないread keyとmetricsだけにNamespaceを付けたkeyは発行しない', async () => {
     const { issue, issueKey } = application()
     for (const body of [
       { name: 'missing', scopes: ['lineage:read'] },
       { name: 'blank namespace', scopes: ['lineage:read'], namespaces: ['  '] },
       { name: 'metrics namespace', scopes: ['metrics:read'], namespaces: ['speech'] },
-      { name: 'mixed', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'] },
     ]) expect((await issue(body)).status).toBe(400)
     expect(issueKey).not.toHaveBeenCalled()
+  })
+  it('従来の入口でも参照と送信を同じキーへ設定できる', async () => {
+    const { issue, issueKey } = application()
+    expect((await issue({ name: 'tracking', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'] })).status).toBe(201)
+    expect(issueKey).toHaveBeenCalledWith(expect.objectContaining({ scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'] }))
   })
   it('管理権限のない利用者はread keyを発行しない', async () => {
     const { issue, issueKey } = application([])

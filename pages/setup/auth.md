@@ -35,7 +35,7 @@ SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authent
 | Viewer | StorageとLineageの閲覧 |
 | Curator | 閲覧、README・ノートの編集、Lineageの登録・修正 |
 | Operator | 閲覧、ジョブの操作 |
-| Admin | 接続・設定・ユーザー・Service Accountの管理、監査ログの閲覧を含む全権限 |
+| Admin | 接続・設定・ユーザー・アクセストークンの管理、監査ログの閲覧を含む全権限 |
 
 複数のロールを付けた場合は、それぞれの権限を合わせて使えます。接続側で禁止した操作や、ユーザーに見せない接続へのアクセスは、別途制限されます。
 
@@ -45,6 +45,6 @@ SSOのgroupから外しても、既存のmadoセッションが直ちに失効�
 
 運用環境ではHTTPSを使い、`AUTH_COOKIE_SECURE=true` にします。認証無効モードは既存の開発・LAN環境向けで、本番モードでは起動できません。
 
-## PipelineにはService Accountを使う
+## Pipelineにはアクセストークンを使う
 
-人のブラウザセッションと、PipelineやPrometheusの認証を分けます。Service Account keyはscopeごとに発行し、[APIの手順](../reference/api.md)に従って利用してください。
+人のブラウザセッションと、PipelineやPrometheusの認証を分けます。**Settings → Access → Access Tokens**で必要な権限を選んで発行します。一つのトークンに参照と送信の両方を許可できます。[APIの手順](../reference/api.md)に従って利用してください。

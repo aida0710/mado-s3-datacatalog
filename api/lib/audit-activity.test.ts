@@ -32,6 +32,13 @@ describe('監査の記録判定', () => {
     expect(classifyActivity('PATCH', '/api/internal/lineage/curation/datasets/d1')).toMatchObject({
       action: 'lineage.dataset.update', resourceId: 'd1', dedicatedSuccessAudit: true,
     })
+    for (const [method, path] of [
+      ['POST', '/api/internal/access-tokens'],
+      ['PATCH', '/api/internal/access-tokens/t1'],
+      ['POST', '/api/internal/access-tokens/t1/regenerate'],
+      ['DELETE', '/api/internal/access-tokens/t1'],
+    ]) expect(classifyActivity(method, path)).toMatchObject({ action: 'access_token.manage', dedicatedSuccessAudit: true })
+    expect(classifyActivity('GET', '/api/internal/access-tokens')).toBeNull()
   })
 
   it('拒否された変更はintentを破棄する', async () => {
