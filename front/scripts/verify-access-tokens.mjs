@@ -119,8 +119,9 @@ try {
   assert.ok(await create.getByRole('checkbox', { name: 'speech', exact: true }).isChecked())
   assert.ok(await create.getByRole('checkbox', { name: 'podcast', exact: true }).isChecked())
   assert.equal(await create.getByRole('checkbox', { name: 'すべてのNamespaceを許可', exact: true }).isChecked(), false)
-  assert.ok(await create.getByRole('checkbox', { name: 'データセット参照', exact: true }).isChecked())
-  assert.ok(await create.getByRole('checkbox', { name: 'DataLineageの送信', exact: true }).isChecked())
+  assert.ok(await create.getByRole('group', { name: 'DataLineage', exact: true }).getByRole('checkbox', { name: '読み取り', exact: true }).isChecked())
+  assert.ok(await create.getByRole('group', { name: 'DataLineage', exact: true }).getByRole('checkbox', { name: '送信', exact: true }).isChecked())
+  assert.equal(await create.getByText('連携APIの権限', { exact: true }).count(), 0)
   await screenshot('access-tokens-create-ja')
   await create.getByRole('button', { name: '発行する', exact: true }).click()
   const original = await readOneTimeValue()
@@ -155,10 +156,10 @@ try {
   console.log('Access tokens: permissions can be combined without changing the credential')
   await openActions()
   await row().getByRole('button', { name: '編集', exact: true }).click()
-  await page.getByRole('dialog').getByRole('checkbox', { name: '容量メトリクス取得', exact: true }).check()
+  await page.getByRole('dialog').getByRole('group', { name: 'Capacity', exact: true }).getByRole('checkbox', { name: '読み取り', exact: true }).check()
   await page.getByRole('dialog').getByRole('checkbox', { name: 'すべての接続を許可', exact: true }).check()
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click()
-  await row().getByText('容量メトリクス取得', { exact: true }).waitFor()
+  await row().getByText('Capacity: 読み取り', { exact: true }).waitFor()
   await probe(regenerated, 'metrics:read', 200)
 
   console.log('Access tokens: deleting needs confirmation and stops authentication')
@@ -205,7 +206,7 @@ try {
   await screenshot('access-tokens-actions-dark')
   assert.deepEqual(pageErrors, [])
   if (directory) await writeFile(`${directory}/browser-result.json`, JSON.stringify({
-    checks: ['initial permissions empty', 'internal API read and write', 'connection search and selection retained',
+    checks: ['single feature permission list', 'derived read/send/metrics scopes', 'initial permissions empty', 'internal API read and write', 'connection search and selection retained',
       'outside connection denied', 'administration denied', 'deleted token denied',
       'namespace search and checkbox selection', 'selection retained across searches', 'flat list', 'read/write with one token',
       'regeneration', 'disable/enable', 'permission updates', 'delete/cancel', 'old URL', 'English/Japanese', '320px/dark', 'no credentials in screenshots'],

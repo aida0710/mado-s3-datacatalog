@@ -23,7 +23,7 @@ export interface AccessToken {
 export interface AccessTokenInput {
   name: string
   description: string
-  scopes: AccessTokenScope[]
+  scopes?: AccessTokenScope[]
   permissions?: InternalApiPermission[]
   connections?: string[] | null
   namespaces: string[]

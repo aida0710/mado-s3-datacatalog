@@ -15,6 +15,7 @@ export const internalPermissionActionLabels = {
   delete: 'tokenPermissions.action.delete', manage: 'tokenPermissions.action.manage',
   curate: 'tokenPermissions.action.curate', operate: 'tokenPermissions.action.operate',
   refresh: 'tokenPermissions.action.refresh',
+  send: 'tokenPermissions.action.send',
 } as const
 
 export function internalPermissionAction(permission: InternalApiPermission) {

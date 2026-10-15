@@ -2,7 +2,7 @@ import type { Pool, PoolClient } from 'pg'
 import { withTransaction, type Queryable } from '../db.js'
 import { newId, randomToken, sha256 } from './auth-crypto.js'
 import { insertServiceAccountKey, insertServiceKeyPermissions, SERVICE_KEY_SECRET_BYTES } from './service-account-key-record.js'
-import { accessTokenGrants } from './access-token-grants.js'
+import { accessTokenGrants, normalizePermissionScopes } from './access-token-grants.js'
 import { saveInternalTokenGrants } from './internal-token-grants.js'
 import type { AccessToken, AccessTokenInput, AccessTokenPatch, AccessTokenRow, AccessTokenUpdate } from './access-token-types.js'
 
@@ -96,8 +96,9 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       return row ? toAccessToken(row) : null
     },
     createToken: input => withTransaction(pool, async database => {
-      const permissions = accessTokenGrants.safeParse(input)
-      if (!permissions.success) throw new AccessTokenPermissionsError()
+      const parsed = accessTokenGrants.safeParse(normalizePermissionScopes(input))
+      if (!parsed.success) throw new AccessTokenPermissionsError()
+      const grants = { ...parsed.data, permissions: parsed.data.permissions ?? [] }
       const accountId = newId()
       // One internal owner per new token preserves the Registry/audit identity contract.
       const suffix = ` [${accountId}]`
@@ -106,29 +107,31 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
         'INSERT INTO service_accounts (id, name, description, created_by) VALUES ($1, $2, $3, $4)',
         [accountId, accountName, input.description, input.createdBy],
       )
-      const issued = await insertServiceAccountKey(database, { ...input, ...permissions.data, accountId })
-      await saveInternalTokenGrants(database, { id: issued.id, ...permissions.data })
+      const issued = await insertServiceAccountKey(database, { ...input, ...grants, accountId })
+      await saveInternalTokenGrants(database, { id: issued.id, ...grants })
       return { accessToken: toAccessToken((await getTokenRow(database, issued.id))!), token: issued.token }
     }),
     updateToken: input => withTransaction(pool, async database => {
       const row = await lockToken(database, input)
       if (!row) return null
-      const permissions = accessTokenGrants.safeParse({
-        scopes: input.patch.scopes ?? row.scopes,
-        namespaces: input.patch.namespaces ?? row.namespaces,
-        permissions: input.patch.permissions ?? row.permissions,
-        connections: input.patch.connections === undefined ? row.connections : input.patch.connections,
+      const requested = normalizePermissionScopes(input.patch)
+      const parsed = accessTokenGrants.safeParse({
+        scopes: requested.scopes ?? row.scopes,
+        namespaces: requested.namespaces ?? row.namespaces,
+        permissions: requested.permissions ?? row.permissions,
+        connections: requested.connections === undefined ? row.connections : requested.connections,
       })
-      if (!permissions.success) throw new AccessTokenPermissionsError()
-      const patch = { ...input.patch, ...permissions.data }
+      if (!parsed.success) throw new AccessTokenPermissionsError()
+      const grants = { ...parsed.data, permissions: parsed.data.permissions ?? [] }
+      const patch = { ...requested, ...grants }
       if (!tokenNeedsUpdate(row, patch)) return { accessToken: toAccessToken(row), changed: false }
-      if (input.patch.scopes !== undefined || input.patch.namespaces !== undefined) {
+      if (requested.scopes !== undefined || requested.namespaces !== undefined) {
         await database.query('DELETE FROM service_account_key_scopes WHERE key_id = $1', [input.id])
         await database.query('DELETE FROM service_account_key_namespaces WHERE key_id = $1', [input.id])
-        await insertServiceKeyPermissions(database, { id: input.id, ...permissions.data })
+        await insertServiceKeyPermissions(database, { id: input.id, ...grants })
       }
       if (input.patch.permissions !== undefined || input.patch.connections !== undefined) {
-        await saveInternalTokenGrants(database, { id: input.id, ...permissions.data })
+        await saveInternalTokenGrants(database, { id: input.id, ...grants })
       }
       if (input.patch.status === 'active' && row.account_status === 'disabled') {
         // Enabling one legacy key must keep every sibling effectively disabled.

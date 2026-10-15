@@ -6,8 +6,7 @@ import { useAccessTokenForm } from '../lib/useAccessTokenForm'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { accessTokenScopeLabels } from '../i18n/accessTokenOptions'
-import type { AccessToken, AccessTokenInput, AccessTokenScope } from '../types/accessTokens'
+import type { AccessToken, AccessTokenInput } from '../types/accessTokens'
 
 // Match the access-token API's metadata limits before submitting the form.
 const TOKEN_NAME_MAX_LENGTH = 128
@@ -37,15 +36,7 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
           <input value={form.description} onChange={event => form.setDescription(event.target.value)} maxLength={TOKEN_DESCRIPTION_MAX_LENGTH} disabled={form.busy} />
         </label>
         <InternalPermissionSelector selected={form.permissions} onToggle={form.togglePermission} onPreset={form.applyPreset} disabled={form.busy} />
-        <fieldset className="access-token-permissions" disabled={form.busy}>
-          <legend>{translate('accessTokens.integrations')}</legend>
-          {(Object.keys(accessTokenScopeLabels) as AccessTokenScope[]).map(scope => <label key={scope}>
-            <input type="checkbox" checked={form.scopes.includes(scope)} onChange={() => form.toggleScope(scope)} />
-            <span>{translate(accessTokenScopeLabels[scope])}</span>
-          </label>)}
-          {form.scopes.includes('lineage:read') && <p className="muted">{translate('accessTokens.readHelp')}</p>}
-          {form.scopes.includes('metrics:read') && <p className="muted">{translate('accessTokens.metricsHelp')}</p>}
-        </fieldset>
+        {form.hasLegacyGrants && <p className="muted">{translate('accessTokens.legacyPermissions')}</p>}
         {form.showsConnections && <TokenConnectionSelector selected={form.connections} onChange={form.setConnections} disabled={form.busy} />}
         {form.includesLineage && <NamespaceSelector selected={form.namespaces} onChange={form.setNamespaces} disabled={form.busy} />}
         <label className="field"><span>{translate('accessTokens.expiresAt')}</span>

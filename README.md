@@ -25,7 +25,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 - **接続ごとの権限** — 「一覧は見せるがダウンロードと README 書き戻しは禁止」のように、接続単位で操作を絞れる
 - **Dataset Lineage** — OpenLineageの`Dataset → Job → Dataset`と、版ごとの`DatasetVersion → Run → DatasetVersion`をReact Flowで辿る
 - **認証とRBAC** — Local User / OIDC SSO、Viewer・Curator・Operator・Admin、監査ログ
-- **アクセストークン** — 内部APIの機能ごとの読み取り・編集・削除・実行・管理と、連携APIの権限を選んで発行。再発行・無効化・削除まで一つの一覧で管理
+- **アクセストークン** — 機能ごとの読み取り・送信・編集・削除・実行・管理を選んで発行。再発行・無効化・削除まで一つの一覧で管理
 
 ---
 
@@ -201,7 +201,7 @@ Pipelineへの導入方法、DatasetとVersionの分け方、OpenLineage event�
 - 「最新らしい版」は推測しません。版表示には明示version IDが必要です
 - Registryが正本で、Marquez停止中は警告を表示します。MadoからMarquezへ直接書き込みません
 
-Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・DataLineage・ジョブ・接続・設定などの機能ごとに操作と接続・Namespaceを指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。連携APIでは`lineage:read`（データセット参照）、`lineage:write`（DataLineage送信）、`metrics:read`（容量取得）を組み合わせて選びます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
+Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・DataLineage・ジョブ・接続・設定などの機能ごとに操作と接続・Namespaceを指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。DataLineageの読み取り・送信、Capacityの読み取りを選ぶと、従来の参照・送信・メトリクスAPIも同じトークンで利用できます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
 
 ### バージョン確認
 

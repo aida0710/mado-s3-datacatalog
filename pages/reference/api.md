@@ -12,19 +12,19 @@ description: アクセストークンの発行・再発行・無効化と、scop
 
 Adminが**Settings → Access → Access Tokens**の**アクセストークンを作成**を開き、名前と許可する操作を指定します。アカウントを別に作る操作はありません。
 
-**データセット参照**と**DataLineageの送信**は両方選べます。Namespaceはデータセットや処理のグループ名です。例えば、音声を`speech`、Podcastを`podcast`に分けられます。S3の接続やバケットとは別の分類です。**Namespaceを検索**で一覧を絞り、許可する名前にチェックを付けます。検索を変えても選択は保持します。一覧にない名前は検索欄へ入力して**追加**できます。全対象を許可する場合だけ**すべてのNamespaceを許可**を選びます。容量取得だけを選ぶ場合、Namespaceは不要です。
+DataLineageの**読み取り**と**送信**は、同じ機能別の一覧で両方選べます。**ML Tracking連携**プリセットでも選べます。Namespaceはデータセットや処理のグループ名です。例えば、音声を`speech`、Podcastを`podcast`に分けられます。S3の接続やバケットとは別の分類です。**Namespaceを検索**で一覧を絞り、許可する名前にチェックを付けます。検索を変えても選択は保持します。一覧にない名前は検索欄へ入力して**追加**できます。全対象を許可する場合だけ**すべてのNamespaceを許可**を選びます。容量取得だけを選ぶ場合、Namespaceは不要です。
 
 <Screenshot src="/screenshots/access-token-create.png" alt="Namespaceを検索しチェックボックスで選択するトークン作成画面" caption="検索で一覧を絞ってチェックします。選択済みの名前は検索を変えても保持されます。" />
 
 値は発行時に一度だけ表示されます。連携先のシークレット管理へ保存してください。有効期限は任意です。
 
-| Scope | 用途 | 入口 |
+| 機能・操作 | 用途 | 入口 |
 | --- | --- | --- |
-| `lineage:read` | データセットとバージョンの参照 | `GET /api/mado/lineage/catalog`など |
-| `lineage:write` | OpenLineageイベントの送信 | `POST /api/openlineage/v1/lineage` |
-| `metrics:read` | 許可した接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
+| DataLineage: 読み取り | データセットとバージョンの参照 | `GET /api/mado/lineage/catalog`など |
+| DataLineage: 送信 | OpenLineageイベントの送信 | `POST /api/openlineage/v1/lineage` |
+| Capacity: 読み取り | 許可した接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
 
-連携用の `/api/mado/` はGETだけです。一つのトークンに必要なscopeを組み合わせられます。容量取得は選択した接続が対象で、Namespaceでは制限されません。既存トークンの全接続参照は維持されます。
+連携用の `/api/mado/` はGETだけです。一つのトークンに必要な操作を組み合わせられます。従来APIの許可も選択した操作から自動で設定されます。容量取得は選択した接続が対象で、Namespaceでは制限されません。既存トークンの全接続参照は維持されます。
 
 `GET /api/mado/access-token`は、scopeを問わず、呼び出したトークン自身の名前・scope・Namespace・有効期限を返します（`namespaces`の`["*"]`は全Namespace）。ほかのトークンの情報や、トークンの値は返しません。連携先が、許可されたNamespaceを利用者に入力させずに知るための入口です。
 
@@ -42,7 +42,7 @@ curl --fail-with-body \
   "$MADO_URL/api/internal/connections"
 ```
 
-この例には`permissions: ["connections:read"]`と接続の選択が必要です。内部APIの権限は上記の連携scopeと別に設定します。トークン管理も許可できますが、自分より強いトークンの発行・再発行はできません。ユーザーの変更には管理者プリセットの全権限・全対象が必要です。ログイン・SSO・自分のパスワード変更はブラウザ専用です。[権限の一覧と対象制限](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md)を参照してください。
+この例には`permissions: ["connections:read"]`と接続の選択が必要です。参照・送信も同じ機能別の一覧で設定します。トークン管理も許可できますが、自分より強いトークンの発行・再発行はできません。ユーザーの変更には管理者プリセットの全権限・全対象が必要です。ログイン・SSO・自分のパスワード変更はブラウザ専用です。[権限の一覧と対象制限](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md)を参照してください。
 
 ## OpenLineageイベントを送信する
 
@@ -56,7 +56,7 @@ curl --fail-with-body \
   --data-binary @event.json
 ```
 
-`MADO_LINEAGE_URL` は公開API用hostnameのorigin、`MADO_LINEAGE_KEY` は `lineage:write` のkeyです。許可されたnamespaceのイベントを送信します。イベント形式と登録の扱いは[Lineageの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md)に記載しています。
+`MADO_LINEAGE_URL` は公開API用hostnameのorigin、`MADO_LINEAGE_KEY` はDataLineageの「送信」を許可したトークンです。許可されたnamespaceのイベントを送信します。イベント形式と登録の扱いは[Lineageの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md)に記載しています。
 
 ## Prometheusで容量メトリクスを取得する
 
@@ -93,4 +93,4 @@ scrape_configs:
 - **無効にする / 有効にする**: 同じ値の利用を一時停止・再開します。
 - **削除**: 利用を終了し、一覧から取り除きます。元には戻せません。監査用の操作履歴は残ります。
 
-既存のService Account keyも同じ一覧から管理できます。値と権限はそのまま引き継ぎます。
+既存のService Account keyも同じ一覧から管理できます。値と権限はそのまま引き継ぎます。名前だけの編集や再発行では内部APIの権限を増やしません。操作の選択を変更して保存すると、新しい機能別権限へ移ります。

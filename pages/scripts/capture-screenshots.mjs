@@ -15,12 +15,14 @@ const artifactDirectory = join(projectRoot, 'artifacts/docs', captureDate)
 const LABELS = {
   ja: {
     createToken: 'アクセストークンを作成', tokenName: '名前', namespaceSearch: 'Namespaceを検索', tokenPreset: 'ML Tracking連携',
+    permissionRead: '読み取り', permissionEdit: '編集',
     browserLocale: 'ja-JP', actions: 'アクション', addToPlayer: 'デッキに追加', synchronizedPlayer: /同期プレイヤー \(2\)/,
     allowedOperations: 'この接続で許可する操作', pin: 'ピン留め', spectrogram: 'スペクトログラム', history: /履歴/,
     breakdown: '内訳', transferEstimate: '移送の見積もり',
   },
   en: {
     createToken: 'Create access token', tokenName: 'Name', namespaceSearch: 'Search namespaces', tokenPreset: 'ML Tracking integration',
+    permissionRead: 'Read', permissionEdit: 'Edit',
     browserLocale: 'en-US', actions: 'Actions', addToPlayer: 'Add to player', synchronizedPlayer: /Synchronized player \(2\)/,
     allowedOperations: 'Allowed operations', pin: 'Pin', spectrogram: 'Spectrogram', history: /History/,
     breakdown: 'Breakdown', transferEstimate: 'Transfer estimate',
@@ -72,7 +74,8 @@ async function prepareSampleMedia() {
 
 const media = await prepareSampleMedia()
 await mkdir(outputDirectory, { recursive: true })
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] })
+const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
+  ...(process.env.MADO_CHROMIUM_PATH ? { executablePath: process.env.MADO_CHROMIUM_PATH } : {}) })
 const screenshots = []
 const unhandled = []
 const pageErrors = []
@@ -169,6 +172,16 @@ try {
     await dialog.getByRole('button', { name: LABELS.tokenPreset, exact: true }).click()
     await dialog.getByRole('checkbox', { name: 'sample-audio', exact: true }).check()
     await dialog.getByRole('searchbox', { name: LABELS.namespaceSearch, exact: true }).fill('sample')
+  } })
+  await capturePage({ name: 'token-permissions', path: '/settings/access/tokens', prepare: async page => {
+    await page.getByRole('button', { name: LABELS.createToken, exact: true }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('textbox', { name: LABELS.tokenName, exact: true }).fill('Storage automation')
+    await dialog.getByRole('group', { name: 'Storage', exact: true }).getByRole('checkbox', { name: LABELS.permissionRead, exact: true }).check()
+    const notes = dialog.getByRole('group', { name: 'Notes', exact: true })
+    await notes.getByRole('checkbox', { name: LABELS.permissionRead, exact: true }).check()
+    await notes.getByRole('checkbox', { name: LABELS.permissionEdit, exact: true }).check()
+    await dialog.locator('.internal-permissions').scrollIntoViewIfNeeded()
   } })
   await capturePage({ name: 'readme-edit', path: `/storage/demo/edit-readme/${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`, prepare: async page => {
     await page.locator('.monaco-editor').first().waitFor()

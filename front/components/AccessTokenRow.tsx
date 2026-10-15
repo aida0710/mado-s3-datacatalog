@@ -3,7 +3,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { fmtDateTimeWithSeconds } from '../lib/format'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { accessTokenScopeLabels } from '../i18n/accessTokenOptions'
+import { displayedTokenPermissions } from '../../api/shared/access-token-permissions'
 import { translateInternalPermission } from '../i18n/translateInternalPermission'
 import type { AccessToken } from '../types/accessTokens'
 
@@ -36,8 +36,7 @@ export function AccessTokenRow({ token, busy, onEdit, onRegenerate, onDelete, on
       </div>
       <div className="access-token-grants">
         <div className="access-token-scope-list">
-          {token.permissions.map(permission => <span className="chip" key={permission}>{translateInternalPermission(permission)}</span>)}
-          {token.scopes.map(scope => <span className="chip" key={scope}>{translate(accessTokenScopeLabels[scope])}</span>)}
+          {displayedTokenPermissions(token).map(permission => <span className="chip" key={permission}>{translateInternalPermission(permission)}</span>)}
         </div>
         {token.connections !== null && token.connections.length > 0 && <p className="muted">{translate('accessTokens.connections')}: {token.connections.includes('*')
           ? translate('accessTokens.allConnections') : token.connections.join(', ')}</p>}

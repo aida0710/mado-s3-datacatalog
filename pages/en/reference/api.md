@@ -12,19 +12,19 @@ Reading datasets, sending OpenLineage events from pipelines, and fetching metric
 
 An Admin opens **Create access token** in **Settings → Access → Access Tokens**, then enters a name and selects the allowed operations. There is no separate account to create.
 
-You can select both **Read datasets** and **Send DataLineage**. A namespace groups datasets and jobs, for example `speech` or `podcast`, independently of S3 connections and buckets. Use **Search namespaces** to filter the list and check the names to allow. Your selection is retained across searches. For a name missing from the list, enter it in the search field and choose **Add**. Select **Allow all namespaces** only when you need access to every namespace. A token used only for capacity metrics does not need a namespace.
+Select **Read** and **Send** in the DataLineage row of the feature permission list, or use the **ML Tracking integration** preset. A namespace groups datasets and jobs, for example `speech` or `podcast`, independently of S3 connections and buckets. Use **Search namespaces** to filter the list and check the names to allow. Your selection is retained across searches. For a name missing from the list, enter it in the search field and choose **Add**. Select **Allow all namespaces** only when you need access to every namespace. A token used only for capacity metrics does not need a namespace.
 
 <Screenshot src="/screenshots/en/access-token-create.png" alt="Token creation with a searchable namespace checklist" caption="Filter the list and check the namespaces to allow. Selected names are retained across searches." />
 
 The value is shown only once, when issued. Save it in the integration’s secret manager. An expiration date is optional.
 
-| Scope | Purpose | Endpoint |
+| Feature / action | Purpose | Endpoint |
 | --- | --- | --- |
-| `lineage:read` | Read datasets and versions | `GET /api/mado/lineage/catalog` and detail endpoints |
-| `lineage:write` | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
-| `metrics:read` | Get capacity metrics for allowed connections | `GET /api/mado/metrics/capacity` |
+| DataLineage: Read | Read datasets and versions | `GET /api/mado/lineage/catalog` and detail endpoints |
+| DataLineage: Send | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
+| Capacity: Read | Get capacity metrics for allowed connections | `GET /api/mado/metrics/capacity` |
 
-The integration API `/api/mado/` accepts GET only. One token can combine scopes. Capacity metrics use the selected connections, independently of namespaces. Existing tokens retain their previous access to all connections.
+The integration API `/api/mado/` accepts GET only. One token can combine operations. The corresponding legacy API scopes are set automatically. Capacity metrics use the selected connections, independently of namespaces. Existing tokens retain their previous access to all connections.
 
 `GET /api/mado/access-token` returns the calling token's own name, scopes, namespaces, and expiration, whatever its scopes (`["*"]` in `namespaces` means all namespaces). It never returns other tokens or token values. Integrations use it to learn the allowed namespaces without asking people to type them.
 
@@ -42,7 +42,7 @@ curl --fail-with-body \
   "$MADO_URL/api/internal/connections"
 ```
 
-This example needs `permissions: ["connections:read"]` and selected connections. Internal permissions are separate from integration scopes above. Token management can be granted, but callers cannot issue or regenerate stronger tokens. User administration requires the Administrator preset's full permissions and targets. Login, SSO and self-service password changes remain browser-only. See the [permission and target reference](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md).
+This example needs `permissions: ["connections:read"]` and selected connections. Reads and sending are configured in the same feature permission list. Token management can be granted, but callers cannot issue or regenerate stronger tokens. User administration requires the Administrator preset's full permissions and targets. Login, SSO and self-service password changes remain browser-only. See the [permission and target reference](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md).
 
 ## Send OpenLineage events
 
@@ -56,7 +56,7 @@ curl --fail-with-body \
   --data-binary @event.json
 ```
 
-`MADO_LINEAGE_URL` is the origin of the public API hostname, and `MADO_LINEAGE_KEY` is a `lineage:write` key. Send events for the allowed namespaces. The event format and how events are registered are described in the [Lineage specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md).
+`MADO_LINEAGE_URL` is the origin of the public API hostname, and `MADO_LINEAGE_KEY` is a token with DataLineage **Send** permission. Send events for the allowed namespaces. The event format and how events are registered are described in the [Lineage specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md).
 
 ## Collect capacity metrics with Prometheus
 
@@ -93,4 +93,4 @@ Open the **…** menu beside a token.
 - **Disable / Enable** pauses or resumes use of the same value.
 - **Delete** permanently ends access and removes the token from the list. Audit history is retained.
 
-Existing Service Account keys appear in the same list, with their values and permissions preserved.
+Existing Service Account keys appear in the same list, with their values and permissions preserved. Renaming or regenerating a token does not add internal API permissions. Changing and saving its selected operations moves it to the feature permission model.

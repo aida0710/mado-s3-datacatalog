@@ -12,7 +12,7 @@
 | Notes | `notes:read`, `notes:write` | ノート・履歴・編集 |
 | Tags | `tags:read`, `tags:write`, `tags:delete` | タグ定義・割り当て・検索 |
 | Favorites | `favorites:read`, `favorites:write`, `favorites:delete` | 接続内のお気に入り |
-| DataLineage | `lineage:read`, `lineage:curate` | 検索・詳細・グラフ・手動登録/修正 |
+| DataLineage | `lineage:read`, `lineage:send`, `lineage:curate` | 検索・詳細・グラフ・OpenLineage送信・手動登録/修正 |
 | Jobs | `jobs:read`, `jobs:operate` | 実行状態・走査開始・キャンセル |
 | Capacity | `capacity:read`, `capacity:operate` | 容量・計測開始 |
 | Pricing | `pricing:read`, `pricing:refresh` | 単価・転送見積もり・単価更新 |
@@ -27,7 +27,7 @@
 
 ## 対象を選ぶ
 
-`connections`は接続IDの配列、`namespaces`はNamespace名の配列。全対象はそれぞれ`["*"]`を明示する。新規画面ではすべて未選択。接続とNamespaceは検索した一覧をチェックして選ぶ。読み取りのみ・管理者・ML Tracking連携・容量監視のプリセットも用意する。管理者プリセットは全権限・連携scope・全接続・全Namespaceを選ぶ。
+`connections`は接続IDの配列、`namespaces`はNamespace名の配列。全対象はそれぞれ`["*"]`を明示する。新規画面ではすべて未選択。接続とNamespaceは検索した一覧をチェックして選ぶ。読み取りのみ・管理者・ML Tracking連携・容量監視のプリセットも用意する。管理者プリセットは全権限・全接続・全Namespaceを選ぶ。DataLineageの送信も同じ機能別一覧で選ぶ。
 
 Storage・Connections・README・Tags・Favorites・Jobs・Capacity・Pricingの権限には接続の指定が必要。接続管理権限を持っていても、許可していない接続を操作できない。URL・クエリ・ジョブのpayload・手動登録の保存場所にも同じ制限を適用する。接続の新規作成・既定接続の変更・共有タグ定義の変更/削除には全接続の許可が必要。接続の公開設定は、このトークンの選択範囲を広げない。許可していない接続は404にする。
 
@@ -39,7 +39,7 @@ DataLineageの保存先URIはNamespaceの権限で読める。接続の選択は
 
 `service_accounts:manage`があっても、自分より強い操作権限・連携scope・接続・Namespaceを持つトークンを作成・変更できない。既存トークンの再発行・有効化・無効化・削除にも、現在の権限範囲の検証を行う。強いトークンの再発行で秘密の値を取得する迂回を防ぐ。
 
-ユーザー管理はロール・パスワードを変更できるため、トークンでは全内部権限・全連携scope・全接続・全Namespaceを持つ場合だけ変更できる。`users:read`だけの閲覧は可能。ブラウザAdminの操作は従来どおり。
+ユーザー管理はロール・パスワードを変更できるため、トークンでは全機能の権限・全接続・全Namespaceを持つ場合だけ変更できる。`users:read`だけの閲覧は可能。ブラウザAdminの操作は従来どおり。
 
 ログイン・ログアウト・SSO・自分のプロフィール/パスワード変更は`/api/auth/*`のブラウザセッション専用。互換用の二階層`/service-accounts/*`もセッション専用で、トークンによる管理は一階層の`/access-tokens/*`を使う。
 
@@ -50,3 +50,5 @@ Authorizationヘッダーがある場合はBearer認証だけを使い、失敗�
 トークンによる変更の操作履歴は`actor_type: service_account`と持ち主IDを記録し、`details.keyId`で個々のトークンを識別する。README・Notesの編集者はトークン名、ユーザーIDはnull。発行者のユーザーになりすますことはない。
 
 `039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加する。既存トークンの値・連携scope・Namespace・有効状態を保持し、内部権限は追加しない。既存の容量取得の全接続参照も保持する。新しい接続指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。公開OpenLineage用のDBロールには新しいテーブルの権限を付けない。
+
+DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。`permissions`を明示した発行/変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。既存トークンは権限を明示変更するまで旧scopeだけを保持し、名前編集や再発行では内部権限を増やさない。

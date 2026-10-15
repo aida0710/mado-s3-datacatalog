@@ -11,9 +11,9 @@ ML Trackingはこのトークン1本で参照・送信・容量取得を行う�
 | GET | `/api/mado/lineage/datasets/{datasetId}` | データセットとバージョンの一覧 |
 | GET | `/api/mado/lineage/versions/{versionId}` | 固定したバージョンのID、ハッシュ、保存先URI |
 
-管理者がSettings → Access → Access Tokensでトークンを作成し、「データセット参照」と「DataLineageの送信」を選択する。
+管理者がSettings → Access → Access Tokensでトークンを作成し、DataLineageの「読み取り」と「送信」を選択する（「ML Tracking連携」プリセットでも両方を選べる）。
 許可するNamespaceを検索して一覧でチェックする。取り込むデータセットのNamespaceと、ML TrackingがRunの記録を送るNamespace（既定は`mado-model-tracking`）を含める。
-発行された値をML Trackingの「連携」画面にあるMadoのアクセストークンへ保存する。値は発行・再発行時に一度だけ返され、再取得できない。lineage:readもNamespace指定を必須とする。
+発行された値をML Trackingの「連携」画面にあるMadoのアクセストークンへ保存する。読み取り・送信の選択から`lineage:read`・`lineage:write`の許可をサーバーが導出するため、従来API用の権限を別に選ぶ操作は不要。値は発行・再発行時に一度だけ返され、再取得できない。lineage:readもNamespace指定を必須とする。
 `*`は全Namespaceを読む権限になるため、必要なNamespace名を列挙する。
 
 ML Tracking側ではMadoのAPI URLとアクセストークンを設定する。検索するNamespaceは入力せず、`/api/mado/access-token`でトークン自身の許可範囲を読んで決める。
@@ -28,6 +28,6 @@ Namespaceの許可には、そのNamespaceにある限定公開のStorage URIも
 
 ML Trackingの内蔵Mado連携はこの検索APIでバージョンを選択する。取り込み時に指定IDを再取得し、実験が参照するバージョンを固定する。
 実験開始・完了・失敗・中止は、`lineage:write`を許可したトークンで既存のOpenLineage入口へ送る。MadoのAPI URLと公開OpenLineage送信先は別に設定できる。
-容量メトリクスが必要なら、同じトークンに`metrics:read`も許可し、既存の`/api/mado/metrics/capacity`を使う。
+容量メトリクスが必要なら、同じトークンでCapacityの「読み取り」と接続を選び、`metrics:read`が許可された状態で既存の`/api/mado/metrics/capacity`を使う。
 Access Tokensで名前・権限・Namespace・有効期限を編集できる。ML Trackingは検索・取り込みのたびに許可範囲を読み直すため、Namespaceの変更に連携の再設定は要らない。無効化は元に戻せる。再発行すると旧値は直ちに使えなくなり、削除すると復帰できない。
 RegistryのDB/APIへML Trackingから直接接続しない。

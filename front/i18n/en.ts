@@ -1,6 +1,8 @@
 import type { japaneseMessages } from './ja'
 
 export const englishMessages = {
+  "tokenPermissions.action.send": "Send",
+  "accessTokens.legacyPermissions": "Changing and saving the selected operations also enables the corresponding internal APIs for this existing token.",
   "tokenPermissions.group.storage": "Storage",
   "tokenPermissions.group.connections": "Connections",
   "tokenPermissions.group.readmes": "README",
@@ -31,7 +33,6 @@ export const englishMessages = {
   "tokenPermissions.preset.capacity": "Capacity monitoring",
   "tokenPermissions.search": "Search features",
   "tokenPermissions.noMatches": "No matching features.",
-  "accessTokens.integrations": "Integration API permissions",
   "accessTokens.connections": "Allowed connections",
   "accessTokens.connectionHelp": "Select connections for Storage, connection management, jobs and capacity access. This selection applies regardless of connection visibility.",
   "accessTokens.allConnections": "Allow all connections",
@@ -48,11 +49,6 @@ export const englishMessages = {
   "accessTokens.issue": "Issue token",
   "accessTokens.description": "Purpose note",
   "accessTokens.permissions": "Allowed operations",
-  "accessTokens.readHelp": "Read datasets, versions, and storage URIs in the allowed namespaces, including URIs in restricted Storage connections. Object contents and credentials are excluded.",
-  "accessTokens.read": "Read datasets",
-  "accessTokens.write": "Send DataLineage",
-  "accessTokens.metrics": "Read capacity metrics",
-  "accessTokens.metricsHelp": "Read bucket names and capacities for selected connections in Prometheus format.",
   "accessTokens.namespaces": "Allowed namespaces",
   "accessTokens.namespaceHelp": "A namespace groups datasets and jobs. Select the names this token may read or send to. You can also add names before their first use.",
   "accessTokens.allNamespaces": "Allow all namespaces",

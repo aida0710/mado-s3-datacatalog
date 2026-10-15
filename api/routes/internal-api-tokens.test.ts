@@ -78,6 +78,37 @@ describe('内部APIのアクセストークン', () => {
     expect(privileges.rows[0]).toEqual({ public_read: false, worker_read: false, reader_write: false })
   })
 
+  it('機能の選択だけで従来APIも許可し、送信を外せば同じトークンの送信権限を失効する', async () => {
+    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
+    const created = await request(manager.token, '/access-tokens', 'POST', {
+      name: 'ML Tracking', permissions: ['lineage:read', 'lineage:send', 'capacity:read'],
+      namespaces: ['speech'], connections: [SELECTED],
+    })
+    expect(created.status).toBe(201)
+    const issued = await created.json() as { accessToken: { id: string }; token: string }
+    expect(await authenticate(issued.token)).toMatchObject({
+      permissions: ['capacity:read', 'lineage:read', 'lineage:send'],
+      scopes: ['lineage:read', 'lineage:write', 'metrics:read'], connections: [SELECTED],
+    })
+    const changed = await request(manager.token, `/access-tokens/${issued.accessToken.id}`, 'PATCH', {
+      expectedRevision: 1, permissions: ['lineage:read'],
+    })
+    expect(changed.status).toBe(200)
+    expect(await legacy.authenticate(issued.token)).toMatchObject({ scopes: ['lineage:read'] })
+  })
+
+  it('旧トークンの名前変更では権限を増やさず、明示した操作変更でだけ新しい許可へ移す', async () => {
+    const issued = await tokens.createToken({ name: 'Legacy metrics', description: '',
+      scopes: ['metrics:read'], namespaces: [], expiresAt: null, createdBy: adminId })
+    await tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { name: 'Renamed' } })
+    expect(await authenticate(issued.token)).toMatchObject({ permissions: [], scopes: ['metrics:read'], connections: null })
+    await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 2,
+      patch: { permissions: ['capacity:read'] } })).rejects.toThrow()
+    await tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 2,
+      patch: { permissions: ['capacity:read'], connections: [SELECTED] } })
+    expect(await authenticate(issued.token)).toMatchObject({ permissions: ['capacity:read'], scopes: ['metrics:read'], connections: [SELECTED] })
+  })
+
   it('閲覧と編集を別々に許可し、編集者と監査にトークンの主体を残す', async () => {
     const writer = await issue({ permissions: ['notes:write'] })
     expect((await request(writer.token, '/notes/home')).status).toBe(403)
@@ -141,10 +172,10 @@ describe('内部APIのアクセストークン', () => {
     expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(201)
     for (const grants of [
       { permissions: ['notes:write'] },
-      { scopes: ['lineage:read'], namespaces: ['other'] },
+      { permissions: undefined, scopes: ['lineage:read'], namespaces: ['other'] },
       { permissions: ['storage:read'], connections: [OUTSIDE] },
       { permissions: ['lineage:read'], namespaces: ['speech'], connections: ['*'] },
-      { scopes: ['metrics:read'], connections: ['*'] },
+      { permissions: undefined, scopes: ['metrics:read'], connections: ['*'] },
     ]) expect((await request(manager.token, '/access-tokens', 'POST', { ...body, ...grants })).status).toBe(403)
     expect((await request(manager.token, `/access-tokens/${manager.accessToken.id}`, 'PATCH', {
       expectedRevision: 1, permissions: ['notes:write'],

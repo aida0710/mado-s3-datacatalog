@@ -21,15 +21,16 @@
 {
   "name": "ML Tracking",
   "description": "データセット参照と学習のDataLineage送信",
-  "scopes": ["lineage:read", "lineage:write"],
-  "permissions": ["lineage:read"],
+  "permissions": ["lineage:read", "lineage:send"],
   "connections": [],
   "namespaces": ["speech"],
   "expiresAt": null
 }
 ```
 
-`scopes`は従来の連携API用で、`lineage:read`・`lineage:write`・`metrics:read`を指定する。`permissions`は内部API用の権限配列。両方の合計で一つ以上が必要で、片方は空にできる。同名の`lineage:read`も入口が異なるので、それぞれ明示的に指定する。内部のDataLineageまたは連携の参照・送信にはNamespaceが必須。DataLineageを使わない場合は空配列にする。
+`permissions`で機能ごとの操作を一つ以上指定する。DataLineageの`lineage:read`は内部APIと従来の参照API、`lineage:send`はOpenLineage送信、`capacity:read`は内部の容量APIとPrometheusメトリクスを許可する。サーバーが対応する`scopes`を導出するため、別に指定する必要はない。DataLineageの参照・送信・登録/編集にはNamespaceが必須。DataLineageを使わない場合は空配列にする。
+
+従来クライアント向けには`scopes`だけの指定も維持する。この場合は内部API権限を追加しない。`permissions`を明示した場合はそれを正とし、対応する`scopes`へ置き換える。応答の`scopes`は従来APIとの互換性のため保持する。PATCHで`permissions`も`scopes`も省略すると、既存の権限は変わらない。
 
 `connections`は許可する接続IDの配列で、全接続は`["*"]`。接続を使う内部権限には一つ以上の選択が必須。新規画面は空配列から始める。既存の連携クライアントが省略した場合と、既存トークンは`null`となり、従来の容量取得の全接続参照を維持する。`null`で内部Storageが許可されることはない。既存トークンのPATCHでは省略して状態を維持できるが、`null`への変更は受け付けない。容量取得はNamespaceで制限されず、明示した接続の範囲で制限する。
 
@@ -49,7 +50,7 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 
 ## 既存環境への適用
 
-v0.2.0への移行では`038_access_tokens.sql`、内部API対応への移行では追加で`039_internal_api_tokens.sql`を新APIより先に適用する。既存の`service_accounts`と`service_account_keys`は内部の識別・監査・Registryの互換性のため保持し、新規作成では内部の持ち主を自動で用意する。既存トークンの値・ID・scope・Namespaceは変えず、内部API権限は空で始める。
+v0.2.0への移行では`038_access_tokens.sql`、内部API対応への移行では追加で`039_internal_api_tokens.sql`を新APIより先に適用する。既存の`service_accounts`と`service_account_keys`は内部の識別・監査・Registryの互換性のため保持し、新規作成では内部の持ち主を自動で用意する。既存トークンの値・ID・scope・Namespaceは変えず、内部API権限は空で始める。画面では旧権限を同じ機能別一覧へ表示するが、名前や説明だけの保存では内部API権限を追加しない。操作の選択を明示的に変えて保存したときに、新しい権限一覧へ移す。既存の全接続の容量トークンを移す場合は、接続も明示的に選択する。
 
 旧管理APIも維持する。無効化された旧アカウントのキーを一つ有効化しても、同じアカウントのほかのキーは無効のまま。再発行は権限・有効期限・無効状態を引き継ぐ。削除は`revoked_at`を保存し、監査・Registryの過去の参照を残す。
 
