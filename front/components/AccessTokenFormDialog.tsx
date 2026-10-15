@@ -1,4 +1,5 @@
 import { Dialog } from './Dialog'
+import { NamespaceSelector } from './NamespaceSelector'
 import { useAccessTokenForm } from '../lib/useAccessTokenForm'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -18,7 +19,7 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
   useLocale()
   const form = useAccessTokenForm({ token, onSave })
   return (
-    <Dialog titleId="access-token-form-title" title={translate(token ? 'accessTokens.edit' : 'accessTokens.create')}
+    <Dialog titleId="access-token-form-title" title={translate(token ? 'accessTokens.edit' : 'accessTokens.create')} size="wide"
       onClose={onCancel} dismissible={!form.busy}
       footer={<>
         <button className="button" type="button" onClick={onCancel} disabled={form.busy}>{translate('common.cancel')}</button>
@@ -42,10 +43,7 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
           {form.scopes.includes('lineage:read') && <p className="muted">{translate('accessTokens.readHelp')}</p>}
           {form.scopes.includes('metrics:read') && <p className="muted">{translate('accessTokens.metricsHelp')}</p>}
         </fieldset>
-        {form.includesLineage && <label className="field"><span>{translate('accessTokens.namespaces')}</span>
-          <input aria-label={translate('accessTokens.namespaces')} aria-describedby="access-token-namespaces-help" value={form.namespaces} onChange={event => form.setNamespaces(event.target.value)} required disabled={form.busy} placeholder={translate('accessTokens.namespacePlaceholder')} />
-          <small id="access-token-namespaces-help" className="muted">{translate('accessTokens.namespaceHelp')}</small>
-        </label>}
+        {form.includesLineage && <NamespaceSelector selected={form.namespaces} onChange={form.setNamespaces} disabled={form.busy} />}
         <label className="field"><span>{translate('accessTokens.expiresAt')}</span>
           <input type="datetime-local" aria-label={translate('accessTokens.expiresAt')} aria-describedby="access-token-expiry-help" value={form.expiry} onChange={event => form.setExpiry(event.target.value)} disabled={form.busy} />
           <small id="access-token-expiry-help" className="muted">{translate('accessTokens.expiryHelp')}</small>

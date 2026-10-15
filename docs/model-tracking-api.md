@@ -10,7 +10,7 @@
 | GET | `/api/mado/lineage/versions/{versionId}` | 固定したバージョンのID、ハッシュ、保存先URI |
 
 管理者がSettings → Access → Access Tokensでトークンを作成し、「データセット参照」を選択する。
-実験のDataLineageも送る場合は「DataLineageの送信」も選ぶ。許可するNamespaceを入力し、発行された値をML Trackingの「連携」画面にあるMadoの参照用キーへ保存する。
+実験のDataLineageも送る場合は「DataLineageの送信」も選ぶ。許可するNamespaceを検索して一覧でチェックし、発行された値をML Trackingの「連携」画面にあるMadoの参照用キーへ保存する。
 同じトークンに送信も許可した場合は、その値を送信用キーにも設定できる。値は発行・再発行時に一度だけ返され、再取得できない。lineage:readもNamespace指定を必須とする。
 `*`は全Namespaceを読む権限になるため、必要なNamespace名を列挙する。
 

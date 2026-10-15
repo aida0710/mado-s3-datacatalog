@@ -16,24 +16,33 @@ function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
+function mockTokenRequests(handler: typeof globalThis.fetch) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) =>
+    String(url).endsWith('/namespaces')
+      ? response({ namespaces: ['speech', 'podcast'], sourceStatus: 'ready' })
+      : handler(url, init))
+}
+
 describe('Access Tokens', () => {
   it('アカウントを別に作らず参照と送信を同じトークンで発行し、言語変更で入力を保つ', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'POST'
+    const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
       ? response({ accessToken: token, token: 'fixture-not-a-real-credential' }, 201) : response({ tokens: [] }))
     render(<AccessTokensPage />)
     await screen.findByText('アクセストークンはありません。')
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'ML Tracking')
-    await user.type(within(dialog).getByRole('textbox', { name: '許可Namespace' }), 'speech, podcast')
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
+    await user.click(within(dialog).getByRole('checkbox', { name: 'podcast' }))
     expect(within(dialog).getByRole('checkbox', { name: 'データセット参照' })).toBeChecked()
     expect(within(dialog).getByRole('checkbox', { name: 'DataLineageの送信' })).toBeChecked()
     expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument()
     act(() => setLocale('en'))
     expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('ML Tracking')
-    expect(within(dialog).getByRole('textbox', { name: 'Allowed namespaces' })).toHaveValue('speech, podcast')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(within(dialog).getByRole('checkbox', { name: 'speech' })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'podcast' })).toBeChecked()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
     await user.click(within(dialog).getByRole('button', { name: 'Issue token' }))
     expect(await screen.findByText('fixture-not-a-real-credential')).toBeInTheDocument()
     const issued = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')!
@@ -46,7 +55,7 @@ describe('Access Tokens', () => {
 
   it('容量取得だけを選ぶ場合はNamespaceを送らず、全接続を読むことを説明する', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'POST'
+    const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
       ? response({ accessToken: { ...token, scopes: ['metrics:read'], namespaces: [] }, token: 'fixture-capacity-value' }, 201)
       : response({ tokens: [] }))
     render(<AccessTokensPage />)
@@ -56,7 +65,7 @@ describe('Access Tokens', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'データセット参照' }))
     await user.click(within(dialog).getByRole('checkbox', { name: 'DataLineageの送信' }))
     await user.click(within(dialog).getByRole('checkbox', { name: '容量メトリクス取得' }))
-    expect(within(dialog).queryByRole('textbox', { name: '許可Namespace' })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('searchbox', { name: 'Namespaceを検索' })).not.toBeInTheDocument()
     expect(within(dialog).getByText(/全接続のバケット名・容量/)).toBeInTheDocument()
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'Capacity')
     await user.click(within(dialog).getByRole('button', { name: '発行する' }))
@@ -65,10 +74,26 @@ describe('Access Tokens', () => {
       .toMatchObject({ scopes: ['metrics:read'], namespaces: [] })
   })
 
+  it('全Namespaceを明示的に選ぶと個別の名前を含めず全対象として発行する', async () => {
+    const user = userEvent.setup()
+    const fetch = mockTokenRequests(async (_url, init) => init?.method === 'POST'
+      ? response({ accessToken: { ...token, namespaces: ['*'] }, token: 'fixture-all-namespaces-value' }, 201)
+      : response({ tokens: [] }))
+    render(<AccessTokensPage />)
+    await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
+    const dialog = screen.getByRole('dialog')
+    await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'All groups')
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
+    await user.click(within(dialog).getByRole('checkbox', { name: 'すべてのNamespaceを許可' }))
+    await user.click(within(dialog).getByRole('button', { name: '発行する' }))
+    await screen.findByText('fixture-all-namespaces-value')
+    expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body)).namespaces).toEqual(['*'])
+  })
+
   it('一覧から無効化と有効化を行い、再発行と削除は確認してから実行する', async () => {
     const user = userEvent.setup()
     let current: AccessToken | null = structuredClone(token)
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    const fetchMock = mockTokenRequests(async (url, init) => {
       if (!init?.method || init.method === 'GET') return response({ tokens: current ? [current] : [] })
       const saved = current!
       if (init.method === 'PATCH') current = { ...saved, ...JSON.parse(String(init.body)), revision: saved.revision + 1 }
@@ -103,7 +128,7 @@ describe('Access Tokens', () => {
 
   it('保存に失敗したら入力を残し、再発行の値を表示しない', async () => {
     const user = userEvent.setup()
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'PATCH'
+    mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
       ? response({ error: 'changed' }, 409) : response({ tokens: [token] }))
     render(<AccessTokensPage />)
     await user.click(within(await screen.findByRole('article', { name: token.name })).getByLabelText('ML Trackingの操作'))

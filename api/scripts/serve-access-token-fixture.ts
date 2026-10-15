@@ -10,6 +10,7 @@ import { setSessionPrincipal } from '../lib/rbac.js'
 import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
 import { requireServiceKeyScope } from '../lib/service-key-auth.js'
 import { mountAccessTokenRoutes } from '../routes/access-tokens.js'
+import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
 const VERIFICATION_DATABASE = 'dashboard_access_tokens_verify'
 // Separate from the application's default ports so verification can run beside development.
@@ -48,7 +49,9 @@ try {
     setSessionPrincipal(context, { kind: 'user', sessionId: 'verification', user })
     await next()
   })
-  mountAccessTokenRoutes(management, { store, audit: createAuditWriter(pools.rw) })
+  mountAccessTokenRoutes(management, { store, audit: createAuditWriter(pools.rw),
+    namespaceCatalog: createAccessTokenNamespaceCatalog({ store,
+      marquez: { listNamespaces: async () => ['speech', 'podcast', 'vision', 'evaluation', 'training'] } }) })
   app.route('/api/internal', management)
   for (const scope of SERVICE_KEY_SCOPES) {
     app.get(`/verification/probe/${scope}`, requireServiceKeyScope({ authenticate: token => credentials.authenticate(token), scope }),

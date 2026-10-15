@@ -10,6 +10,7 @@ import { setSessionPrincipal } from '../lib/rbac.js'
 import { requireServiceKeyScope } from '../lib/service-key-auth.js'
 import { mountAccessTokenRoutes } from './access-tokens.js'
 import type { AccessToken } from '../lib/access-token-types.js'
+import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
 const connection = process.env.DATABASE_URL_RW_TEST
 // This suite resets auth tables; never fall back to another developer's database.
@@ -32,7 +33,8 @@ beforeEach(async () => {
     setSessionPrincipal(context, { kind: 'user', sessionId: 'fixture', user })
     await next()
   })
-  mountAccessTokenRoutes(application, { store: tokens, audit: createAuditWriter(pools.rw) })
+  mountAccessTokenRoutes(application, { store: tokens, audit: createAuditWriter(pools.rw),
+    namespaceCatalog: createAccessTokenNamespaceCatalog({ store: tokens, marquez: null }) })
   for (const scope of ['lineage:read', 'lineage:write', 'metrics:read'] as const) {
     application.get(`/probe/${scope}`, requireServiceKeyScope({
       authenticate: token => credentials.authenticate(token), scope,
@@ -58,6 +60,14 @@ async function issue(overrides: Record<string, unknown> = {}) {
 }
 
 describe('一階層のアクセストークン管理', () => {
+  it('Namespace一覧を管理権限で取得でき、秘密の値と監査は増えない', async () => {
+    await issue()
+    const response = await request({ path: '/namespaces' })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(await response.json()).toEqual({ namespaces: ['speech'], sourceStatus: 'unconfigured' })
+    expect((await pools.rw.query('SELECT id FROM audit_events')).rowCount).toBe(1)
+  })
   it('一度の発行で参照と送信を許可し、一覧と監査には秘密を含めない', async () => {
     const issued = await issue({ scopes: ['lineage:read', 'lineage:write', 'metrics:read'] })
     for (const scope of issued.accessToken.scopes) {
@@ -167,8 +177,9 @@ describe('一階層のアクセストークン管理', () => {
       setSessionPrincipal(context, { kind: 'user', sessionId: 'fixture', user: viewer })
       await next()
     })
-    mountAccessTokenRoutes(limited, { store: tokens, audit: createAuditWriter(pools.rw) })
-    for (const [method, path] of [['GET', ''], ['POST', ''], ['PATCH', `/${issued.accessToken.id}`], ['POST', `/${issued.accessToken.id}/regenerate`], ['DELETE', `/${issued.accessToken.id}`]]) {
+    mountAccessTokenRoutes(limited, { store: tokens, audit: createAuditWriter(pools.rw),
+      namespaceCatalog: createAccessTokenNamespaceCatalog({ store: tokens, marquez: null }) })
+    for (const [method, path] of [['GET', ''], ['GET', '/namespaces'], ['POST', ''], ['PATCH', `/${issued.accessToken.id}`], ['POST', `/${issued.accessToken.id}/regenerate`], ['DELETE', `/${issued.accessToken.id}`]]) {
       expect((await limited.request(`/access-tokens${path}`, { method })).status).toBe(403)
     }
     expect(await credentials.authenticate(issued.token)).not.toBeNull()

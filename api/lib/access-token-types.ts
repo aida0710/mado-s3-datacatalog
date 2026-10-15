@@ -32,6 +32,11 @@ export interface AccessTokenUpdate {
   changed: boolean
 }
 
+export interface AccessTokenNamespaces {
+  namespaces: string[]
+  sourceStatus: 'ready' | 'unavailable' | 'unconfigured' | 'partial'
+}
+
 export interface AccessTokenRow {
   id: string
   service_account_id: string

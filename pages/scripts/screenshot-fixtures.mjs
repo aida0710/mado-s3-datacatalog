@@ -230,6 +230,7 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (path.endsWith('/notes/home/history')) return sendJson({ versions: [{ id: 3, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 }] })
   if (path.endsWith('/notes/home/history/3')) return sendJson({ id: 3, slug: 'home', body: text.noteBody, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 })
   if (path === '/api/internal/users') return sendJson({ users: [user, { ...user, id: 'sample-viewer', username: 'demo-viewer', displayName: 'Sample viewer', email: 'viewer@example.com', roles: ['viewer'], status: 'active' }].map(item => ({ ...item, status: 'active' })) })
+  if (path === '/api/internal/access-tokens/namespaces') return sendJson({ namespaces: ['podcast', 'sample-audio', 'sample-evaluation', 'speech'], sourceStatus: 'ready' })
   if (path === '/api/internal/access-tokens') return sendJson({ tokens: [{
     id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'audio-pipeline',
     description: text.accessTokenDescription, tokenPrefix: 'mado_lin_samplepipeline',

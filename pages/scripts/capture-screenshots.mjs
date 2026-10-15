@@ -14,11 +14,13 @@ const artifactDirectory = join(projectRoot, 'artifacts/docs', captureDate)
 // 画面を操作するときのボタンや見出しの名前。front/i18n/ja.ts・en.ts の表記と同じにする。
 const LABELS = {
   ja: {
+    createToken: 'アクセストークンを作成', tokenName: '名前', namespaceSearch: 'Namespaceを検索',
     browserLocale: 'ja-JP', actions: 'アクション', addToPlayer: 'デッキに追加', synchronizedPlayer: /同期プレイヤー \(2\)/,
     allowedOperations: 'この接続で許可する操作', pin: 'ピン留め', spectrogram: 'スペクトログラム', history: /履歴/,
     breakdown: '内訳', transferEstimate: '移送の見積もり',
   },
   en: {
+    createToken: 'Create access token', tokenName: 'Name', namespaceSearch: 'Search namespaces',
     browserLocale: 'en-US', actions: 'Actions', addToPlayer: 'Add to player', synchronizedPlayer: /Synchronized player \(2\)/,
     allowedOperations: 'Allowed operations', pin: 'Pin', spectrogram: 'Spectrogram', history: /History/,
     breakdown: 'Breakdown', transferEstimate: 'Transfer estimate',
@@ -160,6 +162,13 @@ try {
   } })
   await capturePage({ name: 'access-users', path: '/settings/access/users' })
   await capturePage({ name: 'service-accounts', path: '/settings/access/tokens' })
+  await capturePage({ name: 'access-token-create', path: '/settings/access/tokens', prepare: async page => {
+    await page.getByRole('button', { name: LABELS.createToken, exact: true }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('textbox', { name: LABELS.tokenName, exact: true }).fill('ML Tracking')
+    await dialog.getByRole('checkbox', { name: 'sample-audio', exact: true }).check()
+    await dialog.getByRole('searchbox', { name: LABELS.namespaceSearch, exact: true }).fill('sample')
+  } })
   await capturePage({ name: 'readme-edit', path: `/storage/demo/edit-readme/${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`, prepare: async page => {
     await page.locator('.monaco-editor').first().waitFor()
   } })

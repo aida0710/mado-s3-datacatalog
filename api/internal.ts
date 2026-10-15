@@ -45,6 +45,7 @@ import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountServiceAccountRoutes } from './routes/service-accounts.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { createAccessTokenStore } from './lib/access-token-store.js'
+import { createAccessTokenNamespaceCatalog } from './lib/access-token-namespaces.js'
 import { mountAuditRoutes } from './routes/audit.js'
 import { createRegistryClient } from './lib/registry-client.js'
 import { createMarquezClient } from './lib/marquez-client.js'
@@ -298,7 +299,10 @@ if (authEnabled) {
     ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
   })
   mountServiceAccountRoutes(api, { store: serviceAccounts, audit })
-  mountAccessTokenRoutes(api, { store: createAccessTokenStore(pools.rw), audit })
+  const accessTokens = createAccessTokenStore(pools.rw)
+  mountAccessTokenRoutes(api, { store: accessTokens, audit,
+    namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
+      marquez: env.MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MARQUEZ_URL }) : null }) })
   mountAuditRoutes(api, { pool: pools.ro })
 }
 

@@ -7,6 +7,7 @@
 | Method | `/api/internal`以下のPath | 内容 |
 |---|---|---|
 | GET | `/access-tokens` | 削除されていないトークンのメタデータを`tokens`に返す |
+| GET | `/access-tokens/namespaces` | DataLineageと既存トークンのNamespace一覧 |
 | POST | `/access-tokens` | 名前・説明・権限・Namespace・任意の有効期限を指定して作成 |
 | PATCH | `/access-tokens/{id}` | 名前・説明・権限・Namespace・有効期限・状態を変更 |
 | POST | `/access-tokens/{id}/regenerate` | 秘密の値を再発行。旧値は直ちに認証不可 |
@@ -31,6 +32,14 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 作成・再発行は`{ accessToken, token }`、変更・削除は`{ accessToken }`を返す。秘密の`token`は作成・再発行時の応答だけに含め、一覧・監査には含めない。応答には`Cache-Control: no-store`を付ける。
 
 同じ内容を再保存した場合はrevisionを更新せず、操作監査も増やさない。Namespaceの重複は取り除く。
+
+## Namespaceの選択
+
+画面はNamespaceを検索し、絞り込んだ一覧をチェックして複数選択する。検索や取得の再試行では選択を消さない。まだ一覧にない名前も追加できる。追加はトークンの許可対象を指定する操作で、データセットや処理を登録する操作ではない。全対象の許可は明示的に選択し、保存時に`["*"]`へ変換する。
+
+一覧APIは`{ namespaces: string[], sourceStatus }`を返す。取得元はMarquezの登録済みNamespaceと、削除されていない既存トークンのNamespace。Marquezの一覧は[0.50.0のNamespaceResource](https://github.com/MarquezProject/marquez/blob/0.50.0/api/src/main/java/marquez/api/NamespaceResource.java)の`GET /api/v1/namespaces?limit=&offset=`を使う。1,000件ずつ最大10ページで取得し、データセット全件の走査は行わない。
+
+`sourceStatus`は`ready`・`unavailable`・`unconfigured`・`partial`。取得元の停止や上限で一覧が不完全でも、取得済みの名前と既存トークンの名前は返す。画面で不完全なことを伝え、名前の追加と既存の選択を利用できるようにする。一覧APIにも`service_accounts:manage`を要求する。
 
 ## 既存環境への適用
 

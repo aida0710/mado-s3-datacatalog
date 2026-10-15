@@ -11,15 +11,16 @@ export function accessTokenFormInput(input: {
   name: string
   description: string
   scopes: AccessTokenScope[]
-  namespaces: string
+  namespaces: string[]
   expiry: string
   previous: AccessToken | null
 }): AccessTokenInput {
   const includesLineage = input.scopes.some(scope => scope.startsWith('lineage:'))
+  const namespaces = includesLineage ? [...new Set(input.namespaces)] : []
   const sameExpiry = input.previous !== null && input.expiry === localDateTimeInput(input.previous.expiresAt)
   return {
     name: input.name.trim(), description: input.description.trim(), scopes: input.scopes,
-    namespaces: includesLineage ? [...new Set(input.namespaces.split(',').map(name => name.trim()).filter(Boolean))] : [],
+    namespaces: namespaces.includes('*') ? ['*'] : namespaces,
     ...(sameExpiry ? {} : { expiresAt: input.expiry ? new Date(input.expiry).toISOString() : null }),
   }
 }

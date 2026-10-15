@@ -29,6 +29,9 @@ async function requestToken<T extends z.ZodType>(input: {
 }
 
 export const accessTokensApi = {
+  namespaces: () => requestToken({ path: '/namespaces', schema: z.object({
+    namespaces: z.array(z.string()), sourceStatus: z.enum(['ready', 'unavailable', 'unconfigured', 'partial']),
+  }) }),
   list: async (): Promise<AccessToken[]> => (await requestToken({ schema: z.object({ tokens: z.array(accessTokenSchema) }) })).tokens,
   create: (body: AccessTokenInput) => requestToken({ method: 'POST', body, schema: issuedTokenSchema }),
   update: (token: AccessToken, body: Partial<AccessTokenInput> & { status?: 'active' | 'disabled' }) => requestToken({

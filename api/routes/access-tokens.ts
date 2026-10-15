@@ -8,6 +8,7 @@ import { serviceKeyPermissions } from '../lib/service-key-permissions.js'
 import { AccessTokenConflictError, AccessTokenPermissionsError, type AccessTokenStore } from '../lib/access-token-store.js'
 import type { AccessToken } from '../lib/access-token-types.js'
 import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
+import type { AccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
 // Preserve the metadata limits of the existing service-account contract.
 const TOKEN_NAME_MAX_LENGTH = 128
@@ -35,7 +36,11 @@ const validateTokenId: MiddlewareHandler = async (context, next) => {
   await next()
 }
 
-export function mountAccessTokenRoutes(app: Hono, deps: { store: AccessTokenStore; audit: AuditWriter }): void {
+export function mountAccessTokenRoutes(app: Hono, deps: {
+  store: AccessTokenStore
+  audit: AuditWriter
+  namespaceCatalog: AccessTokenNamespaceCatalog
+}): void {
   const routes = new Hono()
   routes.use('*', requirePermission('service_accounts:manage'), async (c, next) => {
     c.header('Cache-Control', 'no-store')
@@ -73,6 +78,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: { store: AccessTokenStor
   }
 
   routes.get('/', async c => c.json({ tokens: await deps.store.listTokens() }))
+  routes.get('/namespaces', async c => c.json(await deps.namespaceCatalog.listNamespaces()))
   routes.post('/', async c => {
     const parsed = CreateToken.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json({ error: 'invalid body' }, 400)

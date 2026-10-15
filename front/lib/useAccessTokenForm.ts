@@ -7,7 +7,7 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
   const [name, setName] = useState(input.token?.name ?? '')
   const [description, setDescription] = useState(input.token?.description ?? '')
   const [scopes, setScopes] = useState<AccessTokenScope[]>(input.token?.scopes ?? ['lineage:read', 'lineage:write'])
-  const [namespaces, setNamespaces] = useState(input.token?.namespaces.join(', ') ?? '')
+  const [namespaces, setNamespaces] = useState<string[]>(input.token?.namespaces ?? [])
   const [expiry, setExpiry] = useState(localDateTimeInput(input.token?.expiresAt ?? null))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -19,7 +19,7 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     setError(null)
     if (!name.trim()) { setError(translate('accessTokens.nameRequired')); return }
     if (!scopes.length) { setError(translate('accessTokens.choosePermission')); return }
-    if (includesLineage && !namespaces.split(',').some(name => name.trim())) {
+    if (includesLineage && namespaces.length === 0) {
       setError(translate('accessTokens.namespacesRequired')); return
     }
     const sameExpiry = input.token !== null && expiry === localDateTimeInput(input.token.expiresAt)

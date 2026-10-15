@@ -25,12 +25,12 @@ page.on('console', message => {
 const directory = process.env.MADO_SCREENSHOT_DIR
 const tokenName = '学習パイプライン'
 const row = () => page.getByRole('article', { name: tokenName, exact: true })
-async function screenshot(name) {
+async function screenshot(name, target = page) {
   if (!directory) return
   // Never capture a one-time credential, even in this disposable fixture.
   assert.equal(await page.locator('.secret-notice').count(), 0)
   await mkdir(directory, { recursive: true })
-  await page.screenshot({ path: `${directory}/${name}.png`, fullPage: false })
+  await target.screenshot({ path: `${directory}/${name}.png`, ...(target === page ? { fullPage: false } : {}) })
 }
 async function openActions() { await row().locator('summary').click() }
 async function probe(value, scope, status) {
@@ -63,13 +63,27 @@ try {
   const create = page.getByRole('dialog')
   await create.getByRole('textbox', { name: '名前', exact: true }).fill(tokenName)
   await create.getByRole('textbox', { name: '用途のメモ', exact: true }).fill('データセット参照とDataLineageの送信')
-  await create.getByRole('textbox', { name: '許可Namespace', exact: true }).fill('speech, podcast')
+  const namespaceSearch = create.getByRole('searchbox', { name: 'Namespaceを検索', exact: true })
+  await create.getByRole('checkbox', { name: 'speech', exact: true }).waitFor()
+  await namespaceSearch.fill('spe')
+  await create.getByRole('checkbox', { name: 'speech', exact: true }).check()
+  await namespaceSearch.fill('pod')
+  await create.getByRole('checkbox', { name: 'podcast', exact: true }).check()
+  assert.equal(await create.getByRole('group', { name: '選択済みのNamespace', exact: true }).getByRole('button').count(), 2)
+  await screenshot('access-tokens-namespace-search-ja')
+  await screenshot('namespace-selector-desktop', create.getByRole('group', { name: '許可Namespace', exact: true }))
+  await namespaceSearch.fill('')
+  assert.ok(await create.getByRole('checkbox', { name: 'speech', exact: true }).isChecked())
+  assert.ok(await create.getByRole('checkbox', { name: 'podcast', exact: true }).isChecked())
+  assert.equal(await create.getByRole('checkbox', { name: 'すべてのNamespaceを許可', exact: true }).isChecked(), false)
   assert.ok(await create.getByRole('checkbox', { name: 'データセット参照', exact: true }).isChecked())
   assert.ok(await create.getByRole('checkbox', { name: 'DataLineageの送信', exact: true }).isChecked())
   await screenshot('access-tokens-create-ja')
   await create.getByRole('button', { name: '発行する', exact: true }).click()
   const original = await readOneTimeValue()
   await row().waitFor()
+  const metadata = await (await fetch(`${api}/api/internal/access-tokens`)).json()
+  assert.deepEqual(metadata.tokens.find(token => token.name === tokenName).namespaces, ['podcast', 'speech'])
   await probe(original, 'lineage:read', 200)
   await probe(original, 'lineage:write', 200)
   await probe(original, 'metrics:read', 403)
@@ -120,6 +134,7 @@ try {
   await screenshot('access-tokens-list-en')
   await page.getByRole('button', { name: 'Create access token', exact: true }).click()
   await page.getByRole('dialog').getByRole('textbox', { name: 'Name', exact: true }).fill('Language check')
+  await page.getByRole('dialog').getByRole('checkbox', { name: 'speech', exact: true }).waitFor()
   await screenshot('access-tokens-create-en')
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click()
   await switchLanguage('日本語')
@@ -127,12 +142,22 @@ try {
   await page.setViewportSize({ width: 320, height: 800 })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
   await screenshot('access-tokens-mobile-dark')
+  await page.getByRole('button', { name: 'アクセストークンを作成', exact: true }).click()
+  const mobileDialog = page.getByRole('dialog')
+  const mobileSearch = mobileDialog.getByRole('searchbox', { name: 'Namespaceを検索', exact: true })
+  await mobileSearch.fill('spe')
+  await mobileDialog.getByRole('checkbox', { name: 'speech', exact: true }).check()
+  await mobileDialog.getByRole('checkbox', { name: 'speech', exact: true }).scrollIntoViewIfNeeded()
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+  await screenshot('access-tokens-namespace-mobile-dark')
+  await screenshot('namespace-selector-mobile', mobileDialog.getByRole('group', { name: '許可Namespace', exact: true }))
+  await mobileDialog.getByRole('button', { name: 'キャンセル', exact: true }).click()
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.getByRole('article', { name: 'ML Tracking', exact: true }).locator('summary').click()
   await screenshot('access-tokens-actions-dark')
   assert.deepEqual(pageErrors, [])
   if (directory) await writeFile(`${directory}/browser-result.json`, JSON.stringify({
-    checks: ['flat list', 'read/write with one token', 'regeneration', 'disable/enable', 'permission updates', 'delete/cancel', 'old URL', 'English/Japanese', '320px/dark', 'no credentials in screenshots'],
+    checks: ['namespace search and checkbox selection', 'selection retained across searches', 'flat list', 'read/write with one token', 'regeneration', 'disable/enable', 'permission updates', 'delete/cancel', 'old URL', 'English/Japanese', '320px/dark', 'no credentials in screenshots'],
     pageErrors,
   }, null, 2))
   console.log('Access-token browser checks passed; screenshots contain no credential values.')

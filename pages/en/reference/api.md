@@ -12,7 +12,9 @@ Reading datasets, sending OpenLineage events from pipelines, and fetching metric
 
 An Admin opens **Create access token** in **Settings → Access → Access Tokens**, then enters a name and selects the allowed operations. There is no separate account to create.
 
-You can select both **Read datasets** and **Send DataLineage**. A namespace groups datasets and jobs, for example `speech` or `podcast`, independently of S3 connections and buckets. Enter the allowed namespaces, separated by commas. `*` allows all namespaces. A token used only for capacity metrics does not need a namespace.
+You can select both **Read datasets** and **Send DataLineage**. A namespace groups datasets and jobs, for example `speech` or `podcast`, independently of S3 connections and buckets. Use **Search namespaces** to filter the list and check the names to allow. Your selection is retained across searches. For a name missing from the list, enter it in the search field and choose **Add**. Select **Allow all namespaces** only when you need access to every namespace. A token used only for capacity metrics does not need a namespace.
+
+<Screenshot src="/screenshots/en/access-token-create.png" alt="Token creation with a searchable namespace checklist" caption="Filter the list and check the namespaces to allow. Selected names are retained across searches." />
 
 The value is shown only once, when issued. Save it in the integration’s secret manager. An expiration date is optional.
 
