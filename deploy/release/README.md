@@ -13,8 +13,8 @@ not build application source on the deployment host.
    keep `AUTH_COOKIE_SECURE=true` whenever browser access uses TLS.
 4. Provide a compatible Dataset Registry API and token. It is an external
    prerequisite and is not contained in this archive; Marquez is optional for
-   the browser graph. No official Registry distribution is included in Mado
-   v0.1.0. Use `REGISTRY_API_CONTRACT.md` to validate an existing external
+   the browser graph. No official Registry distribution is included in this
+   release. Use `REGISTRY_API_CONTRACT.md` to validate an existing external
    service and obtain its Bearer token from that service's operator. Leave
    neither Registry value blank.
 5. Run `docker compose -f compose.yaml config` and review the resolved config.
@@ -47,6 +47,12 @@ For a deployment already on the previous schema, apply 035–037 before the new
 services, then enable `mado_worker` with the generated `WORKER_DB_PASSWORD`.
 The worker receives only its dedicated environment from `deploy/worker-service.yaml`.
 Migration 037 requires existing SSO users to sign in once after the update.
+
+When upgrading from v0.1.0, apply `db/migrations/038_access_tokens.sql` before
+starting the new APIs. Update both `api-internal` and `api-lineage` to this
+release so token disabling is enforced on both listeners. Existing token
+values and permissions remain valid; regenerating or deleting a token revokes
+its previous value immediately.
 
 Internal/private deployments are downstream operations. Publishing an OSS
 release never connects to or changes a deployment environment.
