@@ -22,14 +22,13 @@ UFW through DNAT, so the host firewall could not restrict it. The public
 OpenLineage listener (`:8081`) returns 404 for these paths. The Prometheus host
 must be inside the edge ACL and resolve the private DNS name.
 
-Scraping requires an access token with the `metrics:read` scope. Issue it
-in Settings → Access → Access Tokens and select **容量メトリクス取得**
-(**Read capacity metrics** in English). A token can combine scopes; a dedicated
-Prometheus token only needs `metrics:read` and its allowed connections. New tokens
-select connections explicitly, including restricted connections when granted.
+Scraping requires an access token that allows reading capacity
+(`capacity:read`, which carries the `metrics:read` scope). Issue it in
+Settings → Access → Access Tokens, choose **Read** under **Capacity** and select
+the connections to expose (or all connections). A token can combine operations;
+a dedicated Prometheus token only needs that permission and its connections.
 Connection names, bucket/prefix metrics and tracking settings all use that
-selection. Existing tokens keep their previous all-connections scope until their
-connection selection is changed.
+selection.
 
 ```yaml
 scrape_configs:

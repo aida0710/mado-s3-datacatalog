@@ -36,7 +36,7 @@ import { createOidcProvisioning } from './lib/auth-oidc-provisioning.js'
 import { sessionCookieName } from './lib/auth-types.js'
 import { createAuditWriter } from './lib/audit.js'
 import { auditActivity } from './lib/audit-activity.js'
-import { createServiceAccountStore } from './lib/auth-api-keys.js'
+import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.js'
 import { createOidcProvider } from './lib/auth-oidc.js'
 import { requirePasswordChangeComplete } from './lib/auth-middleware.js'
 import { requireInternalApiAuthentication } from './lib/internal-api-auth.js'
@@ -45,7 +45,6 @@ import { requireInternalApiPermission } from './lib/internal-api-permission-poli
 import { getRequestPrincipal } from './lib/rbac.js'
 import { mountAuthRoutes } from './routes/auth.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
-import { mountServiceAccountRoutes } from './routes/service-accounts.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { createAccessTokenStore } from './lib/access-token-store.js'
 import { createAccessTokenNamespaceCatalog } from './lib/access-token-namespaces.js'
@@ -78,8 +77,8 @@ const authEnabled = env.AUTH_MODE !== 'disabled'
 const audit = createAuditWriter(pools.rw)
 const users = createUserStore(pools.rw)
 const credentials = createCredentialStore(pools.rw)
-const serviceAccounts = createServiceAccountStore(pools.rw)
-const authenticateInternalToken = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: token => serviceAccounts.authenticate(token) })
+const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
+const authenticateInternalToken = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: authenticateServiceKey })
 const sessionCookie = sessionCookieName(env.AUTH_COOKIE_SECURE)
 const oidcEnabled = authEnabled && (env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid')
 if (oidcEnabled && (!env.OIDC_ISSUER_URL || !env.OIDC_CLIENT_ID
@@ -298,7 +297,6 @@ if (authEnabled) {
     audit,
     ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
   })
-  mountServiceAccountRoutes(api, { store: serviceAccounts, audit })
   const accessTokens = createAccessTokenStore(pools.rw)
   mountAccessTokenRoutes(api, { store: accessTokens, audit,
     visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
@@ -311,13 +309,13 @@ app.route('/api/internal', api)
 
 // 連携用の読み取りAPI。既存のscopeとURLを維持し、公開用の:8081には載せない。
 const madoApi = new Hono()
-mountServiceAccessTokenRoutes(madoApi, { authenticate: token => serviceAccounts.authenticate(token) })
+mountServiceAccessTokenRoutes(madoApi, { authenticate: authenticateServiceKey })
 mountMetricsRoutes(madoApi, {
   authenticate: authenticateInternalToken,
   collectors: [createCapacityMetricsCollector(capacityStore)],
 })
 mountServiceLineageRoutes(madoApi, {
-  authenticate: token => serviceAccounts.authenticate(token),
+  authenticate: authenticateServiceKey,
   registry: env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN
     ? createRegistryClient({ baseUrl: env.DATASET_REGISTRY_URL, token: env.DATASET_REGISTRY_TOKEN })
     : null,

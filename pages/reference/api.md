@@ -24,7 +24,7 @@ DataLineageの**読み取り**と**送信**は、同じ機能別の一覧で両�
 | DataLineage: 送信 | OpenLineageイベントの送信 | `POST /api/openlineage/v1/lineage` |
 | Capacity: 読み取り | 許可した接続の容量メトリクスの取得 | `GET /api/mado/metrics/capacity` |
 
-連携用の `/api/mado/` はGETだけです。一つのトークンに必要な操作を組み合わせられます。従来APIの許可も選択した操作から自動で設定されます。容量取得は選択した接続が対象で、Namespaceでは制限されません。既存トークンの全接続参照は維持されます。
+連携用の `/api/mado/` はGETだけです。一つのトークンに必要な操作を組み合わせられます。連携APIのscopeは、選択した操作から決まります。容量取得は選択した接続が対象で、Namespaceでは制限されません。
 
 `GET /api/mado/access-token`は、scopeを問わず、呼び出したトークン自身の名前・scope・Namespace・有効期限を返します（`namespaces`の`["*"]`は全Namespace）。ほかのトークンの情報や、トークンの値は返しません。連携先が、許可されたNamespaceを利用者に入力させずに知るための入口です。
 

@@ -3,7 +3,7 @@ import { translate } from '../i18n/translate'
 import { useLocale } from '../i18n/useLocale'
 
 export function TokenConnectionSelector({ selected, onChange, disabled }: {
-  selected: string[] | null
+  selected: string[]
   onChange: (ids: string[]) => void
   disabled: boolean
 }) {
@@ -12,7 +12,6 @@ export function TokenConnectionSelector({ selected, onChange, disabled }: {
   return <fieldset className="token-connections" disabled={disabled}>
     <legend>{translate('accessTokens.connections')}</legend>
     <p className="muted">{translate('accessTokens.connectionHelp')}</p>
-    {selected === null && <p className="notice">{translate('accessTokens.legacyConnections')}</p>}
     <label className="token-connections__option">
       <input type="checkbox" checked={selection.allowsAll} onChange={selection.toggleAll} />
       <span>{translate('accessTokens.allConnections')}</span>
@@ -26,7 +25,7 @@ export function TokenConnectionSelector({ selected, onChange, disabled }: {
       <button type="button" className="button small" onClick={selection.retry}>{translate('loadFailedNotice.retry')}</button></p>}
     <div className="token-connections__list" role="group" aria-label={translate('accessTokens.connectionList')}>
       {selection.matches.map(connection => <label className="token-connections__option" key={connection.id}>
-        <input type="checkbox" checked={selected?.includes(connection.id) ?? false} disabled={selection.allowsAll}
+        <input type="checkbox" checked={selected.includes(connection.id)} disabled={selection.allowsAll}
           onChange={() => selection.toggle(connection.id)} />
         <span>{connection.name}<small className="muted">{connection.id}</small></span>
       </label>)}

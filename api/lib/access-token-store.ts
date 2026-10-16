@@ -2,21 +2,21 @@ import type { Pool, PoolClient } from 'pg'
 import { withTransaction, type Queryable } from '../db.js'
 import { newId, randomToken, sha256 } from './auth-crypto.js'
 import { ACTIVE_SERVICE_KEY_CONDITION, insertServiceAccountKey, insertServiceKeyPermissions, SERVICE_KEY_SECRET_BYTES } from './service-account-key-record.js'
-import { accessTokenGrants, normalizePermissionScopes } from './access-token-grants.js'
+import { accessTokenGrants } from './access-token-grants.js'
 import { saveInternalTokenGrants } from './internal-token-grants.js'
+import { serviceKeyScopesForPermissions } from '../shared/access-token-permissions.js'
 import type { AccessToken, AccessTokenInput, AccessTokenPatch, AccessTokenRow, AccessTokenUpdate } from './access-token-types.js'
 
 // Internal owner names must fit the existing service_accounts name constraint.
 const ACCOUNT_NAME_MAX_LENGTH = 128
-const TOKEN_SELECT = `SELECT k.id, k.service_account_id, a.status AS account_status,
+const TOKEN_SELECT = `SELECT k.id, k.service_account_id,
   k.name, k.description, k.token_prefix, k.created_at, k.expires_at,
   k.disabled_at, k.regenerated_at, k.last_used_at, k.revision,
   COALESCE((SELECT array_agg(scope ORDER BY scope) FROM service_account_key_scopes WHERE key_id = k.id), ARRAY[]::text[]) AS scopes,
   COALESCE((SELECT array_agg(namespace ORDER BY namespace) FROM service_account_key_namespaces WHERE key_id = k.id), ARRAY[]::text[]) AS namespaces,
   ARRAY(SELECT permission FROM service_account_key_permissions WHERE key_id=k.id ORDER BY permission) AS permissions,
-  CASE WHEN k.connections_restricted THEN ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id)
-    ELSE NULL END AS connections
-  FROM service_account_keys k JOIN service_accounts a ON a.id = k.service_account_id
+  ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id) AS connections
+  FROM service_account_keys k
   WHERE k.revoked_at IS NULL`
 
 export class AccessTokenConflictError extends Error {
@@ -40,8 +40,7 @@ export interface AccessTokenWriteGuard {
 
 // Same conditions as authentication; a caller disabled or revoked mid-request cannot finish a write.
 // No row lock: two tokens editing each other would otherwise lock in opposite orders and deadlock.
-const ACTIVE_KEY_SELECT = `SELECT 1 FROM service_account_keys k JOIN service_accounts a ON a.id = k.service_account_id
-  WHERE k.id = $1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`
+const ACTIVE_KEY_SELECT = `SELECT 1 FROM service_account_keys k WHERE k.id = $1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`
 
 async function assertActorActive(database: Queryable, guard: AccessTokenWriteGuard | undefined): Promise<void> {
   if (!guard?.actorKeyId) return
@@ -50,7 +49,7 @@ async function assertActorActive(database: Queryable, guard: AccessTokenWriteGua
 }
 
 function toAccessToken(row: AccessTokenRow): AccessToken {
-  const disabled = row.disabled_at !== null || row.account_status === 'disabled'
+  const disabled = row.disabled_at !== null
   const expired = row.expires_at !== null && row.expires_at.getTime() <= Date.now()
   return {
     id: row.id, name: row.name, description: row.description, tokenPrefix: row.token_prefix,
@@ -74,24 +73,16 @@ function tokenNeedsUpdate(row: AccessTokenRow, patch: AccessTokenPatch): boolean
   if (patch.name !== undefined && patch.name !== row.name) return true
   if (patch.description !== undefined && patch.description !== row.description) return true
   if (patch.expiresAt !== undefined && patch.expiresAt?.getTime() !== row.expires_at?.getTime()) return true
-  if (patch.scopes !== undefined && !haveSameMembers(patch.scopes, row.scopes)) return true
   if (patch.namespaces !== undefined && !haveSameMembers(patch.namespaces, row.namespaces)) return true
   if (patch.permissions !== undefined && !haveSameMembers(patch.permissions, row.permissions)) return true
-  if (patch.connections !== undefined && (patch.connections === null || row.connections === null
-    ? patch.connections !== row.connections : !haveSameMembers(patch.connections, row.connections))) return true
+  if (patch.connections !== undefined && !haveSameMembers(patch.connections, row.connections)) return true
   if (patch.status === 'disabled') return row.disabled_at === null
-  if (patch.status === 'active') return row.disabled_at !== null || row.account_status === 'disabled'
+  if (patch.status === 'active') return row.disabled_at !== null
   return false
 }
 
 async function lockToken(database: PoolClient, input: { id: string; expectedRevision: number },
   guard?: AccessTokenWriteGuard): Promise<AccessTokenRow | null> {
-  const owner = await database.query<{ service_account_id: string }>(
-    'SELECT service_account_id FROM service_account_keys WHERE id = $1 AND revoked_at IS NULL', [input.id],
-  )
-  if (!owner.rows[0]) return null
-  // Match legacy account updates: lock the owner before any key to avoid cross-route deadlocks.
-  await database.query('SELECT id FROM service_accounts WHERE id = $1 FOR UPDATE', [owner.rows[0].service_account_id])
   const selected = await database.query<AccessTokenRow>(`${TOKEN_SELECT} AND k.id = $1 FOR UPDATE OF k`, [input.id])
   const row = selected.rows[0]
   if (!row) return null
@@ -122,10 +113,10 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       return row ? toAccessToken(row) : null
     },
     createToken: (input, guard) => withTransaction(pool, async database => {
-      const parsed = accessTokenGrants.safeParse(normalizePermissionScopes(input))
+      const parsed = accessTokenGrants.safeParse(input)
       if (!parsed.success) throw new AccessTokenPermissionsError()
       await assertActorActive(database, guard)
-      const grants = { ...parsed.data, permissions: parsed.data.permissions ?? [] }
+      const grants = parsed.data
       const accountId = newId()
       // One internal owner per new token preserves the Registry/audit identity contract.
       const suffix = ` [${accountId}]`
@@ -134,42 +125,33 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
         'INSERT INTO service_accounts (id, name, description, created_by) VALUES ($1, $2, $3, $4)',
         [accountId, accountName, input.description, input.createdBy],
       )
-      const issued = await insertServiceAccountKey(database, { ...input, ...grants, accountId })
+      const issued = await insertServiceAccountKey(database, {
+        ...input, ...grants, scopes: serviceKeyScopesForPermissions(grants.permissions), accountId,
+      })
       await saveInternalTokenGrants(database, { id: issued.id, ...grants })
       return { accessToken: toAccessToken((await getTokenRow(database, issued.id))!), token: issued.token }
     }),
     updateToken: (input, guard) => withTransaction(pool, async database => {
       const row = await lockToken(database, input, guard)
       if (!row) return null
-      // Feature permissions own the derived scopes; a scopes-only edit would let the two disagree.
-      if (input.patch.scopes !== undefined && input.patch.permissions === undefined && row.permissions.length > 0) {
-        throw new AccessTokenPermissionsError()
-      }
-      const requested = normalizePermissionScopes(input.patch)
       const parsed = accessTokenGrants.safeParse({
-        scopes: requested.scopes ?? row.scopes,
-        namespaces: requested.namespaces ?? row.namespaces,
-        permissions: requested.permissions ?? row.permissions,
-        connections: requested.connections === undefined ? row.connections : requested.connections,
+        namespaces: input.patch.namespaces ?? row.namespaces,
+        permissions: input.patch.permissions ?? row.permissions,
+        connections: input.patch.connections ?? row.connections,
       })
       if (!parsed.success) throw new AccessTokenPermissionsError()
-      const grants = { ...parsed.data, permissions: parsed.data.permissions ?? [] }
-      const patch = { ...requested, ...grants }
-      if (!tokenNeedsUpdate(row, patch)) return { accessToken: toAccessToken(row), changed: false }
-      if (requested.scopes !== undefined || requested.namespaces !== undefined) {
+      const grants = parsed.data
+      if (!tokenNeedsUpdate(row, { ...input.patch, ...grants })) return { accessToken: toAccessToken(row), changed: false }
+      if (input.patch.permissions !== undefined || input.patch.namespaces !== undefined) {
+        // The integration scopes follow the permissions.
         await database.query('DELETE FROM service_account_key_scopes WHERE key_id = $1', [input.id])
         await database.query('DELETE FROM service_account_key_namespaces WHERE key_id = $1', [input.id])
-        await insertServiceKeyPermissions(database, { id: input.id, ...grants })
+        await insertServiceKeyPermissions(database, {
+          id: input.id, scopes: serviceKeyScopesForPermissions(grants.permissions), namespaces: grants.namespaces,
+        })
       }
       if (input.patch.permissions !== undefined || input.patch.connections !== undefined) {
         await saveInternalTokenGrants(database, { id: input.id, ...grants })
-      }
-      if (input.patch.status === 'active' && row.account_status === 'disabled') {
-        // Enabling one legacy key must keep every sibling effectively disabled.
-        await database.query(`UPDATE service_account_keys SET disabled_at = COALESCE(disabled_at, now()),
-          revision = revision + 1 WHERE service_account_id = $1 AND id <> $2 AND revoked_at IS NULL`,
-        [row.service_account_id, input.id])
-        await database.query("UPDATE service_accounts SET status = 'active', updated_at = now() WHERE id = $1", [row.service_account_id])
       }
       await database.query(`UPDATE service_account_keys SET name = $2, description = $3, expires_at = $4,
         disabled_at = CASE WHEN $5 = 'disabled' THEN COALESCE(disabled_at, now())

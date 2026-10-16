@@ -4,7 +4,7 @@ import { Hono } from 'hono'
 import { createPools, closePools } from '../db.js'
 import { createUserStore } from '../lib/auth-user-store.js'
 import { createAccessTokenStore } from '../lib/access-token-store.js'
-import { createServiceAccountStore } from '../lib/auth-api-keys.js'
+import { createServiceKeyAuthenticator } from '../lib/service-key-authenticator.js'
 import { createAuditWriter } from '../lib/audit.js'
 import { getRequestPrincipal } from '../lib/rbac.js'
 import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
@@ -38,7 +38,7 @@ try {
     displayName: 'Verification Admin', username: 'verification-admin', email: 'admin@example.test', roles: ['admin'],
   })
   const store = createAccessTokenStore(pools.rw)
-  const credentials = createServiceAccountStore(pools.rw)
+  const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
   const audit = createAuditWriter(pools.rw)
   const fixtureCrypto = createCrypto('a'.repeat(64))
   for (const [id, name] of [['speech0001', 'Speech Storage'], ['backup0001', 'Backup Storage']]) {
@@ -48,11 +48,11 @@ try {
     [id, name, fixtureCrypto.encrypt('fixture-access-key'), fixtureCrypto.encrypt('fixture-secret')])
   }
   await store.createToken({ name: 'ML Tracking', description: '音声モデルの学習とデータセット参照',
-    scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'], expiresAt: null, createdBy: user.id })
+    permissions: ['lineage:read', 'lineage:send'], namespaces: ['speech'], connections: [], expiresAt: null, createdBy: user.id })
   await store.createToken({ name: '容量監視', description: 'Prometheusから容量を取得',
-    scopes: ['metrics:read'], namespaces: [], expiresAt: null, createdBy: user.id })
+    permissions: ['capacity:read'], namespaces: [], connections: ['*'], expiresAt: null, createdBy: user.id })
   const disabled = await store.createToken({ name: '音声前処理', description: '一時停止中の処理',
-    scopes: ['lineage:write'], namespaces: ['speech'], expiresAt: null, createdBy: user.id })
+    permissions: ['lineage:send'], namespaces: ['speech'], connections: [], expiresAt: null, createdBy: user.id })
   await store.updateToken({ id: disabled.accessToken.id, expectedRevision: 1, patch: { status: 'disabled' } })
 
   const app = new Hono()
@@ -64,7 +64,7 @@ try {
   })
   const management = new Hono()
   management.use('*', requireInternalApiAuthentication({
-    authenticateToken: createInternalTokenAuthenticator({ pool: pools.rw, authenticate: token => credentials.authenticate(token) }),
+    authenticateToken: createInternalTokenAuthenticator({ pool: pools.rw, authenticate: authenticateServiceKey }),
     sessions: { authenticateSession: async () => ({ kind: 'user', sessionId: 'verification', user }) },
     cookieName: 'verification', idleSeconds: 300,
   }))
@@ -81,7 +81,7 @@ try {
       marquez: { listNamespaces: async () => ['speech', 'podcast', 'vision', 'evaluation', 'training'] } }) })
   app.route('/api/internal', management)
   for (const scope of SERVICE_KEY_SCOPES) {
-    app.get(`/verification/probe/${scope}`, requireServiceKeyScope({ authenticate: token => credentials.authenticate(token), scope }),
+    app.get(`/verification/probe/${scope}`, requireServiceKeyScope({ authenticate: authenticateServiceKey, scope }),
       context => context.json({ ok: true }))
   }
   const server = serve({ fetch: app.fetch, hostname: '127.0.0.1', port: VERIFICATION_PORT })

@@ -17,8 +17,7 @@ export async function canAccessConnection(
 ): Promise<boolean> {
   const caller = getRequestPrincipal(c)
   if (caller?.kind === 'service_account') {
-    return caller.connections !== null
-      && (caller.connections.includes('*') || caller.connections.includes(connectionId))
+    return caller.connections.includes('*') || caller.connections.includes(connectionId)
   }
   if (managesConnections(c)) return true
   const principal = getRequestPrincipal(c)!
@@ -43,7 +42,7 @@ export async function canAccessConnection(
 /** nullは「管理者なので全件」。通常Userは利用可能なconnection IDだけを返す。 */
 export async function connectionIdsForPrincipal(pool: Pool, caller: RequestPrincipal | null): Promise<Set<string> | null> {
   if (caller?.kind === 'service_account') {
-    return caller.connections?.includes('*') ? null : new Set(caller.connections ?? [])
+    return caller.connections.includes('*') ? null : new Set(caller.connections)
   }
   if (caller === null || hasPermission(caller, 'connections:manage')) return null
   const principal = caller

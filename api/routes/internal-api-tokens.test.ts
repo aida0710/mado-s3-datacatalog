@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { closePools, createPools } from '../db.js'
 import { createUserStore } from '../lib/auth-user-store.js'
-import { createServiceAccountStore } from '../lib/auth-api-keys.js'
+import { createServiceKeyAuthenticator } from '../lib/service-key-authenticator.js'
 import { AccessTokenActorInactiveError, AccessTokenPermissionsError, createAccessTokenStore } from '../lib/access-token-store.js'
 import { createInternalTokenAuthenticator } from '../lib/internal-token-authenticator.js'
 import { requireInternalApiAuthentication } from '../lib/internal-api-auth.js'
@@ -15,17 +15,16 @@ import type { AccessTokenInput } from '../lib/access-token-types.js'
 import { mountAccessTokenRoutes } from './access-tokens.js'
 import { mountNotesRoutes } from './notes.js'
 import { mountAdminUsersRoutes } from './admin-users.js'
-import { mountServiceAccountRoutes } from './service-accounts.js'
 import { mountAuditRoutes } from './audit.js'
 
 const database = process.env.DATABASE_URL_RW_TEST
 if (!database || !new URL(database).pathname.endsWith('_test')) throw new Error('An explicit isolated test database is required')
 const pools = createPools({ rw: database, ro: database.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)
-const legacy = createServiceAccountStore(pools.rw)
+const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
 const tokens = createAccessTokenStore(pools.rw)
 const audit = createAuditWriter(pools.rw)
-const authenticate = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: token => legacy.authenticate(token) })
+const authenticate = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: authenticateServiceKey })
 const SELECTED = 'selected01'
 const OUTSIDE = 'outside001'
 let app: Hono
@@ -48,13 +47,12 @@ beforeEach(async () => {
   mountAuditRoutes(app, { pool: pools.ro })
   mountAccessTokenRoutes(app, { store: tokens, audit,
     namespaceCatalog: { listNamespaces: async () => ({ namespaces: ['music', 'speech'], sourceStatus: 'ready' }) } })
-  mountServiceAccountRoutes(app, { store: legacy, audit })
   mountAdminUsersRoutes(app, { users, credentials: { resetLocalPassword: vi.fn() }, audit, ssoRoleMapping: {} })
 })
 afterAll(() => closePools(pools))
 
 function issue(grants: Partial<AccessTokenInput> = {}) {
-  return tokens.createToken({ name: 'Automation', description: '', scopes: [], namespaces: [], permissions: ['notes:read'],
+  return tokens.createToken({ name: 'Automation', description: '', namespaces: [], permissions: ['notes:read'],
     connections: [], expiresAt: null, ...grants, createdBy: adminId })
 }
 function request(token: string, path: string, method = 'GET', body?: unknown) {
@@ -63,14 +61,7 @@ function request(token: string, path: string, method = 'GET', body?: unknown) {
 }
 
 describe('内部APIのアクセストークン', () => {
-  it('既存トークンの値と連携権限を保ち、内部API権限は増やさない', async () => {
-    const owner = await legacy.createAccount({ name: 'Existing', description: '', createdBy: adminId })
-    const key = await legacy.issueKey({ accountId: owner.id, name: 'Existing', createdBy: adminId,
-      scopes: ['lineage:read', 'lineage:write', 'metrics:read'], namespaces: ['speech'] })
-    expect(await authenticate(key.token)).toMatchObject({ permissions: [], connections: null, namespaces: ['speech'],
-      scopes: ['lineage:read', 'lineage:write', 'metrics:read'] })
-    expect((await request(key.token, '/notes/home')).status).toBe(403)
-    expect(await legacy.authenticate(key.token)).not.toBeNull()
+  it('内部APIの権限と接続の表は、公開OpenLineageとworkerのDBロールから読めない', async () => {
     const privileges = await pools.rw.query(`SELECT
       has_table_privilege('mado_lineage','service_account_key_permissions','SELECT') AS public_read,
       has_table_privilege('mado_worker','service_account_key_connections','SELECT') AS worker_read,
@@ -94,19 +85,7 @@ describe('内部APIのアクセストークン', () => {
       expectedRevision: 1, permissions: ['lineage:read'],
     })
     expect(changed.status).toBe(200)
-    expect(await legacy.authenticate(issued.token)).toMatchObject({ scopes: ['lineage:read'] })
-  })
-
-  it('旧トークンの名前変更では権限を増やさず、明示した操作変更でだけ新しい許可へ移す', async () => {
-    const issued = await tokens.createToken({ name: 'Legacy metrics', description: '',
-      scopes: ['metrics:read'], namespaces: [], expiresAt: null, createdBy: adminId })
-    await tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { name: 'Renamed' } })
-    expect(await authenticate(issued.token)).toMatchObject({ permissions: [], scopes: ['metrics:read'], connections: null })
-    await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 2,
-      patch: { permissions: ['capacity:read'] } })).rejects.toThrow()
-    await tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 2,
-      patch: { permissions: ['capacity:read'], connections: [SELECTED] } })
-    expect(await authenticate(issued.token)).toMatchObject({ permissions: ['capacity:read'], scopes: ['metrics:read'], connections: [SELECTED] })
+    expect(await authenticateServiceKey(issued.token)).toMatchObject({ scopes: ['lineage:read'] })
   })
 
   it('閲覧と編集を別々に許可し、編集者と監査にトークンの主体を残す', async () => {
@@ -144,7 +123,7 @@ describe('内部APIのアクセストークン', () => {
   it('再発行と認証が重なっても、以前の値で新しい権限を使わせない', async () => {
     const issued = await issue()
     const racing = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: async value => {
-      const principal = await legacy.authenticate(value)
+      const principal = await authenticateServiceKey(value)
       await tokens.regenerateToken({ id: issued.accessToken.id, expectedRevision: 1 })
       return principal
     } })
@@ -160,32 +139,32 @@ describe('内部APIのアクセストークン', () => {
   it('存在しない接続・操作なし・対象なしのトークンは保存しない', async () => {
     await expect(issue({ permissions: ['storage:read'], connections: [OUTSIDE + '-missing'] })).rejects.toThrow()
     await expect(issue({ permissions: [] })).rejects.toThrow()
-    await expect(issue({ permissions: ['storage:read'], connections: null })).rejects.toThrow()
+    await expect(issue({ permissions: ['storage:read'], connections: [] })).rejects.toThrow()
     await expect(issue({ permissions: ['lineage:read'], namespaces: [] })).rejects.toThrow()
     expect(await tokens.listTokens()).toEqual([])
   })
 
   it('管理トークンが自分より強い権限・Namespace・接続を委譲できない', async () => {
     const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read', 'storage:read', 'lineage:read'],
-      scopes: ['lineage:read'], connections: [SELECTED], namespaces: ['speech'] })
-    const body = { name: 'Child', scopes: [], permissions: ['notes:read'], connections: [], namespaces: [] }
+      connections: [SELECTED], namespaces: ['speech'] })
+    const body = { name: 'Child', permissions: ['notes:read'], connections: [], namespaces: [] }
     expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(201)
     for (const grants of [
       { permissions: ['notes:write'] },
-      { permissions: undefined, scopes: ['lineage:read'], namespaces: ['other'] },
+      { permissions: ['lineage:read'], namespaces: ['other'] },
       { permissions: ['storage:read'], connections: [OUTSIDE] },
       { permissions: ['lineage:read'], namespaces: ['speech'], connections: ['*'] },
-      { permissions: undefined, scopes: ['metrics:read'], connections: ['*'] },
+      { permissions: ['capacity:read'], connections: ['*'] },
     ]) expect((await request(manager.token, '/access-tokens', 'POST', { ...body, ...grants })).status).toBe(403)
     expect((await request(manager.token, `/access-tokens/${manager.accessToken.id}`, 'PATCH', {
       expectedRevision: 1, permissions: ['notes:write'],
     })).status).toBe(403)
   })
 
-  it('接続未指定の管理トークンは、DataLineageの接続制限も子へ広げられない', async () => {
+  it('接続を持たない管理トークンは、DataLineageの接続制限も子へ広げられない', async () => {
     const manager = await issue({ permissions: ['service_accounts:manage', 'lineage:read'],
-      namespaces: ['speech'], connections: null })
-    const body = { name: 'Child', scopes: [], permissions: ['lineage:read'], namespaces: ['speech'] }
+      namespaces: ['speech'], connections: [] })
+    const body = { name: 'Child', permissions: ['lineage:read'], namespaces: ['speech'] }
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: ['*'] })).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: [SELECTED] })).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: [] })).status).toBe(201)
@@ -200,7 +179,7 @@ describe('内部APIのアクセストークン', () => {
     expect(await authenticate(issued.token)).toMatchObject({ tokenName: 'Renamed', connections: [SELECTED] })
   })
 
-  it('強い既存トークンの再発行・有効化・削除と旧二階層APIによる操作も拒否する', async () => {
+  it('強い既存トークンの再発行・有効化・削除を拒否し、権限表に無いAPIはトークンに開かない', async () => {
     const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'] })
     const stronger = await issue({ permissions: ['notes:write'] })
     const path = `/access-tokens/${stronger.accessToken.id}`
@@ -214,7 +193,7 @@ describe('内部APIのアクセストークン', () => {
   it('管理トークンは自分の有効期限より長く残るトークンを作れず、期限より短ければ作れる', async () => {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
     const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'], expiresAt })
-    const body = { name: 'Child', scopes: [], permissions: ['notes:read'], connections: [], namespaces: [] }
+    const body = { name: 'Child', permissions: ['notes:read'], connections: [], namespaces: [] }
     const at = (offset: number) => new Date(expiresAt.getTime() + offset).toISOString()
     expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, expiresAt: at(1000) })).status).toBe(403)
@@ -231,11 +210,15 @@ describe('内部APIのアクセストークン', () => {
     expect(response.status).toBe(403)
   })
 
-  it('機能別の権限を持つトークンへのscopesだけの変更は、権限と連携scopeを食い違わせないよう断る', async () => {
+  it('連携scopeは権限から決まり、scopesを送る変更は受け付けない', async () => {
+    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
     const issued = await issue({ permissions: ['lineage:read'], namespaces: ['speech'] })
-    await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { scopes: ['lineage:write'] } }))
+    const response = await request(manager.token, `/access-tokens/${issued.accessToken.id}`, 'PATCH',
+      { expectedRevision: 1, scopes: ['lineage:write'] })
+    expect(response.status).toBe(400)
+    expect(await authenticate(issued.token)).toMatchObject({ scopes: ['lineage:read'], permissions: ['lineage:read'] })
+    await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { permissions: [] } }))
       .rejects.toBeInstanceOf(AccessTokenPermissionsError)
-    expect(await authenticate(issued.token)).toMatchObject({ scopes: issued.accessToken.scopes, permissions: ['lineage:read'] })
   })
 
   it('呼び出し元のトークンが途中で無効になると、作成も削除も確定しない', async () => {
@@ -245,7 +228,7 @@ describe('内部APIのアクセストークン', () => {
     const guard = { actorKeyId: manager.accessToken.id }
     await expect(tokens.deleteToken({ id: target.accessToken.id, expectedRevision: 1 }, guard))
       .rejects.toBeInstanceOf(AccessTokenActorInactiveError)
-    await expect(tokens.createToken({ name: 'Child', description: '', scopes: [], permissions: ['notes:read'],
+    await expect(tokens.createToken({ name: 'Child', description: '', permissions: ['notes:read'],
       connections: [], namespaces: [], expiresAt: null, createdBy: null }, guard)).rejects.toBeInstanceOf(AccessTokenActorInactiveError)
     expect(await authenticate(target.token)).not.toBeNull()
     expect((await tokens.listTokens()).map(token => token.name)).not.toContain('Child')
@@ -265,10 +248,10 @@ describe('内部APIのアクセストークン', () => {
 
   it('ユーザー管理には、全権限に加えて全接続・全Namespaceを持つトークンを要求する', async () => {
     const body = { username: 'scoped-admin-user', displayName: 'Created by token', roles: ['viewer'] }
-    const everything = { permissions: [...INTERNAL_API_PERMISSIONS], scopes: ['lineage:read', 'lineage:write', 'metrics:read'] as const }
-    const limitedConnections = await issue({ ...everything, scopes: [...everything.scopes], connections: [SELECTED], namespaces: ['*'] })
+    const everything = { permissions: [...INTERNAL_API_PERMISSIONS] }
+    const limitedConnections = await issue({ ...everything, connections: [SELECTED], namespaces: ['*'] })
     expect((await request(limitedConnections.token, '/users', 'POST', body)).status).toBe(403)
-    const limitedNamespaces = await issue({ ...everything, scopes: [...everything.scopes], connections: ['*'], namespaces: ['speech'] })
+    const limitedNamespaces = await issue({ ...everything, connections: ['*'], namespaces: ['speech'] })
     expect((await request(limitedNamespaces.token, '/users', 'POST', body)).status).toBe(403)
   })
 
@@ -276,8 +259,7 @@ describe('内部APIのアクセストークン', () => {
     const limited = await issue({ permissions: ['users:manage'] })
     const body = { username: 'automated-user', displayName: 'Created by token', roles: ['viewer'] }
     expect((await request(limited.token, '/users', 'POST', body)).status).toBe(403)
-    const administrator = await issue({ permissions: [...INTERNAL_API_PERMISSIONS],
-      scopes: ['lineage:read', 'lineage:write', 'metrics:read'], connections: ['*'], namespaces: ['*'] })
+    const administrator = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
     expect((await request(administrator.token, '/users', 'POST', body)).status).toBe(201)
     expect((await request(administrator.token, '/users')).status).toBe(200)
   })

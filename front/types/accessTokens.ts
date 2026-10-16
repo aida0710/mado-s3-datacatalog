@@ -10,7 +10,7 @@ export interface AccessToken {
   tokenPrefix: string
   scopes: AccessTokenScope[]
   permissions: InternalApiPermission[]
-  connections: string[] | null
+  connections: string[]
   namespaces: string[]
   status: 'active' | 'disabled' | 'expired'
   createdAt: string
@@ -23,9 +23,8 @@ export interface AccessToken {
 export interface AccessTokenInput {
   name: string
   description: string
-  scopes?: AccessTokenScope[]
-  permissions?: InternalApiPermission[]
-  connections?: string[] | null
+  permissions: InternalApiPermission[]
+  connections: string[]
   namespaces: string[]
   expiresAt?: string | null
 }

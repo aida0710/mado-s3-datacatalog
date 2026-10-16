@@ -36,7 +36,6 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
           <input value={form.description} onChange={event => form.setDescription(event.target.value)} maxLength={TOKEN_DESCRIPTION_MAX_LENGTH} disabled={form.busy} />
         </label>
         <InternalPermissionSelector selected={form.permissions} onToggle={form.togglePermission} onPreset={form.applyPreset} disabled={form.busy} />
-        {form.hasLegacyGrants && <p className="muted">{translate('accessTokens.legacyPermissions')}</p>}
         {form.showsConnections && <TokenConnectionSelector selected={form.connections} onChange={form.setConnections} disabled={form.busy} />}
         {form.includesLineage && <NamespaceSelector selected={form.namespaces} onChange={form.setNamespaces} disabled={form.busy} />}
         <label className="field"><span>{translate('accessTokens.expiresAt')}</span>

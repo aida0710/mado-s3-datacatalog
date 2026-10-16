@@ -37,8 +37,8 @@ export interface ServicePrincipal {
 
 export interface AccessTokenPrincipal extends ServicePrincipal {
   permissions: InternalApiPermission[]
-  /** null preserves the unrestricted integration behavior of existing tokens. */
-  connections: string[] | null
+  /** Connection IDs the token may use; ['*'] is every connection. */
+  connections: string[]
   tokenName: string
 }
 

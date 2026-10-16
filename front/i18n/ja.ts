@@ -1,6 +1,5 @@
 export const japaneseMessages = {
   "tokenPermissions.action.send": "送信",
-  "accessTokens.legacyPermissions": "この既存トークンは、操作の選択を変更して保存すると、選んだ機能の内部APIも利用できるようになります。",
   "tokenPermissions.group.storage": "Storage",
   "tokenPermissions.group.connections": "Connections",
   "tokenPermissions.group.readmes": "README",
@@ -39,7 +38,6 @@ export const japaneseMessages = {
   "accessTokens.connectionLoadFailed": "接続一覧を取得できませんでした。選択済みの接続は保持しています。",
   "accessTokens.noConnections": "該当する接続はありません。",
   "accessTokens.connectionsRequired": "許可する接続を一つ以上選択してください。",
-  "accessTokens.legacyConnections": "接続が未選択の既存設定です。容量取得を許可している場合、その対象は全接続です。接続を選ぶと、その範囲に変更します。内部APIには明示的な接続の選択が必要です。",
   "accessTokens.usersManageHelp": "ユーザー管理は権限やパスワードも変更できるため、全権限・全接続・全Namespaceが必要です。管理者プリセットで設定できます。",
   "accessTokens.reload": "トークン一覧を再読み込み",
   "accessTokens.create": "アクセストークンを作成",
