@@ -4,12 +4,10 @@ import type { AuditWriter } from '../lib/audit.js'
 import { markAuditChangeCommitted, markAuditNoChange, writeDedicatedAudit } from '../lib/audit-activity.js'
 import { getRequestPrincipal, requirePermission } from '../lib/rbac.js'
 import { requestMetadata } from '../lib/request-metadata.js'
-import { serviceKeyPermissions } from '../lib/service-key-permissions.js'
 import { AccessTokenActorInactiveError, AccessTokenConflictError, AccessTokenPermissionsError, type AccessTokenStore } from '../lib/access-token-store.js'
 import type { AccessToken } from '../lib/access-token-types.js'
-import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
 import type { AccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
-import { accessTokenGrants, internalPermissions, tokenConnections } from '../lib/access-token-grants.js'
+import { accessTokenGrants, internalPermissions, tokenConnections, tokenNamespaces } from '../lib/access-token-grants.js'
 import { createAccessTokenManagement, AccessTokenAuthorityError } from '../lib/access-token-management.js'
 import { UnknownTokenConnectionError } from '../lib/internal-token-grants.js'
 import { principalActor } from '../lib/principal-actor.js'
@@ -24,11 +22,10 @@ const Metadata = z.object({
   description: z.string().trim().max(TOKEN_DESCRIPTION_MAX_LENGTH),
   expiresAt: z.iso.datetime().nullable().optional(),
 })
-const CreateToken = accessTokenGrants.safeExtend({ ...Metadata.shape, description: Metadata.shape.description.default('') })
+const CreateToken = accessTokenGrants.safeExtend({ ...Metadata.shape, description: Metadata.shape.description.default('') }).strict()
 const ExpectedRevision = z.object({ expectedRevision: z.number().int().positive() })
 const PatchToken = Metadata.partial().extend({
-  scopes: z.array(z.enum(SERVICE_KEY_SCOPES)).optional(),
-  namespaces: serviceKeyPermissions.shape.namespaces.removeDefault().optional(),
+  namespaces: tokenNamespaces.optional(),
   permissions: internalPermissions.optional(),
   connections: tokenConnections.optional(),
   status: z.enum(['active', 'disabled']).optional(),

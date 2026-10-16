@@ -1,7 +1,7 @@
 # ML Trackingの内蔵Mado連携からデータセットを参照する
 
 アクセストークンの`lineage:read`を使い、許可したNamespaceのデータセットとバージョンを参照する。
-一つのトークンに`lineage:read`と`lineage:write`（OpenLineage送信）、必要なら`metrics:read`を同時に許可できる。
+一つのトークンにDataLineageの読み取り（scope `lineage:read`）と送信（`lineage:send`、scope `lineage:write`）、必要ならCapacityの読み取り（`capacity:read`、scope `metrics:read`）を同時に許可できる。
 ML Trackingはこのトークン1本で参照・送信・容量取得を行う。
 
 | Method | Path | 内容 |

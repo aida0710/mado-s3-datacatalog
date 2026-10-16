@@ -11,8 +11,7 @@ export function accessTokenFormInput(input: {
   name: string
   description: string
   permissions: InternalApiPermission[]
-  permissionsEdited: boolean
-  connections: string[] | null
+  connections: string[]
   namespaces: string[]
   expiry: string
   previous: AccessToken | null
@@ -22,9 +21,8 @@ export function accessTokenFormInput(input: {
   const sameExpiry = input.previous !== null && input.expiry === localDateTimeInput(input.previous.expiresAt)
   return {
     name: input.name.trim(), description: input.description.trim(),
-    ...(input.permissionsEdited || !input.previous ? { permissions: input.permissions } : {}),
-    ...(input.connections === null && input.previous ? {}
-      : { connections: input.connections?.includes('*') ? ['*'] : input.connections }),
+    permissions: input.permissions,
+    connections: input.connections.includes('*') ? ['*'] : input.connections,
     namespaces: namespaces.includes('*') ? ['*'] : namespaces,
     ...(sameExpiry ? {} : { expiresAt: input.expiry ? new Date(input.expiry).toISOString() : null }),
   }

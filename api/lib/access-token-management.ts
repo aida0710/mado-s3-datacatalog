@@ -4,7 +4,6 @@ import { canDelegateToken } from './access-token-authority.js'
 import type { AccessToken, AccessTokenInput, AccessTokenPatch } from './access-token-types.js'
 import type { AccessTokenStore, AccessTokenWriteGuard } from './access-token-store.js'
 import { principalUserId } from './principal-actor.js'
-import { normalizePermissionScopes } from './access-token-grants.js'
 
 export class AccessTokenAuthorityError extends Error {
   constructor() { super('token permissions or targets exceed the caller authority') }
@@ -17,7 +16,7 @@ export function createAccessTokenManagement(deps: {
   async function authorize(principal: RequestPrincipal, grants: AccessTokenInput): Promise<void> {
     if (!canDelegateToken(principal, grants)) throw new AccessTokenAuthorityError()
     if (principal.kind !== 'user' || hasPermission(principal, 'connections:manage')) return
-    const requested = grants.connections ?? []
+    const requested = grants.connections
     if (!requested.length) return
     const visible = await deps.visibleConnections?.(principal)
     if (visible === undefined || (visible !== null && requested.some(id => !visible.has(id)))) {
@@ -38,12 +37,11 @@ export function createAccessTokenManagement(deps: {
 
   return {
     async createToken(principal: RequestPrincipal, input: AccessTokenInput) {
-      const grants = normalizePermissionScopes(input)
-      await authorize(principal, grants)
-      return deps.store.createToken({ ...grants, createdBy: principalUserId(principal) }, writeGuard(principal))
+      await authorize(principal, input)
+      return deps.store.createToken({ ...input, createdBy: principalUserId(principal) }, writeGuard(principal))
     },
     updateToken(principal: RequestPrincipal, input: { id: string; expectedRevision: number; patch: AccessTokenPatch }) {
-      const guard = writeGuard(principal, current => ({ ...current, ...normalizePermissionScopes(input.patch) }))
+      const guard = writeGuard(principal, current => ({ ...current, ...input.patch }))
       return deps.store.updateToken(input, guard)
     },
     regenerateToken(principal: RequestPrincipal, input: { id: string; expectedRevision: number }) {

@@ -115,9 +115,6 @@ export function classifyActivity(method: string, pathname: string): Activity | n
   if (p[0] === 'users' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(verb)) {
     return { action: 'user.manage', resourceType: 'user', resourceId: decoded(p[1]), dedicatedSuccessAudit: true }
   }
-  if (p[0] === 'service-accounts' && ['POST', 'PATCH', 'DELETE'].includes(verb)) {
-    return { action: 'service_account.manage', resourceType: 'service_account', resourceId: decoded(p[1]), dedicatedSuccessAudit: true }
-  }
   if (verb === 'PUT' && p[0] === 'profile') {
     return { action: 'auth.profile.update', resourceType: 'user', resourceId: null, dedicatedSuccessAudit: true }
   }

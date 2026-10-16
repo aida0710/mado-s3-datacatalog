@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { loadLineageEnv } from './env.js'
 import { closePools, createPools } from './db.js'
 import { createAuditWriter } from './lib/audit.js'
-import { createServiceAccountStore } from './lib/auth-api-keys.js'
+import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.js'
 import { createRegistryClient } from './lib/registry-client.js'
 import { mountOpenLineageRoutes } from './routes/openlineage.js'
 import { requestLogger } from './lib/request-logger.js'
@@ -11,7 +11,7 @@ import { requestLogger } from './lib/request-logger.js'
 const env = loadLineageEnv()
 
 const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
-const accounts = createServiceAccountStore(pools.rw)
+const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
 const audit = createAuditWriter(pools.rw)
 const registry = createRegistryClient({
   baseUrl: env.DATASET_REGISTRY_URL,
@@ -25,7 +25,7 @@ app.get('/healthz', c => c.text('ok'))
 const api = new Hono()
 mountOpenLineageRoutes(api, {
   auth: {
-    authenticate: token => accounts.authenticate(token),
+    authenticate: authenticateServiceKey,
     async recordUse(event) {
       await audit.write({
         actor: {

@@ -3,8 +3,13 @@ import type { MetricsCollector } from '../lib/metrics-collector.js'
 import { PROMETHEUS_TEXT_CONTENT_TYPE, renderPrometheusText } from '../lib/prometheus-exposition.js'
 import { getServiceKeyPrincipal, requireServiceKeyScope, type ScopedServicePrincipal } from '../lib/service-key-auth.js'
 
+/** A metrics token reads only the connections it lists; ['*'] is every connection. */
+export interface MetricsPrincipal extends ScopedServicePrincipal {
+  connections: readonly string[]
+}
+
 export interface MetricsRoutesDeps {
-  authenticate(token: string): Promise<ScopedServicePrincipal | null>
+  authenticate(token: string): Promise<MetricsPrincipal | null>
   collectors: MetricsCollector[]
   log?: Pick<Console, 'error'>
 }
@@ -20,9 +25,8 @@ export function mountMetricsRoutes(app: Hono, deps: MetricsRoutesDeps): void {
   for (const collector of deps.collectors) {
     app.get(`/metrics/${collector.name}`, requireMetricsRead, async c => {
       try {
-        const { connections } = getServiceKeyPrincipal(c)
-        // Old metrics tokens retain their global scope; new grants may select connections.
-        const connectionIds = connections == null || connections.includes('*') ? null : new Set(connections)
+        const { connections } = getServiceKeyPrincipal<MetricsPrincipal>(c)
+        const connectionIds = connections.includes('*') ? null : new Set(connections)
         const families = await collector.collect({ connectionIds })
         return c.body(renderPrometheusText(families), 200, {
           'Content-Type': PROMETHEUS_TEXT_CONTENT_TYPE,

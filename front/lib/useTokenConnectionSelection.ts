@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { connectionsClient } from './api/connections-client'
 import { useRetryableLoad } from './useRetryableLoad'
 
-export function useTokenConnectionSelection(input: { selected: string[] | null; onChange: (ids: string[]) => void }) {
+export function useTokenConnectionSelection(input: { selected: string[]; onChange: (ids: string[]) => void }) {
   const { state, retry } = useRetryableLoad(connectionsClient.listConnections)
   const [query, setQuery] = useState('')
-  const selected = input.selected ?? []
+  const selected = input.selected
   const available = state.status === 'loaded' ? state.value : []
   // A deleted or temporarily unavailable connection stays visible until explicitly removed.
   const missing = selected.filter(id => id !== '*' && !available.some(connection => connection.id === id))

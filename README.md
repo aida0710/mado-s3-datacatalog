@@ -302,9 +302,9 @@ passwordはTTYからのみ読み、引数・環境変数・ログには渡しま
 
 Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。Madoがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MADO_HOSTNAME`と公開API用`MADO_API_HOSTNAME`を別TLS vhostとして終端します。
 
-連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、`metrics:read`のアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
+連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
-`038_access_tokens.sql`と、内部API対応の`039_internal_api_tokens.sql`は新APIの起動前に適用します。039は既存トークンへ内部API権限を追加しません。既存のキー値・権限・監査用IDは保持し、トークン単位の説明・無効状態・再発行日時・競合検出用revisionを追加します。
+`038_access_tokens.sql`と、内部API対応の`039_internal_api_tokens.sql`・`040_explicit_token_grants.sql`は、この順に新APIの起動前に適用します。040は既存トークンを機能別の権限と明示した接続へ変換し、トークンの値・IDは変えません（[docs/access-tokens.md](docs/access-tokens.md)）。
 
 ### OSSリリース
 
