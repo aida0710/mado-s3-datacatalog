@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  getServiceKeyPrincipal, requireServiceKeyScope, type ScopedServicePrincipal,
+  getServiceKeyPrincipal, requireServiceKey, requireServiceKeyScope, type ScopedServicePrincipal,
 } from './service-key-auth.js'
 
 interface TestPrincipal extends ScopedServicePrincipal {
@@ -51,5 +51,26 @@ describe('requireServiceKeyScope', () => {
     expect(response.status).toBe(200)
     expect(await response.text()).toBe('key-1')
     expect(authenticate).toHaveBeenCalledWith('mado_lin_key.secret')
+  })
+})
+
+describe('requireServiceKey', () => {
+  function appWithoutScope(authenticate: (token: string) => Promise<TestPrincipal | null>): Hono {
+    const app = new Hono()
+    app.get('/own', requireServiceKey({ authenticate }), c => c.text(getServiceKeyPrincipal<TestPrincipal>(c).keyId))
+    return app
+  }
+
+  it('scopeを問わず有効なkeyを通し、Bearerなし・無効なkey・認証の失敗はscope付きと同じ応答にする', async () => {
+    const withoutScopes = await appWithoutScope(async () => ({ keyId: 'key-1', scopes: [] }))
+      .request('/own', { headers: bearer })
+    expect(withoutScopes.status).toBe(200)
+    expect(await withoutScopes.text()).toBe('key-1')
+    const missing = await appWithoutScope(vi.fn()).request('/own')
+    expect(missing.status).toBe(401)
+    expect(missing.headers.get('WWW-Authenticate')).toBe('Bearer')
+    expect((await appWithoutScope(async () => null).request('/own', { headers: bearer })).status).toBe(401)
+    expect((await appWithoutScope(async () => { throw new Error('db down') })
+      .request('/own', { headers: bearer })).status).toBe(503)
   })
 })

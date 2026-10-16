@@ -31,8 +31,10 @@ export interface ServicePrincipal {
   serviceAccountId: string
   serviceAccountName: string
   keyId: string
+  keyName: string
   scopes: string[]
   namespaces: string[]
+  expiresAt: Date | null
 }
 
 export interface RequestMetadata {

@@ -26,7 +26,9 @@ The value is shown only once, when issued. Save it in the integration’s secret
 
 `/api/mado/`, which returns mado's own data, accepts GET only. One token can combine the scopes it needs. `metrics:read` can read bucket names and capacity for all connections, including connections whose users are limited by an allowlist. Capacity metrics are not limited by namespace, even when combined with lineage scopes.
 
-For ML Tracking, you can use the same value in both its read-key and write-key fields when the token allows dataset reads and lineage writes.
+`GET /api/mado/access-token` returns the calling token's own name, scopes, namespaces, and expiration, whatever its scopes (`["*"]` in `namespaces` means all namespaces). It never returns other tokens or token values. Integrations use it to learn the allowed namespaces without asking people to type them.
+
+For ML Tracking, enter a token that allows **Read datasets** and **Send DataLineage** in the **Access token** field of its **Integrations**. You do not enter namespaces: ML Tracking reads them from this endpoint.
 
 ## Send OpenLineage events
 
