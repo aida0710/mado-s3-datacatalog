@@ -54,5 +54,8 @@ release so token disabling is enforced on both listeners. Existing token
 values and permissions remain valid; regenerating or deleting a token revokes
 its previous value immediately.
 
+Upgrading from v0.2.0 needs no database migration. Update `api-internal` to
+serve `GET /api/mado/access-token`, and keep `api-lineage` on the same release.
+
 Internal/private deployments are downstream operations. Publishing an OSS
 release never connects to or changes a deployment environment.
