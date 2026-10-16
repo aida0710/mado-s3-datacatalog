@@ -227,8 +227,10 @@ export function createServiceAccountStore(pool: Pool): ServiceAccountStore {
         serviceAccountId: row.service_account_id,
         serviceAccountName: row.account_name,
         keyId: row.id,
+        keyName: row.name,
         scopes: row.scopes,
         namespaces: row.namespaces,
+        expiresAt: row.expires_at,
       }
     },
   }
