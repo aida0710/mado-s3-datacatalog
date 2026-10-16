@@ -59,6 +59,17 @@ way back to an earlier release after 040; see
 [access tokens](../../docs/access-tokens.md) and
 [the permission contract](../../docs/internal-api-permissions.md).
 
+Upgrading to v0.4.0 applies
+`db/migrations/041_explicit_connection_settings_media_cache.sql` after 040.
+`AUTH_MODE` must be `local`, `oidc`, or `hybrid`; `disabled` no longer exists.
+041 stores the effective value of every missing boolean connection setting and
+removes media cache rows without metadata or a connection. The previous release
+can create connections without those settings, so stop `api-internal` and
+`api-lineage`, apply 041, and start both on this release; update `nginx` and
+`media-worker` as well. The bundled edge configuration no longer redirects a
+legacy hostname; keep your own edge configuration if you rely on that redirect.
+See [the database procedure](../../db/README.md).
+
 When upgrading from v0.1.0, apply `db/migrations/038_access_tokens.sql` before
 starting the new APIs. Update both `api-internal` and `api-lineage` to this
 release so token disabling is enforced on both listeners. Existing token
