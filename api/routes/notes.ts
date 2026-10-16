@@ -1,10 +1,11 @@
 import type { Hono } from 'hono'
 import { z } from 'zod'
 import type { Pools } from '../db.js'
-import { getSessionPrincipal } from '../lib/rbac.js'
+import { getRequestPrincipal } from '../lib/rbac.js'
+import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 
-// 認証有効時の編集者はsession userのアカウント署名を正本にする。
+// 認証有効時の編集者は利用者の署名またはトークン名を正本にする。
 // editor request値は認証無効の開発・test環境との互換用。
 
 export interface NotesDeps {
@@ -46,11 +47,11 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
     }
     const parsed = PutBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
-    const principal = getSessionPrincipal(c)
+    const principal = getRequestPrincipal(c)
     const body = parsed.data.body
-    const editor = principal?.user.signatureName ?? parsed.data.editor
+    const editor = principalEditor(principal) ?? parsed.data.editor
     if (!editor) return c.json({ error: 'editor is required' }, 400)
-    const actorUserId = principal?.user.id ?? null
+    const actorUserId = principalUserId(principal)
     const sizeBytes = Buffer.byteLength(body, 'utf-8')
 
     // notes (current state) と notes_history (append) を 1 transaction で

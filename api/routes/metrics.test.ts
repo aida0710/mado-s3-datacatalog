@@ -15,7 +15,7 @@ const capacity: MetricsCollector = {
   }],
 }
 
-function appWith(collectors: MetricsCollector[], principal: { scopes: string[] } | null = metricsKey) {
+function appWith(collectors: MetricsCollector[], principal: { scopes: string[]; connections?: string[] | null } | null = metricsKey) {
   const app = new Hono()
   const log = { error: vi.fn() }
   mountMetricsRoutes(app, { authenticate: async () => principal, collectors, log })
@@ -23,6 +23,14 @@ function appWith(collectors: MetricsCollector[], principal: { scopes: string[] }
 }
 
 describe('metrics route', () => {
+  it('新しい接続制限をcollectorへ渡し、既存トークンは従来どおり全接続にする', async () => {
+    const collect = vi.fn().mockResolvedValue([])
+    for (const connections of [undefined, null, ['*'], ['connection-a'], []]) {
+      const { app } = appWith([{ name: 'capacity', collect }], { scopes: ['metrics:read'], connections })
+      expect((await app.request('/metrics/capacity', { headers: bearer })).status).toBe(200)
+      expect(collect).toHaveBeenLastCalledWith({ connectionIds: connections == null || connections.includes('*') ? null : new Set(connections) })
+    }
+  })
   it('metrics:readのkeyに領域ごとのpathでPrometheus形式を返し、cacheさせない', async () => {
     const response = await appWith([capacity]).app.request('/metrics/capacity', { headers: bearer })
     expect(response.status).toBe(200)

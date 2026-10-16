@@ -58,10 +58,12 @@ export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
       `SELECT e.id, e.occurred_at, e.request_id, e.actor_type, e.actor_user_id,
               e.actor_service_account_id, e.action, e.resource_type, e.resource_id,
               e.outcome, e.ip_address, e.user_agent, e.details,
-              COALESCE(u.display_name, sa.name, e.actor_type) AS actor_label
+              COALESCE(u.display_name, actor_key.name, sa.name, e.actor_type) AS actor_label
          FROM audit_events e
          LEFT JOIN auth_users u ON u.id = e.actor_user_id
          LEFT JOIN service_accounts sa ON sa.id = e.actor_service_account_id
+         LEFT JOIN service_account_keys actor_key ON actor_key.service_account_id = e.actor_service_account_id
+           AND actor_key.id::text = e.details->>'keyId'
         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
         ORDER BY e.id DESC LIMIT $${values.length}`,
       values,

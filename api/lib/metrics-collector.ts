@@ -16,5 +16,5 @@ export interface MetricFamily {
 export interface MetricsCollector {
   /** `/api/mado/metrics/<name>` のpathになる。画面やコードで既に使っている領域名を使う (例: capacity)。 */
   name: string
-  collect(): Promise<MetricFamily[]>
+  collect(options?: { connectionIds: ReadonlySet<string> | null }): Promise<MetricFamily[]>
 }

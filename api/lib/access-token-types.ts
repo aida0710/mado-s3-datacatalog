@@ -1,4 +1,5 @@
 import type { ServiceKeyScope } from './auth-types.js'
+import type { InternalApiPermission } from '../shared/access-token-permissions.js'
 
 export interface AccessToken {
   id: string
@@ -6,6 +7,8 @@ export interface AccessToken {
   description: string
   tokenPrefix: string
   scopes: ServiceKeyScope[]
+  permissions: InternalApiPermission[]
+  connections: string[] | null
   namespaces: string[]
   status: 'active' | 'disabled' | 'expired'
   createdAt: Date
@@ -19,6 +22,8 @@ export interface AccessTokenInput {
   name: string
   description: string
   scopes: ServiceKeyScope[]
+  permissions?: InternalApiPermission[]
+  connections?: string[] | null
   namespaces: string[]
   expiresAt: Date | null
 }
@@ -45,6 +50,8 @@ export interface AccessTokenRow {
   description: string
   token_prefix: string
   scopes: ServiceKeyScope[]
+  permissions: InternalApiPermission[]
+  connections: string[] | null
   namespaces: string[]
   created_at: Date
   expires_at: Date | null

@@ -3,7 +3,7 @@ import type { RequestMetadata } from './auth-types.js'
 
 export type AuditActor =
   | { type: 'user'; userId: string }
-  | { type: 'service_account'; serviceAccountId: string }
+  | { type: 'service_account'; serviceAccountId: string; keyId?: string }
   | { type: 'anonymous' }
   | { type: 'system' }
 
@@ -46,7 +46,9 @@ export function createAuditWriter(pool: Pool): AuditWriter {
     const actorServiceId = event.actor.type === 'service_account'
       ? event.actor.serviceAccountId
       : null
-    const details = redactAuditDetails(event.details ?? {})
+    const details = redactAuditDetails({ ...event.details,
+      ...(event.actor.type === 'service_account' && event.actor.keyId ? { keyId: event.actor.keyId } : {}),
+    })
     const q = client ?? pool
     const result = await q.query<{ id: string }>(
       `INSERT INTO audit_events

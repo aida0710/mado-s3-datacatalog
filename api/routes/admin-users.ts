@@ -1,11 +1,13 @@
-import type { Hono } from 'hono'
+import type { Hono, MiddlewareHandler } from 'hono'
 import { z } from 'zod'
 import type { AuditWriter } from '../lib/audit.js'
 import { randomToken } from '../lib/auth-crypto.js'
 import { LastActiveAdminError } from '../lib/auth-admin-invariant.js'
 import type { CredentialStore } from '../lib/auth-credential-store.js'
 import type { UserStore } from '../lib/auth-user-store.js'
-import { requirePermission, getSessionPrincipal } from '../lib/rbac.js'
+import { requirePermission, getRequestPrincipal } from '../lib/rbac.js'
+import { principalActor, principalUserId } from '../lib/principal-actor.js'
+import { canAdministerUsers } from '../lib/access-token-authority.js'
 import { requestMetadata } from '../lib/request-metadata.js'
 import { hashPassword, isAcceptablePasswordLength } from '../lib/password.js'
 import { markAuditChangeCommitted, writeDedicatedAudit } from '../lib/audit-activity.js'
@@ -37,8 +39,15 @@ const RolesBody = z.object({ roles: z.array(Role).max(16) })
 const ResetBody = z.object({ password: Password.optional() })
 
 export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
-  app.use('/users', requirePermission('users:manage'))
-  app.use('/users/*', requirePermission('users:manage'))
+  const authorize: MiddlewareHandler = async (c, next) => {
+    const principal = getRequestPrincipal(c)
+    if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && principal && !canAdministerUsers(principal)) {
+      return c.json({ error: 'user administration requires unrestricted administrator permissions' }, 403)
+    }
+    return requirePermission(c.req.method === 'GET' || c.req.method === 'HEAD' ? 'users:read' : 'users:manage')(c, next)
+  }
+  app.use('/users', authorize)
+  app.use('/users/*', authorize)
 
   app.get('/users', async c => c.json({
     users: await deps.users.listUsers(),
@@ -46,7 +55,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   }))
 
   app.post('/users', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const parsed = CreateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
     if (!await deps.users.rolesExist(parsed.data.roles)) return c.json({ error: 'unknown role' }, 400)
@@ -57,14 +66,14 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
         email: parsed.data.email,
         displayName: parsed.data.displayName,
         roles: parsed.data.roles,
-        createdBy: principal.user.id,
+        createdBy: principalUserId(principal),
         localPassword: initialPassword
           ? { hash: await hashPassword(initialPassword), mustChange: true }
           : undefined,
       })
       markAuditChangeCommitted(c)
       await writeDedicatedAudit(c, deps.audit, {
-        actor: { type: 'user', userId: principal.user.id }, action: 'user.create', outcome: 'success',
+        actor: principalActor(principal), action: 'user.create', outcome: 'success',
         resourceType: 'user', resourceId: user.id,
         details: {
           target: { displayName: user.displayName, username: user.username },
@@ -82,7 +91,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   })
 
   app.patch('/users/:id', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
     const parsed = PatchBody.safeParse(await c.req.json().catch(() => null))
@@ -110,7 +119,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
       after: result.user[field as keyof typeof result.user],
     }))
     await writeDedicatedAudit(c, deps.audit, {
-      actor: { type: 'user', userId: principal.user.id }, action: 'user.update', outcome: 'success',
+      actor: principalActor(principal), action: 'user.update', outcome: 'success',
       resourceType: 'user', resourceId: id,
       details: {
         target: { displayName: result.before.displayName, username: result.before.username },
@@ -122,7 +131,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   })
 
   app.put('/users/:id/roles', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
     const parsed = RolesBody.safeParse(await c.req.json().catch(() => null))
@@ -130,7 +139,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     if (!await deps.users.rolesExist(parsed.data.roles)) return c.json({ error: 'unknown role' }, 400)
     let result
     try {
-      result = await deps.users.replaceUserRoles(id, parsed.data.roles, principal.user.id)
+      result = await deps.users.replaceUserRoles(id, parsed.data.roles, principalUserId(principal))
     } catch (error) {
       if (error instanceof LastActiveAdminError) {
         return c.json({ error: 'cannot remove the last active admin role' }, 409)
@@ -141,7 +150,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     if (result.changedFields.length === 0) return c.json({ user: result.user })
     markAuditChangeCommitted(c)
     await writeDedicatedAudit(c, deps.audit, {
-      actor: { type: 'user', userId: principal.user.id }, action: 'user.roles.update', outcome: 'success',
+      actor: principalActor(principal), action: 'user.roles.update', outcome: 'success',
       resourceType: 'user', resourceId: id,
       details: {
         target: { displayName: result.before.displayName, username: result.before.username },
@@ -153,7 +162,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   })
 
   app.post('/users/:id/reset-password', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
     const parsed = ResetBody.safeParse(await c.req.json().catch(() => ({})))
@@ -169,7 +178,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     }
     markAuditChangeCommitted(c)
     await writeDedicatedAudit(c, deps.audit, {
-      actor: { type: 'user', userId: principal.user.id }, action: 'user.password.reset', outcome: 'success',
+      actor: principalActor(principal), action: 'user.password.reset', outcome: 'success',
       resourceType: 'user', resourceId: id,
       details: {
         target: { displayName: current.displayName, username: current.username },
@@ -182,10 +191,10 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   })
 
   app.delete('/users/:id', async c => {
-    const principal = getSessionPrincipal(c)!
+    const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
-    if (id === principal.user.id) return c.json({ error: 'cannot delete your own account' }, 409)
+    if (id === principalUserId(principal)) return c.json({ error: 'cannot delete your own account' }, 409)
     const current = await deps.users.getUser(id)
     if (!current) return c.json({ error: 'user not found' }, 404)
     try {
@@ -198,7 +207,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
       throw error
     }
     await writeDedicatedAudit(c, deps.audit, {
-      actor: { type: 'user', userId: principal.user.id }, action: 'user.delete', outcome: 'success',
+      actor: principalActor(principal), action: 'user.delete', outcome: 'success',
       resourceType: 'user', resourceId: id,
       details: {
         target: { displayName: current.displayName, username: current.username },
