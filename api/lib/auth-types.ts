@@ -1,3 +1,8 @@
+import type { InternalApiPermission } from '../shared/access-token-permissions.js'
+import { userHasPermission } from './user-permissions.js'
+export { SERVICE_KEY_SCOPES } from '../shared/access-token-permissions.js'
+export type { ServiceKeyScope } from '../shared/access-token-permissions.js'
+
 export type UserStatus = 'active' | 'disabled'
 
 export interface AuthUser {
@@ -19,13 +24,6 @@ export interface SessionPrincipal {
   user: AuthUser
 }
 
-/**
- * Service Account keyへ付けられるscope。Madoが保存しているデータは読み取りだけを開き、
- * 書き込みはRegistryへのOpenLineage投入口 (`lineage:write`) に限る。
- */
-export const SERVICE_KEY_SCOPES = ['lineage:write', 'lineage:read', 'metrics:read'] as const
-export type ServiceKeyScope = typeof SERVICE_KEY_SCOPES[number]
-
 export interface ServicePrincipal {
   kind: 'service_account'
   serviceAccountId: string
@@ -36,6 +34,15 @@ export interface ServicePrincipal {
   namespaces: string[]
   expiresAt: Date | null
 }
+
+export interface AccessTokenPrincipal extends ServicePrincipal {
+  permissions: InternalApiPermission[]
+  /** null preserves the unrestricted integration behavior of existing tokens. */
+  connections: string[] | null
+  tokenName: string
+}
+
+export type RequestPrincipal = SessionPrincipal | AccessTokenPrincipal
 
 export interface RequestMetadata {
   ipAddress?: string | null
@@ -53,6 +60,8 @@ export function oidcTransactionCookieName(secure: boolean): string {
   return secure ? '__Host-mado_oidc_tx' : 'mado_oidc_tx'
 }
 
-export function hasPermission(principal: SessionPrincipal, permission: string): boolean {
-  return principal.user.permissions.includes(permission)
+export function hasPermission(principal: RequestPrincipal, permission: string): boolean {
+  return principal.kind === 'user'
+    ? userHasPermission(principal.user.permissions, permission)
+    : principal.permissions.includes(permission as InternalApiPermission)
 }

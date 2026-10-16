@@ -3,7 +3,8 @@ import { MoreHorizontal } from 'lucide-react'
 import { fmtDateTimeWithSeconds } from '../lib/format'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
-import { accessTokenScopeLabels } from '../i18n/accessTokenOptions'
+import { displayedTokenPermissions } from '../../api/shared/access-token-permissions'
+import { translateInternalPermission } from '../i18n/translateInternalPermission'
 import type { AccessToken } from '../types/accessTokens'
 
 const statusLabels = { active: 'accessTokens.active', disabled: 'accessTokens.disabled', expired: 'accessTokens.expired' } as const
@@ -34,7 +35,11 @@ export function AccessTokenRow({ token, busy, onEdit, onRegenerate, onDelete, on
         <code className="muted">{token.tokenPrefix}…</code>
       </div>
       <div className="access-token-grants">
-        <div className="access-token-scope-list">{token.scopes.map(scope => <span className="chip" key={scope}>{translate(accessTokenScopeLabels[scope])}</span>)}</div>
+        <div className="access-token-scope-list">
+          {displayedTokenPermissions(token).map(permission => <span className="chip" key={permission}>{translateInternalPermission(permission)}</span>)}
+        </div>
+        {token.connections !== null && token.connections.length > 0 && <p className="muted">{translate('accessTokens.connections')}: {token.connections.includes('*')
+          ? translate('accessTokens.allConnections') : token.connections.join(', ')}</p>}
         {token.namespaces.length > 0 && <p className="muted">{translate('accessTokens.namespaces')}: {token.namespaces.join(', ')}</p>}
         <p className="muted">{translate('accessTokens.lastUsed')}: {token.lastUsedAt ? fmtDateTimeWithSeconds(token.lastUsedAt) : translate('accessTokens.neverUsed')}</p>
         <p className="muted">{translate('accessTokens.expiresAt')}: {token.expiresAt ? fmtDateTimeWithSeconds(token.expiresAt) : translate('accessTokens.noExpiry')}</p>

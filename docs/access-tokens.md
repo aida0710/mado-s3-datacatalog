@@ -1,6 +1,8 @@
 # アクセストークンの管理API
 
-画面はSettings → Access → Access Tokens。トークンの作成と操作に`service_accounts:manage`のユーザーセッションが必要。Bearerトークン自身には管理権限を与えない。
+画面はSettings → Access → Access Tokens。ユーザーセッションとBearerトークンの両方から管理できる。一覧は`service_accounts:read`、作成・変更・再発行・削除は`service_accounts:manage`が必要。既存のAdminロールの権限は維持する。
+
+トークンは既存の`/api/internal/*`のほぼ全機能にも利用できる。機能・操作・対象の対応は[内部APIの権限](internal-api-permissions.md)を参照する。
 
 ## 契約
 
@@ -19,13 +21,18 @@
 {
   "name": "ML Tracking",
   "description": "データセット参照と学習のDataLineage送信",
-  "scopes": ["lineage:read", "lineage:write"],
+  "permissions": ["lineage:read", "lineage:send"],
+  "connections": [],
   "namespaces": ["speech"],
   "expiresAt": null
 }
 ```
 
-`scopes`には`lineage:read`・`lineage:write`・`metrics:read`を重複なしで一つ以上指定する。参照または送信を含む場合はNamespaceが必須。容量取得だけの場合は空配列。容量取得の範囲は、組み合わせたDataLineageのNamespaceでは制限されない。
+`permissions`で機能ごとの操作を一つ以上指定する。DataLineageの`lineage:read`は内部APIと従来の参照API、`lineage:send`はOpenLineage送信、`capacity:read`は内部の容量APIとPrometheusメトリクスを許可する。サーバーが対応する`scopes`を導出するため、別に指定する必要はない。DataLineageの参照・送信・登録/編集にはNamespaceが必須。DataLineageを使わない場合は空配列にする。
+
+従来クライアント向けには`scopes`だけの指定も維持する。この場合は内部API権限を追加しない。`permissions`を明示した場合はそれを正とし、対応する`scopes`へ置き換える。応答の`scopes`は従来APIとの互換性のため保持する。PATCHで`permissions`も`scopes`も省略すると、既存の権限は変わらない。
+
+`connections`は許可する接続IDの配列で、全接続は`["*"]`。接続を使う内部権限には一つ以上の選択が必須。新規画面は空配列から始める。既存の連携クライアントが省略した場合と、既存トークンは`null`となり、従来の容量取得の全接続参照を維持する。`null`で内部Storageが許可されることはない。既存トークンのPATCHでは省略して状態を維持できるが、`null`への変更は受け付けない。容量取得はNamespaceで制限されず、明示した接続の範囲で制限する。
 
 PATCHは省略した項目を保持し、`status`は`active`または`disabled`。PATCHと再発行の本文には一覧の`revision`を`expectedRevision`として渡す。古い値なら409 `token_conflict`となり、変更しない。削除済みのIDは404。
 
@@ -39,11 +46,11 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 
 一覧APIは`{ namespaces: string[], sourceStatus }`を返す。取得元はMarquezの登録済みNamespaceと、削除されていない既存トークンのNamespace。Marquezの一覧は[0.50.0のNamespaceResource](https://github.com/MarquezProject/marquez/blob/0.50.0/api/src/main/java/marquez/api/NamespaceResource.java)の`GET /api/v1/namespaces?limit=&offset=`を使う。1,000件ずつ最大10ページで取得し、データセット全件の走査は行わない。
 
-`sourceStatus`は`ready`・`unavailable`・`unconfigured`・`partial`。取得元の停止や上限で一覧が不完全でも、取得済みの名前と既存トークンの名前は返す。画面で不完全なことを伝え、名前の追加と既存の選択を利用できるようにする。一覧APIにも`service_accounts:manage`を要求する。
+`sourceStatus`は`ready`・`unavailable`・`unconfigured`・`partial`。取得元の停止や上限で一覧が不完全でも、取得済みの名前と既存トークンの名前は返す。画面で不完全なことを伝え、名前の追加と既存の選択を利用できるようにする。一覧APIには`service_accounts:read`を要求する。
 
 ## 既存環境への適用
 
-`038_access_tokens.sql`を新APIより先に適用する。既存の`service_accounts`と`service_account_keys`は内部の識別・監査・Registryの互換性のため保持し、新規作成では内部の持ち主を自動で用意する。既存トークンの値・ID・scope・Namespaceは変えない。
+v0.2.0への移行では`038_access_tokens.sql`、内部API対応への移行では追加で`039_internal_api_tokens.sql`を新APIより先に適用する。既存の`service_accounts`と`service_account_keys`は内部の識別・監査・Registryの互換性のため保持し、新規作成では内部の持ち主を自動で用意する。既存トークンの値・ID・scope・Namespaceは変えず、内部API権限は空で始める。画面では旧権限を同じ機能別一覧へ表示するが、名前や説明だけの保存では内部API権限を追加しない。操作の選択を明示的に変えて保存したときに、新しい権限一覧へ移す。既存の全接続の容量トークンを移す場合は、接続も明示的に選択する。
 
 旧管理APIも維持する。無効化された旧アカウントのキーを一つ有効化しても、同じアカウントのほかのキーは無効のまま。再発行は権限・有効期限・無効状態を引き継ぐ。削除は`revoked_at`を保存し、監査・Registryの過去の参照を残す。
 

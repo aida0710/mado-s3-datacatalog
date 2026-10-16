@@ -48,6 +48,10 @@ services, then enable `mado_worker` with the generated `WORKER_DB_PASSWORD`.
 The worker receives only its dedicated environment from `deploy/worker-service.yaml`.
 Migration 037 requires existing SSO users to sign in once after the update.
 
+Internal API token support also requires `db/migrations/039_internal_api_tokens.sql`
+before starting the updated internal API. It adds no rights to existing tokens;
+see [the permission contract](../../docs/internal-api-permissions.md).
+
 When upgrading from v0.1.0, apply `db/migrations/038_access_tokens.sql` before
 starting the new APIs. Update both `api-internal` and `api-lineage` to this
 release so token disabling is enforced on both listeners. Existing token

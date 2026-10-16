@@ -41,7 +41,7 @@ export interface UserStore {
     username?: string | null; displayName?: string; signatureName: string
   }): Promise<AuthUserMutationResult | null>
   /** Role を置き換える。変わったら session を失効させ、新しい Role で入り直させる。 */
-  replaceUserRoles(id: string, roles: string[], grantedBy: string): Promise<AuthUserMutationResult | null>
+  replaceUserRoles(id: string, roles: string[], grantedBy: string | null): Promise<AuthUserMutationResult | null>
   /** 過去の監査から辿れるよう行は残す論理削除。session も失効させる。 */
   deleteUser(id: string): Promise<boolean>
 }

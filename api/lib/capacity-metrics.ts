@@ -84,13 +84,19 @@ export function createCapacityMetricsCollector(
 ): MetricsCollector {
   return {
     name: 'capacity',
-    async collect() {
+    async collect(options) {
       const [buckets, prefixes, connections] = await Promise.all([
         store.listLatestBucketCapacity(),
         store.listLatestPrefixCapacity(),
         store.listConnectionTracking(),
       ])
-      return capacityMetricFamilies({ buckets, prefixes, connections, now: new Date() })
+      const allowed = (connectionId: string) => options?.connectionIds == null || options.connectionIds.has(connectionId)
+      return capacityMetricFamilies({
+        buckets: buckets.filter(bucket => allowed(bucket.connectionId)),
+        prefixes: prefixes.filter(prefix => allowed(prefix.connectionId)),
+        connections: connections.filter(connection => allowed(connection.connectionId)),
+        now: new Date(),
+      })
     },
   }
 }

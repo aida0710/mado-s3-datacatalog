@@ -25,7 +25,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 - **接続ごとの権限** — 「一覧は見せるがダウンロードと README 書き戻しは禁止」のように、接続単位で操作を絞れる
 - **Dataset Lineage** — OpenLineageの`Dataset → Job → Dataset`と、版ごとの`DatasetVersion → Run → DatasetVersion`をReact Flowで辿る
 - **認証とRBAC** — Local User / OIDC SSO、Viewer・Curator・Operator・Admin、監査ログ
-- **アクセストークン** — データセット参照・DataLineage送信・容量取得の権限を組み合わせて発行。再発行・無効化・削除まで一つの一覧で管理
+- **アクセストークン** — 機能ごとの読み取り・送信・編集・削除・実行・管理を選んで発行。再発行・無効化・削除まで一つの一覧で管理
 
 ---
 
@@ -201,7 +201,7 @@ Pipelineへの導入方法、DatasetとVersionの分け方、OpenLineage event�
 - 「最新らしい版」は推測しません。版表示には明示version IDが必要です
 - Registryが正本で、Marquez停止中は警告を表示します。MadoからMarquezへ直接書き込みません
 
-Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。`lineage:read`（データセット参照）、`lineage:write`（DataLineage送信）、`metrics:read`（容量取得）を組み合わせて選びます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
+Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・DataLineage・ジョブ・接続・設定などの機能ごとに操作と接続・Namespaceを指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。DataLineageの読み取り・送信、Capacityの読み取りを選ぶと、従来の参照・送信・メトリクスAPIも同じトークンで利用できます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
 
 ### バージョン確認
 
@@ -302,9 +302,9 @@ passwordはTTYからのみ読み、引数・環境変数・ログには渡しま
 
 Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。Madoがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MADO_HOSTNAME`と公開API用`MADO_API_HOSTNAME`を別TLS vhostとして終端します。
 
-アクセストークンでMado自身のデータを読む入口は`/api/mado/`にまとめ、すべて読み取り専用（GETのみ）にしています。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、`metrics:read`のアクセストークンをBearer送信して読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。この入口はintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
+連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、`metrics:read`のアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
-`038_access_tokens.sql`は新APIの起動前に適用します。既存のキー値・権限・監査用IDは保持し、トークン単位の説明・無効状態・再発行日時・競合検出用revisionを追加します。
+`038_access_tokens.sql`と、内部API対応の`039_internal_api_tokens.sql`は新APIの起動前に適用します。039は既存トークンへ内部API権限を追加しません。既存のキー値・権限・監査用IDは保持し、トークン単位の説明・無効状態・再発行日時・競合検出用revisionを追加します。
 
 ### OSSリリース
 
@@ -344,7 +344,7 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 - MDXでは`compose.mdx.yaml`の`edge` nginxがbrowser用TLSを終端します。証明書取得・UFW・自動更新は[`docs/mdx-tls.md`](docs/mdx-tls.md)を参照してください。
 - Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。外部公開するhost TLS proxyは`127.0.0.1:8081`だけへ接続し、OpenLineage ingest以外を公開しません。公開入口には送信元IP 10 req/s（burst 50）・全体50 req/s（burst 200）のrate limit、送信元20・全体200のconnection limit、2 MiB body上限、timeout、`Cache-Control: no-store`を設定済みです。
 - productionは認証無効で起動できません。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
-- Browser sessionとアクセストークン（PipelineのOpenLineage送信、Prometheusのmetrics読み取り）を分離し、API keyはhashだけを保存します。一つのトークンに複数のscopeを付けられ、Madoのデータを返すscopeは読み取りだけです。
+- Browser sessionとアクセストークンを別の主体として扱い、API keyはhashだけを保存します。内部APIは機能別の権限と対象を毎回検証し、連携APIのscopeは互換性を維持します。
 - RBACと接続capabilityを重ね、監査ログには成功して実際に状態が変わった操作だけを残します。閲覧、認証拒否、失敗した操作、同じ値の再保存、既存ジョブへの合流は記録しません。変更操作は開始時にdurableなintentを置き、失敗・変更なしなら破棄します。password/token/OIDC code/OpenLineage event本体は保存しません。
 - sessionの利用時刻、login attempt、response cache、API keyの最終利用時刻など、認証・cache維持のための内部更新は操作監査の対象外です。
 - **`ENCRYPTION_KEY`** で `storage_connections` の S3 認証情報を保存時暗号化 (AES-256-GCM)。DB ダンプだけ漏れても解読不能。

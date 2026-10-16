@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { DatasetDetail, StorageLocationDetail } from '../shared/lineage-types.js'
-import { datasetWithoutHiddenConnections, withoutHiddenConnection } from './lineage-connection-visibility.js'
+import type { DatasetDetail, StorageLocationDetail, VersionLineageGraph } from '../shared/lineage-types.js'
+import { datasetWithoutHiddenConnections, graphWithoutHiddenConnections, withoutHiddenConnection } from './lineage-connection-visibility.js'
 
 function location(overrides: Partial<StorageLocationDetail> = {}): StorageLocationDetail {
   return {
@@ -21,6 +21,21 @@ describe('withoutHiddenConnection', () => {
   it('見える接続と、全接続が見える管理者には、そのまま返す', () => {
     expect(withoutHiddenConnection(location(), new Set(['hidden0001']))).toEqual(location())
     expect(withoutHiddenConnection(location(), null)).toEqual(location())
+  })
+})
+
+describe('graphWithoutHiddenConnections', () => {
+  it('全Namespaceのグラフでも、保存場所と入れ子のmetadataから非許可の接続IDを除く', () => {
+    const graph: VersionLineageGraph = { rootVersionId: 'version', direction: 'both', truncated: false, edges: [], nodes: [
+      { id: 'version', kind: 'version', label: 'v1', data: { locations: [location(), location({
+        madoConnectionId: 'public0001', metadata: { madoConnectionId: 'public0001' },
+      })] } },
+    ] }
+    const visible = graphWithoutHiddenConnections(graph, new Set(['public0001']))
+    expect(JSON.stringify(visible)).not.toContain('hidden0001')
+    expect(JSON.stringify(visible)).toContain('public0001')
+    expect(JSON.stringify(visible)).toContain('s3://raw/a')
+    expect(graphWithoutHiddenConnections(graph, null)).toBe(graph)
   })
 })
 

@@ -1,4 +1,7 @@
-export type AccessTokenScope = 'lineage:read' | 'lineage:write' | 'metrics:read'
+import type { InternalApiPermission, ServiceKeyScope } from '../../api/shared/access-token-permissions'
+export type { InternalApiPermission } from '../../api/shared/access-token-permissions'
+
+export type AccessTokenScope = ServiceKeyScope
 
 export interface AccessToken {
   id: string
@@ -6,6 +9,8 @@ export interface AccessToken {
   description: string
   tokenPrefix: string
   scopes: AccessTokenScope[]
+  permissions: InternalApiPermission[]
+  connections: string[] | null
   namespaces: string[]
   status: 'active' | 'disabled' | 'expired'
   createdAt: string
@@ -18,7 +23,9 @@ export interface AccessToken {
 export interface AccessTokenInput {
   name: string
   description: string
-  scopes: AccessTokenScope[]
+  scopes?: AccessTokenScope[]
+  permissions?: InternalApiPermission[]
+  connections?: string[] | null
   namespaces: string[]
   expiresAt?: string | null
 }

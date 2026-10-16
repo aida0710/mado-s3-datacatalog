@@ -9,6 +9,7 @@ afterEach(() => vi.restoreAllMocks())
 const token: AccessToken = {
   id: '480ad940-80a2-4a50-8f6e-e0e119ac52a8', name: 'ML Tracking', description: 'Training integration',
   tokenPrefix: 'mado_lin_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
+  permissions: [], connections: null,
   status: 'active', createdAt: '2026-10-15T00:00:00.000Z', expiresAt: null,
   regeneratedAt: null, lastUsedAt: null, revision: 1,
 }
@@ -20,10 +21,55 @@ function mockTokenRequests(handler: typeof globalThis.fetch) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) =>
     String(url).endsWith('/namespaces')
       ? response({ namespaces: ['speech', 'podcast'], sourceStatus: 'ready' })
+      : String(url).endsWith('/connections') ? response([])
       : handler(url, init))
 }
 
 describe('Access Tokens', () => {
+  it('新規作成は全権限が未選択で、機能の検索と編集・読み取りを別々に保存する', async () => {
+    const user = userEvent.setup()
+    const fetch = mockTokenRequests(async (_url, init) => init?.method === 'POST'
+      ? response({ accessToken: { ...token, scopes: [], namespaces: [], permissions: ['notes:write'] }, token: 'fixture-internal-value' }, 201)
+      : response({ tokens: [] }))
+    render(<AccessTokensPage />)
+    await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getAllByRole('checkbox').every(checkbox => !(checkbox as HTMLInputElement).checked)).toBe(true)
+    await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'Notes automation')
+    await user.click(within(dialog).getByRole('button', { name: '発行する' }))
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('許可する操作を一つ以上選択してください')
+    await user.type(within(dialog).getByRole('searchbox', { name: '機能を検索' }), 'notes')
+    const notes = within(dialog).getByRole('group', { name: 'Notes' })
+    expect(within(dialog).queryByRole('group', { name: 'Storage' })).not.toBeInTheDocument()
+    await user.click(within(notes).getByRole('checkbox', { name: '編集' }))
+    expect(within(notes).getByRole('checkbox', { name: '読み取り' })).not.toBeChecked()
+    act(() => setLocale('en'))
+    expect(within(notes).getByRole('checkbox', { name: 'Edit' })).toBeChecked()
+    await user.click(within(dialog).getByRole('button', { name: 'Issue token' }))
+    await screen.findByText('fixture-internal-value')
+    const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body))
+    expect(saved).toMatchObject({ permissions: ['notes:write'], namespaces: [], connections: [] })
+  })
+
+  it('既存の全接続メトリクストークンは、名前だけ編集しても対象を変更しない', async () => {
+    const user = userEvent.setup()
+    const legacy = { ...token, scopes: ['metrics:read'], namespaces: [] }
+    const fetch = mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
+      ? response({ accessToken: { ...legacy, revision: 2 } }) : response({ tokens: [legacy] }))
+    render(<AccessTokensPage />)
+    await user.click(within(await screen.findByRole('article', { name: token.name })).getByLabelText('ML Trackingの操作'))
+    await user.click(screen.getByRole('button', { name: '編集' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText(/容量取得を許可している場合、その対象は全接続です/)).toBeInTheDocument()
+    await user.type(within(dialog).getByRole('textbox', { name: '名前' }), ' updated')
+    await user.click(within(dialog).getByRole('button', { name: '保存' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')![1]!.body))
+    expect(saved).not.toHaveProperty('connections')
+    expect(saved).not.toHaveProperty('permissions')
+    expect(saved).not.toHaveProperty('scopes')
+  })
+
   it('アカウントを別に作らず参照と送信を同じトークンで発行し、言語変更で入力を保つ', async () => {
     const user = userEvent.setup()
     const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
@@ -32,28 +78,32 @@ describe('Access Tokens', () => {
     await screen.findByText('アクセストークンはありません。')
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
+    const lineage = within(dialog).getByRole('group', { name: 'DataLineage' })
+    expect(within(lineage).getByRole('checkbox', { name: '読み取り' })).not.toBeChecked()
+    expect(within(dialog).queryByText('連携APIの権限')).not.toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'ML Tracking連携' }))
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'ML Tracking')
     await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
     await user.click(within(dialog).getByRole('checkbox', { name: 'podcast' }))
-    expect(within(dialog).getByRole('checkbox', { name: 'データセット参照' })).toBeChecked()
-    expect(within(dialog).getByRole('checkbox', { name: 'DataLineageの送信' })).toBeChecked()
+    expect(within(lineage).getByRole('checkbox', { name: '読み取り' })).toBeChecked()
+    expect(within(lineage).getByRole('checkbox', { name: '送信' })).toBeChecked()
     expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument()
     act(() => setLocale('en'))
     expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('ML Tracking')
     expect(within(dialog).getByRole('checkbox', { name: 'speech' })).toBeChecked()
     expect(within(dialog).getByRole('checkbox', { name: 'podcast' })).toBeChecked()
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
     await user.click(within(dialog).getByRole('button', { name: 'Issue token' }))
     expect(await screen.findByText('fixture-not-a-real-credential')).toBeInTheDocument()
     const issued = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')!
     expect(issued[0]).toBe('/api/internal/access-tokens')
     expect(JSON.parse(String(issued[1]!.body))).toEqual({ name: 'ML Tracking', description: '',
-      scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech', 'podcast'], expiresAt: null })
+      permissions: ['lineage:read', 'lineage:send'], connections: [], namespaces: ['speech', 'podcast'], expiresAt: null })
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.queryByText('fixture-not-a-real-credential')).not.toBeInTheDocument()
   })
 
-  it('容量取得だけを選ぶ場合はNamespaceを送らず、全接続を読むことを説明する', async () => {
+  it('容量取得だけを選ぶ場合はNamespaceを送らず、接続を明示的に選んで発行する', async () => {
     const user = userEvent.setup()
     const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
       ? response({ accessToken: { ...token, scopes: ['metrics:read'], namespaces: [] }, token: 'fixture-capacity-value' }, 201)
@@ -62,16 +112,14 @@ describe('Access Tokens', () => {
     await screen.findByText('アクセストークンはありません。')
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
-    await user.click(within(dialog).getByRole('checkbox', { name: 'データセット参照' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'DataLineageの送信' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: '容量メトリクス取得' }))
+    await user.click(within(within(dialog).getByRole('group', { name: 'Capacity' })).getByRole('checkbox', { name: '読み取り' }))
     expect(within(dialog).queryByRole('searchbox', { name: 'Namespaceを検索' })).not.toBeInTheDocument()
-    expect(within(dialog).getByText(/全接続のバケット名・容量/)).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('checkbox', { name: 'すべての接続を許可' }))
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'Capacity')
     await user.click(within(dialog).getByRole('button', { name: '発行する' }))
     await screen.findByText('fixture-capacity-value')
     expect(JSON.parse(String(fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body)))
-      .toMatchObject({ scopes: ['metrics:read'], namespaces: [] })
+      .toMatchObject({ permissions: ['capacity:read'], namespaces: [], connections: ['*'] })
   })
 
   it('全Namespaceを明示的に選ぶと個別の名前を含めず全対象として発行する', async () => {
@@ -83,6 +131,7 @@ describe('Access Tokens', () => {
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'All groups')
+    await user.click(within(dialog).getByRole('button', { name: 'ML Tracking連携' }))
     await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
     await user.click(within(dialog).getByRole('checkbox', { name: 'すべてのNamespaceを許可' }))
     await user.click(within(dialog).getByRole('button', { name: '発行する' }))
