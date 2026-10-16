@@ -2,7 +2,6 @@ import type { japaneseMessages } from './ja'
 
 export const englishMessages = {
   "tokenPermissions.action.send": "Send",
-  "accessTokens.legacyPermissions": "Changing and saving the selected operations also enables the corresponding internal APIs for this existing token.",
   "tokenPermissions.group.storage": "Storage",
   "tokenPermissions.group.connections": "Connections",
   "tokenPermissions.group.readmes": "README",
@@ -41,7 +40,6 @@ export const englishMessages = {
   "accessTokens.connectionLoadFailed": "Could not load connections. Your selection is retained.",
   "accessTokens.noConnections": "No matching connections.",
   "accessTokens.connectionsRequired": "Select at least one allowed connection.",
-  "accessTokens.legacyConnections": "This existing configuration has no connection selection. If metrics access is enabled, it includes all connections. Selecting connections restricts that scope. Internal APIs require an explicit selection.",
   "accessTokens.usersManageHelp": "User administration can change roles and passwords, so it requires every permission, all connections and all namespaces. Use the Administrator preset.",
   "accessTokens.reload": "Reload access tokens",
   "accessTokens.create": "Create access token",

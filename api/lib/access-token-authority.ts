@@ -1,15 +1,12 @@
 import type { AccessTokenInput } from './access-token-types.js'
 import type { RequestPrincipal } from './auth-types.js'
-import { hasPermission, SERVICE_KEY_SCOPES } from './auth-types.js'
+import { hasPermission } from './auth-types.js'
 import { INTERNAL_API_PERMISSIONS } from '../shared/access-token-permissions.js'
 
-type TokenGrants = Pick<AccessTokenInput, 'scopes' | 'permissions' | 'namespaces' | 'connections'>
-  & { expiresAt?: Date | null }
-const USER_SCOPE_PERMISSION = { 'lineage:read': 'lineage:read', 'lineage:write': 'lineage:curate', 'metrics:read': 'storage:read' } as const
+type TokenGrants = Pick<AccessTokenInput, 'permissions' | 'namespaces' | 'connections'> & { expiresAt?: Date | null }
 
-function includesTargets(allowed: readonly string[] | null, requested: readonly string[] | null): boolean {
-  if (allowed === null || allowed.includes('*')) return true
-  return requested !== null && requested.every(value => allowed.includes(value))
+function includesTargets(allowed: readonly string[], requested: readonly string[]): boolean {
+  return allowed.includes('*') || requested.every(value => allowed.includes(value))
 }
 
 /** A lifetime is part of what was granted: a token must not create or manage one that outlives it. */
@@ -18,28 +15,22 @@ function endsWithin(allowed: Date | null, requested: Date | null | undefined): b
   return requested != null && requested.getTime() <= allowed.getTime()
 }
 
+/**
+ * Whether the principal may grant these permissions and targets. Integration scopes derive from the
+ * permissions, so they need no check of their own.
+ */
 export function canDelegateToken(principal: RequestPrincipal, grants: TokenGrants): boolean {
-  if (!(grants.permissions ?? []).every(permission => hasPermission(principal, permission))) return false
-  if (principal.kind === 'user') {
-    if (!grants.scopes.every(scope => hasPermission(principal, USER_SCOPE_PERMISSION[scope]))) return false
-    const unrestrictedConnections = grants.connections?.includes('*')
-      || (grants.connections == null && grants.scopes.includes('metrics:read'))
-    return !unrestrictedConnections || hasPermission(principal, 'connections:manage')
-  }
-  // Even optional targets matter: DataLineage uses them for location resolution.
-  // Only a legacy metrics grant may retain the old null = unrestricted semantics.
-  const legacyMetrics = grants.connections == null && grants.scopes.includes('metrics:read')
-  const requestedConnections = grants.connections ?? (legacyMetrics ? null : [])
-  const allowedConnections = legacyMetrics ? principal.connections : principal.connections ?? []
-  return grants.scopes.every(scope => principal.scopes.includes(scope))
-    && includesTargets(principal.namespaces, grants.namespaces)
-    && includesTargets(allowedConnections, requestedConnections)
+  if (!grants.permissions.every(permission => hasPermission(principal, permission))) return false
+  if (principal.kind === 'user') return !grants.connections.includes('*') || hasPermission(principal, 'connections:manage')
+  // Even targets a permission does not need matter: DataLineage uses connections for location resolution.
+  return includesTargets(principal.namespaces, grants.namespaces)
+    && includesTargets(principal.connections, grants.connections)
     && endsWithin(principal.expiresAt, grants.expiresAt)
 }
 
 /** For work that is not tied to one connection: a token must hold every connection to reach it. */
 export function coversAllConnections(principal: RequestPrincipal): boolean {
-  return principal.kind === 'user' || principal.connections?.includes('*') === true
+  return principal.kind === 'user' || principal.connections.includes('*')
 }
 
 /**
@@ -49,6 +40,5 @@ export function coversAllConnections(principal: RequestPrincipal): boolean {
 export function canAdministerUsers(principal: RequestPrincipal): boolean {
   if (principal.kind === 'user') return hasPermission(principal, 'users:manage')
   return INTERNAL_API_PERMISSIONS.every(permission => principal.permissions.includes(permission))
-    && SERVICE_KEY_SCOPES.every(scope => principal.scopes.includes(scope))
     && coversAllConnections(principal) && principal.namespaces.includes('*')
 }

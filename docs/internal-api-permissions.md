@@ -43,13 +43,13 @@ DataLineageの保存先URIはNamespaceの権限で読める。接続の選択は
 
 トークンの一覧には、呼び出し元のトークンが管理できるものだけを返す。Namespace候補の一覧も、呼び出し元が許可されたNamespaceに絞る(全Namespaceのトークンには全件)。
 
-`permissions`を持つトークンのscopeは`permissions`から決まる。`permissions`を含めず`scopes`だけを変更する要求は400(`invalid_token_permissions`)にする。
+トークンの連携scopeは`permissions`から決まる。入力に`scopes`は含められない（400）。
 
 ユーザー管理はロール・パスワードを変更できるため、トークンでは全機能の権限・全連携scope・全接続・全Namespaceを持つ場合だけ変更できる。`users:read`だけの閲覧は可能。ブラウザAdminの操作は従来どおり。
 
 `audit:read`はブラウザのユーザーと同じく操作履歴の全体を読む権限で、トークンの接続・Namespaceの限定では絞られない。範囲を限定したいトークンには付けない。`audit:read`を持たない管理トークンは、それを他のトークンへ付けられない。
 
-ログイン・ログアウト・SSO・自分のプロフィール/パスワード変更は`/api/auth/*`のブラウザセッション専用。互換用の二階層`/service-accounts/*`もセッション専用で、トークンによる管理は一階層の`/access-tokens/*`を使う。
+ログイン・ログアウト・SSO・自分のプロフィール/パスワード変更は`/api/auth/*`のブラウザセッション専用。トークンの管理は`/access-tokens/*`だけで行う。
 
 ## 認証・記録・互換性
 
@@ -57,6 +57,6 @@ Authorizationヘッダーがある場合はBearer認証だけを使い、失敗�
 
 トークンによる変更の操作履歴は`actor_type: service_account`と持ち主IDを記録し、`details.keyId`で個々のトークンを識別する。README・Notesの編集者はトークン名、ユーザーIDはnull。発行者のユーザーになりすますことはない。
 
-`039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加する。新しいAPIはこの表を読むので、本番では反映前にmigrationを適用する。旧版へ戻しても表は残してよい(旧版は読まない)。既存トークンの値・連携scope・Namespace・有効状態を保持し、内部権限は追加しない。既存の容量取得の全接続参照も保持する。新しい接続指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。公開OpenLineage用のDBロールには新しいテーブルの権限を付けない。
+`039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加し、`040_explicit_token_grants.sql`は既存トークンを機能別の権限と明示した接続へ変換する（[アクセストークン](access-tokens.md)の「既存環境への適用」）。新しいAPIはこの形だけを読むので、本番では反映前に039・040の順で適用する。040は持ち主アカウントの状態の列と、接続の指定の有無の列を削除するため、旧版へは戻せない。接続の指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。公開OpenLineage用のDBロールには新しいテーブルの権限を付けない。
 
-DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。`permissions`を明示した発行/変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。既存トークンは権限を明示変更するまで旧scopeだけを保持し、名前編集や再発行では内部権限を増やさない。
+DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。発行・変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。

@@ -1,7 +1,7 @@
 import type { AccessTokenStore } from './access-token-store.js'
 import type { MarquezNamespaceClient } from './marquez-client.js'
 import type { AccessTokenNamespaces } from './access-token-types.js'
-import { NAMESPACE_MAX_LENGTH } from './service-key-permissions.js'
+import { NAMESPACE_MAX_LENGTH } from './access-token-grants.js'
 
 // Fetch namespaces directly rather than scanning every dataset in the catalog.
 const NAMESPACE_PAGE_SIZE = 1000

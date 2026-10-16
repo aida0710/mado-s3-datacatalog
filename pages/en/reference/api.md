@@ -24,7 +24,7 @@ The value is shown only once, when issued. Save it in the integration’s secret
 | DataLineage: Send | Send OpenLineage events | `POST /api/openlineage/v1/lineage` |
 | Capacity: Read | Get capacity metrics for allowed connections | `GET /api/mado/metrics/capacity` |
 
-The integration API `/api/mado/` accepts GET only. One token can combine operations. The corresponding legacy API scopes are set automatically. Capacity metrics use the selected connections, independently of namespaces. Existing tokens retain their previous access to all connections.
+The integration API `/api/mado/` accepts GET only. One token can combine operations. The integration scopes are derived from the selected operations. Capacity metrics use the selected connections, independently of namespaces.
 
 `GET /api/mado/access-token` returns the calling token's own name, scopes, namespaces, and expiration, whatever its scopes (`["*"]` in `namespaces` means all namespaces). It never returns other tokens or token values. Integrations use it to learn the allowed namespaces without asking people to type them.
 

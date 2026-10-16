@@ -19,7 +19,6 @@ import { mountStorageTagsRoutes } from './routes/storage-tags.js'
 import { mountLineageRoutes } from './routes/lineage.js'
 import { mountLineageCurationRoutes } from './routes/lineage-curation.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
-import { mountServiceAccountRoutes } from './routes/service-accounts.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { mountAuditRoutes } from './routes/audit.js'
 
@@ -30,14 +29,8 @@ const INTERNAL_ROUTE_MOUNTS = {
   mountStorageMediaRoutes, mountJobRoutes, mountStorageScanRoutes, mountStorageCapacityRoutes,
   mountStorageEstimateRoutes, mountPricingRoutes, mountStorageFavoritesRoutes, mountSettingsRoutes,
   mountNotesRoutes, mountStorageTagsRoutes, mountLineageRoutes, mountLineageCurationRoutes,
-  mountAdminUsersRoutes, mountServiceAccountRoutes, mountAccessTokenRoutes, mountAuditRoutes,
+  mountAdminUsersRoutes, mountAccessTokenRoutes, mountAuditRoutes,
 } as const
-
-// Routes deliberately closed to access tokens; they answer 403 to every token.
-const SESSION_ONLY_ROUTES = [
-  // The two-level legacy API predates delegation checks; tokens manage tokens through /access-tokens.
-  /^\/service-accounts(?:\/|$)/,
-]
 
 /** Stands in for any dependency: property reads and calls return another stand-in. */
 function placeholderDependency(): unknown {
@@ -65,17 +58,10 @@ describe('内部APIのルートとトークンの権限表', () => {
     expect(new Set(mounted)).toEqual(new Set(Object.keys(INTERNAL_ROUTE_MOUNTS)))
   })
 
-  it('セッション専用と決めたものを除き、すべてのルートに必要な権限が決まっている', () => {
+  it('すべてのルートに、トークンに必要な権限が決まっている', () => {
     const routes = internalRoutes()
     expect(routes.length).toBeGreaterThan(50)
-    const undecided = routes.filter(route => !SESSION_ONLY_ROUTES.some(pattern => pattern.test(route.path))
-      && internalApiPermission(route.method, `/api/internal${route.path}`) === null)
+    const undecided = routes.filter(route => internalApiPermission(route.method, `/api/internal${route.path}`) === null)
     expect(undecided).toEqual([])
-  })
-
-  it('セッション専用のルートには権限表の項目を置かない', () => {
-    const sessionOnly = internalRoutes().filter(route => SESSION_ONLY_ROUTES.some(pattern => pattern.test(route.path)))
-    expect(sessionOnly.length).toBeGreaterThan(0)
-    for (const route of sessionOnly) expect(internalApiPermission(route.method, `/api/internal${route.path}`)).toBeNull()
   })
 })

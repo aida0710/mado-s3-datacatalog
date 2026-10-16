@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { getCookie } from 'hono/cookie'
-import { bearerToken } from './auth-api-keys.js'
+import { bearerToken } from './service-key-authenticator.js'
 import type { AccessTokenPrincipal } from './auth-types.js'
 import type { SessionStore } from './auth-session-store.js'
 import { setRequestPrincipal } from './rbac.js'
