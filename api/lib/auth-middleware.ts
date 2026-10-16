@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
 import { getCookie } from 'hono/cookie'
 import type { SessionStore } from './auth-session-store.js'
-import { getSessionPrincipal, setSessionPrincipal } from './rbac.js'
+import { getRequestPrincipal, setSessionPrincipal } from './rbac.js'
 
 export interface SessionMiddlewareConfig {
   idleSeconds: number
@@ -11,9 +11,9 @@ export interface SessionMiddlewareConfig {
 /** 初期・一時passwordの変更前は、認証済みでも通常APIを利用させない。 */
 export function requirePasswordChangeComplete(): MiddlewareHandler {
   return async (c, next) => {
-    const principal = getSessionPrincipal(c)
+    const principal = getRequestPrincipal(c)
     if (!principal) return c.json({ error: 'unauthorized' }, 401)
-    if (principal.user.mustChangePassword) {
+    if (principal.kind === 'user' && principal.user.mustChangePassword) {
       return c.json({ error: 'password change required' }, 403)
     }
     await next()

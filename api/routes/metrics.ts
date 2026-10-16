@@ -1,7 +1,7 @@
 import type { Hono } from 'hono'
 import type { MetricsCollector } from '../lib/metrics-collector.js'
 import { PROMETHEUS_TEXT_CONTENT_TYPE, renderPrometheusText } from '../lib/prometheus-exposition.js'
-import { requireServiceKeyScope, type ScopedServicePrincipal } from '../lib/service-key-auth.js'
+import { getServiceKeyPrincipal, requireServiceKeyScope, type ScopedServicePrincipal } from '../lib/service-key-auth.js'
 
 export interface MetricsRoutesDeps {
   authenticate(token: string): Promise<ScopedServicePrincipal | null>
@@ -20,7 +20,10 @@ export function mountMetricsRoutes(app: Hono, deps: MetricsRoutesDeps): void {
   for (const collector of deps.collectors) {
     app.get(`/metrics/${collector.name}`, requireMetricsRead, async c => {
       try {
-        const families = await collector.collect()
+        const { connections } = getServiceKeyPrincipal(c)
+        // Old metrics tokens retain their global scope; new grants may select connections.
+        const connectionIds = connections == null || connections.includes('*') ? null : new Set(connections)
+        const families = await collector.collect({ connectionIds })
         return c.body(renderPrometheusText(families), 200, {
           'Content-Type': PROMETHEUS_TEXT_CONTENT_TYPE,
           'Cache-Control': 'no-store',

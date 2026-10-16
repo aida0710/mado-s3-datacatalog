@@ -48,3 +48,5 @@ In production, use HTTPS and set `AUTH_COOKIE_SECURE=true`. The authentication-d
 ## Use access tokens for pipelines
 
 Keep authentication for pipelines and Prometheus separate from people's browser sessions. Create tokens with the required permissions in **Settings → Access → Access Tokens**. One token can allow both reads and writes. See the [API guide](../reference/api.md).
+
+New tokens start with no permissions. Select read, edit, delete, run or manage actions by feature, then choose allowed connections and namespaces. The same token can use internal APIs.

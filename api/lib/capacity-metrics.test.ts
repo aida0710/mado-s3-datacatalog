@@ -85,6 +85,19 @@ describe('capacityMetricFamilies', () => {
 })
 
 describe('createCapacityMetricsCollector', () => {
+  it('接続名・バケット・prefix・設定をすべて許可接続だけに絞る', async () => {
+    const collector = createCapacityMetricsCollector({
+      listLatestBucketCapacity: async () => [measured, { ...measured, connectionId: 'connection-b', bucket: 'private-bucket' }],
+      listLatestPrefixCapacity: async () => [measuredPrefix, { ...measuredPrefix, connectionId: 'connection-b', prefix: 'private-prefix/' }],
+      listConnectionTracking: async () => [tracked, neverConfigured],
+    })
+    const families = await collector.collect({ connectionIds: new Set(['connection-a']) })
+    expect(families.flatMap(family => family.samples).every(sample => sample.labels.connection_id === 'connection-a')).toBe(true)
+    expect(JSON.stringify(families)).not.toContain('private-')
+    expect(JSON.stringify(families)).not.toContain('connection-b')
+    expect((await collector.collect({ connectionIds: new Set() })).every(family => family.samples.length === 0)).toBe(true)
+    expect(JSON.stringify(await collector.collect())).toContain('private-bucket')
+  })
   it('storeから最新値とconnection設定を読んでfamilyを組み立てる', async () => {
     const store = {
       listLatestBucketCapacity: vi.fn().mockResolvedValue([measured]),

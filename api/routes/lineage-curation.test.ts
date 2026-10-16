@@ -4,6 +4,7 @@ import type { AuditWriter } from '../lib/audit.js'
 import type { RegistryClient } from '../lib/registry-client.js'
 import { setSessionPrincipal } from '../lib/rbac.js'
 import { mountLineageCurationRoutes } from './lineage-curation.js'
+import { createNamespaceLineagePolicy } from '../lib/namespace-lineage-policy.js'
 
 const user = {
   id: '00000000-0000-4000-8000-000000000001', username: 'curator', email: null,
@@ -14,7 +15,7 @@ const user = {
 
 function appWith(
   registryOverrides: Partial<RegistryClient> = {},
-  { accessibleConnectionIds }: { accessibleConnectionIds?: string[] } = {},
+  { accessibleConnectionIds, namespaces }: { accessibleConnectionIds?: string[]; namespaces?: string[] } = {},
 ) {
   const registry = {
     getDataset: vi.fn().mockResolvedValue({
@@ -49,11 +50,30 @@ function appWith(
   const canAccessConnection = async (_c: unknown, connectionId: string) =>
     accessibleConnectionIds?.includes(connectionId) ?? true
   const visibleConnectionIds = async () => accessibleConnectionIds ? new Set(accessibleConnectionIds) : null
-  mountLineageCurationRoutes(app, { registry, pool: pool as never, audit, canAccessConnection, visibleConnectionIds })
+  mountLineageCurationRoutes(app, { registry, pool: pool as never, audit, canAccessConnection, visibleConnectionIds,
+    namespacePolicy: namespaces ? () => createNamespaceLineagePolicy(registry, namespaces) : undefined })
   return { app, registry, pool, audit }
 }
 
 describe('lineage 手動登録 route', () => {
+  it('Namespaceの外のDatasetは同値更新でも返さず、変更も登録も行わない', async () => {
+    const { app, registry, audit } = appWith({}, { namespaces: ['other'] })
+    const response = await app.request('/lineage/curation/datasets/00000000-0000-4000-8000-000000000010', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName: '更新前' }),
+    })
+    expect(response.status).toBe(404)
+    expect(await response.text()).not.toContain('更新前')
+    expect(registry.updateDataset).not.toHaveBeenCalled()
+    expect(audit.write).not.toHaveBeenCalled()
+    const registered = await app.request('/lineage/curation/datasets', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        dataset: { datasetKey: 'speech/new', namespace: 'speech', name: 'new', aliases: [] },
+        version: { version: 'v1' }, evidenceRefs: [],
+      }),
+    })
+    expect(registered.status).toBe(403)
+    expect(registry.registerManualDataset).not.toHaveBeenCalled()
+  })
   it('Datasetの説明情報だけを更新して変更項目を監査する', async () => {
     const { app, registry, audit } = appWith()
     const datasetId = '00000000-0000-4000-8000-000000000010'

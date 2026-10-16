@@ -1,11 +1,16 @@
 # nginx/Dockerfileだけがrepository rootをbuild contextに使う。
-# Frontendとnginx設定以外を送らず、ローカルの.env・git履歴・成果物を
+# Frontend・共有の権限カタログ・nginx設定だけを送り、ローカルの.env・git履歴・成果物を
 # 誤ってBuildKit/GitHub Actionsのcontextへ含めない。
 *
 !front/
 !front/**
 !nginx/
 !nginx/**
+!api/
+api/**
+!api/shared/
+api/shared/**
+!api/shared/access-token-permissions.ts
 front/node_modules/
 front/dist/
 front/*.log

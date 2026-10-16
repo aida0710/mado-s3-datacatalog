@@ -5,7 +5,8 @@ import { nanoid } from 'nanoid'
 import type { Pools } from '../db.js'
 import type { CryptoModule } from '../crypto.js'
 import { managesConnections, visibleConnectionIds } from '../lib/connection-access.js'
-import { getSessionPrincipal } from '../lib/rbac.js'
+import { getRequestPrincipal } from '../lib/rbac.js'
+import { principalUserId } from '../lib/principal-actor.js'
 import {
   CONNECTION_SETTINGS_SUBQUERY,
   settingsToCapabilities,
@@ -315,7 +316,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       }
       await upsertCapabilities(client, id, capabilities)
       await replaceAllowedUsers(
-        client, id, visibility.allowedUserIds, getSessionPrincipal(c)?.user.id ?? null,
+        client, id, visibility.allowedUserIds, principalUserId(getRequestPrincipal(c)),
       )
       const r = await client.query<ConnectionRow>(`${SELECT_CONN} WHERE c.id = $1`, [id])
       await client.query('COMMIT')
@@ -518,12 +519,12 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       await deleteSettings(client, id, pricing.deletes)
       if (capacityChanged) {
         await upsertCapacitySettings(
-          client, id, u.capacityTracking!, getSessionPrincipal(c)?.user.id ?? null,
+          client, id, u.capacityTracking!, principalUserId(getRequestPrincipal(c)),
         )
       }
       if (allowedUsersChanged) {
         await replaceAllowedUsers(
-          client, id, allowedUserIds!, getSessionPrincipal(c)?.user.id ?? null,
+          client, id, allowedUserIds!, principalUserId(getRequestPrincipal(c)),
         )
         // allowlistだけを変更した場合も接続の更新日時を進める。
         if (sets.length === 0) {
