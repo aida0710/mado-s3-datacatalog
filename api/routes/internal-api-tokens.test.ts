@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { closePools, createPools } from '../db.js'
 import { createUserStore } from '../lib/auth-user-store.js'
 import { createServiceAccountStore } from '../lib/auth-api-keys.js'
-import { createAccessTokenStore } from '../lib/access-token-store.js'
+import { AccessTokenActorInactiveError, AccessTokenPermissionsError, createAccessTokenStore } from '../lib/access-token-store.js'
 import { createInternalTokenAuthenticator } from '../lib/internal-token-authenticator.js'
 import { requireInternalApiAuthentication } from '../lib/internal-api-auth.js'
 import { requireInternalApiPermission } from '../lib/internal-api-permission-policy.js'
@@ -47,7 +47,7 @@ beforeEach(async () => {
   mountNotesRoutes(app, { pools })
   mountAuditRoutes(app, { pool: pools.ro })
   mountAccessTokenRoutes(app, { store: tokens, audit,
-    namespaceCatalog: { listNamespaces: async () => ({ namespaces: ['speech'], sourceStatus: 'ready' }) } })
+    namespaceCatalog: { listNamespaces: async () => ({ namespaces: ['music', 'speech'], sourceStatus: 'ready' }) } })
   mountServiceAccountRoutes(app, { store: legacy, audit })
   mountAdminUsersRoutes(app, { users, credentials: { resetLocalPassword: vi.fn() }, audit, ssoRoleMapping: {} })
 })
@@ -209,6 +209,67 @@ describe('内部APIのアクセストークン', () => {
     expect((await request(manager.token, `${path}?expectedRevision=1`, 'DELETE')).status).toBe(403)
     expect((await request(manager.token, '/service-accounts', 'POST', { name: 'Bypass' })).status).toBe(403)
     expect(await authenticate(stronger.token)).not.toBeNull()
+  })
+
+  it('管理トークンは自分の有効期限より長く残るトークンを作れず、期限より短ければ作れる', async () => {
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
+    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'], expiresAt })
+    const body = { name: 'Child', scopes: [], permissions: ['notes:read'], connections: [], namespaces: [] }
+    const at = (offset: number) => new Date(expiresAt.getTime() + offset).toISOString()
+    expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(403)
+    expect((await request(manager.token, '/access-tokens', 'POST', { ...body, expiresAt: at(1000) })).status).toBe(403)
+    expect((await request(manager.token, '/access-tokens', 'POST', { ...body, expiresAt: at(-1000) })).status).toBe(201)
+    const permanent = await issue({ permissions: ['notes:read'] })
+    expect((await request(manager.token, `/access-tokens/${permanent.accessToken.id}?expectedRevision=1`, 'DELETE')).status).toBe(403)
+    expect(await authenticate(permanent.token)).not.toBeNull()
+  })
+
+  it('権限の外にあるトークンへの操作は、revisionが古くても競合ではなく403にする', async () => {
+    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'] })
+    const stronger = await issue({ permissions: ['notes:write'] })
+    const response = await request(manager.token, `/access-tokens/${stronger.accessToken.id}`, 'PATCH', { expectedRevision: 99, name: 'Probe' })
+    expect(response.status).toBe(403)
+  })
+
+  it('機能別の権限を持つトークンへのscopesだけの変更は、権限と連携scopeを食い違わせないよう断る', async () => {
+    const issued = await issue({ permissions: ['lineage:read'], namespaces: ['speech'] })
+    await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { scopes: ['lineage:write'] } }))
+      .rejects.toBeInstanceOf(AccessTokenPermissionsError)
+    expect(await authenticate(issued.token)).toMatchObject({ scopes: issued.accessToken.scopes, permissions: ['lineage:read'] })
+  })
+
+  it('呼び出し元のトークンが途中で無効になると、作成も削除も確定しない', async () => {
+    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'] })
+    const target = await issue({ name: 'Target', permissions: ['notes:read'] })
+    await tokens.updateToken({ id: manager.accessToken.id, expectedRevision: 1, patch: { status: 'disabled' } })
+    const guard = { actorKeyId: manager.accessToken.id }
+    await expect(tokens.deleteToken({ id: target.accessToken.id, expectedRevision: 1 }, guard))
+      .rejects.toBeInstanceOf(AccessTokenActorInactiveError)
+    await expect(tokens.createToken({ name: 'Child', description: '', scopes: [], permissions: ['notes:read'],
+      connections: [], namespaces: [], expiresAt: null, createdBy: null }, guard)).rejects.toBeInstanceOf(AccessTokenActorInactiveError)
+    expect(await authenticate(target.token)).not.toBeNull()
+    expect((await tokens.listTokens()).map(token => token.name)).not.toContain('Child')
+  })
+
+  it('管理トークンの一覧には、自分が管理できるトークンと許可されたNamespaceだけを出す', async () => {
+    const manager = await issue({ permissions: ['service_accounts:read', 'lineage:read'], namespaces: ['speech'], connections: [] })
+    const weaker = await issue({ name: 'Weaker', permissions: ['lineage:read'], namespaces: ['speech'] })
+    const stronger = await issue({ name: 'Stronger', permissions: ['lineage:read'], namespaces: ['music'] })
+    const listed = await (await request(manager.token, '/access-tokens')).json() as { tokens: Array<{ id: string }> }
+    const ids = listed.tokens.map(token => token.id)
+    expect(ids).toEqual(expect.arrayContaining([manager.accessToken.id, weaker.accessToken.id]))
+    expect(ids).not.toContain(stronger.accessToken.id)
+    expect(await (await request(manager.token, '/access-tokens/namespaces')).json())
+      .toEqual({ namespaces: ['speech'], sourceStatus: 'ready' })
+  })
+
+  it('ユーザー管理には、全権限に加えて全接続・全Namespaceを持つトークンを要求する', async () => {
+    const body = { username: 'scoped-admin-user', displayName: 'Created by token', roles: ['viewer'] }
+    const everything = { permissions: [...INTERNAL_API_PERMISSIONS], scopes: ['lineage:read', 'lineage:write', 'metrics:read'] as const }
+    const limitedConnections = await issue({ ...everything, scopes: [...everything.scopes], connections: [SELECTED], namespaces: ['*'] })
+    expect((await request(limitedConnections.token, '/users', 'POST', body)).status).toBe(403)
+    const limitedNamespaces = await issue({ ...everything, scopes: [...everything.scopes], connections: ['*'], namespaces: ['speech'] })
+    expect((await request(limitedNamespaces.token, '/users', 'POST', body)).status).toBe(403)
   })
 
   it('限定トークンではユーザー管理から権限を昇格できず、全権限の管理者なら作成できる', async () => {

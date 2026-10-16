@@ -164,10 +164,12 @@ if (authEnabled) {
 const api = new Hono()
 const safeInternalOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
 if (authEnabled) {
+  // ブラウザからの要求は、セッションに触れる(有効期限を延ばす)前にOriginを確かめる。
+  // Authorizationヘッダーは他サイトのフォームからは付けられないので、トークンの要求には要らない。
+  api.use('*', (context, next) => context.req.header('Authorization') !== undefined
+    ? next() : safeInternalOrigin(context, next))
   api.use('*', requireInternalApiAuthentication({ sessions, authenticateToken: authenticateInternalToken,
     idleSeconds: env.AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
-  api.use('*', (context, next) => getRequestPrincipal(context)?.kind === 'service_account'
-    ? next() : safeInternalOrigin(context, next))
   api.use('*', auditActivity(audit))
   api.use('*', requirePasswordChangeComplete())
   api.use('*', requireInternalApiPermission())

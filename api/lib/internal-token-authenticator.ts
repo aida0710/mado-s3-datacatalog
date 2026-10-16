@@ -2,6 +2,7 @@ import type { Pool } from 'pg'
 import type { AccessTokenPrincipal, ServicePrincipal } from './auth-types.js'
 import { isInternalApiPermission } from '../shared/access-token-permissions.js'
 import { equalDigest, sha256 } from './auth-crypto.js'
+import { ACTIVE_SERVICE_KEY_CONDITION } from './service-account-key-record.js'
 
 export function createInternalTokenAuthenticator(deps: {
   pool: Pool
@@ -20,8 +21,7 @@ export function createInternalTokenAuthenticator(deps: {
           ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id)
         ELSE NULL END AS connections
       FROM service_account_keys k JOIN service_accounts a ON a.id=k.service_account_id
-      WHERE k.id=$1 AND k.revoked_at IS NULL AND k.disabled_at IS NULL AND a.status='active'
-        AND (k.expires_at IS NULL OR k.expires_at > now())`, [principal.keyId])
+      WHERE k.id=$1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`, [principal.keyId])
     const row = grants.rows[0]
     // Read all grants from one snapshot and recheck the secret if regeneration raced with authentication.
     if (!row || !equalDigest(row.secret_hash, sha256(token.slice(token.indexOf('.') + 1)))) return null

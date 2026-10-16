@@ -7,6 +7,9 @@ const SERVICE_KEY_TOKEN_PREFIX = 'mado_lin_'
 const PUBLIC_ID_LENGTH = 16
 // Keep 256 bits of entropy for both first issuance and regeneration.
 export const SERVICE_KEY_SECRET_BYTES = 32
+/** When a key may act, for queries aliasing service_account_keys as `k` and its service_accounts row as `a`. */
+export const ACTIVE_SERVICE_KEY_CONDITION = `k.revoked_at IS NULL AND k.disabled_at IS NULL AND a.status = 'active'
+  AND (k.expires_at IS NULL OR k.expires_at > now())`
 
 export async function insertServiceAccountKey(database: Queryable, input: {
   accountId: string

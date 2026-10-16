@@ -39,4 +39,11 @@ describe('内部APIの操作ごとの権限', () => {
     expect(internalApiPermission('HEAD', '/api/internal/notes/home')).toBe('notes:read')
     expect(internalApiPermission('GET', '/api/internal/lineage/future-endpoint')).toBeNull()
   })
+  it('実在しない操作や旧二階層APIには権限を割り当てない', () => {
+    for (const [method, path] of [['POST', '/tags/42'], ['POST', '/storage/id/tags'], ['PUT', '/users'],
+      ['DELETE', '/users/id/roles'], ['PATCH', '/access-tokens'], ['GET', '/access-tokens/id/regenerate'],
+      ['GET', '/service-accounts'], ['POST', '/service-accounts/id/keys']]) {
+      expect(internalApiPermission(method, `/api/internal${path}`)).toBeNull()
+    }
+  })
 })

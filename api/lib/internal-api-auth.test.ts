@@ -9,8 +9,8 @@ import { canAccessConnection, requireConnectionAccess, visibleConnectionIds } fr
 import type { Pool } from 'pg'
 
 const tokenPrincipal: AccessTokenPrincipal = {
-  kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key',
-  tokenName: 'Reader', scopes: [], namespaces: [], connections: ['selected'], permissions: ['notes:read'],
+  kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key', keyName: 'Reader',
+  tokenName: 'Reader', expiresAt: null, scopes: [], namespaces: [], connections: ['selected'], permissions: ['notes:read'],
 }
 const session: SessionPrincipal = { kind: 'user', sessionId: 'session', user: {
   id: 'user', username: null, email: null, displayName: 'User', signatureName: 'User', status: 'active',
@@ -21,14 +21,17 @@ function application(principal = tokenPrincipal) {
   const app = new Hono()
   const sessions = { authenticateSession: vi.fn().mockResolvedValue(session) }
   const authenticateToken = vi.fn().mockResolvedValue(principal)
-  app.use('*', requireInternalApiAuthentication({ sessions, authenticateToken, cookieName: 'session', idleSeconds: 300 }))
+  // Same order as internal.ts: a browser request is checked for Origin before its session is touched.
   const safeOrigin = requireSafeOrigin(['https://mado.example.test'])
-  app.use('*', (c, next) => getRequestPrincipal(c)?.kind === 'service_account' ? next() : safeOrigin(c, next))
+  app.use('*', (c, next) => c.req.header('Authorization') !== undefined ? next() : safeOrigin(c, next))
+  app.use('*', requireInternalApiAuthentication({ sessions, authenticateToken, cookieName: 'session', idleSeconds: 300 }))
   app.use('*', requireInternalApiPermission())
   app.get('/api/internal/notes/home', c => c.json({ kind: getRequestPrincipal(c)?.kind }))
   app.put('/api/internal/notes/home', c => c.text('saved'))
   app.post('/api/internal/lineage/curation/runs', c => c.text('registered'))
   app.post('/api/internal/future-feature', c => c.text('new endpoint'))
+  app.post('/api/internal/tags', c => c.text('tag created'))
+  app.put('/api/internal/storage/selected/tags', c => c.text('tagged'))
   return { app, sessions, authenticateToken }
 }
 
@@ -56,6 +59,19 @@ describe('内部APIの認証と権限', () => {
     expect((await app.request('/api/internal/notes/home', { method: 'PUT', headers: { Authorization: 'Bearer valid' } })).status).toBe(200)
     expect((await app.request('/api/internal/notes/home', { method: 'PUT', headers: { Cookie: 'session=valid', Origin: 'https://other.test' } })).status).toBe(403)
     expect((await app.request('/api/internal/notes/home', { method: 'PUT', headers: { Cookie: 'session=valid', Origin: 'https://mado.example.test' } })).status).toBe(200)
+  })
+  it('別Originからの書き込みは、セッションを確かめる(延長する)前に拒否する', async () => {
+    const { app, sessions } = application()
+    expect((await app.request('/api/internal/notes/home', { method: 'PUT', headers: { Cookie: 'session=valid', Origin: 'https://other.test' } })).status).toBe(403)
+    expect(sessions.authenticateSession).not.toHaveBeenCalled()
+  })
+  it('全接続に効くタグ定義の変更は全接続のトークンだけに許し、接続ごとのタグ付けは限定トークンにも許す', async () => {
+    const headers = { Authorization: 'Bearer valid' }
+    const limited = application({ ...tokenPrincipal, permissions: ['tags:write'] }).app
+    expect((await limited.request('/api/internal/tags', { method: 'POST', headers })).status).toBe(403)
+    expect((await limited.request('/api/internal/storage/selected/tags', { method: 'PUT', headers })).status).toBe(200)
+    const unrestricted = application({ ...tokenPrincipal, permissions: ['tags:write'], connections: ['*'] }).app
+    expect((await unrestricted.request('/api/internal/tags', { method: 'POST', headers })).status).toBe(200)
   })
   it('認証サービスの障害は503にし、権限表にないAPIはトークンに開放しない', async () => {
     const { app, authenticateToken } = application()

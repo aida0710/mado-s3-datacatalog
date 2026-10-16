@@ -5,7 +5,7 @@ import { markAuditChangeCommitted, markAuditNoChange, writeDedicatedAudit } from
 import { getRequestPrincipal, requirePermission } from '../lib/rbac.js'
 import { requestMetadata } from '../lib/request-metadata.js'
 import { serviceKeyPermissions } from '../lib/service-key-permissions.js'
-import { AccessTokenConflictError, AccessTokenPermissionsError, type AccessTokenStore } from '../lib/access-token-store.js'
+import { AccessTokenActorInactiveError, AccessTokenConflictError, AccessTokenPermissionsError, type AccessTokenStore } from '../lib/access-token-store.js'
 import type { AccessToken } from '../lib/access-token-types.js'
 import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
 import type { AccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
@@ -13,6 +13,7 @@ import { accessTokenGrants, internalPermissions, tokenConnections } from '../lib
 import { createAccessTokenManagement, AccessTokenAuthorityError } from '../lib/access-token-management.js'
 import { UnknownTokenConnectionError } from '../lib/internal-token-grants.js'
 import { principalActor } from '../lib/principal-actor.js'
+import { canDelegateToken } from '../lib/access-token-authority.js'
 import type { RequestPrincipal } from '../lib/auth-types.js'
 
 // Preserve the metadata limits of the existing service-account contract.
@@ -81,6 +82,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
       return c.json({ accessToken: mutation.accessToken, ...(mutation.token ? { token: mutation.token } : {}) }, input.created ? 201 : 200)
     } catch (error) {
       if (error instanceof AccessTokenAuthorityError) return c.json({ error: error.message }, 403)
+      if (error instanceof AccessTokenActorInactiveError) return c.json({ error: error.message }, 401)
       if (error instanceof UnknownTokenConnectionError) return c.json({ error: error.message }, 400)
       if (error instanceof AccessTokenConflictError)
         return c.json({ error: error.message, code: 'token_conflict' }, 409)
@@ -90,8 +92,18 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
     }
   }
 
-  routes.get('/', async c => c.json({ tokens: await deps.store.listTokens() }))
-  routes.get('/namespaces', async c => c.json(await deps.namespaceCatalog.listNamespaces()))
+  // A token sees only tokens it could manage, so the list does not reveal stronger grants.
+  routes.get('/', async c => {
+    const principal = getRequestPrincipal(c)!
+    const tokens = await deps.store.listTokens()
+    return c.json({ tokens: principal.kind === 'user' ? tokens : tokens.filter(token => canDelegateToken(principal, token)) })
+  })
+  routes.get('/namespaces', async c => {
+    const principal = getRequestPrincipal(c)!
+    const catalog = await deps.namespaceCatalog.listNamespaces()
+    if (principal.kind === 'user' || principal.namespaces.includes('*')) return c.json(catalog)
+    return c.json({ ...catalog, namespaces: catalog.namespaces.filter(namespace => principal.namespaces.includes(namespace)) })
+  })
   routes.post('/', async c => {
     const parsed = CreateToken.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json({ error: 'invalid body' }, 400)
