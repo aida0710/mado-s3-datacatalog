@@ -58,6 +58,7 @@ import { mountStorageCapacityRoutes } from './routes/storage-capacity.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { createCapacityMetricsCollector } from './lib/capacity-metrics.js'
 import { mountMetricsRoutes } from './routes/metrics.js'
+import { mountServiceAccessTokenRoutes } from './routes/service-access-token.js'
 import { mountServiceLineageRoutes } from './routes/service-lineage.js'
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
@@ -311,6 +312,7 @@ app.route('/api/internal', api)
 // Service Account keyでMado自身のデータを読む入口。すべて読み取り専用で、browser sessionの
 // `/api/internal`とは分ける。公開用の:8081には載せない。
 const madoApi = new Hono()
+mountServiceAccessTokenRoutes(madoApi, { authenticate: token => serviceAccounts.authenticate(token) })
 mountMetricsRoutes(madoApi, {
   authenticate: token => serviceAccounts.authenticate(token),
   collectors: [createCapacityMetricsCollector(capacityStore)],
