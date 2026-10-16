@@ -107,7 +107,6 @@ export function PreviewAudio({ connectionId, bucket, k, entryPath }: Props) {
   )
 }
 
-// meta が null の場合 (旧 API 互換 / 未解析) は空配列 → 情報行を出さない。
 function infoLines(analyze: Analyze): string[] {
   return formatAudioInfoLines(analyze.meta, analyze.durationSec, analyze.sampleRate)
 }

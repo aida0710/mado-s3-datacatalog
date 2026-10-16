@@ -1,21 +1,18 @@
 import type { z } from 'zod'
 import { ListBuckets, StorageList } from './types'
-import { LONG_CACHE_TTL_MS, removePersistedKeysStartingWith, TTLCache } from './cache'
+import { LONG_CACHE_TTL_MS, TTLCache } from './cache'
 import { buildUrl, cacheKey, getJson, storagePath, type Revalidatable } from './http'
 
 const listCache = new TTLCache<z.infer<typeof StorageList>>(LONG_CACHE_TTL_MS, {
-  // v2: old persisted values have no authoritative server fetchedAt metadata.
   persistKey: 'mado.cache.list.v2',
   // A browser cache received near the end of the server TTL must not extend the
   // response another six hours. Revalidate no later than the server expiry.
   expiresAt: value => Date.parse(value.cache.expiresAt),
 })
 const bucketsCache = new TTLCache<z.infer<typeof ListBuckets>>(LONG_CACHE_TTL_MS, {
-  // 旧形式にはS3取得時刻がないため、読み出し直す。
   persistKey: 'mado.cache.buckets.v2',
   expiresAt: value => Date.parse(value.cache.expiresAt),
 })
-removePersistedKeysStartingWith('mado.cache.buckets:')
 
 export interface ListCursor {
   continuation?: string

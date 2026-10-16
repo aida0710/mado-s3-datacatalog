@@ -43,7 +43,7 @@ SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authent
 
 SSOのgroupから外しても、既存のmadoセッションが直ちに失効するとは限りません。すぐに利用を止める場合は、mado側のUserを無効化してください。
 
-運用環境ではHTTPSを使い、`AUTH_COOKIE_SECURE=true` にします。認証無効モードは既存の開発・LAN環境向けで、本番モードでは起動できません。
+運用環境ではHTTPSを使い、`AUTH_COOKIE_SECURE=true` にします。開発・テスト環境も `AUTH_MODE` に `local`・`oidc`・`hybrid` のいずれかを指定します。未設定やその他の値では起動できません。
 
 ## Pipelineにはアクセストークンを使う
 

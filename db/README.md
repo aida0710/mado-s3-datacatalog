@@ -206,3 +206,18 @@ URLs switch from the API roles to `mado_worker`. Verify that the worker can acce
 its job/capacity/media tables and cannot select `auth_sessions` or `service_account_keys`.
 Existing SSO sessions require one sign-in after migration 037; configure
 `offline_access` in both the provider and `OIDC_SCOPES` for token renewal.
+
+## Explicit connection settings and media cache (041)
+
+After migration 040, apply `041_explicit_connection_settings_media_cache.sql` before starting the API and workers. It writes all eight capability settings plus `scan_enabled` and `capacity_metrics_enabled` for every connection. Missing and non-boolean values become `true`, preserving their effective value; existing `true` and `false` values remain unchanged. A CHECK constraint restricts those keys to the two boolean strings. Optional settings such as scan page size and pricing keep their defaults.
+
+The same migration deletes media cache rows without `meta` (SQL NULL or JSON null) or `connection_id`, then requires both columns and an object for `meta`. Individual metadata fields may remain null. Removed cache entries are recomputed on demand. New connections write all ten boolean settings in the connection creation transaction.
+
+Apply the file once, in a transaction, as the database administrator:
+
+```bash
+docker compose -f compose.prod.yaml exec -T postgres \
+  psql --single-transaction -v ON_ERROR_STOP=1 -U postgres -d dashboard \
+  -f /migrations/041_explicit_connection_settings_media_cache.sql
+```
+The application treats missing or invalid boolean settings as an error and does not repair data while reading it. Do not edit previously applied migration files.

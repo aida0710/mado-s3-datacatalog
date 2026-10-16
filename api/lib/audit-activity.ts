@@ -129,7 +129,7 @@ export function auditActivity(audit: AuditWriter): MiddlewareHandler {
     const activity = classifyActivity(c.req.method, c.req.path)
     if (!activity) return next()
     const principal = getRequestPrincipal(c)
-    if (!principal) return next()
+    if (!principal) return c.json({ error: 'unauthorized' }, 401)
 
     const metadata = requestMetadata(c)
     const intentId = await audit.start({

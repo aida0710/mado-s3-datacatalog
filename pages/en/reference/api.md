@@ -94,3 +94,5 @@ Open the **…** menu beside a token.
 - **Delete** permanently ends access and removes the token from the list. Audit history is retained.
 
 Existing Service Account keys appear in the same list, with their values and permissions preserved. Renaming or regenerating a token does not add internal API permissions. Changing and saving its selected operations moves it to the feature permission model.
+
+Internal APIs require a browser session or an access token. Notes and README edits use the account signature or token name as the editor. An `editor` field in the PUT body produces a 400 validation error. Logical DataLineage graphs use `rootKind=dataset|job`; queries containing `kind` produce a 400 response.

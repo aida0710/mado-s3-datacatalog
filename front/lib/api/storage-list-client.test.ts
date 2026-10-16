@@ -37,7 +37,7 @@ describe('バケット一覧cacheの取得時刻', () => {
     expect(fetchBuckets).toHaveBeenCalledTimes(2)
   })
 
-  it('取得時刻が不明な旧形式の永続キャッシュは再取得する', async () => {
+  it('別prefixの保存値を読まず削除もせずに一覧を取得する', async () => {
     localStorage.setItem('mado.cache.buckets:buckets|buckets-legacy-test', JSON.stringify({
       value: { buckets: [{ name: 'old-bucket', creationDate: null }] },
       expiresAt: Date.now() + 60_000,
@@ -52,7 +52,7 @@ describe('バケット一覧cacheの取得時刻', () => {
 
     expect((await storageListClient.buckets('buckets-legacy-test')).buckets[0].name).toBe('new-bucket')
     expect(fetchBuckets).toHaveBeenCalledTimes(1)
-    expect(localStorage.getItem('mado.cache.buckets:buckets|buckets-legacy-test')).toBeNull()
+    expect(localStorage.getItem('mado.cache.buckets:buckets|buckets-legacy-test')).not.toBeNull()
   })
 })
 

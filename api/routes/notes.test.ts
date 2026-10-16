@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { createTestAppWithPrincipal, testPrincipal } from '../lib/test-fixtures/request-principal.js'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { createPools, closePools } from '../db.js'
 import { mountNotesRoutes } from './notes.js'
@@ -8,8 +8,12 @@ const RW = process.env.DATABASE_URL_RW_TEST
 const RO = RW.replace('dashboard_rw', 'dashboard_ro')
 const pools = createPools({ rw: RW, ro: RO })
 
-const app = new Hono()
-mountNotesRoutes(app, { pools })
+function notesApp(tokenName = 'tanaka') {
+  const app = createTestAppWithPrincipal(testPrincipal(tokenName))
+  mountNotesRoutes(app, { pools })
+  return app
+}
+const app = notesApp()
 
 beforeEach(async () => {
   await pools.rw.query('TRUNCATE notes')
@@ -25,10 +29,10 @@ describe('GET /notes/:slug', () => {
   })
 
   it('PUT した後は body と editor と時刻を返す', async () => {
-    const put = await app.request('/notes/home', {
+    const put = await notesApp('tanaka').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: '# Hello\nworld', editor: 'tanaka' }),
+      body: JSON.stringify({ body: '# Hello\nworld' }),
     })
     expect(put.status).toBe(200)
 
@@ -46,15 +50,15 @@ describe('GET /notes/:slug', () => {
 
 describe('PUT /notes/:slug', () => {
   it('2 回目の書き込みは 1 回目を上書きする', async () => {
-    await app.request('/notes/home', {
+    await notesApp('a').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'first', editor: 'a' }),
+      body: JSON.stringify({ body: 'first' }),
     })
-    const res = await app.request('/notes/home', {
+    const res = await notesApp('b').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'second', editor: 'b' }),
+      body: JSON.stringify({ body: 'second' }),
     })
     expect(res.status).toBe(200)
     const get = await app.request('/notes/home')
@@ -63,13 +67,13 @@ describe('PUT /notes/:slug', () => {
     expect(body.last_editor).toBe('b')
   })
 
-  it('editor が無ければ 400', async () => {
+  it('editorを指定せず保存すると認証主体の名前で成功する', async () => {
     const res = await app.request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ body: 'x' }),
     })
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(200)
   })
 
   it('editor が空なら 400', async () => {
@@ -82,15 +86,15 @@ describe('PUT /notes/:slug', () => {
   })
 
   it('slug が違えば body と editor は混ざらない', async () => {
-    await app.request('/notes/home', {
+    await notesApp('a').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'home body', editor: 'a' }),
+      body: JSON.stringify({ body: 'home body' }),
     })
-    await app.request('/notes/other', {
+    await notesApp('b').request('/notes/other', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'other body', editor: 'b' }),
+      body: JSON.stringify({ body: 'other body' }),
     })
     const home = (await (await app.request('/notes/home')).json()) as { body: string }
     const other = (await (await app.request('/notes/other')).json()) as { body: string }
@@ -101,15 +105,15 @@ describe('PUT /notes/:slug', () => {
 
 describe('PUT /notes/:slug — 履歴記録', () => {
   it('PUT 成功時に notes_history へ INSERT される (slug 単位で append)', async () => {
-    await app.request('/notes/home', {
+    await notesApp('tanaka').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'v1', editor: 'tanaka' }),
+      body: JSON.stringify({ body: 'v1' }),
     })
-    await app.request('/notes/home', {
+    await notesApp('sato').request('/notes/home', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'v2 updated', editor: 'sato' }),
+      body: JSON.stringify({ body: 'v2 updated' }),
     })
     const r = await pools.rw.query(
       `SELECT body, editor, size_bytes FROM notes_history
@@ -122,9 +126,9 @@ describe('PUT /notes/:slug — 履歴記録', () => {
 
   it('同じ本文の再保存では履歴を追加しない', async () => {
     for (const editor of ['tanaka', 'sato']) {
-      await app.request('/notes/home', {
+      await notesApp(editor).request('/notes/home', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: 'same', editor }),
+        body: JSON.stringify({ body: 'same' }),
       })
     }
     const r = await pools.rw.query(
@@ -134,9 +138,9 @@ describe('PUT /notes/:slug — 履歴記録', () => {
   })
 
   it('同じ新規本文の同時保存でも履歴は1件だけ', async () => {
-    await Promise.all(['a', 'b'].map(editor => app.request('/notes/new-note', {
+    await Promise.all(['a', 'b'].map(editor => notesApp(editor).request('/notes/new-note', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'same', editor }),
+      body: JSON.stringify({ body: 'same' }),
     })))
     const r = await pools.rw.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM notes_history WHERE slug = 'new-note'`,

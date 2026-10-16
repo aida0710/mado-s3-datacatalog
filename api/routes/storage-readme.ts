@@ -12,9 +12,6 @@ import { markAuditNoChange } from '../lib/audit-activity.js'
 import type { ResponseCache } from '../lib/storage-cache.js'
 import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
 
-// 認証有効時の編集者はsession userのアカウント署名を正本にする。
-// editor request値は認証無効の開発・test環境との互換用。
-
 export interface StorageReadmeDeps {
   getStorage: GetStorage
   pools: Pools
@@ -27,8 +24,7 @@ const PutBody = z.object({
   bucket: z.string().min(1),
   prefix: z.string(),       // '' (ルート) または '/' で終わる
   body: z.string().max(1_000_000),
-  editor: z.string().min(1).optional(),
-})
+}).strict()
 
 const readmeWriteTails = new Map<string, Promise<void>>()
 
@@ -110,8 +106,8 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
     }
     const { bucket, prefix, body } = parsed.data
     const principal = getRequestPrincipal(c)
-    const editor = principalEditor(principal) ?? parsed.data.editor
-    if (!editor) return c.json({ error: 'editor is required' }, 400)
+    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    const editor = principalEditor(principal)
     const actorUserId = principalUserId(principal)
     const Key = prefix + 'README.md'
     const buf = Buffer.from(body, 'utf-8')

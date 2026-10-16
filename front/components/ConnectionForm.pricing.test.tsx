@@ -1,9 +1,9 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from '../lib/api/fixtures'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ConnectionForm } from './ConnectionForm'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
-import { PRICING_FIXTURE } from '../lib/api/fixtures'
 import type { Connection } from '../lib/api/types'
 
 const TIB = 1024 ** 4
@@ -12,6 +12,7 @@ const connection: Connection = {
   id: 'c1', name: 'mdx-s3', endpoint: 'https://mdx.lan:9000', region: 'auto',
   accessKeyIdMasked: 'AKIA…2345', forcePathStyle: true, listObjectsVersion: 'v2',
   capabilities: ALL_CAPABILITIES_ON,
+  ...CONNECTION_SETTINGS_FIXTURE,
   scanEnabled: true,
   listCacheTtlSec: 86400,
   pricing: PRICING_FIXTURE,

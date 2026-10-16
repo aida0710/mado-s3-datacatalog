@@ -3,10 +3,10 @@ import type { Pool } from 'pg'
 import { hasPermission, type RequestPrincipal } from './auth-types.js'
 import { getRequestPrincipal } from './rbac.js'
 
-/** 認証無効の開発環境と接続管理者は全接続へアクセスできる。 */
+/** 接続管理者は全接続へアクセスできる。 */
 export function managesConnections(c: Context): boolean {
   const principal = getRequestPrincipal(c)
-  return principal === null || hasPermission(principal, 'connections:manage')
+  return principal !== null && hasPermission(principal, 'connections:manage')
 }
 
 /** 現在のUserが接続を利用できるか。非許可時は存在自体を隠すため呼び出し側は404にする。 */
@@ -19,9 +19,8 @@ export async function canAccessConnection(
   if (caller?.kind === 'service_account') {
     return caller.connections.includes('*') || caller.connections.includes(connectionId)
   }
-  if (managesConnections(c)) return true
-  const principal = getRequestPrincipal(c)!
-  if (principal.kind !== 'user') return false
+  if (!caller || caller.kind !== 'user') return false
+  if (hasPermission(caller, 'connections:manage')) return true
   const result = await pool.query(
     `SELECT 1
        FROM storage_connections connection
@@ -34,7 +33,7 @@ export async function canAccessConnection(
                AND allowed.user_id = $2
           )
         )`,
-    [connectionId, principal.user.id],
+    [connectionId, caller.user.id],
   )
   return (result.rowCount ?? 0) > 0
 }
@@ -44,9 +43,8 @@ export async function connectionIdsForPrincipal(pool: Pool, caller: RequestPrinc
   if (caller?.kind === 'service_account') {
     return caller.connections.includes('*') ? null : new Set(caller.connections)
   }
-  if (caller === null || hasPermission(caller, 'connections:manage')) return null
-  const principal = caller
-  if (principal.kind !== 'user') return new Set()
+  if (!caller || caller.kind !== 'user') return new Set()
+  if (hasPermission(caller, 'connections:manage')) return null
   const result = await pool.query<{ id: string }>(
     `SELECT connection.id
        FROM storage_connections connection
@@ -56,7 +54,7 @@ export async function connectionIdsForPrincipal(pool: Pool, caller: RequestPrinc
             WHERE allowed.connection_id = connection.id
               AND allowed.user_id = $1
          )`,
-    [principal.user.id],
+    [caller.user.id],
   )
   return new Set(result.rows.map(row => row.id))
 }

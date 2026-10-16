@@ -91,7 +91,8 @@ describe('内部APIのアクセストークン', () => {
   it('閲覧と編集を別々に許可し、編集者と監査にトークンの主体を残す', async () => {
     const writer = await issue({ permissions: ['notes:write'] })
     expect((await request(writer.token, '/notes/home')).status).toBe(403)
-    expect((await request(writer.token, '/notes/home', 'PUT', { body: 'Saved by automation', editor: 'Pretend user' })).status).toBe(200)
+    expect((await request(writer.token, '/notes/home', 'PUT', { body: 'Saved by automation', editor: 'Pretend user' })).status).toBe(400)
+    expect((await request(writer.token, '/notes/home', 'PUT', { body: 'Saved by automation' })).status).toBe(200)
     const note = await pools.rw.query('SELECT last_editor,last_editor_user_id FROM notes WHERE slug=$1', ['home'])
     expect(note.rows[0]).toEqual({ last_editor: 'Automation', last_editor_user_id: null })
     const recorded = await pools.rw.query("SELECT actor_type,actor_user_id,actor_service_account_id,details FROM audit_events WHERE action='note.update' AND outcome='success'")

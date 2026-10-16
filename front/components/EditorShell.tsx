@@ -4,10 +4,10 @@
 // - 中央: 枠の中に「左サイドバー (optional) + Monaco エディタ」 — leftPane が undefined のときは
 //   1-pane (エディタのみ全幅)、指定されたときは 2-pane。900px 未満は縦に積み、
 //   サイドバーは開閉ボタンで出す
-// - 下部: エラー表示 + アカウント署名 (認証時はread-only) + キャンセル/保存
+// - 下部: エラー表示 + アカウント署名 (read-only) + キャンセル/保存
 //
 // 離脱警告:
-//   - dirty (= 本文、または認証無効時の編集者名が変わった) のとき、ブラウザ閉じ・リロード時に
+//   - dirty (= 本文が変わった) のとき、ブラウザ閉じ・リロード時に
 //     beforeunload 警告を出す
 //   - 同サイト内のクライアントナビゲーション (Link 押下、戻る/進む) も React Router の
 //     useBlocker で confirm ダイアログを挟む
@@ -15,7 +15,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, ChevronUp, Folder } from 'lucide-react'
-import { getEditorName, setEditorName } from '../lib/editorName'
 import { useAuth } from '../lib/auth-context'
 import { useBlocker } from 'react-router-dom'
 import { localizeMessage } from '../i18n/localizeMessage'
@@ -27,7 +26,7 @@ interface Props {
   /** 見出しの下の補足 (何を編集しているか。README なら場所)。 */
   description?: ReactNode
   initialBody: string
-  onSave: (body: string, editor: string) => Promise<void>
+  onSave: (body: string) => Promise<void>
   onSaved: () => void
   onCancel: () => void
   leftPane?: ReactNode
@@ -56,9 +55,7 @@ export function EditorShell({
   useLocale()
   const auth = useAuth()
   const [body, setBody] = useState(() => initialBody)
-  // 認証時はアカウント署名が正本。認証disabledの開発環境だけ従来の端末署名を使う。
-  const [localEditor, setLocalEditor] = useState(() => getEditorName())
-  const editor = auth.user?.signatureName ?? localEditor
+  const editor = auth.user?.signatureName ?? ''
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // モバイル時の sidebar (= ファイル参照ペイン) の開閉。デスクトップでは CSS により
@@ -70,10 +67,7 @@ export function EditorShell({
   // 古い値が残るので、ref で同期更新する。
   const justSavedRef = useRef(false)
 
-  // 署名欄の初期値は自分の名前なので、editor の比較は「開いた時点の値」と行う。
-  // initialEditor (前回の編集者) と比べると、開いただけで dirty になってしまう。
-  const [openedEditor] = useState(editor)
-  const dirty = body !== initialBody || (!auth.enabled && editor !== openedEditor)
+  const dirty = body !== initialBody
 
   // 1. ブラウザレベル離脱 (タブ閉じ / リロード / 外部 URL 遷移)
   useEffect(() => {
@@ -105,8 +99,7 @@ export function EditorShell({
     setSaving(true)
     setError(null)
     try {
-      await onSave(body, editor)
-      if (!auth.enabled) setEditorName(editor)
+      await onSave(body)
       justSavedRef.current = true
       onSaved()
     } catch (e) {
@@ -163,8 +156,7 @@ export function EditorShell({
           <span>{translate('editorShell.editorName')}</span>
           <input
             value={editor}
-            onChange={e => setLocalEditor(e.target.value)}
-            readOnly={auth.enabled}
+            readOnly
             placeholder={translate('common.exampleEditor')}
             autoComplete="nickname"
             spellCheck={false}

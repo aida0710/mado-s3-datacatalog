@@ -24,7 +24,7 @@ export interface CachedMedia {
   durationSec: number | null
   sampleRate: number | null
   hasSpectrogram: boolean
-  meta: MediaMeta | null
+  meta: MediaMeta
 }
 
 export async function getCachedMedia(pool: Pool, cacheKey: string): Promise<CachedMedia | null> {
@@ -33,10 +33,10 @@ export async function getCachedMedia(pool: Pool, cacheKey: string): Promise<Cach
     duration_sec: number | null
     sample_rate: number | null
     has_spec: boolean
-    meta: MediaMeta | null
+    meta: MediaMeta
   }>(
     `SELECT peaks, duration_sec, sample_rate, meta, (spectrogram IS NOT NULL) AS has_spec
-       FROM media_cache WHERE cache_key = $1 AND meta IS NOT NULL AND connection_id IS NOT NULL`,
+       FROM media_cache WHERE cache_key = $1`,
     [cacheKey],
   )
   const row = r.rows[0]

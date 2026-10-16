@@ -51,12 +51,14 @@ DataLineageの保存先URIはNamespaceの権限で読める。接続の選択は
 
 ログイン・ログアウト・SSO・自分のプロフィール/パスワード変更は`/api/auth/*`のブラウザセッション専用。トークンの管理は`/access-tokens/*`だけで行う。
 
-## 認証・記録・互換性
+## 認証と操作の記録
 
-Authorizationヘッダーがある場合はBearer認証だけを使い、失敗時にCookieへ切り替えない。Cookieによる書き込みは従来のOrigin検証を維持し、セッションを確かめる(有効期限を延ばす)前に検証する。Authorizationヘッダーのある要求はブラウザOriginを要求しない。
+Authorizationヘッダーがある場合はBearer認証だけを使い、失敗時にCookieへ切り替えない。Cookieによる書き込みはOriginを検証し、セッションを確かめる(有効期限を延ばす)前に検証する。Authorizationヘッダーのある要求はブラウザOriginを要求しない。
 
 トークンによる変更の操作履歴は`actor_type: service_account`と持ち主IDを記録し、`details.keyId`で個々のトークンを識別する。README・Notesの編集者はトークン名、ユーザーIDはnull。発行者のユーザーになりすますことはない。
 
 `039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加し、`040_explicit_token_grants.sql`は既存トークンを機能別の権限と明示した接続へ変換する（[アクセストークン](access-tokens.md)の「既存環境への適用」）。新しいAPIはこの形だけを読むので、本番では反映前に039・040の順で適用する。040は持ち主アカウントの状態の列と、接続の指定の有無の列を削除するため、旧版へは戻せない。接続の指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。公開OpenLineage用のDBロールには新しいテーブルの権限を付けない。
 
 DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。発行・変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。
+
+内部APIは全環境で認証主体を必須にします。README・NotesのPUT本文は `editor` を受け付けず、含まれていれば400を返します。編集者名はユーザーの `signatureName` またはトークン名から決めます。DataLineageの論理グラフは `rootKind=dataset|job` を指定し、`kind` を含む要求は400になります。

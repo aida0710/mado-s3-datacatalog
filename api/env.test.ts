@@ -6,6 +6,7 @@ const VALID_KEY = '0'.repeat(64)
 describe('loadEnv', () => {
   it('必須の環境変数を読める', () => {
     const env = loadEnv({
+      AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
@@ -19,7 +20,7 @@ describe('loadEnv', () => {
     expect(env.PREVIEW_TEXT_LIMIT).toBe(65536) // デフォルト値
     expect(env.PREVIEW_TAR_ENTRY_LIMIT).toBe(200)
     expect(env.PREVIEW_TAR_ENTRY_MAX_BYTES).toBe(100 * 1024 * 1024)
-    expect(env.AUTH_MODE).toBe('disabled')
+    expect(env.AUTH_MODE).toBe('local')
     expect(env.AUTH_COOKIE_SECURE).toBe(false)
     expect(env.AUTH_SESSION_IDLE_SECONDS).toBe(604800)
     expect(env.AUTH_SESSION_ABSOLUTE_SECONDS).toBe(604800)
@@ -28,6 +29,7 @@ describe('loadEnv', () => {
 
   it('ALLOWED_ORIGINS はカンマで分け、空白を除き、空要素を落とす', () => {
     const env = loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
@@ -41,6 +43,7 @@ describe('loadEnv', () => {
 
   it('ALLOWED_ORIGINS が無ければ throw する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
@@ -50,6 +53,7 @@ describe('loadEnv', () => {
 
   it('ALLOWED_ORIGINS がカンマと空白だけなら空とみなして throw する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
@@ -63,6 +67,7 @@ describe('loadEnv', () => {
 
   it('ENCRYPTION_KEY が無ければ throw する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
@@ -72,6 +77,7 @@ describe('loadEnv', () => {
 
   it('ENCRYPTION_KEY の長さが違えば throw する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
@@ -82,6 +88,7 @@ describe('loadEnv', () => {
 
   it('ENCRYPTION_KEY に hex 以外の文字があれば throw する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
@@ -92,6 +99,7 @@ describe('loadEnv', () => {
 
   it('MEDIA_* は default 値で読める', () => {
     const env = loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
       ENCRYPTION_KEY: '0'.repeat(64),
@@ -107,6 +115,7 @@ describe('loadEnv', () => {
 
   it('boolean文字列のfalseをtrueとして扱わない', () => {
     const env = loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
       ENCRYPTION_KEY: '0'.repeat(64),
@@ -118,6 +127,7 @@ describe('loadEnv', () => {
 
   it('OIDC groupのallow listとrole mappingを検証してparseする', () => {
     const env = loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
       ENCRYPTION_KEY: '0'.repeat(64),
@@ -133,6 +143,7 @@ describe('loadEnv', () => {
 
   it('存在しないMado roleへのOIDC mappingを拒否する', () => {
     expect(() => loadEnv({
+      AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
       ENCRYPTION_KEY: '0'.repeat(64),
@@ -141,15 +152,22 @@ describe('loadEnv', () => {
     })).toThrow(/OIDC_ROLE_MAPPING_JSON/)
   })
 
-  it('productionでは認証無効を拒否する', () => {
+  it.each(['development', 'test', 'production'])('%sで認証無効を指定すると起動エラーになる', environment => {
     expect(() => loadEnv({
-      MADO_ENV: 'production',
+      MADO_ENV: environment,
       AUTH_MODE: 'disabled',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
-    })).toThrow(/AUTH_MODE=disabled/)
+    })).toThrow(/AUTH_MODE/)
+  })
+
+  it.each([undefined, '', 'required'])('認証方式が %s なら起動エラーになる', mode => {
+    expect(() => loadEnv({
+      AUTH_MODE: mode, DATABASE_URL_RW: 'postgres://x', DATABASE_URL_RO: 'postgres://x',
+      ENCRYPTION_KEY: VALID_KEY, ALLOWED_ORIGINS: 'https://mado.example',
+    })).toThrow(/AUTH_MODE/)
   })
 
   it('productionでも認証を明示すれば起動できる', () => {

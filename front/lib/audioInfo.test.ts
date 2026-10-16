@@ -1,3 +1,4 @@
+import { MEDIA_META_FIXTURE } from './api/fixtures'
 import { describe, expect, it } from 'vitest'
 import { type AudioMeta, formatAudioInfoLines } from './audioInfo'
 
@@ -13,8 +14,8 @@ const fullMeta: AudioMeta = {
 }
 
 describe('formatAudioInfoLines', () => {
-  it('meta が null なら情報行なし', () => {
-    expect(formatAudioInfoLines(null, 12.345, 48000)).toEqual([])
+  it('個別項目がすべて不明なら情報行を出さない', () => {
+    expect(formatAudioInfoLines(MEDIA_META_FIXTURE, null, null)).toEqual([])
   })
 
   it('codec と container が同一なら片方だけ表示 (FLAC · FLAC を避ける)', () => {
