@@ -103,13 +103,11 @@ describe('トークンの接続制限', () => {
     expect(await (await app.request('/connections/selected', { method: 'PUT' })).json()).toEqual({ visible: ['selected'] })
     expect(pool.query).not.toHaveBeenCalled()
   })
-  it('従来の未指定と新規の空選択では内部Storageを参照できない', async () => {
-    for (const connections of [null, []]) {
-      const app = new Hono()
-      const pool = { query: vi.fn() } as unknown as Pool
-      app.use('*', async (c, next) => { setRequestPrincipal(c, { ...tokenPrincipal, connections }); await next() })
-      app.get('/', async c => c.json({ allowed: await canAccessConnection(pool, c, 'selected') }))
-      expect(await (await app.request('/')).json()).toEqual({ allowed: false })
-    }
+  it('接続を選んでいないトークンは内部Storageを参照できない', async () => {
+    const app = new Hono()
+    const pool = { query: vi.fn() } as unknown as Pool
+    app.use('*', async (c, next) => { setRequestPrincipal(c, { ...tokenPrincipal, connections: [] }); await next() })
+    app.get('/', async c => c.json({ allowed: await canAccessConnection(pool, c, 'selected') }))
+    expect(await (await app.request('/')).json()).toEqual({ allowed: false })
   })
 })

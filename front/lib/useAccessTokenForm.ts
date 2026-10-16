@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { accessTokenFormInput, localDateTimeInput } from './accessTokenForm'
 import { translate } from '../i18n/translate'
-import { CONNECTION_PERMISSIONS, INTERNAL_API_PERMISSIONS, displayedTokenPermissions, serviceKeyScopesForPermissions } from '../../api/shared/access-token-permissions'
+import { CONNECTION_PERMISSIONS, INTERNAL_API_PERMISSIONS } from '../../api/shared/access-token-permissions'
 import { accessTokenPreset, type AccessTokenPreset } from './accessTokenPresets'
 import type { AccessToken, AccessTokenInput, InternalApiPermission } from '../types/accessTokens'
 
 export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (input: AccessTokenInput) => Promise<void> }) {
   const [name, setName] = useState(input.token?.name ?? '')
   const [description, setDescription] = useState(input.token?.description ?? '')
-  const [permissions, setPermissions] = useState<InternalApiPermission[]>(input.token ? displayedTokenPermissions(input.token) : [])
-  const [permissionsEdited, setPermissionsEdited] = useState(false)
-  const [connections, setConnections] = useState<string[] | null>(input.token ? input.token.connections : [])
+  const [permissions, setPermissions] = useState<InternalApiPermission[]>(input.token?.permissions ?? [])
+  const [connections, setConnections] = useState<string[]>(input.token?.connections ?? [])
   const [namespaces, setNamespaces] = useState<string[]>(input.token?.namespaces ?? [])
   const [expiry, setExpiry] = useState(localDateTimeInput(input.token?.expiresAt ?? null))
   const [busy, setBusy] = useState(false)
@@ -18,14 +17,10 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
   const includesLineage = permissions.some(permission => permission.startsWith('lineage:'))
   const requiresConnections = permissions.some(permission => CONNECTION_PERMISSIONS.includes(permission))
   const showsConnections = requiresConnections || permissions.some(permission => permission.startsWith('lineage:'))
-  const storedPermissionScopes = serviceKeyScopesForPermissions(input.token?.permissions ?? [])
-  const hasLegacyGrants = input.token?.scopes.some(scope => !storedPermissionScopes.includes(scope)) ?? false
   function togglePermission(permission: InternalApiPermission) {
-    setPermissionsEdited(true)
     setPermissions(current => current.includes(permission) ? current.filter(selected => selected !== permission) : [...current, permission])
   }
   function applyPreset(preset: AccessTokenPreset) {
-    setPermissionsEdited(true)
     setPermissions(accessTokenPreset(preset))
     if (preset === 'all') { setNamespaces(['*']); setConnections(['*']) }
     if (preset === 'none') { setNamespaces([]); setConnections([]) }
@@ -34,12 +29,9 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     setError(null)
     if (!name.trim()) { setError(translate('accessTokens.nameRequired')); return }
     if (!permissions.length) { setError(translate('accessTokens.choosePermission')); return }
-    if (requiresConnections && connections?.length === 0) { setError(translate('accessTokens.connectionsRequired')); return }
-    if (connections === null && requiresConnections && (permissionsEdited || !input.token)) {
-      setError(translate('accessTokens.connectionsRequired')); return
-    }
+    if (requiresConnections && connections.length === 0) { setError(translate('accessTokens.connectionsRequired')); return }
     if (permissions.includes('users:manage') && !(INTERNAL_API_PERMISSIONS.every(permission => permissions.includes(permission))
-      && connections?.includes('*') && namespaces.includes('*'))) {
+      && connections.includes('*') && namespaces.includes('*'))) {
       setError(translate('accessTokens.usersManageHelp')); return
     }
     if (includesLineage && namespaces.length === 0) {
@@ -51,11 +43,11 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     }
     setBusy(true)
     try {
-      await input.onSave(accessTokenFormInput({ name, description, permissions, permissionsEdited, connections, namespaces, expiry, previous: input.token }))
+      await input.onSave(accessTokenFormInput({ name, description, permissions, connections, namespaces, expiry, previous: input.token }))
     } catch (failure) { setError((failure as Error).message) }
     finally { setBusy(false) }
   }
-  return { name, setName, description, setDescription, permissions, togglePermission, applyPreset, hasLegacyGrants,
+  return { name, setName, description, setDescription, permissions, togglePermission, applyPreset,
     connections, setConnections, showsConnections, namespaces, setNamespaces,
     expiry, setExpiry, includesLineage, busy, error, save }
 }

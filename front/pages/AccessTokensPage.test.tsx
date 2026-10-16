@@ -9,7 +9,7 @@ afterEach(() => vi.restoreAllMocks())
 const token: AccessToken = {
   id: '480ad940-80a2-4a50-8f6e-e0e119ac52a8', name: 'ML Tracking', description: 'Training integration',
   tokenPrefix: 'mado_lin_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
-  permissions: [], connections: null,
+  permissions: ['lineage:read', 'lineage:send'], connections: [],
   status: 'active', createdAt: '2026-10-15T00:00:00.000Z', expiresAt: null,
   regeneratedAt: null, lastUsedAt: null, revision: 1,
 }
@@ -51,22 +51,21 @@ describe('Access Tokens', () => {
     expect(saved).toMatchObject({ permissions: ['notes:write'], namespaces: [], connections: [] })
   })
 
-  it('既存の全接続メトリクストークンは、名前だけ編集しても対象を変更しない', async () => {
+  it('全接続の容量トークンは、名前だけ編集しても保存済みの権限と全接続をそのまま送る', async () => {
     const user = userEvent.setup()
-    const legacy = { ...token, scopes: ['metrics:read'], namespaces: [] }
+    const capacity = { ...token, scopes: ['metrics:read'] as AccessToken['scopes'], namespaces: [],
+      permissions: ['capacity:read'] as AccessToken['permissions'], connections: ['*'] }
     const fetch = mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
-      ? response({ accessToken: { ...legacy, revision: 2 } }) : response({ tokens: [legacy] }))
+      ? response({ accessToken: { ...capacity, revision: 2 } }) : response({ tokens: [capacity] }))
     render(<AccessTokensPage />)
     await user.click(within(await screen.findByRole('article', { name: token.name })).getByLabelText('ML Trackingの操作'))
     await user.click(screen.getByRole('button', { name: '編集' }))
     const dialog = screen.getByRole('dialog')
-    expect(within(dialog).getByText(/容量取得を許可している場合、その対象は全接続です/)).toBeInTheDocument()
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), ' updated')
     await user.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')![1]!.body))
-    expect(saved).not.toHaveProperty('connections')
-    expect(saved).not.toHaveProperty('permissions')
+    expect(saved).toMatchObject({ permissions: ['capacity:read'], connections: ['*'], namespaces: [] })
     expect(saved).not.toHaveProperty('scopes')
   })
 
@@ -106,7 +105,7 @@ describe('Access Tokens', () => {
   it('容量取得だけを選ぶ場合はNamespaceを送らず、接続を明示的に選んで発行する', async () => {
     const user = userEvent.setup()
     const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
-      ? response({ accessToken: { ...token, scopes: ['metrics:read'], namespaces: [] }, token: 'fixture-capacity-value' }, 201)
+      ? response({ accessToken: { ...token, scopes: ['metrics:read'], namespaces: [], permissions: ['capacity:read'], connections: ['*'] }, token: 'fixture-capacity-value' }, 201)
       : response({ tokens: [] }))
     render(<AccessTokensPage />)
     await screen.findByText('アクセストークンはありません。')

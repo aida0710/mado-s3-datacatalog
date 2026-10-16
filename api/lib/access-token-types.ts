@@ -8,7 +8,7 @@ export interface AccessToken {
   tokenPrefix: string
   scopes: ServiceKeyScope[]
   permissions: InternalApiPermission[]
-  connections: string[] | null
+  connections: string[]
   namespaces: string[]
   status: 'active' | 'disabled' | 'expired'
   createdAt: Date
@@ -18,12 +18,12 @@ export interface AccessToken {
   revision: number
 }
 
+/** Integration scopes are not part of the input: they derive from the permissions. */
 export interface AccessTokenInput {
   name: string
   description: string
-  scopes: ServiceKeyScope[]
-  permissions?: InternalApiPermission[]
-  connections?: string[] | null
+  permissions: InternalApiPermission[]
+  connections: string[]
   namespaces: string[]
   expiresAt: Date | null
 }
@@ -45,13 +45,12 @@ export interface AccessTokenNamespaces {
 export interface AccessTokenRow {
   id: string
   service_account_id: string
-  account_status: 'active' | 'disabled'
   name: string
   description: string
   token_prefix: string
   scopes: ServiceKeyScope[]
   permissions: InternalApiPermission[]
-  connections: string[] | null
+  connections: string[]
   namespaces: string[]
   created_at: Date
   expires_at: Date | null

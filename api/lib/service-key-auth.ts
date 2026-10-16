@@ -1,11 +1,10 @@
 import type { Context, MiddlewareHandler } from 'hono'
-import { bearerToken } from './auth-api-keys.js'
+import { bearerToken } from './service-key-authenticator.js'
 import type { ServiceKeyScope } from './auth-types.js'
 
 /** scope判定に要る部分だけを要求する。呼び出し側はより詳しいprincipal型を渡してよい。 */
 export interface ScopedServicePrincipal {
   scopes: readonly string[]
-  connections?: readonly string[] | null
 }
 
 export interface RequireServiceKeyOptions<P extends ScopedServicePrincipal> {

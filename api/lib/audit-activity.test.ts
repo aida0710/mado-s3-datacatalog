@@ -166,10 +166,10 @@ describe('監査の記録判定', () => {
         await next()
       })
       app.use('*', auditActivity(writer))
-      app.post('/service-accounts/:id/keys', async c => {
+      app.post('/access-tokens/:id/regenerate', async c => {
         markAuditChangeCommitted(c)
         await writeDedicatedAudit(c, writer, {
-          actor: { type: 'user', userId: user.id }, action: 'service_account.key.create', outcome: 'success',
+          actor: { type: 'user', userId: user.id }, action: 'access_token.regenerate', outcome: 'success',
         })
         return c.json({ token: 'shown-once' }, 201)
       })
@@ -178,14 +178,14 @@ describe('監査の記録判定', () => {
 
     it('専用 audit を書けたら intent を破棄する', async () => {
       const { app, finish, discard } = appWith(vi.fn().mockResolvedValue(undefined))
-      expect((await app.request('/service-accounts/a1/keys', { method: 'POST' })).status).toBe(201)
+      expect((await app.request('/access-tokens/a1/regenerate', { method: 'POST' })).status).toBe(201)
       expect(discard).toHaveBeenCalledWith(47)
       expect(finish).not.toHaveBeenCalled()
     })
 
     it('専用 audit の書き込みに失敗しても応答は成功のままにし、intent を成功へ確定する', async () => {
       const { app, finish, discard } = appWith(vi.fn().mockRejectedValue(new Error('audit unavailable')))
-      const res = await app.request('/service-accounts/a1/keys', { method: 'POST' })
+      const res = await app.request('/access-tokens/a1/regenerate', { method: 'POST' })
       // 一度しか見せない token を、監査の失敗で捨てさせない。
       expect(res.status).toBe(201)
       expect(await res.json()).toEqual({ token: 'shown-once' })

@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { MetricsCollector } from '../lib/metrics-collector.js'
 import { mountMetricsRoutes } from './metrics.js'
 
-const metricsKey = { scopes: ['metrics:read'] }
-const lineageKey = { scopes: ['lineage:write'] }
+const metricsKey = { scopes: ['metrics:read'], connections: ['*'] }
+const lineageKey = { scopes: ['lineage:write'], connections: [] }
 const bearer = { Authorization: 'Bearer mado_lin_key.secret' }
 
 const capacity: MetricsCollector = {
@@ -15,7 +15,7 @@ const capacity: MetricsCollector = {
   }],
 }
 
-function appWith(collectors: MetricsCollector[], principal: { scopes: string[]; connections?: string[] | null } | null = metricsKey) {
+function appWith(collectors: MetricsCollector[], principal: { scopes: string[]; connections: string[] } | null = metricsKey) {
   const app = new Hono()
   const log = { error: vi.fn() }
   mountMetricsRoutes(app, { authenticate: async () => principal, collectors, log })
@@ -23,12 +23,12 @@ function appWith(collectors: MetricsCollector[], principal: { scopes: string[]; 
 }
 
 describe('metrics route', () => {
-  it('新しい接続制限をcollectorへ渡し、既存トークンは従来どおり全接続にする', async () => {
+  it('トークンの接続をcollectorへ渡し、全接続(*)だけを制限なしにする', async () => {
     const collect = vi.fn().mockResolvedValue([])
-    for (const connections of [undefined, null, ['*'], ['connection-a'], []]) {
+    for (const connections of [['*'], ['connection-a'], []]) {
       const { app } = appWith([{ name: 'capacity', collect }], { scopes: ['metrics:read'], connections })
       expect((await app.request('/metrics/capacity', { headers: bearer })).status).toBe(200)
-      expect(collect).toHaveBeenLastCalledWith({ connectionIds: connections == null || connections.includes('*') ? null : new Set(connections) })
+      expect(collect).toHaveBeenLastCalledWith({ connectionIds: connections.includes('*') ? null : new Set(connections) })
     }
   })
   it('metrics:readのkeyに領域ごとのpathでPrometheus形式を返し、cacheさせない', async () => {

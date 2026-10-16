@@ -12,15 +12,13 @@ export function createInternalTokenAuthenticator(deps: {
     const principal = await deps.authenticate(token)
     if (!principal) return null
     const grants = await deps.pool.query<{ name: string; secret_hash: Buffer; scopes: string[]; namespaces: string[];
-      permissions: string[]; connections: string[] | null }>(`
+      permissions: string[]; connections: string[] }>(`
       SELECT k.name, k.secret_hash,
         ARRAY(SELECT scope FROM service_account_key_scopes WHERE key_id=k.id ORDER BY scope) AS scopes,
         ARRAY(SELECT namespace FROM service_account_key_namespaces WHERE key_id=k.id ORDER BY namespace) AS namespaces,
         ARRAY(SELECT permission FROM service_account_key_permissions WHERE key_id=k.id ORDER BY permission) AS permissions,
-        CASE WHEN k.connections_restricted THEN
-          ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id)
-        ELSE NULL END AS connections
-      FROM service_account_keys k JOIN service_accounts a ON a.id=k.service_account_id
+        ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id) AS connections
+      FROM service_account_keys k
       WHERE k.id=$1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`, [principal.keyId])
     const row = grants.rows[0]
     // Read all grants from one snapshot and recheck the secret if regeneration raced with authentication.

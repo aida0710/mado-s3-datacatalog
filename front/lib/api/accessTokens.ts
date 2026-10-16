@@ -7,8 +7,8 @@ import { INTERNAL_API_PERMISSIONS, SERVICE_KEY_SCOPES } from '../../../api/share
 const accessTokenSchema = z.object({
   id: z.string(), name: z.string(), description: z.string(), tokenPrefix: z.string(),
   scopes: z.array(z.enum(SERVICE_KEY_SCOPES)),
-  permissions: z.array(z.enum(INTERNAL_API_PERMISSIONS)).default([]),
-  connections: z.array(z.string()).nullable().default(null),
+  permissions: z.array(z.enum(INTERNAL_API_PERMISSIONS)),
+  connections: z.array(z.string()),
   namespaces: z.array(z.string()), status: z.enum(['active', 'disabled', 'expired']),
   createdAt: z.string(), expiresAt: z.string().nullable(), regeneratedAt: z.string().nullable(),
   lastUsedAt: z.string().nullable(), revision: z.number().int().positive(),
