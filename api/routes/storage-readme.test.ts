@@ -1,3 +1,4 @@
+import { createTestAppWithPrincipal, testPrincipal } from '../lib/test-fixtures/request-principal.js'
 import {
   GetObjectCommand,
   NoSuchKey,
@@ -36,7 +37,7 @@ async function seedConnection(p: Pools, id: string): Promise<void> {
 function passthroughCache(): ResponseCache {
   return {
     get: async () => null,
-    set: async () => {},
+    set: async () => null,
     invalidateScope: async () => {},
     invalidateConnection: async () => {},
   }
@@ -44,17 +45,21 @@ function passthroughCache(): ResponseCache {
 
 let cache: ResponseCache = passthroughCache()
 
-const app = new Hono()
-mountStorageReadmeRoutes(app, {
-  getStorage,
-  pools,
-  cache: {
-    get: s => cache.get(s),
-    set: (s, p) => cache.set(s, p),
-    invalidateScope: (c, b, p) => cache.invalidateScope(c, b, p),
-    invalidateConnection: c => cache.invalidateConnection(c),
-  },
-})
+function readmeApp(tokenName = 'sato') {
+  const app = createTestAppWithPrincipal(testPrincipal(tokenName))
+  mountStorageReadmeRoutes(app, {
+    getStorage,
+    pools,
+    cache: {
+      get: s => cache.get(s),
+      set: (s, p) => cache.set(s, p),
+      invalidateScope: (c, b, p) => cache.invalidateScope(c, b, p),
+      invalidateConnection: c => cache.invalidateConnection(c),
+    },
+  })
+  return app
+}
+const app = readmeApp()
 
 beforeEach(async () => {
   storageMock.reset()
@@ -122,11 +127,11 @@ describe('GET /storage/:connectionId/readme', () => {
 describe('PUT /storage/:connectionId/readme', () => {
   it('本文を書き込み、meta を upsert する', async () => {
     storageMock.on(PutObjectCommand).resolves({})
-    const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    const res = await readmeApp('sato').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bucket: 'b', prefix: 'voice/jp/', body: 'new body', editor: 'sato',
+        bucket: 'b', prefix: 'voice/jp/', body: 'new body',
       }),
     })
     expect(res.status).toBe(200)
@@ -162,11 +167,11 @@ describe('PUT /storage/:connectionId/readme', () => {
        VALUES($1,'b','voice/jp/','tanaka',5)`,
       [TEST_CONN_ID],
     )
-    const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    const res = await readmeApp('sato').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bucket: 'b', prefix: 'voice/jp/', body: 'newer', editor: 'sato',
+        bucket: 'b', prefix: 'voice/jp/', body: 'newer',
       }),
     })
     expect(res.status).toBe(200)
@@ -178,11 +183,11 @@ describe('PUT /storage/:connectionId/readme', () => {
 
   it('storage への PUT が失敗したら DB には触らない', async () => {
     storageMock.on(PutObjectCommand).rejects(new Error('storage down'))
-    const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    const res = await readmeApp('sato').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bucket: 'b', prefix: 'voice/jp/', body: 'new', editor: 'sato',
+        bucket: 'b', prefix: 'voice/jp/', body: 'new',
       }),
     })
     expect(res.status).toBe(500)
@@ -210,11 +215,11 @@ describe('PUT /storage/:connectionId/readme', () => {
          CHECK (last_editor <> 'POISON')`
     )
     try {
-      const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+      const res = await readmeApp('POISON').request(`/storage/${TEST_CONN_ID}/readme`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bucket: 'b', prefix: 'a/', body: 'x', editor: 'POISON',
+          bucket: 'b', prefix: 'a/', body: 'x',
         }),
       })
       expect(res.status).toBe(200)
@@ -241,13 +246,13 @@ describe('PUT /storage/:connectionId/readme — 履歴記録', () => {
   it('PUT 成功時に storage_readme_history へ INSERT される (path 単位で append)', async () => {
     storageMock.on(PutObjectCommand).resolves({})
     // 同じ path で 2 回 PUT
-    await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    await readmeApp('tanaka').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'v1', editor: 'tanaka' }),
+      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'v1' }),
     })
-    await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    await readmeApp('sato').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'v2 updated', editor: 'sato' }),
+      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'v2 updated' }),
     })
     const r = await pools.rw.query(
       `SELECT body, editor, size_bytes FROM storage_readme_history
@@ -264,9 +269,9 @@ describe('PUT /storage/:connectionId/readme — 履歴記録', () => {
       Body: Readable.from(Buffer.from('same')) as never,
     })
     storageMock.on(PutObjectCommand).resolves({})
-    const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    const res = await readmeApp('sato').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'same', editor: 'sato' }),
+      body: JSON.stringify({ bucket: 'b', prefix: 'p/', body: 'same' }),
     })
     expect(res.status).toBe(200)
     expect(storageMock.commandCalls(PutObjectCommand)).toHaveLength(0)
@@ -391,6 +396,7 @@ describe('接続が見つからないとき', () => {
     mountStorageReadmeRoutes(localApp, {
       getStorage: async (id: string) => { throw new ConnectionNotFoundError(id) },
       pools,
+      cache: passthroughCache(),
     })
     const res = await localApp.request('/storage/missing0001/readme?bucket=b')
     expect(res.status).toBe(404)
@@ -409,10 +415,10 @@ describe('PUT /storage/:connectionId/readme — 一覧キャッシュの無効�
     }
 
     storageMock.on(PutObjectCommand).resolves({})
-    const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
+    const res = await readmeApp('tester').request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket: 'b1', prefix: 'p/', body: '# hello', editor: 'tester' }),
+      body: JSON.stringify({ bucket: 'b1', prefix: 'p/', body: '# hello' }),
     })
     expect(res.status).toBe(200)
     expect(invalidated).toEqual([[TEST_CONN_ID, 'b1', 'p/']])

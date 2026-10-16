@@ -32,8 +32,7 @@ interface PersistedEntry<V> {
 }
 
 // localStorage に永続化するキャッシュの persistKey は、すべてこの接頭辞で始める。
-// clearAllCaches が、今のビルドが読まなくなった旧形式のキー（mado.cache.list: や
-// mado.cache.tar:）も含めてまとめて消せるようにするため。
+// サインアウト時に、利用者のキャッシュをまとめて消すため。
 const PERSISTED_CACHE_KEY_PREFIX = 'mado.cache.'
 
 // これまでに作ったキャッシュ。clearAllCaches がメモリ上の値も消せるように持っておく。

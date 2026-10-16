@@ -41,6 +41,17 @@ describe('監査の記録判定', () => {
     expect(classifyActivity('GET', '/api/internal/access-tokens')).toBeNull()
   })
 
+  it('認証主体がなければ変更処理と監査intentの作成を実行しない', async () => {
+    const app = new Hono()
+    const start = vi.fn()
+    const mutation = vi.fn(c => c.json({ ok: true }))
+    app.use('*', auditActivity({ start, finish: vi.fn(), discard: vi.fn(), write: vi.fn() } as unknown as AuditWriter))
+    app.put('/settings/:key', mutation)
+    expect((await app.request('/settings/theme', { method: 'PUT' })).status).toBe(401)
+    expect(start).not.toHaveBeenCalled()
+    expect(mutation).not.toHaveBeenCalled()
+  })
+
   it('拒否された変更はintentを破棄する', async () => {
     const start = vi.fn().mockResolvedValue(42)
     const finish = vi.fn().mockResolvedValue(undefined)

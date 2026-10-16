@@ -2,9 +2,7 @@ import type { Hono } from 'hono'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 
-// LAN 共有のお気に入り: LAN の任意ユーザーがバケットをピン留め/解除できる。
-// リストは接続ごとにグローバル。PUT/DELETE は認証なしで、
-// README の PUT オナーシステム契約を踏襲する — 防御は LAN 境界に委ねる。
+// お気に入りは接続ごとに共有する。認証と操作権限は internal.ts で検証する。
 
 export interface StorageFavoritesDeps {
   pools: Pools

@@ -1,9 +1,9 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from '../lib/api/fixtures'
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PreviewDrawer } from './PreviewDrawer'
 import { ConnectionContext } from '../lib/connectionContext'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
-import { PRICING_FIXTURE } from '../lib/api/fixtures'
 import type { Capabilities, Connection } from '../lib/api/types'
 
 // 中身のプレビューは別テストの領分。ここでは「何が出て何が出ないか」だけ見る。
@@ -22,6 +22,7 @@ function renderDrawer(caps: Partial<Capabilities>, k = 'a/b.txt') {
     capabilities: { ...ALL_CAPABILITIES_ON, ...caps },
     createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', isDefault: false,
     visibility: { mode: 'public', allowedUsers: [] },
+    ...CONNECTION_SETTINGS_FIXTURE,
     scanEnabled: true, listCacheTtlSec: 86400,
     pricing: PRICING_FIXTURE,
   }

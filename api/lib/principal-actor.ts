@@ -10,8 +10,7 @@ export function principalUserId(principal: RequestPrincipal | null): string | nu
   return principal?.kind === 'user' ? principal.user.id : null
 }
 
-export function principalEditor(principal: RequestPrincipal | null): string | null {
-  if (!principal) return null
+export function principalEditor(principal: RequestPrincipal): string {
   return principal.kind === 'user' ? principal.user.signatureName : principal.tokenName
 }
 

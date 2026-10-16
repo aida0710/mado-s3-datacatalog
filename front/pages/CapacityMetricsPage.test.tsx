@@ -1,19 +1,20 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from '../lib/api/fixtures'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api/client'
+import { AUTH_FIXTURE } from '../lib/auth-fixture'
 import { AuthContext } from '../lib/auth-context'
 import { ConnectionContext } from '../lib/connectionContext'
 import type { CapacityScanJob, Connection } from '../lib/api/types'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
-import { PRICING_FIXTURE } from '../lib/api/fixtures'
 import CapacityMetricsPage from './CapacityMetricsPage'
 
 const connection: Connection = {
   id: 'c1', name: 'test', endpoint: 'https://example.com', region: 'auto',
   accessKeyIdMasked: '***', forcePathStyle: true, listObjectsVersion: 'v2',
-  capabilities: ALL_CAPABILITIES_ON, scanEnabled: true, listCacheTtlSec: 86400,
+  capabilities: ALL_CAPABILITIES_ON, ...CONNECTION_SETTINGS_FIXTURE, scanEnabled: true, listCacheTtlSec: 86400,
   capacityTracking: { enabled: true, intervalSeconds: 86400 },
   pricing: PRICING_FIXTURE, isDefault: false, visibility: { mode: 'public', allowedUsers: [] },
   createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
@@ -61,7 +62,6 @@ function mount(permissions: string[] | null = null, scanJobs: CapacityScanJob[] 
   if (permissions === null) return render(content)
   return render(
     <AuthContext.Provider value={{
-      enabled: true,
       user: {
         id: 'u1', username: 'user', email: null, displayName: 'User', signatureName: 'User',
         roles: ['viewer'], permissions, mustChangePassword: false,
@@ -141,9 +141,9 @@ describe('CapacityMetricsPage', () => {
     })
     render(
       <MemoryRouter initialEntries={['/?view=capacity']}>
-        <ConnectionContext.Provider value={restricted}>
+        <AuthContext.Provider value={AUTH_FIXTURE}><ConnectionContext.Provider value={restricted}>
           <CapacityMetricsPage connectionId="c1" />
-        </ConnectionContext.Provider>
+        </ConnectionContext.Provider></AuthContext.Provider>
       </MemoryRouter>,
     )
     expect(await screen.findByRole('button', { name: '今すぐ全バケットを計測' })).toBeDisabled()

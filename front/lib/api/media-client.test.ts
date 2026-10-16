@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { MEDIA_META_FIXTURE } from './fixtures'
 import { api } from './client'
 
 const okJson = (body: unknown): Response =>
@@ -24,17 +25,16 @@ describe('media client', () => {
     expect((init as RequestInit).signal).toBe(ctl.signal)
   })
 
-  it('mediaAnalyze: meta が null でもパースできる (旧 API 互換)', async () => {
+  it('metaがnullの応答を受け取ると検証エラーになる', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(okJson({
       cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
     }))
-    const r = await api.mediaAnalyze({ connectionId: 'c', bucket: 'b', key: 'a.wav' })
-    expect(r.meta).toBeNull()
+    await expect(api.mediaAnalyze({ connectionId: 'c', bucket: 'b', key: 'a.wav' })).rejects.toThrow()
   })
 
   it('mediaAnalyze: entryPath がクエリに乗る', async () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(okJson({
-      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     }))
     await api.mediaAnalyze({ connectionId: 'c', bucket: 'b', key: 'shard.tar', entryPath: 'u1.wav' })
     expect(String(spy.mock.calls[0][0])).toContain('entryPath=u1.wav')

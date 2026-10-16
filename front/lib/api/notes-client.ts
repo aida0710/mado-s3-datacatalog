@@ -8,8 +8,8 @@ const notePath = (slug: string) => `${API_BASE}/notes/${encodeURIComponent(slug)
 export const notesClient = {
   note: (slug: string) => getJson(notePath(slug), Note),
 
-  putNote: (slug: string, body: string, editor: string): Promise<z.infer<typeof PutNoteOk>> =>
-    mutateJson(notePath(slug), { method: 'PUT', body: { body, editor } }, PutNoteOk),
+  putNote: (slug: string, body: string): Promise<z.infer<typeof PutNoteOk>> =>
+    mutateJson(notePath(slug), { method: 'PUT', body: { body } }, PutNoteOk),
 
   // 編集履歴 (新しい順)。
   noteHistory: (slug: string, limit?: number) =>

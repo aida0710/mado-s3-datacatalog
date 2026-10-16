@@ -71,14 +71,12 @@ describe('media-cache', () => {
     expect(got2?.meta?.channels).toBe(2)
   })
 
-  it('meta IS NULL の旧行はキャッシュミス扱い (自然にバックフィルされる)', async () => {
-    const key = mediaCacheKey({ connectionId: 'c', bucket: 'b', key: 'old.wav', etag: 'e' })
-    // meta カラム追加前の行を模して直接 INSERT (meta なし)
-    await pools.rw.query(
-      `INSERT INTO media_cache (cache_key, peaks, spectrogram, duration_sec, sample_rate)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [key, JSON.stringify([[-1, 1]]), null, 1, 16000],
-    )
-    expect(await getCachedMedia(pools.ro, key)).toBeNull()
+  it.each([
+    [null, 'c'], ['null', 'c'], ['{}', null],
+  ])('meta=%s、connection_id=%sのキャッシュを書き込むと制約エラーになる', async (meta, connectionId) => {
+    await expect(pools.rw.query(
+      `INSERT INTO media_cache (cache_key, peaks, meta, connection_id)
+       VALUES ('invalid', '[]', $1::jsonb, $2)`, [meta, connectionId],
+    )).rejects.toThrow()
   })
 })

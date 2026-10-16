@@ -34,7 +34,7 @@ export function nextChannelMode(current: ChannelMode, pressed: ChannelSide): Cha
 // channelCount=2 / explicit / discrete なので、モノラル入力は output 1 が
 // 無音になり「R」を選んでも何も鳴らない → mono では L/R を使わせない。
 //
-// channels が null (ffprobe が返さない / 旧 API で meta 全体が null / 解析に失敗)
+// channels が null (ffprobe が返さない / 解析に失敗)
 // のときは true にフォールバックする。false に倒すと実ステレオまで機能を失う。
 // 外したときの実害は「mono で R を選ぶと無音」だけで、もう一度 R を押して both に
 // 戻せば直る (both は splitter を通らないため)。

@@ -1,16 +1,11 @@
 import type { z } from 'zod'
 import { TarPreview } from './types'
-import { removePersistedKeysStartingWith, SHORT_CACHE_TTL_MS, TTLCache } from './cache'
+import { SHORT_CACHE_TTL_MS, TTLCache } from './cache'
 import { buildUrl, cacheKey, fetchOk, storagePath } from './http'
 import { loadTarPreviewStream, type TarPreviewCallbacks } from './tar-preview-stream'
 export type { TarEntry, TarPreviewCallbacks } from './tar-preview-stream'
 
 const tarCache = new TTLCache<z.infer<typeof TarPreview>>(SHORT_CACHE_TTL_MS)
-
-// 以前 tar も localStorage に永続化していたので、その残骸を起動時に一度だけ
-// 掃除する。今のビルドはこのキーを読み書きしないため、放置しても害は無いが
-// 容量を食うので消しておく。
-removePersistedKeysStartingWith('mado.cache.tar:')
 
 // preview 系の URL と、ブラウザ側で本文を扱う取得。画像 / 音声 / 動画は URL を
 // そのまま要素に渡し、テキストと tar だけ JS で読む。

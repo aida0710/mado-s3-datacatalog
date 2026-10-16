@@ -29,7 +29,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
   const [clock, setClock] = useState(() => Date.now())
   const auth = useAuth()
   const connection = useConnection()
-  const canManage = !auth.enabled || (auth.user?.permissions.includes('connections:manage') ?? false)
+  const canManage = auth.user?.permissions.includes('connections:manage') ?? false
 
   const refresh = useCallback(async () => {
     setLoading(true)

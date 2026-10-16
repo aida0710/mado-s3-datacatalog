@@ -52,12 +52,10 @@ function fmtDuration(sec: number): string {
 }
 
 export function formatAudioInfoLines(
-  meta: AudioMeta | null,
+  meta: AudioMeta,
   durationSec: number | null,
   sampleRate: number | null,
 ): string[] {
-  if (!meta) return []
-
   const line1 = [
     fmtCodecContainer(meta.codec, meta.container),
     fmtChannels(meta.channels),

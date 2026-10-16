@@ -45,8 +45,7 @@ describe('canSplitChannels', () => {
   })
 
   it('不明 (null / undefined) は有効側にフォールバックする', () => {
-    // 旧 API は meta ごと null を返しうる。ここで false に倒すと実ステレオまで
-    // L/R を失う。true に倒して外れても実害は「mono で R が無音」だけ。
+    // 解析でチャンネル数が分からなくても、ステレオ音声のL/R操作を妨げない。
     expect(canSplitChannels(null)).toBe(true)
     expect(canSplitChannels(undefined)).toBe(true)
   })

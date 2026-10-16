@@ -43,7 +43,7 @@ export interface LineageService {
     key: string
     limit: number
   }): Promise<StorageLineageResolution>
-  /** visibleConnectionIds は利用者に見える接続。null は全接続 (接続の管理者か認証無効)。
+  /** visibleConnectionIds は利用者に見える接続。null は全接続 (接続の管理者または全接続を許可したトークン)。
    *  見えない接続は、保存場所の madoConnectionId に出さない。 */
   dataset(id: string, visibleConnectionIds: ReadonlySet<string> | null): Promise<DatasetDetail>
   version(id: string, visibleConnectionIds: ReadonlySet<string> | null): Promise<DatasetVersionDetail>

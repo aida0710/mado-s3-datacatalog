@@ -49,8 +49,7 @@ const ALL_ENABLED = Object.fromEntries(
   FEATURES.map(f => [f.key, true]),
 ) as Record<FeatureKey, boolean>
 
-// 機能の表示/非表示。設定はアプリ全体で 1 つ
-// (LAN 共有・認証なし、README / Favorites と同じ契約)。
+// 機能の表示/非表示。設定はアプリ全体で共有する。
 // 接続ごとの権限 (ConnectionForm の「この接続で許可する操作」) とは別物 —
 // あちらは S3 への操作を止めるもので、こちらは単なる画面の出し分け。
 export function FeatureSettings() {

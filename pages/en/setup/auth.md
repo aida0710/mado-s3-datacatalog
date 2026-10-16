@@ -43,7 +43,7 @@ If a user has multiple roles, they get the combined permissions of those roles. 
 
 Removing a user from an SSO group does not necessarily end their existing mado sessions right away. To stop access immediately, disable the User in mado.
 
-In production, use HTTPS and set `AUTH_COOKIE_SECURE=true`. The authentication-disabled mode is meant for existing development and LAN environments and cannot be started in production mode.
+In production, use HTTPS and set `AUTH_COOKIE_SECURE=true`. Every environment, including development and tests, must set `AUTH_MODE` to `local`, `oidc`, or `hybrid`. Missing or unsupported values prevent startup.
 
 ## Use access tokens for pipelines
 

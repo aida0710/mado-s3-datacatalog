@@ -11,6 +11,7 @@ const RW = process.env.DATABASE_URL_RW_TEST
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 
 const env = loadEnv({
+  AUTH_MODE: 'local',
   DATABASE_URL_RW: RW,
   DATABASE_URL_RO: RW,
   ENCRYPTION_KEY: '0'.repeat(64),

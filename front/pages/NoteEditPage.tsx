@@ -52,8 +52,8 @@ export default function NoteEditPage() {
       title={translate('noteEditPage.editNote')}
       description={translate('section.teamNote')}
       initialBody={data.exists ? data.body : ''}
-      onSave={(body, editor) =>
-        api.putNote('home', body, editor).then(() => undefined)
+      onSave={body =>
+        api.putNote('home', body).then(() => undefined)
       }
       onSaved={goHome}
       onCancel={goHome}

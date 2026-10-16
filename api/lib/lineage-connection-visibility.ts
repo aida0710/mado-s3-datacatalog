@@ -4,7 +4,7 @@ import type { DatasetDetail, StorageLocationDetail, VersionLineageGraph } from '
 // 保存場所には Mado の接続 ID が 2 か所に入りうる。Mado が binding から付ける madoConnectionId と、
 // 手動登録のときに Registry へ保存した metadata.madoConnectionId。どちらも除く。
 
-/** visibleConnectionIds が null なら全接続が見える (接続の管理者か認証無効)。 */
+/** visibleConnectionIds が null なら全接続が見える (接続の管理者または全接続を許可したトークン)。 */
 export function withoutHiddenConnection(
   location: StorageLocationDetail,
   visibleConnectionIds: ReadonlySet<string> | null,

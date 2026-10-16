@@ -8,6 +8,7 @@ import { mountStorageEstimateRoutes } from './storage-estimate.js'
 import { SCAN_KIND, scanDedupKey } from './storage-scan.js'
 import { PRICING_REFRESH_DEDUP_KEY, PRICING_REFRESH_KIND } from './pricing.js'
 import { setSessionPrincipal } from '../lib/rbac.js'
+import { createTestAppWithPrincipal } from '../lib/test-fixtures/request-principal.js'
 
 const RW = process.env.DATABASE_URL_RW_TEST
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
@@ -20,7 +21,7 @@ const pricing = createPricingStore(pools, { memoTtlMs: 0 })
 // カタログの古さ判定を確かめられるよう「今日」を差し込む。
 let today = new Date('2026-08-22T00:00:00Z')
 
-const app = new Hono()
+const app = createTestAppWithPrincipal()
 mountStorageEstimateRoutes(app, { pools, store, pricing, now: () => today })
 
 const GIB = 1024 ** 3

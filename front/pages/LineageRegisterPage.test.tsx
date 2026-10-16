@@ -28,7 +28,7 @@ const curator: AuthUser = {
 
 function renderPage(user: AuthUser = curator) {
   return render(
-    <AuthContext.Provider value={{ enabled: true, user, logout: vi.fn(), reload: vi.fn() }}>
+    <AuthContext.Provider value={{ user, logout: vi.fn(), reload: vi.fn() }}>
       <MemoryRouter><LineageRegisterPage /></MemoryRouter>
     </AuthContext.Provider>,
   )

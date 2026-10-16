@@ -27,6 +27,12 @@ docker compose -f compose.dev.yaml up -d --build
 docker compose -f compose.dev.yaml logs -f api-internal front
 ```
 
+開発環境もログインが必要です。起動前に `.env.example` を `.env` へコピーし、暗号化キーとDBの接続先を設定します。`AUTH_MODE=local` で起動した後、次の対話コマンドで初期Adminを作成します。
+
+```bash
+docker compose -f compose.dev.yaml exec api-internal npm run auth:bootstrap-admin:dev
+```
+
 `front/` と `api/` はbind mountで反映します。FrontはHMR、APIは `tsx watch` で更新します。ホストにNode.js 22を用意する場合は、依存を各ディレクトリに入れます。
 
 ```bash

@@ -1,7 +1,7 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from './fixtures'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from './client'
-import { ALL_CAPABILITIES_ON } from './types'
-import { PRICING_FIXTURE } from './fixtures'
+import { ALL_CAPABILITIES_ON, Connection } from './types'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -11,16 +11,30 @@ describe('connections client', () => {
       id: 'c1', name: 'n', endpoint: 'http://e', region: 'r',
       accessKeyIdMasked: 'x…y', forcePathStyle: true, listObjectsVersion: 'v2',
       capabilities: { ...ALL_CAPABILITIES_ON, download: false },
+      ...CONNECTION_SETTINGS_FIXTURE,
       scanEnabled: true,
       listCacheTtlSec: 86400,
       pricing: PRICING_FIXTURE,
       createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
-      isDefault: true,
+      isDefault: true, visibility: { mode: 'public', allowedUsers: [] },
     }]), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const list = await api.listConnections()
     expect(list[0].isDefault).toBe(true)
     expect(list[0].capabilities.download).toBe(false)
     expect(list[0].capabilities.list).toBe(true)
+  })
+
+  it.each(['scanPageSize', 'capacityMetricsEnabled', 'capacityTracking', 'visibility'])('%sが応答にないと検証エラーになる', missing => {
+    const connection = {
+      id: 'c1', name: 'n', endpoint: 'http://e', region: 'r', accessKeyIdMasked: 'x',
+      forcePathStyle: true, listObjectsVersion: 'v2', capabilities: ALL_CAPABILITIES_ON,
+      ...CONNECTION_SETTINGS_FIXTURE, scanEnabled: true, listCacheTtlSec: 86400,
+      pricing: PRICING_FIXTURE, createdAt: '', updatedAt: '', isDefault: false,
+      visibility: { mode: 'public', allowedUsers: [] },
+    }
+    expect(Connection.safeParse(connection).success).toBe(true)
+    const incomplete = Object.fromEntries(Object.entries(connection).filter(([key]) => key !== missing))
+    expect(Connection.safeParse(incomplete).success).toBe(false)
   })
 
   it('setDefaultConnection は PUT /connections/:id/default を叩く', async () => {

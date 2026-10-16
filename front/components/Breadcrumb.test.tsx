@@ -1,3 +1,4 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from '../lib/api/fixtures'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -5,7 +6,6 @@ import { describe, expect, it } from 'vitest'
 import { Breadcrumb } from './Breadcrumb'
 import { ConnectionContext } from '../lib/connectionContext'
 import type { Connection } from '../lib/api/types'
-import { PRICING_FIXTURE } from '../lib/api/fixtures'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
 
 const connection: Connection = {
@@ -21,6 +21,7 @@ const connection: Connection = {
   updatedAt: '2026-01-01T00:00:00.000Z',
   isDefault: false,
   visibility: { mode: 'public', allowedUsers: [] },
+  ...CONNECTION_SETTINGS_FIXTURE,
   scanEnabled: true,
   listCacheTtlSec: 86400,
   pricing: PRICING_FIXTURE,

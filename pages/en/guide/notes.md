@@ -24,6 +24,6 @@ Home has one Team note shared across all of mado. You can put content there that
 
 ## Check changes in the history
 
-Click **History** to see who edited, when, and the past versions of the body. The signature you set in Account is used as your name on edits.
+Click **History** to see who edited, when, and the past versions of the body. Edits use the signature saved in Account. You cannot change the name in the editor. The signature belongs to your account and remains the same across browsers.
 
 <Screenshot src="/screenshots/en/readme-history.png" alt="README edit history" caption="Open the history when you want to see how something was updated." />

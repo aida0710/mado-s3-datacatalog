@@ -26,6 +26,19 @@ function service(overrides: Partial<LineageService> = {}): LineageService {
 }
 
 describe('lineage 読み取り route', () => {
+  it.each([
+    'kind=dataset&namespace=speech&name=raw',
+    'kind=dataset&rootKind=job&namespace=speech&name=raw',
+    'kind=dataset&mode=versions&versionId=32c6440d-57e6-435d-bda4-bf2eb6a666eb',
+  ])('kindを含むクエリ %s を送ると検証エラーになる', async query => {
+    const lineage = service()
+    const app = new Hono()
+    mountLineageRoutes(app, { service: lineage, visibleConnectionIds: async () => null })
+    expect((await app.request(`/lineage/graph?${query}`)).status).toBe(400)
+    expect(lineage.logicalGraph).not.toHaveBeenCalled()
+    expect(lineage.versionGraph).not.toHaveBeenCalled()
+  })
+
   it('logical graph queryを検証しdepthをclampする', async () => {
     const svc = service()
     const app = new Hono()

@@ -3,8 +3,7 @@ import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 
 // アプリ全体の設定 (接続に紐づかない、Mado 全体で 1 つ)。
-// LAN 共有・認証なしで、README / Favorites と同じオナーシステム契約を踏襲する
-// — 防御は LAN 境界に委ねる。
+// 認証と操作権限は internal.ts で検証する。
 //
 // 個別キーではなく GET /settings で全件返す。設定が増えるたびに画面表示時の
 // ラウンドトリップが増えるのを避けるため。値は TEXT で、型の解釈は front 側。
