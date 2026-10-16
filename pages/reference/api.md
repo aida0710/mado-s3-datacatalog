@@ -26,7 +26,9 @@ Adminが**Settings → Access → Access Tokens**の**アクセストークン�
 
 mado自身のデータを返す `/api/mado/` はGETだけです。一つのトークンに必要なscopeを組み合わせられます。`metrics:read`はホワイトリストで利用者を限定した接続も含め、全接続のバケット名・容量を読み取れます。参照・送信と組み合わせた場合も、容量取得はNamespaceでは制限されません。
 
-ML Trackingでデータセットを参照し、実験のDataLineageを送る場合は、参照と送信を許可した同じ値を参照用キーと送信用キーの両方に設定できます。
+`GET /api/mado/access-token`は、scopeを問わず、呼び出したトークン自身の名前・scope・Namespace・有効期限を返します（`namespaces`の`["*"]`は全Namespace）。ほかのトークンの情報や、トークンの値は返しません。連携先が、許可されたNamespaceを利用者に入力させずに知るための入口です。
+
+ML Trackingでデータセットを参照し、実験のDataLineageを送る場合は、**データセット参照**と**DataLineageの送信**を許可したトークンを、ML Trackingの［連携］の「アクセストークン」に設定します。Namespaceは入力しません。ML Trackingがこの入口から許可範囲を読みます。
 
 ## OpenLineageイベントを送信する
 

@@ -35,11 +35,27 @@ describe('ServiceAccountStore', () => {
     const principal = await store.authenticate(key.token)
     expect(principal).toMatchObject({
       serviceAccountId: account.id,
+      keyId: key.id,
+      keyName: 'prod',
       scopes: [scope],
       namespaces: ['speech'],
+      expiresAt: null,
     })
     expect(await store.authenticate(`${key.token}x`)).toBeNull()
     expect(await store.revokeKey(account.id, key.id)).toBe(true)
+    expect(await store.authenticate(key.token)).toBeNull()
+  })
+
+  it('有効期限のあるkeyは認証結果にその期限を含め、期限切れのkeyは拒否する', async () => {
+    const admin = await auth.createUser({ email: 'admin@example.com', displayName: 'Admin', roles: ['admin'] })
+    const account = await store.createAccount({ name: 'expiring', createdBy: admin.id })
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
+    const key = await store.issueKey({
+      accountId: account.id, name: 'expiring', scopes: ['lineage:read'], namespaces: ['speech'],
+      createdBy: admin.id, expiresAt,
+    })
+    expect((await store.authenticate(key.token))?.expiresAt?.getTime()).toBe(expiresAt.getTime())
+    await pools.rw.query("UPDATE service_account_keys SET expires_at = now() - interval '1 second' WHERE id = $1", [key.id])
     expect(await store.authenticate(key.token)).toBeNull()
   })
 
