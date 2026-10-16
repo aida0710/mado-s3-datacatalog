@@ -27,6 +27,12 @@ docker compose -f compose.dev.yaml up -d --build
 docker compose -f compose.dev.yaml logs -f api-internal front
 ```
 
+Development also requires login. Before startup, copy `.env.example` to `.env` and configure the encryption key and database connections. Start with `AUTH_MODE=local`, then create the initial Admin with this interactive command.
+
+```bash
+docker compose -f compose.dev.yaml exec api-internal npm run auth:bootstrap-admin:dev
+```
+
 `front/` and `api/` are bind-mounted, so your changes are picked up. Front reloads with HMR, and the API reloads with `tsx watch`. If you set up Node.js 22 on the host, install the dependencies in each directory.
 
 ```bash

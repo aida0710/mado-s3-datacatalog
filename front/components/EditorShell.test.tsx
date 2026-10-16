@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
+import { AuthContext } from '../lib/auth-context'
+import { AUTH_FIXTURE } from '../lib/auth-fixture'
 import { EditorShell } from './EditorShell'
 
 // Monaco を出さず、テスト用の小さな textarea で body を編集できるようにする。
@@ -12,7 +14,7 @@ import { EditorShell } from './EditorShell'
 // MemoryRouter ではなく createMemoryRouter で wrap する。
 function shellWith(props: {
   initialBody?: string
-  onSave?: (b: string, e: string) => Promise<void>
+  onSave?: (body: string) => Promise<void>
   onSaved?: () => void
   onCancel?: () => void
   leftPane?: ReactNode
@@ -48,35 +50,27 @@ function shellWith(props: {
       ),
     },
   ])
-  return <RouterProvider router={router} />
+  return <AuthContext.Provider value={AUTH_FIXTURE}><RouterProvider router={router} /></AuthContext.Provider>
 }
 
-beforeEach(() => {
-  localStorage.clear()
-  // 署名名が未設定だと保存ボタンが無効なので、設定済みの状態を既定にする。
-  // 「署名設定から初期化する」テストだけは自分で入れ直す。
-  localStorage.setItem('dashboard.lastEditor', 'tanaka')
-})
+beforeEach(() => localStorage.clear())
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
 describe('EditorShell — saving', () => {
-  it('保存すると本文と署名名を onSave に渡し、署名名を保存して onSaved を呼ぶ', async () => {
+  it('保存すると本文をonSaveに渡してonSavedを呼ぶ', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     const onSaved = vi.fn()
     const user = userEvent.setup()
 
-    // 署名名が未設定の状態から、その場で入力して保存するケース。
-    localStorage.clear()
     render(shellWith({ initialBody: 'hello', onSave, onSaved }))
 
-    await user.type(screen.getByLabelText('編集者名'), 'tanaka')
     await user.click(screen.getByRole('button', { name: '保存' }))
 
-    expect(onSave).toHaveBeenCalledWith('hello', 'tanaka')
+    expect(onSave).toHaveBeenCalledWith('hello')
     expect(onSaved).toHaveBeenCalled()
-    expect(localStorage.getItem('dashboard.lastEditor')).toBe('tanaka')
+    expect(localStorage.length).toBe(0)
   })
 
   it('保存に失敗したら onSaved を呼ばず、理由を出す', async () => {
@@ -90,17 +84,10 @@ describe('EditorShell — saving', () => {
     expect(await screen.findByText(/boom/)).toBeTruthy()
   })
 
-  it('署名名の設定が編集者名に入る', () => {
-    localStorage.setItem('dashboard.lastEditor', 'sato')
+  it('アカウントの署名名が編集不可で表示される', () => {
     render(shellWith({ initialBody: '' }))
-    expect((screen.getByLabelText('編集者名') as HTMLInputElement).value).toBe('sato')
-  })
-
-  it('disables 保存 until the editor name is provided', () => {
-    localStorage.clear()   // 署名名が未設定の状態
-    render(shellWith({ initialBody: 'hello' }))
-    const save = screen.getByRole('button', { name: '保存' }) as HTMLButtonElement
-    expect(save.disabled).toBe(true)
+    expect(screen.getByLabelText('編集者名')).toHaveValue('tanaka')
+    expect(screen.getByLabelText('編集者名')).toHaveAttribute('readonly')
   })
 })
 

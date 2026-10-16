@@ -20,12 +20,12 @@ export const readmeClient = {
     readmeCache.invalidate(cacheKey('readme', connectionId, bucket, prefix))
   },
 
-  putReadme: async ({ connectionId, bucket, prefix, body, editor }: {
-    connectionId: string; bucket: string; prefix: string; body: string; editor: string
+  putReadme: async ({ connectionId, bucket, prefix, body }: {
+    connectionId: string; bucket: string; prefix: string; body: string
   }): Promise<z.infer<typeof PutReadmeOk>> => {
     const result = await mutateJson(
       storagePath(connectionId, '/readme'),
-      { method: 'PUT', body: { bucket, prefix, body, editor } },
+      { method: 'PUT', body: { bucket, prefix, body } },
       PutReadmeOk,
     )
     // 編集後は当該 README のキャッシュを破棄。次回 readme() で最新を fetch。

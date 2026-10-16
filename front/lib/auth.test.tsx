@@ -218,17 +218,12 @@ describe('AuthGate — API の 401', () => {
     expect(server.callsTo('/api/auth/me')).toBe(2) // 起動時の 1 回 + 401 の確認 1 回
   })
 
-  it('認証が無効（AUTH_MODE=disabled）なら、API が 401 を返しても何もしない', async () => {
-    const server = stubServer({
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
-    })
+  it('認証設定が404ならエラーを表示しアプリを開かない', async () => {
+    const server = stubServer({})
     renderGate()
-    await screen.findByText('ログイン後の画面')
-
-    await act(async () => { await fetchOk('/api/internal/notes/home').catch(() => {}) })
-
+    expect(await screen.findByRole('alert')).toHaveTextContent('認証設定')
+    expect(screen.queryByText('ログイン後の画面')).not.toBeInTheDocument()
     expect(server.callsTo('/api/auth/me')).toBe(0)
-    expect(screen.getByText('ログイン後の画面')).toBeInTheDocument()
   })
 
   it('ログイン画面でパスワードを誤って 401 が返っても、session の確認を繰り返さない', async () => {

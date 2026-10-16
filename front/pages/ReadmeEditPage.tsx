@@ -102,8 +102,8 @@ export default function ReadmeEditPage({ connectionId }: Props) {
       title={title}
       description={description}
       initialBody={data.exists ? data.body : ''}
-      onSave={(body, editor) =>
-        api.putReadme({ connectionId, bucket, prefix, body, editor }).then(() => undefined)
+      onSave={body =>
+        api.putReadme({ connectionId, bucket, prefix, body }).then(() => undefined)
       }
       onSaved={goBack}
       onCancel={goBack}

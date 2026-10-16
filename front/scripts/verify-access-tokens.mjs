@@ -50,8 +50,8 @@ async function switchLanguage(name) {
 }
 
 try {
-  console.log('Access tokens: legacy URL opens the flat token list')
-  await page.goto(`${base}/settings/access/service-accounts`)
+  console.log('Access tokens: token URL opens the token list')
+  await page.goto(`${base}/settings/access/tokens`)
   await page.waitForURL(`${base}/settings/access/tokens`)
   await page.getByRole('article', { name: 'ML Tracking', exact: true }).waitFor()
   assert.equal(await page.getByRole('article').count(), 3)

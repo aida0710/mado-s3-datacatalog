@@ -348,17 +348,15 @@ describe('clearAllCaches', () => {
     expect(loader).toHaveBeenCalledTimes(2)
   })
 
-  it('今のビルドが読まない旧形式のキャッシュも消し、キャッシュ以外の保存値は残す', () => {
-    localStorage.setItem('mado.cache.list:readme|c|b|p/', '{}')
-    localStorage.setItem('mado.cache.tar:c|b|a.tar', '{}')
-    localStorage.setItem('dashboard.lastEditor', 'tanaka')
+  it('キャッシュprefixの保存値を消すときもUI設定は残る', () => {
+    localStorage.setItem('mado.cache.another-module:entry', '{}')
+    localStorage.setItem('mado.cache.other-tab:entry', '{}')
     localStorage.setItem('mado.ui.drawerWidth', '480')
 
     clearAllCaches()
 
-    expect(localStorage.getItem('mado.cache.list:readme|c|b|p/')).toBeNull()
-    expect(localStorage.getItem('mado.cache.tar:c|b|a.tar')).toBeNull()
-    expect(localStorage.getItem('dashboard.lastEditor')).toBe('tanaka')
+    expect(localStorage.getItem('mado.cache.another-module:entry')).toBeNull()
+    expect(localStorage.getItem('mado.cache.other-tab:entry')).toBeNull()
     expect(localStorage.getItem('mado.ui.drawerWidth')).toBe('480')
   })
 })

@@ -1,3 +1,4 @@
+import { MEDIA_META_FIXTURE } from '../lib/api/fixtures'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api/client'
@@ -533,10 +534,10 @@ describe('PlayerDeck - L/R チャンネル', () => {
     expect(leftBtn()).toHaveAttribute('title', 'モノラルのため分割できません')
   })
 
-  it('チャンネル数が不明 (meta=null) なら L/R は有効のまま', async () => {
+  it('channelsがnullならL/Rを操作できる', async () => {
     installMockAudioContext()
     vi.spyOn(api, 'mediaAnalyze').mockResolvedValue({
-      cacheKey: 'k', peaks: [], durationSec: 1, sampleRate: 16000, hasSpectrogram: false, meta: null,
+      cacheKey: 'k', peaks: [], durationSec: 1, sampleRate: 16000, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     setup()
     fireEvent.click(screen.getByText('add1'))

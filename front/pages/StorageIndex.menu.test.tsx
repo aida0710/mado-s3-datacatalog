@@ -1,10 +1,10 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE, STORAGE_CACHE_FIXTURE } from '../lib/api/fixtures'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api/client'
 import type { Connection } from '../lib/api/types'
-import { PRICING_FIXTURE, STORAGE_CACHE_FIXTURE } from '../lib/api/fixtures'
 import { ConnectionContext } from '../lib/connectionContext'
 import { copyToClipboard } from '../lib/clipboard'
 import StorageIndex from './StorageIndex'
@@ -31,6 +31,7 @@ const connection: Connection = {
   updatedAt: '2026-01-01T00:00:00.000Z',
   isDefault: false,
   visibility: { mode: 'public', allowedUsers: [] },
+  ...CONNECTION_SETTINGS_FIXTURE,
   scanEnabled: true,
   listCacheTtlSec: 86400,
   pricing: PRICING_FIXTURE,

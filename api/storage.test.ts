@@ -6,7 +6,7 @@ import { lookup as dnsLookup, type LookupAddress } from 'node:dns'
 import { ListBucketsCommand } from '@aws-sdk/client-s3'
 import { createPools, closePools } from './db.js'
 import { createCrypto } from './crypto.js'
-import { CONNECTION_CACHE_TTL_MS, createStorageFactory } from './storage.js'
+import { CAPABILITY_KEYS, CONNECTION_CACHE_TTL_MS, createStorageFactory } from './storage.js'
 import { BlockedEndpointError, isBlockedAddress } from './lib/endpoint-policy.js'
 
 // 接続先の名前解決だけを差し替える (pg など node_modules 側の名前解決には効かない)。
@@ -40,10 +40,15 @@ async function insertConnection(id: string, endpoint = 'https://s3.example.com/'
      VALUES ($1, $1, $4, 'auto', $2, $3, 'AKIA…0000', true)`,
     [id, crypto.encrypt('AKIAEXAMPLE12345'), crypto.encrypt('secret-value'), endpoint],
   )
+  await pools.rw.query(
+    `INSERT INTO connection_settings (connection_id, key, value)
+     SELECT $1, key, 'true' FROM unnest($2::text[]) AS keys(key)`,
+    [id, [...CAPABILITY_KEYS.map(key => `cap.${key}`), 'scan_enabled', 'capacity_metrics_enabled']],
+  )
 }
 
 describe('createStorageFactory の権限読み出し', () => {
-  it('connection_settings に行が無ければ全許可', async () => {
+  it('全権限をtrueで保存すると全操作が有効になる', async () => {
     await insertConnection('conn000001')
     const f = createStorageFactory({ pools, crypto })
     try {
@@ -62,7 +67,7 @@ describe('createStorageFactory の権限読み出し', () => {
     await pools.rw.query(
       `INSERT INTO connection_settings (connection_id, key, value)
        VALUES ('conn000002', 'cap.download', 'false'),
-              ('conn000002', 'cap.readmeRead', 'true')`,
+              ('conn000002', 'cap.readmeRead', 'true') ON CONFLICT (connection_id, key) DO UPDATE SET value = EXCLUDED.value`,
     )
     const f = createStorageFactory({ pools, crypto })
     try {
@@ -98,7 +103,7 @@ describe('createStorageFactory の権限読み出し', () => {
       expect((await f.getConnectionConfig('conn000004')).capabilities.download).toBe(true)
       await pools.rw.query(
         `INSERT INTO connection_settings (connection_id, key, value)
-         VALUES ('conn000004', 'cap.download', 'false')`,
+         VALUES ('conn000004', 'cap.download', 'false') ON CONFLICT (connection_id, key) DO UPDATE SET value = EXCLUDED.value`,
       )
       // キャッシュを捨てるまでは古い値のまま (= キャッシュが効いている)。
       expect((await f.getConnectionConfig('conn000004')).capabilities.download).toBe(true)
@@ -118,7 +123,7 @@ describe('接続ごとの走査可否とキャッシュ TTL', () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
     try {
       const client = await factory.getStorage('conn000017')
-      await pools.rw.query("INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'cap.download', 'false')", ['conn000017'])
+      await pools.rw.query("INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'cap.download', 'false') ON CONFLICT (connection_id, key) DO UPDATE SET value = EXCLUDED.value", ['conn000017'])
       clock.mockReturnValue(now + CONNECTION_CACHE_TTL_MS + 1)
       expect(await factory.getStorage('conn000017')).toBe(client)
       expect((await factory.getConnectionConfig('conn000017')).capabilities.download).toBe(false)
@@ -127,7 +132,7 @@ describe('接続ごとの走査可否とキャッシュ TTL', () => {
       expect(await factory.getStorage('conn000017')).not.toBe(client)
     } finally { clock.mockRestore(); await factory.close() }
   })
-  it('設定が無ければ走査は許可、TTL は 24 時間', async () => {
+  it('走査をtrueで保存しTTLを省略すると走査は許可されTTLは24時間になる', async () => {
     await insertConnection('conn000010')
     const f = createStorageFactory({ pools, crypto })
     try {
@@ -164,7 +169,7 @@ describe('接続ごとの走査可否とキャッシュ TTL', () => {
   it("capacity_metrics_enabled='false' で容量メトリクス集計が無効になる", async () => {
     await insertConnection('conn000014')
     await pools.rw.query(
-      `INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'capacity_metrics_enabled', 'false')`,
+      `INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'capacity_metrics_enabled', 'false') ON CONFLICT (connection_id, key) DO UPDATE SET value = EXCLUDED.value`,
       ['conn000014'],
     )
     const f = createStorageFactory({ pools, crypto })
@@ -178,7 +183,7 @@ describe('接続ごとの走査可否とキャッシュ TTL', () => {
   it("scan_enabled='false' で走査が無効になる", async () => {
     await insertConnection('conn000011')
     await pools.rw.query(
-      `INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'scan_enabled', 'false')`,
+      `INSERT INTO connection_settings (connection_id, key, value) VALUES ($1, 'scan_enabled', 'false') ON CONFLICT (connection_id, key) DO UPDATE SET value = EXCLUDED.value`,
       ['conn000011'],
     )
     const f = createStorageFactory({ pools, crypto })

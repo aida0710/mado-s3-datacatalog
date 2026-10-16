@@ -5,17 +5,13 @@ import { getRequestPrincipal } from '../lib/rbac.js'
 import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 
-// 認証有効時の編集者は利用者の署名またはトークン名を正本にする。
-// editor request値は認証無効の開発・test環境との互換用。
-
 export interface NotesDeps {
   pools: Pools
 }
 
 const PutBody = z.object({
   body: z.string(),
-  editor: z.string().min(1).optional(),
-})
+}).strict()
 
 interface NoteRow {
   body: string
@@ -49,8 +45,8 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
     if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
     const principal = getRequestPrincipal(c)
     const body = parsed.data.body
-    const editor = principalEditor(principal) ?? parsed.data.editor
-    if (!editor) return c.json({ error: 'editor is required' }, 400)
+    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    const editor = principalEditor(principal)
     const actorUserId = principalUserId(principal)
     const sizeBytes = Buffer.byteLength(body, 'utf-8')
 

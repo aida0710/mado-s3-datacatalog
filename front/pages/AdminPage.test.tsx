@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../lib/auth-context'
 import AdminPage from './AdminPage'
@@ -8,7 +8,6 @@ import AdminPage from './AdminPage'
 afterEach(() => vi.restoreAllMocks())
 
 const auth: AuthContextValue = {
-  enabled: true,
   user: {
     id: 'admin', username: 'admin', email: null, displayName: 'Admin', signatureName: 'Admin',
     roles: ['admin'], permissions: ['users:manage', 'service_accounts:manage', 'audit:read'],
@@ -18,11 +17,16 @@ const auth: AuthContextValue = {
   reload: async () => {},
 }
 
-function renderServiceAccountsPage() {
+function CurrentLocation() {
+  return <output aria-label="location">{useLocation().pathname}</output>
+}
+
+function renderAccessPage(path = '/settings/access/tokens') {
   return render(
     <AuthContext.Provider value={auth}>
-      <MemoryRouter initialEntries={['/settings/access/service-accounts']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes><Route path="/settings/access/*" element={<AdminPage />} /></Routes>
+        <CurrentLocation />
       </MemoryRouter>
     </AuthContext.Provider>,
   )
@@ -54,15 +58,23 @@ describe('AdminPage', () => {
     expect(screen.getByText('StorageとDataLineageを閲覧できます。')).toBeInTheDocument()
   })
 
-  it('以前のService AccountsのURLから一階層のトークン一覧を開く', async () => {
+  it('TokensのURLを開くとアクセストークン一覧を表示する', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ tokens: [] }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     }))
-    renderServiceAccountsPage()
+    renderAccessPage()
     expect(await screen.findByText('アクセストークンはありません。')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'アクセストークンを作成' })).toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/internal/access-tokens')
+  })
+
+  it.each(['/settings/access/service-accounts', '/settings/access/unknown'])('%sを開くと転送せず見つからない旨を表示する', path => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    renderAccessPage(path)
+    expect(screen.getByText('見つかりません')).toBeInTheDocument()
+    expect(screen.getByLabelText('location')).toHaveTextContent(path)
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('ユーザー行を展開して編集・再発行・削除を管理できる', async () => {

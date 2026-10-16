@@ -19,7 +19,7 @@ import { translate } from '../../i18n/translate'
  */
 export function TopBar({ navigation }: { navigation: Navigation }) {
   useLocale()
-  const { enabled, user, logout } = useAuth()
+  const { user, logout } = useAuth()
   const theme = useTheme()
   const compact = useIsCompact()
   const [loggingOut, setLoggingOut] = useState(false)
@@ -53,7 +53,7 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
           >
             {theme.theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
           </button>
-          {enabled && user && (
+          {user && (
             <>
               <Link
                 to="/settings/account"

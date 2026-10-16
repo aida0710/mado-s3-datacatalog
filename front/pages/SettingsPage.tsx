@@ -8,6 +8,7 @@ import { useTagsEnabled } from '../lib/useFeatureEnabled'
 import { useAuth } from '../lib/auth-context'
 import ConnectionEditorPage from './ConnectionEditorPage'
 import ConnectionsPage from './ConnectionsPage'
+import NotFoundPage from './NotFoundPage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -87,7 +88,7 @@ export default function SettingsPage() {
           </Suspense>
         } />
         <Route path="about" element={<About />} />
-        <Route path="*" element={<Navigate to="connections" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>
   )

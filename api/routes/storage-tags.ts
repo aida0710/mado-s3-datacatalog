@@ -4,8 +4,7 @@ import { nanoid } from 'nanoid'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 
-// README/favorites と同じ「オナーシステム」— 認証なし。
-// 防御は LAN 境界 (requireSafeOrigin ミドルウェア) に委ねる。
+// 認証と操作権限は internal.ts の共通ガードで検証する。
 
 export interface StorageTagsDeps {
   pools: Pools

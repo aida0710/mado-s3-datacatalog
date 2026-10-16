@@ -11,8 +11,8 @@ import { coversAllConnections } from '../lib/access-token-authority.js'
 
 export interface JobRoutesDeps {
   store: JobStore
-  /** 認証有効時だけ渡す。job payload の connectionId も接続ACLで隠す。 */
-  canAccessConnection?: (c: Context, connectionId: string) => Promise<boolean>
+  /** job payload の connectionId も接続ACLで隠す。 */
+  canAccessConnection: (c: Context, connectionId: string) => Promise<boolean>
   /** 走査の結果にはサブディレクトリ名が入るので、接続の「一覧」の権限が無効なら見せない。 */
   getConnectionConfig: (connectionId: string) => Promise<ConnectionConfig>
 }
@@ -24,13 +24,14 @@ function connectionIdOf(job: { payload?: unknown }): string | null {
 }
 
 async function canReadJob(c: Context, job: { kind: string; payload?: unknown }, deps: JobRoutesDeps): Promise<boolean> {
+  const principal = getRequestPrincipal(c)
+  if (!principal) return false
   const connectionId = connectionIdOf(job)
   if (connectionId === null) {
     // 接続を持たないジョブは全体に関わるので、接続を限定したトークンには見せない。
-    const principal = getRequestPrincipal(c)
-    return !principal || coversAllConnections(principal)
+    return coversAllConnections(principal)
   }
-  if (deps.canAccessConnection && !await deps.canAccessConnection(c, connectionId)) return false
+  if (!await deps.canAccessConnection(c, connectionId)) return false
   if (job.kind !== SCAN_KIND) return true
   // 削除された接続の走査結果も見せない。
   const config = await deps.getConnectionConfig(connectionId).catch(() => null)

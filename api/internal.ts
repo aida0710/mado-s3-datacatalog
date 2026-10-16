@@ -73,14 +73,13 @@ const env = loadEnv()
 const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
 const crypto = createCrypto(env.ENCRYPTION_KEY)
 const storageFactory = createStorageFactory({ pools, crypto })
-const authEnabled = env.AUTH_MODE !== 'disabled'
 const audit = createAuditWriter(pools.rw)
 const users = createUserStore(pools.rw)
 const credentials = createCredentialStore(pools.rw)
 const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
 const authenticateInternalToken = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: authenticateServiceKey })
 const sessionCookie = sessionCookieName(env.AUTH_COOKIE_SECURE)
-const oidcEnabled = authEnabled && (env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid')
+const oidcEnabled = env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid'
 if (oidcEnabled && (!env.OIDC_ISSUER_URL || !env.OIDC_CLIENT_ID
     || !env.OIDC_CLIENT_SECRET || !env.OIDC_REDIRECT_URI)) {
   throw new Error('AUTH_MODE enables OIDC but OIDC_ISSUER_URL/CLIENT_ID/CLIENT_SECRET/REDIRECT_URI is incomplete')
@@ -101,14 +100,14 @@ const sessions = createSessionStore(pools.rw, audit, oidc ? createOidcSessionVer
 }) : undefined)
 // 期限切れ session と OIDC attempt の掃除。attempt の有効期限は分単位なので 1 時間おきで十分。
 const AUTH_CLEANUP_INTERVAL_MS = 60 * 60 * 1000
-const authCleanupTimer = authEnabled ? setInterval(() => {
+const authCleanupTimer = setInterval(() => {
   void Promise.all([
     sessions.deleteExpiredSessions(),
     sessions.deleteExpiredLogoutEvents(),
     oidc?.deleteExpiredAttempts(),
   ]).catch(error => console.error('failed to clean expired auth records', error))
-}, AUTH_CLEANUP_INTERVAL_MS) : null
-authCleanupTimer?.unref()
+}, AUTH_CLEANUP_INTERVAL_MS)
+authCleanupTimer.unref()
 
 // 応答キャッシュは書き込みを伴うので rw プールを使う。書き込み先は
 // storage_response_cache の 1 テーブルのみ (spec の「ロールについての判断」)。
@@ -124,68 +123,60 @@ app.use('*', requestLogger())
 app.get('/healthz', c => c.text('ok'))
 
 // Login/callbackはbrowser session確立前に到達するpublic route。write系には既存の
-// Origin検証を適用し、認証を有効化したときだけ公開する。
-if (authEnabled) {
-  const authApi = new Hono()
-  const safeOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
-  authApi.use('*', async (c, next) => {
-    // AuthentikからのBack-channel logoutはbrowser Originを持たない代わりに、
-    // ProviderのJWKSで署名されたlogout_tokenをhandler内で検証する。
-    if (c.req.path.endsWith('/oidc/backchannel-logout')) return next()
-    return safeOrigin(c, next)
-  })
-  mountAuthRoutes(authApi, {
-    crypto,
-    users,
-    credentials,
-    sessions,
-    oidcProvisioning: createOidcProvisioning(pools.rw, audit),
-    audit,
-    config: {
-      localEnabled: env.AUTH_MODE === 'local' || env.AUTH_MODE === 'hybrid',
-      session: {
-        idleSeconds: env.AUTH_SESSION_IDLE_SECONDS,
-        absoluteSeconds: env.AUTH_SESSION_ABSOLUTE_SECONDS,
-        secure: env.AUTH_COOKIE_SECURE,
-      },
-      oidc,
-      oidcLoginPolicy: {
-        autoLinkVerifiedEmail: env.OIDC_AUTO_LINK_VERIFIED_EMAIL,
-        allowedGroups: env.OIDC_ALLOWED_GROUPS,
-        roleMapping: env.OIDC_ROLE_MAPPING_JSON,
-        defaultRole: env.OIDC_DEFAULT_ROLE,
-      },
+// Origin検証を適用する。
+const authApi = new Hono()
+const safeOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
+authApi.use('*', async (c, next) => {
+  // AuthentikからのBack-channel logoutはbrowser Originを持たない代わりに、
+  // ProviderのJWKSで署名されたlogout_tokenをhandler内で検証する。
+  if (c.req.path.endsWith('/oidc/backchannel-logout')) return next()
+  return safeOrigin(c, next)
+})
+mountAuthRoutes(authApi, {
+  crypto,
+  users,
+  credentials,
+  sessions,
+  oidcProvisioning: createOidcProvisioning(pools.rw, audit),
+  audit,
+  config: {
+    localEnabled: env.AUTH_MODE === 'local' || env.AUTH_MODE === 'hybrid',
+    session: {
+      idleSeconds: env.AUTH_SESSION_IDLE_SECONDS,
+      absoluteSeconds: env.AUTH_SESSION_ABSOLUTE_SECONDS,
+      secure: env.AUTH_COOKIE_SECURE,
     },
-  })
-  app.route('/api/auth', authApi)
-}
+    oidc,
+    oidcLoginPolicy: {
+      autoLinkVerifiedEmail: env.OIDC_AUTO_LINK_VERIFIED_EMAIL,
+      allowedGroups: env.OIDC_ALLOWED_GROUPS,
+      roleMapping: env.OIDC_ROLE_MAPPING_JSON,
+      defaultRole: env.OIDC_DEFAULT_ROLE,
+    },
+  },
+})
+app.route('/api/auth', authApi)
 
 const api = new Hono()
 const safeInternalOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
-if (authEnabled) {
-  // ブラウザからの要求は、セッションに触れる(有効期限を延ばす)前にOriginを確かめる。
-  // Authorizationヘッダーは他サイトのフォームからは付けられないので、トークンの要求には要らない。
-  api.use('*', (context, next) => context.req.header('Authorization') !== undefined
-    ? next() : safeInternalOrigin(context, next))
-  api.use('*', requireInternalApiAuthentication({ sessions, authenticateToken: authenticateInternalToken,
-    idleSeconds: env.AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
-  api.use('*', auditActivity(audit))
-  api.use('*', requirePasswordChangeComplete())
-  api.use('*', requireInternalApiPermission())
-} else {
-  api.use('*', safeInternalOrigin)
-}
+// ブラウザからの要求は、セッションに触れる(有効期限を延ばす)前にOriginを確かめる。
+// Authorizationヘッダーは他サイトのフォームからは付けられないので、トークンの要求には要らない。
+api.use('*', (context, next) => context.req.header('Authorization') !== undefined
+  ? next() : safeInternalOrigin(context, next))
+api.use('*', requireInternalApiAuthentication({ sessions, authenticateToken: authenticateInternalToken,
+  idleSeconds: env.AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
+api.use('*', auditActivity(audit))
+api.use('*', requirePasswordChangeComplete())
+api.use('*', requireInternalApiPermission())
 
 // ホワイトリスト接続は、一覧から隠すだけでなく全Storage APIのURL直打ちも遮断する。
 // 非許可Userへは存在を明かさないため403ではなく404を返す。
-if (authEnabled) {
-  api.use('/storage/:connectionId/*', requireConnectionAccess(pools.ro))
-  api.use('/connections/:connectionId', async (context, next) => {
-    if (getRequestPrincipal(context)?.kind !== 'service_account') return next()
-    return requireConnectionAccess(pools.ro)(context, next)
-  })
-  api.use('/lineage/resolve-location', requireConnectionQueryAccess(pools.ro))
-}
+api.use('/storage/:connectionId/*', requireConnectionAccess(pools.ro))
+api.use('/connections/:connectionId', async (context, next) => {
+  if (getRequestPrincipal(context)?.kind !== 'service_account') return next()
+  return requireConnectionAccess(pools.ro)(context, next)
+})
+api.use('/lineage/resolve-location', requireConnectionQueryAccess(pools.ro))
 
 // 接続ごとの権限ガード。対応表は lib/storage-capability-routes.ts の 1 箇所にある。
 // Hono は登録順に実行するので、必ずルートの mount より前に登録すること。
@@ -216,9 +207,7 @@ mountStorageMediaRoutes(api, {
 })
 mountJobRoutes(api, {
   store: jobStore,
-  canAccessConnection: authEnabled
-    ? (c, connectionId) => canAccessConnection(pools.ro, c, connectionId)
-    : undefined,
+  canAccessConnection: (c, connectionId) => canAccessConnection(pools.ro, c, connectionId),
   getConnectionConfig: storageFactory.getConnectionConfig,
 })
 mountStorageScanRoutes(api, { store: jobStore, getConnectionConfig: storageFactory.getConnectionConfig })
@@ -276,34 +265,30 @@ if (env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN && env.MARQUEZ_URL) {
     service: createLineageService({ registry, marquez, bindings }),
     visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
   })
-  if (authEnabled) {
-    mountLineageCurationRoutes(api, {
-      namespacePolicy,
-      registry,
-      pool: pools.ro,
-      audit,
-      canAccessConnection: (c, connectionId) => canAccessConnection(pools.ro, c, connectionId),
-      visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
-    })
-  }
+  mountLineageCurationRoutes(api, {
+    namespacePolicy,
+    registry,
+    pool: pools.ro,
+    audit,
+    canAccessConnection: (c, connectionId) => canAccessConnection(pools.ro, c, connectionId),
+    visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
+  })
 } else {
   api.all('/lineage/*', c => c.json({ error: 'lineage integration is not configured' }, 503))
 }
 
-if (authEnabled) {
-  mountAdminUsersRoutes(api, {
-    users,
-    credentials,
-    audit,
-    ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
-  })
-  const accessTokens = createAccessTokenStore(pools.rw)
-  mountAccessTokenRoutes(api, { store: accessTokens, audit,
-    visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
-    namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
-      marquez: env.MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MARQUEZ_URL }) : null }) })
-  mountAuditRoutes(api, { pool: pools.ro })
-}
+mountAdminUsersRoutes(api, {
+  users,
+  credentials,
+  audit,
+  ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
+})
+const accessTokens = createAccessTokenStore(pools.rw)
+mountAccessTokenRoutes(api, { store: accessTokens, audit,
+  visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
+  namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
+    marquez: env.MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MARQUEZ_URL }) : null }) })
+mountAuditRoutes(api, { pool: pools.ro })
 
 app.route('/api/internal', api)
 
@@ -354,7 +339,7 @@ let shuttingDown = false
 const shutdown = async () => {
   if (shuttingDown) return
   shuttingDown = true
-  if (authCleanupTimer) clearInterval(authCleanupTimer)
+  clearInterval(authCleanupTimer)
   setTimeout(() => process.exit(1), 10_000).unref()
   await new Promise<void>(resolve => server.close(() => resolve()))
   await storageFactory.close()

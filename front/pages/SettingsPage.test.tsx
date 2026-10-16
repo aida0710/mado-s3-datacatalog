@@ -1,17 +1,16 @@
+import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from '../lib/api/fixtures'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../lib/auth-context'
 import { api } from '../lib/api/client'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
-import { PRICING_FIXTURE } from '../lib/api/fixtures'
 import SettingsPage from './SettingsPage'
 
 afterEach(() => vi.restoreAllMocks())
 
 describe('SettingsPage', () => {
   const auth: AuthContextValue = {
-    enabled: true,
     user: {
       id: 'admin', username: 'admin', email: null, displayName: 'Admin', signatureName: 'Admin',
       roles: ['admin'], permissions: ['users:manage', 'service_accounts:manage', 'audit:read'],
@@ -38,6 +37,19 @@ describe('SettingsPage', () => {
     expect(screen.getByLabelText('署名名')).toBeInTheDocument()
   })
 
+  it('未知の設定URLを開くと接続一覧へ転送せず見つからない旨を表示する', () => {
+    const listConnections = vi.spyOn(api, 'listConnections')
+    render(
+      <AuthContext.Provider value={auth}>
+        <MemoryRouter initialEntries={['/settings/unknown']}>
+          <Routes><Route path="/settings/*" element={<SettingsPage />} /></Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    )
+    expect(screen.getByText('見つかりません')).toBeInTheDocument()
+    expect(listConnections).not.toHaveBeenCalled()
+  })
+
   it('接続追加はモーダルではなく専用ページに表示する', () => {
     render(
       <MemoryRouter initialEntries={['/settings/connections/new']}>
@@ -55,7 +67,7 @@ describe('SettingsPage', () => {
     vi.spyOn(api, 'listConnections').mockResolvedValue([{
       id: 'connection-1', name: 'production', endpoint: 'https://s3.example.com', region: 'auto',
       accessKeyIdMasked: 'AKIA…TEST', forcePathStyle: true, listObjectsVersion: 'v2',
-      capabilities: ALL_CAPABILITIES_ON, scanEnabled: true, listCacheTtlSec: 86400,
+      capabilities: ALL_CAPABILITIES_ON, ...CONNECTION_SETTINGS_FIXTURE, scanEnabled: true, listCacheTtlSec: 86400,
       pricing: PRICING_FIXTURE, isDefault: true,
       visibility: { mode: 'public', allowedUsers: [] },
       createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',

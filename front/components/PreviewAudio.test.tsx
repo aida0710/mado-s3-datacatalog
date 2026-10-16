@@ -1,3 +1,4 @@
+import { MEDIA_META_FIXTURE } from '../lib/api/fixtures'
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PreviewAudio } from './PreviewAudio'
@@ -29,7 +30,7 @@ afterEach(() => {
 describe('PreviewAudio', () => {
   it('解析結果で波形が出る / スペクトログラムは常時表示', async () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: true, meta: null,
+      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: true, meta: MEDIA_META_FIXTURE,
     })
     render(<PreviewAudio connectionId="c" bucket="b" k="a.wav" />)
     expect(screen.getByText('解析中…')).toBeInTheDocument()
@@ -40,7 +41,7 @@ describe('PreviewAudio', () => {
 
   it('hasSpectrogram が false ならスペクトログラム画像を出さない', async () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     render(<PreviewAudio connectionId="c" bucket="b" k="a.wav" />)
     await waitFor(() => expect(screen.getByRole('slider', { name: '再生位置' })).toBeInTheDocument())
@@ -61,13 +62,14 @@ describe('PreviewAudio', () => {
     expect(screen.getByText('peak -0.3 dBFS · RMS -18.2 dB')).toBeInTheDocument()
   })
 
-  it('meta が null なら情報行を出さない', async () => {
+  it('メタ情報の各項目が不明でも長さとサンプルレートを表示する', async () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     const { container } = render(<PreviewAudio connectionId="c" bucket="b" k="a.wav" />)
     await waitFor(() => expect(screen.getByRole('slider', { name: '再生位置' })).toBeInTheDocument())
-    expect(container.querySelector('.preview-audio-info')).toBeNull()
+    expect(container.querySelector('.preview-audio-info')).toHaveTextContent('16 kHz')
+    expect(container.querySelector('.preview-audio-info')).toHaveTextContent('0:03.000')
   })
 
   it('解析失敗は小さくエラー表示、再生 UI は残る', async () => {
@@ -83,7 +85,7 @@ describe('PreviewAudio', () => {
     // 戻ることを担保する。
     vi.mocked(api.mediaAnalyze)
       .mockResolvedValueOnce({
-        cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: null,
+        cacheKey: 'ck', peaks: [[-1, 1]], durationSec: 3, sampleRate: 16000, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
       })
       .mockImplementationOnce(() => new Promise(() => {}))
     const { rerender } = render(<PreviewAudio key="a" connectionId="c" bucket="b" k="a.wav" />)
@@ -101,7 +103,7 @@ describe('PreviewAudio', () => {
   it('非圧縮tarは全量取得を待たず音声プレーヤーを表示する', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }))
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     const { container } = render(<PreviewAudio connectionId="c" bucket="b" k="shard.tar" entryPath="u1.wav" />)
     await waitFor(() => expect(container.querySelector('audio')).toHaveAttribute('src', expect.stringContaining('/preview/tar-entry')))
@@ -111,7 +113,7 @@ describe('PreviewAudio', () => {
 
   it('圧縮tarの取得中は「音声を取得中…」を表示する', () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     vi.mocked(fetch).mockReturnValue(new Promise(() => {})) // 未解決のまま保持
     const { container } = render(
@@ -123,7 +125,7 @@ describe('PreviewAudio', () => {
 
   it('entryPath ありで blob 解決後に audio.src が blob: URL になり、analyze にも entryPath が渡る', async () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
@@ -143,7 +145,7 @@ describe('PreviewAudio', () => {
 
   it('entryPath ありで blob 取得失敗は小さくエラー表示される', async () => {
     vi.mocked(api.mediaAnalyze).mockResolvedValue({
-      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: null,
+      cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     })
     vi.mocked(fetch).mockResolvedValue({
       ok: false,

@@ -1,9 +1,8 @@
 import type { MiddlewareHandler } from 'hono'
 
 // CSRF 防御: 書き込み系メソッドに対して Origin/Referer を許可リストと突き合わせる。
-// /api/internal/* は本来オナーシステム (LAN 信頼前提) で動かすが、それでも
-// LAN 内に紛れた悪意あるページが /api/internal/connections 等に POST/PUT/DELETE を
-// 撃てる事故を避けるため Origin を必須化する。
+// 悪意ある別サイトがブラウザのセッションを使って変更要求を送るのを防ぐため、
+// セッション認証の書き込みでは Origin を必須にする。
 // /api/external/* は Bearer 認証で守られ、cron からの curl は Origin を送らないため対象外。
 //
 // ブラウザは fetch() に必ず Origin を付ける (file://、Worker 経由など限られた例外を除く)。

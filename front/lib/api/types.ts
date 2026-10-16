@@ -287,23 +287,23 @@ export const Connection = z.object({
   capabilities: Capabilities,
   /** 配下の走査を許可するか。巨大バケットを抱える接続でのガード。 */
   scanEnabled: z.boolean(),
-  /** storage.scanの1回あたり取得件数。未返却の旧APIは1000件として扱う。 */
-  scanPageSize: z.union([z.literal(100), z.literal(250), z.literal(500), z.literal(1000)]).optional(),
-  /** bucket容量メトリクスの集計許可。未返却の旧APIは有効として扱う。 */
-  capacityMetricsEnabled: z.boolean().optional(),
+  /** storage.scanの1回あたり取得件数。 */
+  scanPageSize: z.union([z.literal(100), z.literal(250), z.literal(500), z.literal(1000)]),
+  /** bucket容量メトリクスの集計許可。 */
+  capacityMetricsEnabled: z.boolean(),
   /** 一覧キャッシュの保持秒数。既定 86400 (24 時間)。 */
   listCacheTtlSec: z.number(),
   /** connection配下の全bucketへ適用する容量計測設定。 */
   capacityTracking: z.object({
     enabled: z.boolean(),
     intervalSeconds: z.number().int(),
-  }).optional(),
+  }),
   /** 転送見積もりに使うプロファイル。 */
   pricing: ConnectionPricing,
   createdAt: z.string(),
   updatedAt: z.string(),
   isDefault: z.boolean(),
-  visibility: ConnectionVisibility.default({ mode: 'public', allowedUsers: [] }),
+  visibility: ConnectionVisibility,
 })
 export type Connection = z.infer<typeof Connection>
 
@@ -374,8 +374,7 @@ export const Note = z.union([NoteAbsent, NotePresent])
 export const PutNoteOk = z.object({ ok: z.literal(true) })
 
 // 音声解析 (波形 / スペクトログラム)。GET /storage/:connectionId/media/analyze
-// meta: ffprobe/ffmpeg の副産物 (コーデック・音量など)。旧 API 互換のため全体が null
-// になり得る (各フィールドも個別に null 許容)。front/lib/audioInfo.ts で表示用に整形する。
+// meta: ffprobe/ffmpeg の解析情報。取得できない個別項目は null。
 export const MediaAnalyze = z.object({
   cacheKey: z.string(),
   peaks: z.array(z.tuple([z.number(), z.number()])),
@@ -391,7 +390,7 @@ export const MediaAnalyze = z.object({
     sizeBytes: z.number().nullable(),
     peakDb: z.number().nullable(),
     rmsDb: z.number().nullable(),
-  }).nullable(),
+  }),
 })
 
 // タグ (事前定義、全接続共通レジストリ)

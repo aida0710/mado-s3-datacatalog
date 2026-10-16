@@ -208,7 +208,7 @@ export function PlayerDeck() {
       api.mediaAnalyze({ connectionId: t.connectionId, bucket: t.bucket, key: t.key, entryPath: t.entryPath })
         .then(r => {
           setPeaksById(cur => ({ ...cur, [t.id]: r.peaks }))
-          setChannelsById(cur => ({ ...cur, [t.id]: r.meta?.channels ?? null }))
+          setChannelsById(cur => ({ ...cur, [t.id]: r.meta.channels }))
         })
         .catch(() => {
           setChannelsById(cur => (t.id in cur ? cur : { ...cur, [t.id]: null }))

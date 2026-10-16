@@ -47,7 +47,6 @@ function authPageFor({ config, session, onSessionChanged }: {
 export function AuthGate({ children }: { children: ReactNode }) {
   useLocale()
   const [config, setConfig] = useState<AuthConfig | null>(null)
-  const [disabled, setDisabled] = useState(false)
   const [session, dispatchSession] = useReducer(nextAuthSession, SIGNED_OUT)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -87,15 +86,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [applyCurrentUser])
 
-  // ログイン中だけ 401 を受け取る。認証が無効ならログイン画面が無いので受け取らない。
+  // ログイン中だけ 401 を受け取る。
   // ログイン画面の表示中も受け取らない（パスワード誤りの 401 などで確認を繰り返さないため）。
   // 画面が DOM に出た時点で受け取れるよう、layout effect で張る。通常の effect は DOM に
   // 出たあと（子の画面の effect のあと）に走るので、その間に届いた 401 を取りこぼす。
   const signedIn = session.user !== null
   useLayoutEffect(() => {
-    if (disabled || !signedIn) return
+    if (!signedIn) return
     return subscribeUnauthorized(() => { void confirmSessionAfterUnauthorized() })
-  }, [disabled, signedIn, confirmSessionAfterUnauthorized])
+  }, [signedIn, confirmSessionAfterUnauthorized])
 
   // session が切れて画面を残している間は、このタブへ戻ってきたときに session を確かめ直す。
   // SSO は新しいタブでログインする（LoginPage の overlay）ので、済ませて戻るだけで画面に戻れる。
@@ -115,10 +114,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       try {
         const response = await fetch('/api/auth/config', { headers: { Accept: 'application/json' } })
         if (!current) return
-        if (response.status === 404) {
-          setDisabled(true)
-          return
-        }
         if (!response.ok) throw new Error(translate('auth.couldNotLoadAuthenticationSettings'))
         const next = await response.json() as AuthConfig
         if (!current) return
@@ -164,11 +159,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // 画面には、描いている User を渡す。session が切れてログイン画面を重ねている間も、
   // 残した画面は同じ User のまま描く。
   const screenUser = session.screenUser
-  const value = useMemo(() => ({ enabled: !disabled, user: screenUser, logout, reload }), [disabled, screenUser, logout, reload])
+  const value = useMemo(() => ({ user: screenUser, logout, reload }), [screenUser, logout, reload])
 
   if (loading) return <div className="auth-splash" role="status">{translate('common.loading')}</div>
   if (error) return <div className="auth-splash error" role="alert">{localizeMessage(error)}</div>
-  const authPage = !disabled && config ? authPageFor({ config, session, onSessionChanged: reload }) : null
+  const authPage = config ? authPageFor({ config, session, onSessionChanged: reload }) : null
   // 残す画面が無ければ（起動時やサインアウトのあと）、ログイン画面だけを出す。
   if (authPage && !screenUser) return authPage
   return (

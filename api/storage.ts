@@ -13,13 +13,7 @@ export const CONNECTION_CACHE_TTL_MS = 60_000
 
 export type ListObjectsVersion = 'v1' | 'v2'
 
-/** 接続ごとに許可する操作。既定はすべて true (= マイグレーション前と同じ挙動)。
- *
- *  認証が無い前提のツールなので、これはアクセス制御ではなく **誤操作の防止**。
- *  Deep Archive のように GetObject 自体が失敗する / 課金されるバケットや、
- *  書き戻したくない本番バケットを登録した接続で、危険な導線を閉じるためにある。
- *  UI で隠すだけだと共有 Web URL を直に叩けてしまうので、API 側でも
- *  lib/capabilityGuard.ts が 403 で止める。 */
+/** 接続ごとに許可する操作。課金を伴う取得や書き戻しを制限する。 */
 export interface Capabilities {
   /** バケット / オブジェクトの一覧 (`/buckets`, `/list`)。 */
   list: boolean
@@ -115,9 +109,15 @@ interface DbRow {
   settings: Record<string, string>
 }
 
-/** 走査を許可するか。'false' だけを無効とみなす (capabilities と同じ約束)。 */
+function readBooleanSetting(settings: Record<string, string>, key: string): boolean {
+  const value = settings[key]
+  if (value === 'true') return true
+  if (value === 'false') return false
+  throw new Error(`connection setting ${key} must be true or false`)
+}
+
 export function settingsToScanEnabled(settings: Record<string, string>): boolean {
-  return settings['scan_enabled'] !== 'false'
+  return readBooleanSetting(settings, 'scan_enabled')
 }
 
 export const SCAN_PAGE_SIZES = [100, 250, 500, 1000] as const
@@ -132,9 +132,8 @@ export function settingsToScanPageSize(settings: Record<string, string>): ScanPa
     : DEFAULT_SCAN_PAGE_SIZE
 }
 
-/** 容量メトリクスの集計を許可するか。未設定は後方互換のため有効。 */
 export function settingsToCapacityMetricsEnabled(settings: Record<string, string>): boolean {
-  return settings['capacity_metrics_enabled'] !== 'false'
+  return readBooleanSetting(settings, 'capacity_metrics_enabled')
 }
 
 /** 一覧キャッシュの保持秒数。壊れた値や 0 以下は既定に倒す。 */
@@ -144,16 +143,10 @@ export function settingsToListCacheTtlSec(settings: Record<string, string>): num
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_LIST_CACHE_TTL_SEC
 }
 
-/** connection_settings の key/value → Capabilities。
- *
- *  **行が無いキーは既定 (有効)**。'false' と明示されたときだけ無効にする。
- *  これにより、マイグレーション直後 (テーブルが空) の挙動が適用前と一致し、
- *  既存接続へのバックフィルが要らない。connections.ts のレスポンス組み立てからも
- *  使うので export する。 */
 export function settingsToCapabilities(settings: Record<string, string>): Capabilities {
   const out = {} as Capabilities
   for (const cap of CAPABILITY_KEYS) {
-    out[cap] = settings[capabilitySettingKey(cap)] !== 'false'
+    out[cap] = readBooleanSetting(settings, capabilitySettingKey(cap))
   }
   return out
 }
