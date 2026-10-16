@@ -13,14 +13,12 @@ export interface AuthUser {
 }
 
 export interface AuthContextValue {
-  enabled: boolean
   user: AuthUser | null
   logout(): Promise<void>
   reload(): Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue>({
-  enabled: false,
   user: null,
   logout: async () => {},
   reload: async () => {},

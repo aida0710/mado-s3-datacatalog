@@ -104,22 +104,22 @@ export function reducer(state: FormState, action: Action): FormState {
 
 export function initialState(current: Connection | null): FormState {
   return {
-    name: current?.name ?? '',
-    endpoint: current?.endpoint ?? '',
-    region: current?.region ?? 'auto',
+    name: current ? current.name : '',
+    endpoint: current ? current.endpoint : '',
+    region: current ? current.region : 'auto',
     accessKeyId: '',
     secretAccessKey: '',
-    forcePathStyle: current?.forcePathStyle ?? true,
-    listObjectsVersion: current?.listObjectsVersion ?? 'v2',
-    capabilities: current?.capabilities ?? ALL_CAPABILITIES_ON,
-    visibilityMode: current?.visibility.mode ?? 'public',
-    allowedUserIds: current?.visibility.allowedUsers.map(user => user.id).sort() ?? [],
-    scanEnabled: current?.scanEnabled ?? true,
-    scanPageSize: current?.scanPageSize ?? 1000,
-    capacityMetricsEnabled: current?.capacityMetricsEnabled ?? true,
-    listCacheTtlSec: current?.listCacheTtlSec ?? 86400,
-    capacityTrackingEnabled: current?.capacityTracking?.enabled ?? false,
-    capacityTrackingIntervalSeconds: current?.capacityTracking?.intervalSeconds ?? 86400,
+    forcePathStyle: current ? current.forcePathStyle : true,
+    listObjectsVersion: current ? current.listObjectsVersion : 'v2',
+    capabilities: current ? current.capabilities : ALL_CAPABILITIES_ON,
+    visibilityMode: current ? current.visibility.mode : 'public',
+    allowedUserIds: current ? current.visibility.allowedUsers.map(user => user.id).sort() : [],
+    scanEnabled: current ? current.scanEnabled : true,
+    scanPageSize: current ? current.scanPageSize : 1000,
+    capacityMetricsEnabled: current ? current.capacityMetricsEnabled : true,
+    listCacheTtlSec: current ? current.listCacheTtlSec : 86400,
+    capacityTrackingEnabled: current ? current.capacityTracking.enabled : false,
+    capacityTrackingIntervalSeconds: current ? current.capacityTracking.intervalSeconds : 86400,
     pricingProvider: current?.pricing.providerExplicit ? current.pricing.provider : '',
     pricingStorageClass: current?.pricing.storageClass ?? 'STANDARD',
     pricingReadMbps: current?.pricing.readMbps ?? 300,
@@ -190,12 +190,12 @@ export function toUpdateInput(state: FormState, current: Connection): Connection
     input.visibility = { mode: visibilityMode, allowedUserIds }
   }
   if (scanEnabled !== current.scanEnabled) input.scanEnabled = scanEnabled
-  if (scanPageSize !== (current.scanPageSize ?? 1000)) input.scanPageSize = scanPageSize
-  if (capacityMetricsEnabled !== (current.capacityMetricsEnabled ?? true)) {
+  if (scanPageSize !== current.scanPageSize) input.scanPageSize = scanPageSize
+  if (capacityMetricsEnabled !== current.capacityMetricsEnabled) {
     input.capacityMetricsEnabled = capacityMetricsEnabled
   }
   if (listCacheTtlSec !== current.listCacheTtlSec) input.listCacheTtlSec = listCacheTtlSec
-  const currentCapacityTracking = current.capacityTracking ?? { enabled: false, intervalSeconds: 86400 }
+  const currentCapacityTracking = current.capacityTracking
   if (capacityTrackingEnabled !== currentCapacityTracking.enabled
       || capacityTrackingIntervalSeconds !== currentCapacityTracking.intervalSeconds) {
     input.capacityTracking = {

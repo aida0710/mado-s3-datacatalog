@@ -8,7 +8,7 @@
 
 <img width="1340" height="771" alt="mosaic_20260524162904" src="https://github.com/user-attachments/assets/4f5349ad-38c2-46c7-8e29-3be76477615c" />
 
-Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のアクセストークンを使います。既存LAN運用から移行できるよう認証無効モードも残していますが、外部公開では使用しません。
+Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のアクセストークンを使います。開発環境でも認証を必須にしています。
 
 ## できること
 
@@ -31,7 +31,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 
 ### アクセス
 
-ダッシュボードのURLをブラウザで開き、SSOまたは管理者が作成したLocal Userでログインします。`AUTH_MODE=disabled`の既存LAN環境ではログイン画面を出しません。
+ダッシュボードのURLをブラウザで開き、SSOまたは管理者が作成したLocal Userでログインします。
 
 左のナビゲーションから **Home / Storage / DataLineage / Settings** を開けます。画面・区分の名前は、日本語の画面でも英語のまま表示します。
 
@@ -253,7 +253,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `ENCRYPTION_KEY` | yes | `storage_connections` の S3 認証情報を AES-256-GCM で暗号化するキー (32 byte hex) |
 | `ALLOWED_ORIGINS` | yes | CSRF 防御。write 系で許容する Origin (カンマ区切り)。dev: `http://localhost:5173` / prod: ダッシュボードを開く URL |
 | `MADO_ENV` | no | `development` / `test` / `production`。本番composeは`production`を固定し、安全でない認証設定を起動時に拒否 |
-| `AUTH_MODE` | no | `disabled` / `local` / `oidc` / `hybrid`。`MADO_ENV=production`では未設定・`disabled`を起動時に拒否 |
+| `AUTH_MODE` | yes | `local` / `oidc` / `hybrid` のいずれか。未設定・その他の値は全環境で起動時に拒否 |
 | `AUTH_COOKIE_SECURE` | no | HTTPS本番は`true`必須。`__Host-` session cookieを使う |
 | `OIDC_ISSUER_URL` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_REDIRECT_URI` | oidc/hybrid | OIDC discovery issuer、client、callback URL |
 | `OIDC_SCOPES` | no | `openid email profile offline_access`を推奨。`offline_access`はIdP側のscope mappingも必要。設定手順は[Authentik連携](docs/authentik.md) |
@@ -289,9 +289,9 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 
 ### 認証とLineageの初期化
 
-既存DBには`021_auth.sql`以降の未適用migrationを番号順に適用します。ただし`028`は旧APIが参照する列を削除するため、既存環境では**新APIを先に起動してから`028`を適用**してください（`021`〜`027`は従来どおりコード起動前に適用できます）。`029`は未使用の既知bootstrap credentialを削除し、OpenLineage API専用DB roleを追加します。新規導入では既定passwordを持つAdminを残さないため、Webを公開する前に次のoffline bootstrapを必ず実行します。
+既存DBには`021_auth.sql`以降の未適用migrationを番号順に適用します。ただし`028`は旧APIが参照する列を削除するため、既存環境では**新APIを先に起動してから`028`を適用**してください（`021`〜`027`はコード起動前に適用できます）。`029`は未使用の既知bootstrap credentialを削除し、OpenLineage API専用DB roleを追加します。新規導入では既定passwordを持つAdminを残さないため、Webを公開する前に次のoffline bootstrapを必ず実行します。
 
-初期Adminを明示的に再設定する場合は、対話的なbootstrapコマンドを使います（パスワードを引数やshell historyへ残しません）。
+初期Adminの作成・再設定には、対話的なbootstrapコマンドを使います（パスワードを引数やshell historyへ残しません）。
 
 ```bash
 docker compose -f compose.prod.yaml exec api-internal \
@@ -305,6 +305,8 @@ Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセ�
 連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
 `038_access_tokens.sql`と、内部API対応の`039_internal_api_tokens.sql`・`040_explicit_token_grants.sql`は、この順に新APIの起動前に適用します。040は既存トークンを機能別の権限と明示した接続へ変換し、トークンの値・IDは変えません（[docs/access-tokens.md](docs/access-tokens.md)）。
+
+`041_explicit_connection_settings_media_cache.sql`も新API・workerの起動前に適用します。接続の操作権限・走査・容量取得の設定を保存し、メタ情報または所有接続のない音声キャッシュを削除します。必要な解析は次回取得時に再実行されます。既存のmigrationは書き換えません。
 
 ### OSSリリース
 
@@ -343,7 +345,7 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 - **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へ用途別TLS proxyを接続します。Browser側TLS終端後に`AUTH_COOKIE_SECURE=true`と`AUTH_MODE=local|oidc|hybrid`を設定します。
 - MDXでは`compose.mdx.yaml`の`edge` nginxがbrowser用TLSを終端します。証明書取得・UFW・自動更新は[`docs/mdx-tls.md`](docs/mdx-tls.md)を参照してください。
 - Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。外部公開するhost TLS proxyは`127.0.0.1:8081`だけへ接続し、OpenLineage ingest以外を公開しません。公開入口には送信元IP 10 req/s（burst 50）・全体50 req/s（burst 200）のrate limit、送信元20・全体200のconnection limit、2 MiB body上限、timeout、`Cache-Control: no-store`を設定済みです。
-- productionは認証無効で起動できません。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
+- 開発・テスト環境も認証方式の指定が必須です。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
 - Browser sessionとアクセストークンを別の主体として扱い、API keyはhashだけを保存します。内部APIは機能別の権限と対象を毎回検証し、連携APIのscopeは互換性を維持します。
 - RBACと接続capabilityを重ね、監査ログには成功して実際に状態が変わった操作だけを残します。閲覧、認証拒否、失敗した操作、同じ値の再保存、既存ジョブへの合流は記録しません。変更操作は開始時にdurableなintentを置き、失敗・変更なしなら破棄します。password/token/OIDC code/OpenLineage event本体は保存しません。
 - sessionの利用時刻、login attempt、response cache、API keyの最終利用時刻など、認証・cache維持のための内部更新は操作監査の対象外です。

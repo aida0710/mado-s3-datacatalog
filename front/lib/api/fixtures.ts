@@ -7,7 +7,7 @@
 // 注意: `npx tsc --noEmit` はテストファイルを見ない。この種の型変更は
 // `npm run build` (tsc -b) で検証すること。
 
-import type { ConnectionPricing } from './types'
+import type { Connection, ConnectionPricing } from './types'
 
 export const STORAGE_CACHE_FIXTURE = {
   fetchedAt: '2026-10-07T00:00:00.000Z',
@@ -44,4 +44,15 @@ export const PRICING_FIXTURE: ConnectionPricing = {
     perObjectOverheadBytes: 0,
     storageRateSource: 'none',
   },
+}
+
+export const CONNECTION_SETTINGS_FIXTURE: Pick<Connection, 'scanPageSize' | 'capacityMetricsEnabled' | 'capacityTracking'> = {
+  scanPageSize: 1000,
+  capacityMetricsEnabled: true,
+  capacityTracking: { enabled: false, intervalSeconds: 86400 },
+}
+
+export const MEDIA_META_FIXTURE = {
+  codec: null, container: null, channels: null, bitsPerSample: null,
+  bitRate: null, sizeBytes: null, peakDb: null, rmsDb: null,
 }

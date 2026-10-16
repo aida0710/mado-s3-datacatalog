@@ -40,8 +40,6 @@ export async function deleteSettings(
   )
 }
 
-/** 権限トグルは cap.* キーの 'true' / 'false'。既定 (行なし) は有効なので、
- *  設定画面で明示的に入れた値が行として見えるよう true も書き込む。 */
 export async function upsertCapabilities(
   q: SettingsQueryable,
   connectionId: string,

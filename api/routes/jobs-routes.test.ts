@@ -1,10 +1,9 @@
-import { Hono } from 'hono'
+import { createTestAppWithPrincipal } from '../lib/test-fixtures/request-principal.js'
 import { describe, expect, it, vi } from 'vitest'
 import type { JobStore } from '../lib/jobs.js'
 import type { ConnectionConfig } from '../storage.js'
 import { mountJobRoutes } from './jobs.js'
-import { setRequestPrincipal } from '../lib/rbac.js'
-import type { RequestPrincipal } from '../lib/auth-types.js'
+import type { RequestPrincipal, AccessTokenPrincipal } from '../lib/auth-types.js'
 
 function job(id: number, connectionId = 'restricted1') {
   return {
@@ -32,7 +31,7 @@ function fixture(canAccess: boolean, { listEnabled = true }: { listEnabled?: boo
     get: vi.fn().mockResolvedValue(row),
     cancel: vi.fn().mockResolvedValue(true),
   } as unknown as JobStore
-  const app = new Hono()
+  const app = createTestAppWithPrincipal()
   mountJobRoutes(app, {
     store,
     canAccessConnection: vi.fn().mockResolvedValue(canAccess),
@@ -54,7 +53,7 @@ describe('job routeの接続ホワイトリスト', () => {
     expect(store.cancel).not.toHaveBeenCalled()
   })
 
-  it('許可されたjobは従来どおり参照できる', async () => {
+  it('許可されたjobを参照すると内容が返る', async () => {
     const { app } = fixture(true)
     const res = await app.request('/jobs/7')
     expect(res.status).toBe(200)
@@ -69,18 +68,24 @@ describe('job routeの接続ホワイトリスト', () => {
 })
 
 describe('接続を持たないjob', () => {
-  const token = { kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key',
+  const token: Omit<AccessTokenPrincipal, 'connections'> = { kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key',
     keyName: 'Operator', tokenName: 'Operator', expiresAt: null, scopes: [], namespaces: [],
-    permissions: ['jobs:read', 'jobs:operate'] } as const
+    permissions: ['jobs:read', 'jobs:operate'] }
 
   function connectionlessFixture(principal: RequestPrincipal | null) {
     const row = { ...job(8), kind: 'pricing.refresh', payload: {} }
     const store = { get: vi.fn().mockResolvedValue(row), cancel: vi.fn().mockResolvedValue(true) } as unknown as JobStore
-    const app = new Hono()
-    app.use('*', async (c, next) => { if (principal) setRequestPrincipal(c, principal); await next() })
+    const app = createTestAppWithPrincipal(principal)
     mountJobRoutes(app, { store, canAccessConnection: vi.fn().mockResolvedValue(true), getConnectionConfig: vi.fn() })
     return { app, store }
   }
+
+  it('認証主体がなければジョブを参照もキャンセルもできない', async () => {
+    const { app, store } = connectionlessFixture(null)
+    expect((await app.request('/jobs/8')).status).toBe(404)
+    expect((await app.request('/jobs/8/cancel', { method: 'POST' })).status).toBe(404)
+    expect(store.cancel).not.toHaveBeenCalled()
+  })
 
   it('接続を限定したトークンには見せず、キャンセルもさせない', async () => {
     const { app, store } = connectionlessFixture({ ...token, connections: ['selected'] })
@@ -89,8 +94,7 @@ describe('接続を持たないjob', () => {
     expect(store.cancel).not.toHaveBeenCalled()
   })
 
-  it('全接続のトークンと認証なしの構成では従来どおり参照できる', async () => {
+  it('全接続のトークンならジョブを参照できる', async () => {
     expect((await connectionlessFixture({ ...token, connections: ['*'] }).app.request('/jobs/8')).status).toBe(200)
-    expect((await connectionlessFixture(null).app.request('/jobs/8')).status).toBe(200)
   })
 })

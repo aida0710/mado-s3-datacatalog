@@ -1,9 +1,10 @@
 import { lazy, Suspense, type CSSProperties, type ReactNode } from 'react'
-import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { Route, Routes, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import StoragePage from './pages/StoragePage'
 import StorageLanding from './pages/StorageLanding'
 import SettingsPage from './pages/SettingsPage'
+import NotFoundPage from './pages/NotFoundPage'
 import { PlayerDeckProvider, usePlayerDeck } from './lib/playerDeck'
 import { PinnedPreviewsProvider, usePinnedPreviews } from './lib/pinnedPreviews'
 import { useNavigation } from './lib/useNavigation'
@@ -24,11 +25,6 @@ const LineageRegisterPage = lazy(() => import('./pages/LineageRegisterPage'))
 function StoragePageWithKey() {
   const { connectionId } = useParams<{ connectionId: string }>()
   return <StoragePage key={connectionId} connectionId={connectionId!} />
-}
-
-function LegacyAccessRedirect() {
-  const tail = useParams()['*'] || 'users'
-  return <Navigate to={`/settings/access/${tail}`} replace />
 }
 
 // BottomDock (同期プレイヤー + ピン留め) は画面下部に fixed でドックされるため、
@@ -76,7 +72,7 @@ export default function App() {
                     <Route path="/storage/:connectionId/*" element={<StoragePageWithKey />} />
                     <Route path="/lineage"            element={<LineagePage />} />
                     <Route path="/lineage/register"   element={<LineageRegisterPage />} />
-                    <Route path="/access/*"           element={<LegacyAccessRedirect />} />
+                    <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>
               </MainContent>

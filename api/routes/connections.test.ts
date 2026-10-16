@@ -4,6 +4,7 @@ import { createPools, closePools } from '../db.js'
 import { createCrypto } from '../crypto.js'
 import { mountConnectionsRoutes } from './connections.js'
 import { requireConnectionAccess } from '../lib/connection-access.js'
+import { createTestAppWithPrincipal } from '../lib/test-fixtures/request-principal.js'
 import { setSessionPrincipal } from '../lib/rbac.js'
 import type { SessionPrincipal } from '../lib/auth-types.js'
 
@@ -17,7 +18,7 @@ const crypto = createCrypto(TEST_KEY)
 
 const invalidate = vi.fn<(id: string) => void>()
 
-const app = new Hono()
+const app = createTestAppWithPrincipal()
 mountConnectionsRoutes(app, { pools, crypto, invalidate })
 
 const ALLOWED_USER_ID = '11111111-1111-4111-8111-111111111111'
@@ -695,18 +696,17 @@ describe('接続ごとの権限 (capabilities)', () => {
   })
 })
 
-describe('connection_settings に行が無い接続 (マイグレーション前からある接続)', () => {
-  it('権限行が 1 つも無ければ全権限が有効として返る', async () => {
-    // 013 適用前から居る接続を再現する — connection_settings には何も入れない。
-    await pools.rw.query(
-      `INSERT INTO storage_connections
-         (id, name, endpoint, region, access_key_id_enc, secret_access_key_enc, access_key_id_masked)
-       VALUES ('legacy0001', 'legacy', 'https://s3.example.com/', 'auto', 'v1:x', 'v1:y', 'AKIA…0000')`,
+describe('接続設定の保存', () => {
+  it('接続を作成すると全権限・走査・容量取得の設定が保存される', async () => {
+    const connection = await createOne()
+    const settings = await pools.ro.query<{ key: string; value: string }>(
+      'SELECT key, value FROM connection_settings WHERE connection_id = $1 ORDER BY key', [connection.id],
     )
-    const list = (await (await app.request('/connections')).json()) as MaskedConnection[]
-    const legacy = list.find(c => c.id === 'legacy0001')
-    expect(legacy).toBeDefined()
-    expect(Object.values(legacy!.capabilities).every(Boolean)).toBe(true)
+    expect(Object.fromEntries(settings.rows.map(row => [row.key, row.value]))).toEqual({
+      'cap.list': 'true', 'cap.preview': 'true', 'cap.download': 'true', 'cap.archive': 'true',
+      'cap.audioInfo': 'true', 'cap.audioSpectrogram': 'true', 'cap.readmeRead': 'true', 'cap.readmeWrite': 'true',
+      scan_enabled: 'true', capacity_metrics_enabled: 'true',
+    })
   })
 
   it('権限を落とすと connection_settings に cap.* の行として入る', async () => {

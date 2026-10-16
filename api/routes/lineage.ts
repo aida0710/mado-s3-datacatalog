@@ -40,6 +40,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
     return policy ? createNamespaceLineageService(deps.service, policy) : deps.service
   }
   app.get('/lineage/graph', async c => {
+    if (c.req.query('kind') !== undefined) return c.json({ error: 'kind is not supported; use rootKind' }, 400)
     const mode = c.req.query('mode') ?? 'logical'
     const depth = boundedInt(c.req.query('depth'), { fallback: 3, min: 1, max: 10 })
     try {
@@ -59,12 +60,11 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
       }
       if (mode !== 'logical') return c.json({ error: 'invalid graph mode' }, 400)
 
-      // rootKindが公開契約。kindは実装初期のclientとの後方互換。
-      const kind = c.req.query('rootKind') ?? c.req.query('kind')
+      const kind = c.req.query('rootKind')
       const namespace = Identity.safeParse(c.req.query('namespace'))
       const name = Identity.safeParse(c.req.query('name'))
       if (kind !== 'dataset' && kind !== 'job') {
-        return c.json({ error: 'kind must be dataset or job' }, 400)
+        return c.json({ error: 'rootKind must be dataset or job' }, 400)
       }
       if (!namespace.success || !name.success) {
         return c.json({ error: 'namespace and name are required' }, 400)

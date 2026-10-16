@@ -19,6 +19,7 @@ import { auditActivity } from '../lib/audit-activity.js'
 import { mountNotesRoutes } from '../routes/notes.js'
 import { mountConnectionsRoutes } from '../routes/connections.js'
 import { createCrypto } from '../crypto.js'
+import { CAPABILITY_KEYS, capabilitySettingKey } from '../storage.js'
 
 const VERIFICATION_DATABASE = 'dashboard_access_tokens_verify'
 // Separate from the application's default ports so verification can run beside development.
@@ -42,10 +43,15 @@ try {
   const audit = createAuditWriter(pools.rw)
   const fixtureCrypto = createCrypto('a'.repeat(64))
   for (const [id, name] of [['speech0001', 'Speech Storage'], ['backup0001', 'Backup Storage']]) {
-    await pools.rw.query(`INSERT INTO storage_connections
-      (id,name,endpoint,access_key_id_enc,secret_access_key_enc,access_key_id_masked)
-      VALUES ($1,$2,'https://s3.example.test',$3,$4,'fixture…key')`,
-    [id, name, fixtureCrypto.encrypt('fixture-access-key'), fixtureCrypto.encrypt('fixture-secret')])
+    await pools.rw.query(`WITH connection AS (
+      INSERT INTO storage_connections
+        (id,name,endpoint,access_key_id_enc,secret_access_key_enc,access_key_id_masked)
+      VALUES ($1,$2,'https://s3.example.test',$3,$4,'fixture…key') RETURNING id
+    )
+    INSERT INTO connection_settings (connection_id, key, value)
+      SELECT connection.id, key, 'true' FROM connection CROSS JOIN unnest($5::text[]) AS key`,
+    [id, name, fixtureCrypto.encrypt('fixture-access-key'), fixtureCrypto.encrypt('fixture-secret'),
+      [...CAPABILITY_KEYS.map(capabilitySettingKey), 'scan_enabled', 'capacity_metrics_enabled']])
   }
   await store.createToken({ name: 'ML Tracking', description: '音声モデルの学習とデータセット参照',
     permissions: ['lineage:read', 'lineage:send'], namespaces: ['speech'], connections: [], expiresAt: null, createdBy: user.id })

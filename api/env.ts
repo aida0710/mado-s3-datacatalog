@@ -55,9 +55,7 @@ const baseSchema = z.object({
   MEDIA_WORKER_PORT: z.coerce.number().default(3100),
   MEDIA_WORKER_URL: z.string().default('http://media-worker:3100'),
 
-  // Browser auth。disabledは既存LAN運用から段階移行するための明示モード。
-  // Internetへ公開するときはlocal/oidc/hybridのいずれかとHTTPSを必須にする。
-  AUTH_MODE: z.enum(['disabled', 'local', 'oidc', 'hybrid']).default('disabled'),
+  AUTH_MODE: z.enum(['local', 'oidc', 'hybrid']),
   AUTH_COOKIE_SECURE: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
@@ -91,12 +89,6 @@ const baseSchema = z.object({
 })
 
 const schema = baseSchema.superRefine((env, ctx) => {
-  if (env.MADO_ENV === 'production' && env.AUTH_MODE === 'disabled') {
-    ctx.addIssue({
-      code: 'custom', path: ['AUTH_MODE'],
-      message: 'AUTH_MODE=disabled is forbidden when MADO_ENV=production',
-    })
-  }
   if ((env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid') && env.OIDC_ALLOWED_GROUPS.length === 0) {
     ctx.addIssue({
       code: 'custom', path: ['OIDC_ALLOWED_GROUPS'],

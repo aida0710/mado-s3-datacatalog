@@ -42,6 +42,7 @@ services:
       - .env
     environment:
       PORT: 3000
+      AUTH_MODE: "${AUTH_MODE:?Set AUTH_MODE to local, oidc, or hybrid}"
     volumes:
       - ./api:/app
       - /app/node_modules

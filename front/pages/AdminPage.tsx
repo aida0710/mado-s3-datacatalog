@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent, type MouseEvent } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
+import NotFoundPage from './NotFoundPage'
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 import { SecretNotice } from '../components/SecretNotice'
@@ -685,9 +686,8 @@ export default function AdminPage() {
         <Route index element={<Navigate to={defaultPath} replace />} />
         <Route path="users" element={canUsers ? <UsersPage /> : <Navigate to={defaultPath} replace />} />
         <Route path="tokens" element={canTokens ? <AccessTokensPage /> : <Navigate to={defaultPath} replace />} />
-        <Route path="service-accounts" element={<Navigate to="../tokens" replace />} />
         <Route path="audit" element={canAudit ? <AuditPageView /> : <Navigate to={defaultPath} replace />} />
-        <Route path="*" element={<Navigate to={defaultPath} replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>
   )

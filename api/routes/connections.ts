@@ -49,7 +49,7 @@ const endpointSchema = z.string().url().max(512).refine(isAllowedEndpoint, {
 const ListObjectsVersionEnum = z.enum(['v1', 'v2'])
 
 // 接続ごとの権限 (storage.ts の Capabilities と 1:1)。
-// 既定はすべて true — 未指定で作った接続は今までどおり全機能が使える。
+// 新規接続はすべての操作を有効にする。
 // 落とすのは「Deep Archive なのでダウンロードさせたくない」等の例外運用のとき。
 const CapabilitiesBody = z.object({
   list:             z.boolean().default(true),
@@ -290,8 +290,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       return c.json({ error: 'README の編集には読み込みが必要です' }, 400)
     }
     const id = nanoid(10)
-    // 接続行と権限は別テーブルなので 1 トランザクションで書く。権限の書き込みだけ
-    // 失敗して「全権限が既定 (= 全部有効)」の接続が残る fail-open を避ける。
+    // 設定だけ欠けた接続が見えないよう、接続行と設定をまとめて確定する。
     const client = await deps.pools.rw.connect()
     try {
       await client.query('BEGIN')
@@ -315,6 +314,10 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
         return c.json({ error: 'ホワイトリストに存在しないユーザーが含まれています' }, 400)
       }
       await upsertCapabilities(client, id, capabilities)
+      await upsertSettings(client, id, [
+        ['scan_enabled', 'true'],
+        ['capacity_metrics_enabled', 'true'],
+      ])
       await replaceAllowedUsers(
         client, id, visibility.allowedUserIds, principalUserId(getRequestPrincipal(c)),
       )
