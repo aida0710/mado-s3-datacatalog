@@ -49,7 +49,7 @@ jobs:
 
   api:
     name: API
-    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       TZ: Asia/Tokyo
@@ -85,7 +85,7 @@ jobs:
 
   front:
     name: Front
-    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       TZ: Asia/Tokyo
@@ -108,7 +108,7 @@ jobs:
 
   images:
     name: Image (${{ matrix.id }})
-    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false

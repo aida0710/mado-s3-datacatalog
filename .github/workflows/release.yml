@@ -74,7 +74,7 @@ jobs:
   images:
     name: Build image (${{ matrix.id }})
     needs: [verify-source]
-    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     environment: release
     timeout-minutes: 45
     permissions:
@@ -99,7 +99,6 @@ jobs:
             context: .
             file: nginx/Dockerfile
     steps:
-      - *setup-gh
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.verify-source.outputs.release-sha }}
