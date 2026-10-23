@@ -16,7 +16,7 @@ permissions:
 jobs:
   release-contract:
     name: Release contract
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,7 +49,7 @@ jobs:
 
   api:
     name: API
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
     timeout-minutes: 20
     env:
       TZ: Asia/Tokyo
@@ -85,7 +85,7 @@ jobs:
 
   front:
     name: Front
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
     timeout-minutes: 15
     env:
       TZ: Asia/Tokyo
@@ -108,7 +108,7 @@ jobs:
 
   images:
     name: Image (${{ matrix.id }})
-    runs-on: ubuntu-24.04
+    runs-on: ${{ (github.actor == github.repository_owner && github.triggering_actor == github.repository_owner) && 'r540-linux' || 'ubuntu-24.04' }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
