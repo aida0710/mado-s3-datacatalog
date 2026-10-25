@@ -87,6 +87,8 @@ export const API_ERROR_CODES = [
   'marquez_unavailable',
   // Prometheus のメトリクス
   'metrics_unavailable',
+  // 稼働確認 (GET /healthz)
+  'database_unavailable',
   // 想定外の失敗。原因はサーバーのログにだけ書く。
   'internal_error',
 ] as const
