@@ -7,6 +7,7 @@ import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.j
 import { createRegistryClient } from './lib/registry-client.js'
 import { mountOpenLineageRoutes } from './routes/openlineage.js'
 import { requestLogger } from './lib/request-logger.js'
+import { mountHealthRoute } from './lib/health-route.js'
 import { apiError } from './lib/api-error.js'
 
 const env = loadLineageEnv()
@@ -21,7 +22,7 @@ const registry = createRegistryClient({
 
 const app = new Hono()
 app.use('*', requestLogger())
-app.get('/healthz', c => c.text('ok'))
+mountHealthRoute(app, pools.ro)
 
 const api = new Hono()
 mountOpenLineageRoutes(api, {

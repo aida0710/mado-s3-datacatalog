@@ -19,6 +19,7 @@ import { createPricingStore } from './lib/pricing-store.js'
 import { createPricingRefreshHandler } from './lib/pricing-refresh-handler.js'
 import { PRICING_REFRESH_KIND } from './routes/pricing.js'
 import { requestLogger } from './lib/request-logger.js'
+import { mountHealthRoute } from './lib/health-route.js'
 import { createCapacityStore } from './lib/capacity-store.js'
 import { createCapacityScheduler } from './lib/capacity-scheduler.js'
 import { RequestQueueFullError } from './lib/shared-requests.js'
@@ -62,7 +63,7 @@ const jobRunner = createJobRunner({
 
 const app = new Hono()
 app.use('*', requestLogger())
-app.get('/healthz', c => c.text('ok'))
+mountHealthRoute(app, pools.ro)
 
 // 内部POSTでも無制限のJSONや異なる解析の待ち行列を作らせない。
 const MAX_ANALYZE_BODY_BYTES = 64 * 1024
