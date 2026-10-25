@@ -7,7 +7,7 @@ import { translateInternalPermission } from '../i18n/translateInternalPermission
 import type { AccessToken } from '../types/accessTokens'
 
 const statusLabels = { active: 'accessTokens.active', disabled: 'accessTokens.disabled', expired: 'accessTokens.expired' } as const
-const statusClasses = { active: 'status-finished', disabled: 'status-queued', expired: 'status-attention' }
+const statusClasses = { active: 'status-success', disabled: 'status-neutral', expired: 'status-attention' }
 
 export function AccessTokenRow({ token, busy, onEdit, onRegenerate, onDelete, onToggle }: {
   token: AccessToken
@@ -47,11 +47,11 @@ export function AccessTokenRow({ token, busy, onEdit, onRegenerate, onDelete, on
         <span className={`status-badge ${statusClasses[token.status]}`}>{translate(statusLabels[token.status])}</span>
         <details ref={actions} className="access-token-actions">
           <summary aria-label={translate('accessTokens.actionsFor', { value0: token.name })}><MoreHorizontal size={18} aria-hidden="true" /></summary>
-          <div className="popover access-token-menu">
-            <button type="button" disabled={busy} onClick={() => selectAction(onEdit)}>{translate('common.edit')}</button>
-            <button type="button" disabled={busy} onClick={() => selectAction(onRegenerate)}>{translate('accessTokens.regenerate')}</button>
-            <button type="button" disabled={busy} onClick={() => selectAction(onToggle)}>{translate(token.status === 'disabled' ? 'accessTokens.enable' : 'accessTokens.disable')}</button>
-            <button type="button" className="danger" disabled={busy} onClick={() => selectAction(onDelete)}>{translate('common.delete')}</button>
+          <div className="popover menu access-token-menu">
+            <button type="button" className="menu-item" disabled={busy} onClick={() => selectAction(onEdit)}>{translate('common.edit')}</button>
+            <button type="button" className="menu-item" disabled={busy} onClick={() => selectAction(onRegenerate)}>{translate('accessTokens.regenerate')}</button>
+            <button type="button" className="menu-item" disabled={busy} onClick={() => selectAction(onToggle)}>{translate(token.status === 'disabled' ? 'accessTokens.enable' : 'accessTokens.disable')}</button>
+            <button type="button" className="menu-item danger" disabled={busy} onClick={() => selectAction(onDelete)}>{translate('common.delete')}</button>
           </div>
         </details>
       </div>

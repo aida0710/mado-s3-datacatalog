@@ -1,48 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getLocale, initialLocale, initializeLocale, setLocale } from './locale'
+import { afterEach, describe, expect, it } from 'vitest'
+import { getLocale, setLocale } from './locale'
 
 afterEach(() => {
-  vi.restoreAllMocks()
   localStorage.removeItem('mado.locale')
   setLocale('ja')
 })
 
-describe('language preference', () => {
-  it('a saved choice overrides the browser language', () => {
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US'])
-    localStorage.setItem('mado.locale', 'ja')
-    expect(initialLocale()).toBe('ja')
-  })
-
-  it('uses the first supported browser language when the saved value is invalid', () => {
-    localStorage.setItem('mado.locale', 'invalid')
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['fr-FR', 'ja-JP', 'en-US'])
-    expect(initialLocale()).toBe('ja')
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-GB', 'ja-JP'])
-    expect(initialLocale()).toBe('en')
-  })
-
-  it('falls back to English for unsupported browser languages', () => {
-    localStorage.removeItem('mado.locale')
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['fr-FR'])
-    expect(initialLocale()).toBe('en')
-  })
-
-  it('falls back to English when the browser reports no language', () => {
-    localStorage.removeItem('mado.locale')
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue([])
-    vi.spyOn(navigator, 'language', 'get').mockReturnValue('')
-    expect(initialLocale()).toBe('en')
-  })
-
-  it('still switches language when browser storage is unavailable', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Unavailable') })
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Unavailable') })
-    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US'])
-    expect(initialLocale()).toBe('en')
+// 言語の決め方 (保存した言語 → ブラウザ → 英語) はデザインシステムが確かめる。ここでは保存キーだけを見る。
+describe('表示言語', () => {
+  it('選んだ言語を mado.locale に保存し、<html lang> に書く', () => {
     setLocale('en')
-    initializeLocale()
     expect(getLocale()).toBe('en')
+    expect(localStorage.getItem('mado.locale')).toBe('en')
     expect(document.documentElement.lang).toBe('en')
   })
 })

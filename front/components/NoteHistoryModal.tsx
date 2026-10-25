@@ -20,7 +20,6 @@ export function NoteHistoryModal({ slug, currentBody, onClose }: Props) {
   return (
     <HistoryModal
       title={translate('noteHistoryModal.teamNoteHistory')}
-      titleId="note-history-title"
       subtitle={slug}
       currentBody={currentBody}
       onClose={onClose}

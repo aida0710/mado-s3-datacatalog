@@ -10,12 +10,12 @@
 // 走査中と結果で骨格 (.scan-figures) を保つ。完了時に「走査済み」が
 // 「オブジェクト / 合計サイズ」へ置き換わるだけで、レイアウトが飛ばない。
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import { ScanResult as ScanResultSchema, type ScanResult } from '../../lib/api/types'
 import { fmtCacheAge, fmtCount, fmtSize } from '../../lib/format'
-import { Dialog } from '../Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { EstimatePanel } from './EstimatePanel'
 import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
@@ -72,7 +72,6 @@ function Breakdown({ title, rows }: {
 
 export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: Props) {
   useLocale()
-  const titleId = useId()
   const [result, setResult] = useState<ScanResult | null>(null)
   const [scannedAt, setScannedAt] = useState<string | null>(null)
   const [jobId, setJobId] = useState<number | null>(null)
@@ -177,11 +176,13 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
 
   return (
     <Dialog
-      titleId={titleId}
       title={translate('scanModal.directorySummary')}
       subtitle={`${bucket} / ${prefix || translate('scanModal.bucketRoot')}`}
       onClose={onClose}
+      closeLabel={translate('common.close')}
       size="wide"
+      // 集計を見るだけのダイアログなので、背景のクリックでも閉じる。
+      closesOnBackdropClick
       footer={footer}
     >
       <div className="dialog-body">
@@ -265,7 +266,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             {!running && result && (
               <>
                 {result.partial && (
-                  <p className="notice storage-warning">
+                  <p className="notice warning">
                     {translate('scanModal.anErrorOccurredDuringTheScanTheSummary')}</p>
                 )}
                 <Breakdown

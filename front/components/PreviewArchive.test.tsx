@@ -30,11 +30,11 @@ vi.mock('../lib/api/client', () => ({
     readHead: vi.fn(async () => new TextEncoder().encode('entry body')),
   },
 }))
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 
 afterEach(() => {
   vi.clearAllMocks()
@@ -126,14 +126,14 @@ describe('PreviewArchive - 行の ⋯ アクションメニュー', () => {
 
     await userEvent.click(screen.getByRole('menuitem', { name: /Web URL をコピー/ }))
     // 親ディレクトリのリスト + ?preview=<tar> + &entry=<エントリ> の共有 URL。
-    expect(copyToClipboard).toHaveBeenCalledWith(
+    expect(copyText).toHaveBeenCalledWith(
       `${window.location.origin}/storage/c/b/rec/?preview=rec%2Fa.tar&entry=track.mp3`,
     )
 
     await openMenuFor('track.mp3')
     await userEvent.click(screen.getByRole('menuitem', { name: /生データ URL をコピー/ }))
     // 相対パスのままコピーするとホストが分からず、受け取った側が開けない。
-    expect(copyToClipboard).toHaveBeenLastCalledWith(
+    expect(copyText).toHaveBeenLastCalledWith(
       `${window.location.origin}/api/internal/storage/c/preview/tar-entry?bucket=b&key=a.tar&entry=x`,
     )
   })
@@ -206,7 +206,7 @@ describe('PreviewArchive - URL 駆動のエントリ開閉 (?entry=)', () => {
 
     onEntryChange.mockClear()
     renderUrlDriven({ initialEntry: 'blob.bin', onEntryChange })
-    await userEvent.click(await screen.findByRole('button', { name: 'Close entry' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'エントリを閉じる' }))
     expect(onEntryChange).toHaveBeenCalledWith(null)
   })
 

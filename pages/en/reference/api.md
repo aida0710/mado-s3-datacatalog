@@ -16,7 +16,7 @@ Select **Read** and **Send** in the DataLineage row of the feature permission li
 
 <Screenshot src="/screenshots/en/access-token-create.png" alt="Token creation with a searchable namespace checklist" caption="Filter the list and check the namespaces to allow. Selected names are retained across searches." />
 
-The value is shown only once, when issued. Save it in the integration’s secret manager. An expiration date is optional.
+The value is shown only once, when issued. Save it in the integration’s secret manager. **Expires at** defaults to 90 days. You can choose 7, 30, 90, or 365 days, no expiry, a **Custom duration** in minutes, hours, or days, or **Choose from calendar**.
 
 | Feature / action | Purpose | Endpoint |
 | --- | --- | --- |

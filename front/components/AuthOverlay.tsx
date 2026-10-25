@@ -13,27 +13,35 @@ const keepKeyInOverlay = (event: KeyboardEvent) => event.stopPropagation()
 
 /**
  * session が切れたとき、開いていた画面の上にログイン画面（または初回のパスワード変更画面）を
- * 重ねる。背後の画面は AuthGate が inert にして残す。入り直すまで閉じられないので、Dialog と
- * 違って Escape や背景のクリックでは閉じない。
+ * 重ねる。背後の画面は AuthGate が inert にして残す。入り直すまで閉じられないので、Escape でも
+ * 閉じない。
+ *
+ * モーダルの <dialog> で開き、トップレイヤーに出す。背後の画面で開いていたダイアログもトップ
+ * レイヤーにあるので、ただの重ねた要素ではそれらの下に隠れてしまう。後から開いたこちらが一番上になる。
  */
 export function AuthOverlay({ titleId, children }: Props) {
-  const dialogRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   // 背後の画面は inert で focus を受け取れないので、focus をこちらへ移す。見えた時点で
-  // focus が中にあるよう、描画と同じタイミング（layout effect）で移す。
-  useLayoutEffect(() => { dialogRef.current?.focus() }, [])
+  // focus が中にあるよう、描画と同じタイミング（layout effect）で開いて移す。
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (!dialog.open) dialog.showModal()
+    dialog.focus()
+    return () => dialog.close()
+  }, [])
 
   return (
-    <div
+    <dialog
       ref={dialogRef}
       className="auth-overlay"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
+      onCancel={event => event.preventDefault()}
       onKeyDown={keepKeyInOverlay}
     >
       {children}
-    </div>
+    </dialog>
   )
 }

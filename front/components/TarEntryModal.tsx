@@ -1,20 +1,18 @@
-import { useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
+import type { ReactNode } from 'react'
 import { Download, Link, Pin } from 'lucide-react'
+import { Dialog, useCodeLanguage } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { classifyEntry } from '../lib/api/mime'
 import { fmtSize, prettyPrintJson } from '../lib/format'
 import { absoluteUrl, tarEntryWebUrl } from '../lib/route'
-import { copyToClipboard } from '../lib/clipboard'
 import { usePinnedPreviews } from '../lib/pinnedPreviews'
 import { TEXT_HEAD_BYTES } from '../lib/textSniff'
-import { useCodeLanguage } from '../lib/useCodeLanguage'
+import { CODE_LANGUAGE_STORAGE_KEY } from '../lib/codeLanguage'
 import { useSniffedText } from '../lib/useSniffedText'
 import { CodeFormatSelect, CodeView } from './CodeView'
 import { CopyMenu, type MenuItem } from './CopyMenu'
-import { Dialog } from './Dialog'
 import { PreviewAudio } from './PreviewAudio'
-import { CopyContentButton } from './PreviewText'
+import { CopyButton } from './CopyButton'
 import { PreviewVideo } from './PreviewVideo'
 import { UnsupportedPreview } from './UnsupportedPreview'
 import { useLocale } from '../i18n/useLocale'
@@ -34,9 +32,8 @@ interface Props {
 /**
  * tar の中の 1 エントリのプレビュー。プレビューのドロワーやピン留めの上に重ねるダイアログ。
  * 見出しはエントリ名、その下にどのアーカイブの中か (とサイズ) を出す。
- *
- * document.body に portal する。ドロワー (sticky) や画面下のドック (fixed) の中に置くと
- * それらの重なりの中に閉じ込められ、ドックがダイアログの上に出てしまうため。
+ * モーダルの <dialog> はトップレイヤーに出るので、ドロワー (sticky) や画面下のドック (fixed) の
+ * 中に置いても、それらの重なりに隠れない。
  */
 export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose }: Props) {
   useLocale()
@@ -82,9 +79,8 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
     </>
   )
 
-  return createPortal(
+  return (
     <Dialog
-      titleId="tar-entry-title"
       title={entry.name}
       subtitle={
         <>
@@ -93,9 +89,10 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
         </>
       }
       onClose={onClose}
-      closeLabel="Close entry"
+      closeLabel={translate('tarEntryModal.closeEntry')}
       size="extra-wide"
-      nested
+      // プレビューを見るだけのダイアログなので、背景のクリックでも閉じる。
+      closesOnBackdropClick
     >
       <div className="dialog-body preview-stack">
         {/* 画像 / 音声 / 動画以外はすべてテキストとして開こうとする。
@@ -127,8 +124,7 @@ export function TarEntryModal({ connectionId, bucket, archiveKey, entry, onClose
           </>
         )}
       </div>
-    </Dialog>,
-    document.body,
+    </Dialog>
   )
 }
 
@@ -164,17 +160,11 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
 /** 読み込んだテキスト。形式を推測して色を付け、帯の選択欄で形式を選び直せる。 */
 function LoadedText({ name, text, actions }: { name: string; text: string; actions: ReactNode }) {
   useLocale()
-  const [copied, setCopied] = useState<boolean | null>(null)
-  const code = useCodeLanguage(name, text)
+  const code = useCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName: name, text })
 
   // 末尾の改行で行数が余分に増えないようにする。
   const trimmed = text.endsWith('\n') ? text.slice(0, -1) : text
   const lines = trimmed.length === 0 ? 0 : trimmed.split('\n').length
-
-  const handleCopy = async () => {
-    setCopied(await copyToClipboard(text))
-    setTimeout(() => setCopied(null), 1500)
-  }
 
   return (
     <>
@@ -186,7 +176,7 @@ function LoadedText({ name, text, actions }: { name: string; text: string; actio
           </>
         }
       >
-        <CopyContentButton copied={copied} onCopy={handleCopy} />
+        <CopyButton value={text} label={translate('previewText.copyContent')} />
         {actions}
       </EntryToolbar>
       <CodeView text={text} language={code.language} className="preview-code" />

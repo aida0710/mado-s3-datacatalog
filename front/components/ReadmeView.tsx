@@ -1,18 +1,16 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize from 'rehype-sanitize'
 import { ChevronDown, ChevronUp, History, Pencil, Plus } from 'lucide-react'
+import { ErrorNotice } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import type { z } from 'zod'
 import { Readme } from '../lib/api/types'
 import { encPath } from '../lib/route'
 import { CacheBanner } from './storage/CacheBanner'
-import { LoadFailedNotice } from './LoadFailedNotice'
+import { MarkdownView } from './MarkdownView'
 import { useCapabilities } from '../lib/useCapabilities'
-import { failedLoad, LOADING, type LoadState } from '../lib/loadState'
 import { createRevalidationReceiver } from '../lib/revalidationReceiver'
+import { loadFailedMessage } from '../i18n/loadFailedMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -23,6 +21,15 @@ const ReadmeHistoryModal = lazy(() =>
 )
 
 type ReadmeData = z.infer<typeof Readme>
+
+// 取得の状態。期限切れのキャッシュを出しながら裏で取り直す (stale-while-revalidate) ので、
+// デザインシステムの useQuery ではなく自分で持つ。
+type ReadmeState =
+  | { status: 'loading' }
+  | { status: 'loaded'; value: ReadmeData }
+  | { status: 'failed'; error: unknown }
+
+const LOADING: ReadmeState = { status: 'loading' }
 
 interface Props {
   connectionId: string
@@ -35,7 +42,7 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
   const caps = useCapabilities(connectionId)
   // 取得の失敗は「README なし」と分けて持つ。失敗を「なし」と見せると「作成」から
   // 書き始めて、既存の README を保存で上書きしてしまうため。
-  const [readmeState, setReadmeState] = useState<LoadState<ReadmeData>>(LOADING)
+  const [readmeState, setReadmeState] = useState<ReadmeState>(LOADING)
   // 期限切れキャッシュを表示したまま裏で再取得中か (stale-while-revalidate)。
   const [revalidating, setRevalidating] = useState(false)
   // 遅い応答が prefix 切替をまたいで届いたときに別ディレクトリの README を
@@ -75,7 +82,7 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
       },
     })
       .then(receiver.receiveInitial)
-      .catch((error: unknown) => { if (current()) setReadmeState(failedLoad(error)) })
+      .catch((error: unknown) => { if (current()) setReadmeState({ status: 'failed', error }) })
   }, [connectionId, bucket, prefix, caps.readmeRead])
 
   const forceRefresh = useCallback(() => {
@@ -117,6 +124,9 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
   const editHref = `/storage/${encodeURIComponent(connectionId)}/edit-readme/${encodeURIComponent(bucket)}/${encPath(prefix)}`
 
   const editLabel = data?.exists ? translate('common.edit') : translate('common.create')
+  // is-collapsed: max-height でクリップ (高さ判定に必須なので未展開なら常時付与)。
+  // is-faded: 下端のもや。実際にあふれている時だけ — 短い README には出さない。
+  const collapseClass = expanded ? undefined : needsExpand ? 'is-collapsed is-faded' : 'is-collapsed'
 
   return (
     <section className="readme-panel" aria-labelledby={headingId}>
@@ -159,22 +169,14 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
       </div>
       <div className="readme-panel__body">
         {readmeState.status === 'failed' ? (
-          <LoadFailedNotice subject="README" reason={readmeState.reason} onRetry={retryAfterFailure} />
+          <ErrorNotice
+            message={loadFailedMessage({ subject: 'README', error: readmeState.error })}
+            retry={retryAfterFailure}
+            retryLabel={translate('common.retry')}
+          />
         ) : data?.exists ? (
           <>
-            <div
-              ref={bodyRef}
-              // is-collapsed: max-height でクリップ (高さ判定に必須なので未展開なら常時付与)。
-              // is-faded: 下端のもや。実際にあふれている時だけ — 短い README には出さない。
-              className={`markdown-body${expanded ? '' : ' is-collapsed'}${needsExpand && !expanded ? ' is-faded' : ''}`}
-            >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize]}
-              >
-                {data.body}
-              </ReactMarkdown>
-            </div>
+            <MarkdownView ref={bodyRef} source={data.body} className={collapseClass} />
             {(needsExpand || expanded) && (
               <button
                 type="button"

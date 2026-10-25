@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { Copy } from 'lucide-react'
+import { CopyButton } from './CopyButton'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
-/** Keep one-time credentials in memory only; closing this notice removes the value. */
+/** 一度だけ表示する認証情報。値はメモリにだけ持ち、この通知を閉じると消える。 */
 export function SecretNotice({ secret, note, onClose }: {
   secret: { label: string; value: string }
   note: string
@@ -17,9 +17,7 @@ export function SecretNotice({ secret, note, onClose }: {
       <strong>{secret.label} — {note}</strong>
       <code>{secret.value}</code>
       <span className="secret-notice__actions">
-        <button type="button" className="button small" onClick={() => void navigator.clipboard.writeText(secret.value)}>
-          <Copy size={14} aria-hidden="true" />{translate('adminPage.copy')}
-        </button>
+        <CopyButton value={secret.value} label={translate('adminPage.copy')} />
         <button type="button" className="button small" onClick={onClose}>{translate('common.close')}</button>
       </span>
     </div>

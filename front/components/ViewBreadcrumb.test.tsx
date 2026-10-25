@@ -5,11 +5,11 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Connection } from '../lib/api/types'
 import { ConnectionContext } from '../lib/connectionContext'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 import { ViewBreadcrumb } from './ViewBreadcrumb'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
 
-vi.mock('../lib/clipboard', () => ({ copyToClipboard: vi.fn(async () => true) }))
+vi.mock('@mado/design-system/clipboard', () => ({ copyText: vi.fn(async () => true) }))
 
 afterEach(() => vi.clearAllMocks())
 
@@ -56,7 +56,7 @@ describe('ViewBreadcrumb', () => {
     expect(screen.queryByRole('menuitem', { name: /S3 URL/ })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('menuitem', { name: /Web URL をコピー/ }))
-    expect(copyToClipboard)
+    expect(copyText)
       .toHaveBeenCalledWith(`${window.location.origin}/storage/c1/?view=tags`)
   })
 

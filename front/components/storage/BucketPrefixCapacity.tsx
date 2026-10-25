@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react'
 import { api } from '../../lib/api/client'
 import type { CapacityPoint, CapacityPrefixSummary } from '../../lib/api/types'
-import { fmtCapacityBytes, fmtCapacityDelta, fmtCount } from '../../lib/format'
+import { fmtSize, fmtCapacityDelta, fmtCount } from '../../lib/format'
 import { storageDirectoryHref } from '../../lib/route'
 import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
@@ -90,7 +90,7 @@ export function BucketPrefixCapacity({
             {hiddenCount === 0 && restBytes > 0 && (
               <tr>
                 <td className="muted capacity-rest-name">{translate('bucketPrefixCapacity.rootFilesAndOtherDirectories')}</td>
-                <td className="numeric mono nowrap">{fmtCapacityBytes(restBytes)}</td>
+                <td className="numeric mono nowrap">{fmtSize(restBytes)}</td>
                 <td className="capacity-col-share">
                   <ShareBar share={bucketTotalBytes > 0 ? restBytes / bucketTotalBytes : 0} />
                 </td>
@@ -149,7 +149,7 @@ function PrefixRow({ connectionId, bucket, prefix, share, open, onToggle, days, 
             </Link>
           </span>
         </td>
-        <td className="numeric mono nowrap">{fmtCapacityBytes(prefix.totalBytes)}</td>
+        <td className="numeric mono nowrap">{fmtSize(prefix.totalBytes)}</td>
         <td className="capacity-col-share"><ShareBar share={share} /></td>
         <td className="numeric mono nowrap capacity-col-delta">
           {prefix.previous ? fmtCapacityDelta({ current: prefix.totalBytes, previous: prefix.previous.totalBytes }) : '—'}

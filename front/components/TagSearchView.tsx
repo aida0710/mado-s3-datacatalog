@@ -1,9 +1,9 @@
-import { useEffect, useId, useReducer, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api/client'
 import type { Tag, TagSearchResult } from '../lib/api/types'
 import { encPath, fileLinkToDirRedirect, parseS3Path } from '../lib/route'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { TagToggleChips } from './TagToggleChips'
 import { ImportExportButtons } from './ImportExportButtons'
 import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
@@ -97,7 +97,6 @@ const KIND_LABEL: Record<Hit['kind'], string> = {
 // 選んだタグのいずれかが付いた bucket/ディレクトリ/ファイルを列挙する (OR)。
 export function TagSearchView({ connectionId }: Props) {
   useLocale()
-  const missingTitleId = useId()
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [search, dispatch] = useReducer(searchReducer, initialSearch)
@@ -236,16 +235,16 @@ export function TagSearchView({ connectionId }: Props) {
   return (
     <section className="tag-search">
       {/* 一覧の上の帯と同じ形: 左にタグの選択、右に割り当ての入出力。 */}
-      <div className="storage-toolbar">
+      <div className="toolbar">
         {allTags.length > 0 && (
-          <div className="storage-toolbar-item">
+          <div className="toolbar-item">
             <TagToggleChips
               tags={allTags} selected={selected} onToggle={toggle} onClear={() => setSelected(new Set())}
             />
             {loading && <span className="muted">{translate('common.searching')}</span>}
           </div>
         )}
-        <div className="storage-toolbar-item storage-toolbar-end">
+        <div className="toolbar-item storage-toolbar-end">
           <ImportExportButtons
             what={translate('tagSearchView.tagAssignments')}
             onExport={() => { void handleExport() }}
@@ -257,10 +256,10 @@ export function TagSearchView({ connectionId }: Props) {
 
       {pendingMissing && (
         <Dialog
-          titleId={missingTitleId}
           title={translate('tagSearchView.someTagsAreNotRegistered')}
           subtitle={pendingMissing.names.join(' / ')}
           onClose={() => answerMissing(false)}
+          closeLabel={translate('common.close')}
           narrowLayout="sheet"
           footer={(
             <>

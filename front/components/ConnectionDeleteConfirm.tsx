@@ -13,7 +13,6 @@ export function ConnectionDeleteConfirm({ name, onConfirm, onCancel }: Props) {
   useLocale()
   return (
     <DeleteConfirmDialog
-      titleId="connection-delete-title"
       title={translate('common.deleteConnection')}
       onConfirm={onConfirm}
       onCancel={onCancel}

@@ -424,21 +424,22 @@ cd front && npm test && npm run lint
 
 ### 画面の見た目 (mado ML Tracking と共通)
 
-画面の部品と枠は mado ML Tracking と同じものを使います。CSS はデザインシステム `@mado/design-system` ([aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)) にあり、`front/` は次の順に読み込みます。
+画面の部品と枠は mado ML Tracking と同じものを使います。CSS と、両製品に共通の処理・React の部品はデザインシステム `@mado/design-system` ([aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)) にあり、`front/` は CSS を次の順に読み込みます。
 
 | 読み込む物 | 中身 |
 |---|---|
 | `main.tsx` の `fonts.css` と `tokens.css` | 書体と、ライト・ダークの色・角丸・書体の変数 |
 | `App.css` の Tailwind | preflight とユーティリティ class |
-| `App.css` の `base.css`・`components.css`・`shell.css`・`code.css` (4 つとも `@layer components`) | 要素の既定 (本文 13px、入力欄、リンク、見出し)、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け |
+| `App.css` の `base.css`・`components.css`・`shell.css`・`code.css`・`lineage.css` (どれも `@layer components`。React Flow の既定の CSS もこの layer の先に入れます) | 要素の既定 (本文 13px、入力欄、リンク、見出し)、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ・メニュー・一覧の上の帯・パンくず、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け、DataLineage のグラフ |
 | `front/styles/*.css` (layer の外) | 画面ごとの指定 (保存先の一覧、プレビュー、メモ・README、設定、DataLineage) |
 
 - 共通の CSS は Tailwind の preflight より強く、ユーティリティ class より弱い層に入ります。共通の CSS どうしの優先順位は mado ML Tracking と同じです。
-- 部品は共通の class 名 (`.button`、`.page-header`、`.tabs`、`.field`、`.dialog` など) で使い、領域のファイルにはその画面に固有の指定だけを書きます。ダイアログは `components/Dialog.tsx` を使います。
+- 部品は共通の class 名 (`.button`、`.page-header`、`.tabs`、`.field`、`.dialog`、`.toolbar`、`.popover.menu`、`.status-success` など) で使い、領域のファイルにはその画面に固有の指定だけを書きます。文字の大きさは `--font-size-2xs`〜`--font-size-xl` の変数で書きます。
+- 画面の枠 (サイドバー・ドロワー・ユーザーメニュー・表示言語の選択・ロゴ)、ダイアログ (ブラウザの `<dialog>`)、読み込み中・失敗の表示とデータの読み込み (`useQuery`)、コピー、サイズと経過時間の書式、アクセストークンの期限の選び方は、デザインシステムの `@mado/design-system/react` などを使います。保存キーは `mado.` で始めます (`mado.theme`・`mado.locale`・`mado.navigation.*`・`mado.codeLanguage`)。
 - 色は `tokens.css` の変数で書き、値を直接書きません。ダークテーマは上部バーのボタンで切り替え (`localStorage` の `mado.theme`。切り替えるまでは OS の設定に合わせます)、`<html data-theme="dark">` で効きます。
 - 画面幅の切り替え点は 640px・900px・1200px の 3 つです (Tailwind の `sm`・`md`・`lg` も同じ値)。左のサイドバーは 1200px 以上で名前つき (下のボタンでアイコンだけに畳め、右の境目のドラッグで幅を変えられます)、900px 以上でアイコンだけ、それ未満は上部バーのメニューボタンから開くドロワーです。
 - アイコンは [Lucide](https://lucide.dev/) (`lucide-react`) を使います。
-- テキストのプレビューの形式の推測と色付けは、デザインシステムの `@mado/design-system/code` ([highlight.js](https://highlightjs.org/) と、CSV・TSV・ログの色付け) を mado ML Tracking と共有します。画面の部品は `components/CodeView.tsx`、形式の記憶は `lib/useCodeLanguage.ts` です。本文はどちらのテーマでも暗い面に置き、色はどれも面に対して 4.5:1 以上です。
+- テキストのプレビューの形式の推測と色付けは、デザインシステムの `@mado/design-system/code` ([highlight.js](https://highlightjs.org/) と、CSV・TSV・ログの色付け) を mado ML Tracking と共有します。画面の部品は `components/CodeView.tsx`、形式の記憶はデザインシステムの `useCodeLanguage` (保存キーと形式の名前は `lib/codeLanguage.ts`) です。本文はどちらのテーマでも暗い面に置き、色はどれも面に対して 4.5:1 以上です。
 
 デザインシステムは、GitHub Release に添付された tarball に依存しています (`front/package.json`)。見た目を変えるときはデザインシステムのリポジトリで版を上げ (main に入ると Release が作られます)、次の手順で取り込みます。
 

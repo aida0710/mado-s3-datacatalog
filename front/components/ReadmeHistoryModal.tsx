@@ -29,7 +29,6 @@ export function ReadmeHistoryModal({ connectionId, bucket, prefix, currentBody, 
   return (
     <HistoryModal
       title={translate('readmeHistoryModal.readmeHistory')}
-      titleId="readme-history-title"
       subtitle={`${bucket} / ${prefix || '(root)'}`}
       currentBody={currentBody}
       onClose={onClose}

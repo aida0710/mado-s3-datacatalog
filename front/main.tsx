@@ -13,14 +13,15 @@ import '@fontsource/noto-sans-jp/japanese-700.css'
 import '@mado/design-system/fonts.css'
 import '@mado/design-system/tokens.css'
 
+import { initialTheme } from '@mado/design-system/theme'
 import App from './App.tsx'
 import { AuthGate } from './lib/auth.tsx'
-import { initialTheme } from './lib/useTheme'
-import { initializeLocale } from './i18n/locale'
+import { THEME_STORAGE_KEY } from './lib/theme'
+import { localeStore } from './i18n/locale'
 
-// ログイン画面も含め、最初の描画から保存したテーマ (無ければ OS の設定) で出す。
-document.documentElement.dataset.theme = initialTheme()
-initializeLocale()
+// ログイン画面も含め、最初の描画から保存したテーマ (無ければ OS の設定) と表示言語で出す。
+document.documentElement.dataset.theme = initialTheme(THEME_STORAGE_KEY)
+localeStore.applyToDocument()
 
 // React Router v7 の data router を使う (createBrowserRouter + RouterProvider)。
 // 単純な BrowserRouter だと useBlocker (編集ページの離脱警告) が動かないため。

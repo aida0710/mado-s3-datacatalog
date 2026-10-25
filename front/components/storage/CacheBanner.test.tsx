@@ -37,7 +37,7 @@ describe('CacheBanner', () => {
   it('README などの compact 表示でも経過時間で色分けする', () => {
     const fetchedAt = new Date(Date.now() - 30 * 3_600_000)
     render(<CacheBanner fetchedAt={fetchedAt} revalidating={false} onRefresh={noop} compact />)
-    expect(screen.getByText(/\(1日前\)$/)).toHaveAttribute('data-age', 'over-24h')
+    expect(screen.getByText(/\(昨日\)$/)).toHaveAttribute('data-age', 'over-24h')
   })
 
   it('更新中は aria-live で読み上げに乗せる', () => {

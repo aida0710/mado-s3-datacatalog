@@ -339,7 +339,7 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   return (
     <div className="storage-browser">
       {/* 一覧の上の帯: 検索 (前方一致)・再帰検索・タグの絞り込み。 */}
-      <div className="storage-toolbar">
+      <div className="toolbar">
         <SearchBar
           q={q}
           recursive={recursive}

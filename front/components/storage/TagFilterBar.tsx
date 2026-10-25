@@ -16,7 +16,7 @@ export function TagFilterBar({ tags, selected, onToggle, onClear }: Props) {
   useLocale()
   if (tags.length === 0) return null
   return (
-    <div className="storage-toolbar-item">
+    <div className="toolbar-item">
       <span className="muted">{translate('tagFilterBar.filterByTag')}</span>
       <TagToggleChips tags={tags} selected={selected} onToggle={onToggle} onClear={onClear} />
     </div>

@@ -83,7 +83,7 @@ export function Pager({
           (V1 only の S3 互換実装) で、設定 → 接続 →
           ListObjects API バージョンを v1 に切り替えると直る。 */}
       {cursorStuck && (
-        <p className="notice storage-warning">
+        <p className="notice warning">
           <span>
             {translate('pager.cannotAdvanceTheServerReturnedTheSameCursor')}{' '}<strong>{translate('common.listObjectsApiVersion')}</strong>{' '}
             {translate('pager.to')}{' '}<span className="mono">v1</span> {translate('pager.inSettingsThisCanHappenWithV1Only')}</span>

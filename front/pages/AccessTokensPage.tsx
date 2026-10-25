@@ -1,4 +1,5 @@
 import { Plus, RefreshCw } from 'lucide-react'
+import { ErrorNotice, LoadingMessage } from '@mado/design-system/react'
 import { useAccessTokens } from '../lib/useAccessTokens'
 import { AccessTokenRow } from '../components/AccessTokenRow'
 import { AccessTokenFormDialog } from '../components/AccessTokenFormDialog'
@@ -7,6 +8,7 @@ import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 import { SecretNotice } from '../components/SecretNotice'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
+import { errorReason } from '../i18n/loadFailedMessage'
 import { localizeMessage } from '../i18n/localizeMessage'
 import '../styles/accessTokens.css'
 
@@ -25,12 +27,16 @@ export default function AccessTokensPage() {
         </button>
       </div>
       {manager.secret && <SecretNotice secret={manager.secret} note={translate('accessTokens.secretOnce')} onClose={manager.clearSecret} />}
-      {manager.error && <p className="notice error" role="alert">{localizeMessage(manager.error)}</p>}
-      {manager.state.status === 'loading' && <p role="status">{translate('common.loading')}</p>}
-      {manager.state.status === 'failed' && <p className="notice error" role="alert">{localizeMessage(manager.state.reason)}</p>}
-      {manager.state.status === 'loaded' && <div className="access-token-list">
-        {manager.state.value.length === 0 && <p className="muted">{translate('accessTokens.empty')}</p>}
-        {manager.state.value.map(token => <AccessTokenRow key={token.id} token={token} busy={manager.pendingId !== null}
+      <ErrorNotice message={manager.error && localizeMessage(manager.error)} />
+      <ErrorNotice
+        message={manager.tokens.error ? errorReason(manager.tokens.error) : null}
+        retry={manager.reload}
+        retryLabel={translate('common.retry')}
+      />
+      {!manager.tokens.value && manager.tokens.loading && <LoadingMessage label={translate('common.loading')} />}
+      {manager.tokens.value && <div className="access-token-list">
+        {manager.tokens.value.length === 0 && <p className="muted">{translate('accessTokens.empty')}</p>}
+        {manager.tokens.value.map(token => <AccessTokenRow key={token.id} token={token} busy={manager.pendingId !== null}
           onEdit={() => manager.setDialog({ type: 'edit', token })}
           onRegenerate={() => manager.setDialog({ type: 'regenerate', token })}
           onDelete={() => manager.setDialog({ type: 'delete', token })}
@@ -38,12 +44,12 @@ export default function AccessTokensPage() {
       </div>}
       {(dialog?.type === 'create' || dialog?.type === 'edit') && <AccessTokenFormDialog
         token={dialog.type === 'edit' ? dialog.token : null} onSave={manager.save} onCancel={() => manager.setDialog(null)} />}
-      {dialog?.type === 'regenerate' && <ActionConfirmDialog titleId="token-regenerate-title" title={translate('accessTokens.regenerate')}
+      {dialog?.type === 'regenerate' && <ActionConfirmDialog title={translate('accessTokens.regenerate')}
         confirmLabel={translate('accessTokens.regenerate')} pendingLabel={translate('common.loading')}
         onConfirm={() => manager.regenerate(dialog.token)} onCancel={() => manager.setDialog(null)}>
         {translate('accessTokens.regenerateConfirmation', { value0: dialog.token.name })}
       </ActionConfirmDialog>}
-      {dialog?.type === 'delete' && <DeleteConfirmDialog titleId="token-delete-title" title={translate('accessTokens.delete')}
+      {dialog?.type === 'delete' && <DeleteConfirmDialog title={translate('accessTokens.delete')}
         onConfirm={() => manager.deleteToken(dialog.token)} onCancel={() => manager.setDialog(null)}>
         {translate('accessTokens.deleteConfirmation', { value0: dialog.token.name })}
       </DeleteConfirmDialog>}

@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from 'react'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
-export function ActionConfirmDialog({ titleId, title, children, onConfirm, onCancel,
+export function ActionConfirmDialog({ title, children, onConfirm, onCancel,
   confirmLabel, pendingLabel, tone = 'danger' }: {
-  titleId: string
   title: string
   children: ReactNode
   onConfirm: () => Promise<void>
@@ -26,7 +25,7 @@ export function ActionConfirmDialog({ titleId, title, children, onConfirm, onCan
     finally { setBusy(false) }
   }
   return (
-    <Dialog titleId={titleId} title={title} onClose={onCancel} dismissible={!busy} narrowLayout="sheet"
+    <Dialog title={title} onClose={onCancel} closeLabel={translate('common.close')} dismissible={!busy} narrowLayout="sheet"
       footer={<>
         <button type="button" className="button" onClick={onCancel} disabled={busy}>{translate('common.cancel')}</button>
         <button type="button" className={`button ${tone}`} onClick={() => void submit()} disabled={busy}>

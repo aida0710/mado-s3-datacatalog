@@ -1,5 +1,7 @@
-import { LoginHeader } from '../components/shell/LoginHeader'
 import { useState, type FormEvent } from 'react'
+import { LoginHeader } from '@mado/design-system/react'
+import { LanguagePicker } from '../components/LanguagePicker'
+import { ProductLogo } from '../components/shell/ProductLogo'
 import { fetchApi } from '../lib/api/http'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -7,6 +9,11 @@ import { translate } from '../i18n/translate'
 
 /** ログイン画面とパスワード変更画面の見出しの id。重ねて出すときの dialog の名前にも使う。 */
 export const AUTH_TITLE_ID = 'auth-title'
+
+/** ログインとパスワード変更のカードの上端。ロゴと同じ行の右に表示言語の切り替えを置く。 */
+function AuthCardHeader() {
+  return <LoginHeader logo={<ProductLogo />} languagePicker={<LanguagePicker />} />
+}
 
 interface Props {
   config: {
@@ -60,7 +67,7 @@ export function LoginPage({
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
-        <LoginHeader />
+        <AuthCardHeader />
         <h1 id={AUTH_TITLE_ID}>{translate('loginPage.signIn')}</h1>
         {(sessionExpired || idpLogoutIncomplete || overlay) && (
           <div className="login-lead">
@@ -138,7 +145,7 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby={AUTH_TITLE_ID}>
-        <LoginHeader />
+        <AuthCardHeader />
         <p className="login-eyebrow">{translate('loginPage.firstSignIn')}</p>
         <h1 id={AUTH_TITLE_ID}>{translate('common.changePassword')}</h1>
         <div className="login-lead"><p>{translate('loginPage.updateYourInitialPasswordOnThisScreen')}</p></div>

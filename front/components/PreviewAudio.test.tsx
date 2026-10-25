@@ -58,7 +58,7 @@ describe('PreviewAudio', () => {
     })
     render(<PreviewAudio connectionId="c" bucket="b" k="a.flac" />)
     await waitFor(() => expect(screen.getByText('FLAC · stereo · 48 kHz · 24 bit')).toBeInTheDocument())
-    expect(screen.getByText('1411 kbps · 0:12.345 · 2.0 MB')).toBeInTheDocument()
+    expect(screen.getByText('1411 kbps · 0:12.345 · 2.0 MiB')).toBeInTheDocument()
     expect(screen.getByText('peak -0.3 dBFS · RMS -18.2 dB')).toBeInTheDocument()
   })
 
