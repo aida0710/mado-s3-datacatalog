@@ -5,11 +5,13 @@ import {
   type ListObjectsV2CommandOutput,
 } from '@aws-sdk/client-s3'
 import type { Hono } from 'hono'
+import { z } from 'zod'
 import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
 import type { ConnectionConfig } from '../storage.js'
 import { cacheKey, LIST_CACHE_TTL_MS, type CacheScope, type ResponseCache } from '../lib/storage-cache.js'
 import { SharedRequests } from '../lib/shared-requests.js'
 import { apiError } from '../lib/api-error.js'
+import { decodePageCursor, encodePageCursor } from '../lib/page-cursor.js'
 
 export interface StorageListDeps {
   getStorage: GetStorage
@@ -25,9 +27,16 @@ export interface StorageListDeps {
 interface ListBody {
   directories: string[]
   files: Array<{ key: string; size: number; lastModified: string | null }>
-  nextContinuation: string | null
-  nextStartAfter: string | null
+  nextCursor: string | null
 }
+
+// S3 の一覧の続きの位置。V2 は ContinuationToken (不透明な文字列)、V1 と、続きのトークンを返さない
+// 互換実装では最後のキー (StartAfter / Marker)。どちらかを `cursor` の中に入れて画面へ渡す。
+const ListPagePosition = z.union([
+  z.strictObject({ continuationToken: z.string().min(1) }),
+  z.strictObject({ startAfter: z.string().min(1) }),
+])
+type ListPagePosition = z.infer<typeof ListPagePosition>
 
 function withCacheMeta<Body extends object>(
   body: Body,
@@ -71,13 +80,12 @@ function isSelfPlaceholder(key: string, prefix: string): boolean {
 function listBodyFrom(
   out: Pick<ListObjectsV2CommandOutput, 'CommonPrefixes' | 'Contents' | 'IsTruncated'>,
   prefix: string,
-  next: { continuation: string | null; startAfter: string | null },
-) {
+  next: ListPagePosition | null,
+): ListBody {
   const truncated = out.IsTruncated === true
   const rawContents = out.Contents ?? []
-  const fallbackKey = !next.continuation && !next.startAfter && truncated && rawContents.length > 0
-    ? rawContents[rawContents.length - 1].Key ?? null
-    : null
+  const lastKey = rawContents.at(-1)?.Key
+  const position = next ?? (truncated && lastKey ? { startAfter: lastKey } : null)
   return {
     directories: (out.CommonPrefixes ?? [])
       .map(p => p.Prefix!)
@@ -89,8 +97,7 @@ function listBodyFrom(
         size: o.Size ?? 0,
         lastModified: o.LastModified?.toISOString() ?? null,
       })),
-    nextContinuation: next.continuation,
-    nextStartAfter: next.startAfter ?? fallbackKey,
+    nextCursor: position ? encodePageCursor(position) : null,
   }
 }
 
@@ -139,8 +146,11 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
     const bucket = c.req.query('bucket')
     if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
-    const continuation = c.req.query('continuation') || undefined
-    const startAfter = c.req.query('startAfter') || undefined
+    const cursor = c.req.query('cursor')
+    const position = cursor === undefined ? null : decodePageCursor(cursor, ListPagePosition)
+    if (cursor !== undefined && !position) return c.json(apiError('invalid_cursor', 'invalid cursor'), 400)
+    const continuation = position && 'continuationToken' in position ? position.continuationToken : undefined
+    const startAfter = position && 'startAfter' in position ? position.startAfter : undefined
     // recursive=1 のときは Delimiter を外し、prefix 配下を flat に列挙する。
     // これは UI 側の「再帰検索」チェックボックスから来る。CommonPrefixes は
     // 空になるので結果は全部 Contents に並ぶ。
@@ -185,7 +195,7 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
             MaxKeys: 100,
           }), { abortSignal: signal })
           // V1 には continuation token 概念が無い。pagination は marker (= startAfter) で。
-          const body = listBodyFrom(out, prefix, { continuation: null, startAfter: out.NextMarker ?? null })
+          const body = listBodyFrom(out, prefix, out.NextMarker ? { startAfter: out.NextMarker } : null)
           return storeFreshResponse({ cache: deps.cache, scope, body, ttlMs: config.listCacheTtlSec * 1000 })
         }
 
@@ -204,11 +214,11 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
         // 一部の S3 互換実装は IsTruncated=true を返すのに
         // NextContinuationToken を返さないことがある。その場合に最終キーで
         // フォールバック。AWS 公式 S3 では NextContinuationToken が常に入る
-        // ので nextStartAfter は null のままになる。
+        // ので最後のキーへの置き換えは起きない。
         // ★ ただしこの fallback は V2 自体を理解しないサーバには効かない
         //   (start-after parameter を無視するため)。そういうサーバは接続設定で
         //   list_objects_version='v1' を選んでもらう。
-        const body = listBodyFrom(out, prefix, { continuation: out.NextContinuationToken ?? null, startAfter: null })
+        const body = listBodyFrom(out, prefix, out.NextContinuationToken ? { continuationToken: out.NextContinuationToken } : null)
         return storeFreshResponse({ cache: deps.cache, scope, body, ttlMs: config.listCacheTtlSec * 1000 })
       },
     })

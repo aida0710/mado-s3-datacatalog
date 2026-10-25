@@ -6,6 +6,7 @@ export const API_ERROR_CODES = [
   // 要求の形
   'invalid_request',
   'invalid_json',
+  'invalid_cursor',
   'body_too_large',
   'unknown_setting',
   'unsupported_archive',

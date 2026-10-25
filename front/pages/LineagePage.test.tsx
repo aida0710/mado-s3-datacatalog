@@ -28,7 +28,7 @@ vi.mock('../lib/api/client', async importOriginal => {
       lineageDataset: vi.fn(),
       lineageVersion: vi.fn(),
       lineageRun: vi.fn(),
-      lineageCatalog: vi.fn().mockResolvedValue({ results: [], totalCount: 0 }),
+      lineageCatalog: vi.fn().mockResolvedValue({ results: [], totalCount: 0, nextCursor: null }),
     },
   }
 })
@@ -100,6 +100,7 @@ describe('LineagePage', () => {
         currentVersionId: 'version-1', versionCount: 1,
       }],
       totalCount: 1,
+      nextCursor: null,
     })
     vi.mocked(api.lineageGraph).mockResolvedValue(graph)
     renderPage()

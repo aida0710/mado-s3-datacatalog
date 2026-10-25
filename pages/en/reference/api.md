@@ -44,6 +44,8 @@ curl --fail-with-body \
 
 This example needs `permissions: ["connections:read"]` and selected connections. Reads and sending are configured in the same feature permission list. Token management can be granted, but callers cannot issue or regenerate stronger tokens. User administration requires the Administrator preset's full permissions and targets. Login, SSO and self-service password changes remain browser-only. See the [permission and target reference](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md).
 
+Lists that continue over several pages (audit log, directory listing, DataLineage catalog) take `limit` and `cursor`. Pass the response's `nextCursor` unchanged as the next request's `cursor`; `null` means the last page. The cursor is opaque: do not build or parse it. A value the API cannot read returns 400 `invalid_cursor`.
+
 ## Send OpenLineage events
 
 Pass the destination URL and the key from the pipeline's environment variables or secret manager. The following example assumes the event JSON is in `event.json`.

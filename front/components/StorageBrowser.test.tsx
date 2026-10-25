@@ -48,8 +48,7 @@ describe('StorageBrowser - ディレクトリ行', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     renderBrowser('voice/')
@@ -65,8 +64,7 @@ describe('StorageBrowser - ディレクトリ行', () => {
     listMock.mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     // 2 回目 (prefix 変更後): 手動で resolve するまで pending
     let resolveSecond: (v: unknown) => void = () => {}
@@ -98,7 +96,7 @@ describe('StorageBrowser - ディレクトリ行', () => {
     expect(screen.queryByRole('link', { name: /jp\// })).toBeNull()
 
     // 解決すれば消える
-    resolveSecond({ directories: [], files: [], nextContinuation: null, nextStartAfter: null })
+    resolveSecond({ directories: [], files: [], nextCursor: null })
     await waitFor(() =>
       expect(screen.queryByRole('progressbar')).toBeNull()
     )
@@ -110,15 +108,13 @@ describe('StorageBrowser - ディレクトリ行', () => {
     listMock.mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     // 2 回目 (検索後): prefix='voice/' + 'j' で再 fetch
     listMock.mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -126,13 +122,13 @@ describe('StorageBrowser - ディレクトリ行', () => {
     await screen.findByRole('link', { name: /jp\// })
     expect(listMock).toHaveBeenCalledTimes(1)
     // 初回呼び出しの prefix は 'voice/'、再帰オフ
-    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: {}, recursive: false, onRevalidate: expect.any(Function) }])
+    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: undefined, recursive: false, onRevalidate: expect.any(Function) }])
 
     // 検索 input に 'j' を入力 → debounce 後に 2 回目の list が走る
     await user.type(screen.getByLabelText('ディレクトリ内検索'), 'j')
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2), { timeout: 1000 })
     // 2 回目の prefix は 'voice/' + 'j' = 'voice/j'
-    expect(listMock.mock.calls[1]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/j', cursor: {}, recursive: false, onRevalidate: expect.any(Function) }])
+    expect(listMock.mock.calls[1]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/j', cursor: undefined, recursive: false, onRevalidate: expect.any(Function) }])
   })
 
   it('再帰チェックを入れると api.list に recursive=true を渡す', async () => {
@@ -140,25 +136,23 @@ describe('StorageBrowser - ディレクトリ行', () => {
     listMock.mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/jp/a.wav', size: 1, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
     renderBrowser('voice/')
     await screen.findByRole('link', { name: /jp\// })
-    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: {}, recursive: false, onRevalidate: expect.any(Function) }])
+    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: undefined, recursive: false, onRevalidate: expect.any(Function) }])
 
     // 再帰チェックを ON → 同じ prefix で recursive: true で再 fetch
     await user.click(screen.getByLabelText('再帰検索'))
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2))
-    expect(listMock.mock.calls[1]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: {}, recursive: true, onRevalidate: expect.any(Function) }])
+    expect(listMock.mock.calls[1]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: undefined, recursive: true, onRevalidate: expect.any(Function) }])
   })
 
   it('enables the "次" pager button when the response carries a next cursor', async () => {
@@ -166,14 +160,13 @@ describe('StorageBrowser - ディレクトリ行', () => {
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/a.mp3', size: 1, lastModified: null }],
-      nextContinuation: 'tok1',
-      nextStartAfter: null,
+      nextCursor: 'tok1',
     })
 
     renderBrowser('voice/')
     await screen.findByText(/a\.mp3/)
 
-    // 応答に nextContinuation があれば「次 →」ボタンが活きる。
+    // 応答に nextCursor があれば「次 →」ボタンが活きる。
     // 1 ページ目なので「戻る」は disabled、「次」は enabled。
     const nextBtn = screen.getByRole('button', { name: '次のページへ' })
     expect(nextBtn).toBeEnabled()
@@ -183,19 +176,17 @@ describe('StorageBrowser - ディレクトリ行', () => {
 
   it('advances to page 2 when the user clicks "次 →" and uses the next cursor', async () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
-    // 1 ページ目: nextContinuation='tok1' で次があることを示す
+    // 1 ページ目: nextCursor='tok1' で次があることを示す
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/a.mp3', size: 1, lastModified: null }],
-      nextContinuation: 'tok1',
-      nextStartAfter: null,
+      nextCursor: 'tok1',
     })
     // 2 ページ目: 末尾 (next なし)
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/b.mp3', size: 2, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -205,54 +196,51 @@ describe('StorageBrowser - ディレクトリ行', () => {
 
     await user.click(screen.getByRole('button', { name: '次のページへ' }))
 
-    // 2 回目の list は cursor: { continuation: 'tok1' } で呼ばれる。
+    // 2 回目の list は cursor: 'tok1' で呼ばれる。
     // forward navigation なので force:true で cache を bypass する
     // (一部の S3 互換実装で cursor が進まない問題への防衛)。
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2))
     expect(listMock.mock.calls[1]).toEqual([
-      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: { continuation: 'tok1' }, recursive: false, force: true, onRevalidate: expect.any(Function) },
+      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: 'tok1', recursive: false, force: true, onRevalidate: expect.any(Function) },
     ])
 
     // 表示が page 2 の中身 (b.mp3) に置き換わる
     await screen.findByText(/b\.mp3/)
-    // page 2 では next が disabled (nextContinuation=null)、戻るは enabled
+    // page 2 では next が disabled (nextCursor=null)、戻るは enabled
     expect(screen.getByRole('button', { name: '次のページへ' })).toBeDisabled()
     expect(screen.getByRole('button', { name: '前のページへ' })).toBeEnabled()
   })
 
   it('ページ 1 → 2 → 3 とそれぞれ別の cursor で進む', async () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
-    // 3 ページ分用意。各 nextContinuation は別物。
+    // 3 ページ分用意。各 nextCursor は別物。
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/p1.mp3', size: 1, lastModified: null }],
-      nextContinuation: 'tok-after-p1',
-      nextStartAfter: null,
+      nextCursor: 'tok-after-p1',
     })
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/p2.mp3', size: 2, lastModified: null }],
-      nextContinuation: 'tok-after-p2',
-      nextStartAfter: null,
+      nextCursor: 'tok-after-p2',
     })
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/p3.mp3', size: 3, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
     renderBrowser('voice/')
     await screen.findByText(/p1\.mp3/)
-    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: {}, recursive: false, onRevalidate: expect.any(Function) }])
+    expect(listMock.mock.calls[0]).toEqual([{ connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: undefined, recursive: false, onRevalidate: expect.any(Function) }])
 
     // p1 → p2: cursor は p1 が返した tok-after-p1。forward navigation は force:true。
     await user.click(screen.getByRole('button', { name: '次のページへ' }))
     await screen.findByText(/p2\.mp3/)
     expect(listMock).toHaveBeenCalledTimes(2)
     expect(listMock.mock.calls[1]).toEqual([
-      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: { continuation: 'tok-after-p1' }, recursive: false, force: true, onRevalidate: expect.any(Function) },
+      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: 'tok-after-p1', recursive: false, force: true, onRevalidate: expect.any(Function) },
     ])
     // p1 の表示は消えている
     expect(screen.queryByText(/p1\.mp3/)).toBeNull()
@@ -262,49 +250,18 @@ describe('StorageBrowser - ディレクトリ行', () => {
     await screen.findByText(/p3\.mp3/)
     expect(listMock).toHaveBeenCalledTimes(3)
     expect(listMock.mock.calls[2]).toEqual([
-      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: { continuation: 'tok-after-p2' }, recursive: false, force: true, onRevalidate: expect.any(Function) },
+      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: 'tok-after-p2', recursive: false, force: true, onRevalidate: expect.any(Function) },
     ])
     expect(screen.queryByText(/p2\.mp3/)).toBeNull()
   })
 
-  it('応答に continuation token が無ければ startAfter で次に進む', async () => {
-    const listMock = api.list as ReturnType<typeof vi.fn>
-    // 一部の S3 互換実装は IsTruncated=true でも nextContinuation を返さない
-    // ことがあり、backend は最終キーを nextStartAfter にフォールバックさせる。
-    listMock.mockResolvedValueOnce({
-      directories: [],
-      files: [{ key: 'voice/p1.mp3', size: 1, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: 'voice/p1.mp3',
-    })
-    listMock.mockResolvedValueOnce({
-      directories: [],
-      files: [{ key: 'voice/p2.mp3', size: 2, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
-    })
-
-    const user = userEvent.setup()
-    renderBrowser('voice/')
-    await screen.findByText(/p1\.mp3/)
-
-    // 「次」を押すと cursor: { startAfter: '...' } で fetch される。
-    // forward navigation なので force:true がつく。
-    await user.click(screen.getByRole('button', { name: '次のページへ' }))
-    await screen.findByText(/p2\.mp3/)
-    expect(listMock.mock.calls[1]).toEqual([
-      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: { startAfter: 'voice/p1.mp3' }, recursive: false, force: true, onRevalidate: expect.any(Function) },
-    ])
-  })
-
   it('disables 次 when the server returns a cursor identical to the one used to fetch the current page (stuck pagination)', async () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
-    // 1 ページ目: nextContinuation='STUCK'
+    // 1 ページ目: nextCursor='STUCK'
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/p1.mp3', size: 1, lastModified: null }],
-      nextContinuation: 'STUCK',
-      nextStartAfter: null,
+      nextCursor: 'STUCK',
     })
     // 2 ページ目: cursor='STUCK' で取りに行ったあと、server が同じ 'STUCK' を返してきた
     // (一部の S3 互換実装でしばしば見られるバグ)。ここで「次」を押せても
@@ -312,8 +269,7 @@ describe('StorageBrowser - ディレクトリ行', () => {
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'voice/p2.mp3', size: 2, lastModified: null }],
-      nextContinuation: 'STUCK',
-      nextStartAfter: null,
+      nextCursor: 'STUCK',
     })
 
     const user = userEvent.setup()
@@ -329,10 +285,10 @@ describe('StorageBrowser - ディレクトリ行', () => {
     expect(listMock).toHaveBeenCalledTimes(2)
     // page 2 の fetch は force:true で呼ばれている
     expect(listMock.mock.calls[1]).toEqual([
-      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: { continuation: 'STUCK' }, recursive: false, force: true, onRevalidate: expect.any(Function) },
+      { connectionId: 'c1', bucket: 'b1', prefix: 'voice/', cursor: 'STUCK', recursive: false, force: true, onRevalidate: expect.any(Function) },
     ])
 
-    // page 2 で nextContinuation=STUCK が再来 → cursor が進まない → 「次」disable
+    // page 2 で nextCursor=STUCK が再来 → cursor が進まない → 「次」disable
     expect(screen.getByRole('button', { name: '次のページへ' })).toBeDisabled()
     // 案内文も出る
     expect(screen.getByText(/cursor を進めずに同じトークン/)).toBeInTheDocument()
@@ -342,8 +298,7 @@ describe('StorageBrowser - ディレクトリ行', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: ['voice/jp/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -369,7 +324,7 @@ describe('force と refresh の分離', () => {
   it('↻ はサーバーキャッシュを貫通させる (refresh: true)', async () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
     listMock.mockResolvedValue({
-      directories: [], files: [], nextContinuation: null, nextStartAfter: null,
+      directories: [], files: [], nextCursor: null,
     })
     const user = userEvent.setup()
     renderBrowser('voice/')
@@ -384,11 +339,11 @@ describe('force と refresh の分離', () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
     listMock.mockResolvedValueOnce({
       directories: [], files: [{ key: 'voice/p1.mp3', size: 1, lastModified: null }],
-      nextContinuation: 'tok1', nextStartAfter: null,
+      nextCursor: 'tok1',
     })
     listMock.mockResolvedValueOnce({
       directories: [], files: [{ key: 'voice/p2.mp3', size: 1, lastModified: null }],
-      nextContinuation: null, nextStartAfter: null,
+      nextCursor: null,
     })
     const user = userEvent.setup()
     renderBrowser('voice/')
@@ -406,7 +361,7 @@ describe('更新中の表示', () => {
   it('共有キャッシュの時刻が変わっても表示中のページの取得時刻を表示する', async () => {
     const fetchedAt = '2026-10-07T00:00:00.000Z'
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      directories: ['voice/jp/'], files: [], nextContinuation: null, nextStartAfter: null,
+      directories: ['voice/jp/'], files: [], nextCursor: null,
       cache: { fetchedAt, expiresAt: '2099-10-08T00:00:00.000Z', hit: true },
     })
     ;(api.lastFetched.list as ReturnType<typeof vi.fn>).mockReturnValue(new Date())
@@ -419,7 +374,7 @@ describe('更新中の表示', () => {
   it('手動更新中は古い一覧を消して異なる鮮度表示との混在を防ぐ', async () => {
     const listMock = api.list as ReturnType<typeof vi.fn>
     listMock.mockResolvedValueOnce({
-      directories: ['voice/jp/'], files: [], nextContinuation: null, nextStartAfter: null,
+      directories: ['voice/jp/'], files: [], nextCursor: null,
     })
     // 2 回目 (↻) は解決させず、読み込み中のまま留める
     listMock.mockImplementationOnce(() => new Promise(() => {}))

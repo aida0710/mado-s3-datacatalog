@@ -3,8 +3,9 @@ import { ListBuckets, StorageList } from './types'
 import { LONG_CACHE_TTL_MS, TTLCache } from './cache'
 import { buildUrl, cacheKey, getJson, storagePath, type Revalidatable } from './http'
 
+// 応答の形が変わったら persistKey の版を上げ、古い形の保存分を読まないようにする。
 const listCache = new TTLCache<z.infer<typeof StorageList>>(LONG_CACHE_TTL_MS, {
-  persistKey: 'mado.cache.list.v2',
+  persistKey: 'mado.cache.list.v3',
   // A browser cache received near the end of the server TTL must not extend the
   // response another six hours. Revalidate no later than the server expiry.
   expiresAt: value => Date.parse(value.cache.expiresAt),
@@ -14,14 +15,9 @@ const bucketsCache = new TTLCache<z.infer<typeof ListBuckets>>(LONG_CACHE_TTL_MS
   expiresAt: value => Date.parse(value.cache.expiresAt),
 })
 
-export interface ListCursor {
-  continuation?: string
-  startAfter?: string
-}
-
 const listCacheKey = (
-  connectionId: string, bucket: string, prefix: string, recursive: boolean | undefined, cursor: ListCursor,
-) => cacheKey('list', connectionId, bucket, prefix, recursive ? 'r' : '', cursor.continuation, cursor.startAfter)
+  connectionId: string, bucket: string, prefix: string, recursive: boolean | undefined, cursor: string | undefined,
+) => cacheKey('list', connectionId, bucket, prefix, recursive ? 'r' : '', cursor)
 
 // バケット一覧とディレクトリ一覧。上流が遅いので localStorage まで永続化する。
 export const storageListClient = {
@@ -42,11 +38,12 @@ export const storageListClient = {
     bucketsCache.invalidate(cacheKey('buckets', connectionId))
   },
 
-  list: ({ connectionId, bucket, prefix, cursor = {}, recursive, force, refresh, onRevalidate }: {
+  list: ({ connectionId, bucket, prefix, cursor, recursive, force, refresh, onRevalidate }: {
     connectionId: string
     bucket: string
     prefix: string
-    cursor?: ListCursor
+    /** 前のページの応答の nextCursor。最初のページは省く。 */
+    cursor?: string
     recursive?: boolean
     /** force=true は「forward navigation で同じ cache key に到達して停滞する」現象の防衛。
      *  一部の S3 互換実装は ContinuationToken / 最終キーを進めずに返してくることがあり、
@@ -64,8 +61,7 @@ export const storageListClient = {
       () => getJson(buildUrl(storagePath(connectionId, '/list'), {
         bucket,
         prefix,
-        continuation: cursor.continuation,
-        startAfter: cursor.startAfter,
+        cursor,
         recursive: recursive ? '1' : undefined,
         refresh: refresh ? '1' : undefined,
       }), StorageList),
@@ -81,8 +77,8 @@ export const storageListClient = {
   // 該当キャッシュエントリが「いつ S3 から取得されたか」。null = 未取得 / 失敗 / invalidate 直後。
   // fetch 側と同じ引数で同じ cache key を組む。
   lastFetched: {
-    list: ({ connectionId, bucket, prefix, cursor = {}, recursive }: {
-      connectionId: string; bucket: string; prefix: string; cursor?: ListCursor; recursive?: boolean
+    list: ({ connectionId, bucket, prefix, cursor, recursive }: {
+      connectionId: string; bucket: string; prefix: string; cursor?: string; recursive?: boolean
     }): Date | null => {
       const value = listCache.peek(listCacheKey(connectionId, bucket, prefix, recursive, cursor))
       return value ? new Date(value.cache.fetchedAt) : null

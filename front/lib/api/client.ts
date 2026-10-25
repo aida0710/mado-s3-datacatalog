@@ -13,7 +13,6 @@ import { storageListClient } from './storage-list-client'
 import { tagsClient } from './tags-client'
 
 export type { Revalidatable } from './http'
-export type { ListCursor } from './storage-list-client'
 export type { TarEntry, TarPreviewCallbacks } from './preview-client'
 export type { TagAssignmentTarget } from './tags-client'
 
