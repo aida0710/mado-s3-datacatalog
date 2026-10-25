@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import {
   NavigationDrawer, UserMenu, useTheme, type NavigationLayout, type UserMenuLinkRenderer,
 } from '@mado/design-system/react'
@@ -20,8 +20,9 @@ const renderUserMenuLink: UserMenuLinkRenderer = (item, { children, ...props }) 
 )
 
 /**
- * 上部バー: アプリ名、テーマの切り替え、ログイン中の利用者のメニューとサインアウト。画面の切り替えは
- * サイドバーにあり、md (900px) 未満ではこのバーのメニューボタンからドロワーで開く。
+ * 上部バー: アプリ名、表示言語とテーマの切り替え、ログイン中の利用者のメニュー (アカウント・設定・
+ * サインアウト)。画面の切り替えはサイドバーにあり、md (900px) 未満ではこのバーのメニューボタンから
+ * ドロワーで開く。
  */
 export function TopBar({ navigation }: { navigation: NavigationLayout }) {
   useLocale()
@@ -72,31 +73,18 @@ export function TopBar({ navigation }: { navigation: NavigationLayout }) {
             {theme.theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
           </button>
           {user && (
-            <>
-              {/* サインアウトは操作 (リンクでない) で、デザインシステムの UserMenu の項目はリンクだけなので、
-                  mado ML Tracking と同じく丸の横のボタンに置く。 */}
-              <UserMenu
-                displayName={user.displayName}
-                email={user.email}
-                label={translate('topBar.userMenu')}
-                items={[
-                  { label: translate('section.account'), href: '/settings/account' },
-                  { label: translate('section.settings'), href: '/settings', startsGroup: true },
-                ]}
-                renderLink={renderUserMenuLink}
-                closeKey={pathname}
-              />
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={translate('common.signOut')}
-                title={translate('common.signOut')}
-                disabled={loggingOut}
-                onClick={() => void signOut()}
-              >
-                <LogOut size={17} />
-              </button>
-            </>
+            <UserMenu
+              displayName={user.displayName}
+              email={user.email}
+              label={translate('topBar.userMenu')}
+              items={[
+                { label: translate('section.account'), href: '/settings/account' },
+                { label: translate('section.settings'), href: '/settings', startsGroup: true },
+                { label: translate('common.signOut'), onSelect: () => void signOut(), disabled: loggingOut, startsGroup: true },
+              ]}
+              renderLink={renderUserMenuLink}
+              closeKey={pathname}
+            />
           )}
         </div>
       </header>

@@ -33,8 +33,8 @@ export default function NoteEditPage() {
           message={loadFailedMessage({ subject: translate('section.teamNote'), error: note.error })}
           retry={note.reload}
           retryLabel={translate('common.retry')}
+          detail={translate('common.editingIsDisabledUntilTheContentLoadsTo')}
         />
-        <p className="muted">{translate('common.editingIsDisabledUntilTheContentLoadsTo')}</p>
       </>
     )
   }

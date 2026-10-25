@@ -40,11 +40,13 @@ describe('TopBar', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
-  it('サインアウトは丸の横のボタンで行う', async () => {
+  it('サインアウトはユーザーメニューの項目から行う', async () => {
     const user = userEvent.setup()
     const logout = vi.fn(async () => {})
     renderTopBar({ ...AUTH_FIXTURE, logout })
-    await user.click(screen.getByRole('button', { name: 'サインアウト' }))
+    expect(screen.queryByRole('button', { name: 'サインアウト' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'ユーザーメニュー' }))
+    await user.click(screen.getByRole('menuitem', { name: 'サインアウト' }))
     expect(logout).toHaveBeenCalledOnce()
   })
 })

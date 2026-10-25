@@ -75,8 +75,8 @@ export default function ReadmeEditPage({ connectionId }: Props) {
           message={loadFailedMessage({ subject: 'README', error: readme.error })}
           retry={readme.reload}
           retryLabel={translate('common.retry')}
+          detail={translate('common.editingIsDisabledUntilTheContentLoadsTo')}
         />
-        <p className="muted">{translate('common.editingIsDisabledUntilTheContentLoadsTo')}</p>
       </>
     )
   }
