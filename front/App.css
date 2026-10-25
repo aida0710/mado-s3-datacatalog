@@ -20,7 +20,6 @@
 @import "./styles/notes.css";
 @import "./styles/settings.css";
 @import "./styles/lineage.css";
-@plugin "@tailwindcss/typography";
 
 /* Tailwind の設定。値は @mado/design-system の変数を指すだけにする。 */
 @theme {
@@ -28,8 +27,6 @@
   --breakpoint-sm: 640px;
   --breakpoint-md: 900px;
   --breakpoint-lg: 1200px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
 
   /* preflight が html と kbd・samp に使う書体。 */
   --font-sans: var(--font);
