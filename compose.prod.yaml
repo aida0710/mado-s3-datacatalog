@@ -24,9 +24,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
-      - ./db/migrations:/migrations:ro
     # 初回 init 中の一時サーバは Unix socket だけを listen する。socket 経由の pg_isready は
-    # migration 適用前に healthy を返すため、init 完了後に立つ本サーバだけが応える TCP で確認する。
+    # ロールの作成 (db/init) が終わる前に healthy を返すため、init 完了後に立つ本サーバだけが応える TCP で確認する。
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d dashboard"]
       interval: 5s
@@ -52,6 +51,8 @@ services:
     env_file:
       - .env
     environment:
+      # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
+      DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
       MADO_ENV: production
       PORT: 3000
     extra_hosts:
@@ -87,6 +88,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      # api-internal が移行を当て終えて healthy になってから起動する。
+      api-internal:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     restart: unless-stopped
@@ -106,6 +110,9 @@ services:
     container_name: mado-prod-media-worker
     command: ["node", "dist/worker.js"]
     depends_on:
+      # api-internal が移行を当て終えて healthy になってから起動する。
+      api-internal:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     restart: unless-stopped
