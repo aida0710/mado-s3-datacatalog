@@ -102,7 +102,7 @@ tr.selected .storage-meter {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 /* ── 接続先の切り替え (ConnectionSwitcher) ───────────────────────────
@@ -118,7 +118,7 @@ tr.selected .storage-meter {
 }
 .connection-switcher-label {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .connection-switcher-name {
   min-width: 0;
@@ -135,12 +135,12 @@ tr.selected .storage-meter {
   padding: 6px 14px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .connection-switcher-note {
   padding: 10px 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .menu-item.connection-switcher-item {
   flex-direction: column;
@@ -154,7 +154,7 @@ tr.selected .storage-meter {
   margin-top: 2px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
 .connection-switcher-manage {
@@ -199,7 +199,7 @@ tr.selected .storage-meter {
   background: var(--text);
   color: var(--background);
   box-shadow: var(--shadow-menu);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -233,7 +233,7 @@ tr.selected .storage-meter {
   border-radius: var(--radius-pill);
   background: var(--background);
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 .tag-chip:hover {
@@ -302,7 +302,7 @@ tr.selected .storage-meter {
   border-left: 3px solid var(--border-strong);
   background: var(--surface);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .cache-banner-body {
   display: flex;
@@ -321,7 +321,7 @@ tr.selected .storage-meter {
 }
 .cache-banner-at {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 .cache-banner[data-age='within-1h'] .cache-banner-at {
@@ -484,7 +484,7 @@ tr.selected .storage-meter {
   max-width: 100%;
   color: var(--link);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .entry-name-main > svg {
   flex: none;
@@ -506,7 +506,7 @@ tr.selected .storage-meter {
   padding-left: 23px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
 }
 .state-message.entry-empty {
@@ -542,7 +542,7 @@ tr.selected .storage-meter {
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 .storage-pager-page:hover:not(:disabled) {
@@ -567,7 +567,7 @@ tr.selected .storage-meter {
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-lineage-label {
   display: inline-flex;
@@ -596,7 +596,7 @@ tr.selected .storage-meter {
   min-width: 0;
 }
 .storage-lineage-name strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -631,14 +631,14 @@ tr.selected .storage-meter {
   gap: 4px;
 }
 .scan-figure-value {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
 }
 .scan-figure-value small {
   margin-left: 3px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 400;
 }
 /* サブディレクトリと拡張子の 2 つの表で列の位置を揃える。 */
@@ -661,7 +661,7 @@ tr.selected .storage-meter {
   gap: 8px;
   margin-right: auto;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* 見積もり。 */
 .est-summary {
@@ -730,7 +730,7 @@ tr.est-detail:hover > td {
   grid-template-columns: max-content max-content minmax(0, 1fr);
   gap: 4px 16px;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .est-costs > div {
   display: contents;
@@ -750,7 +750,7 @@ tr.est-detail:hover > td {
   margin: 12px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 .est-warns li {
@@ -770,7 +770,7 @@ tr.est-detail:hover > td {
   gap: 6px 12px;
   margin-top: 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .est-foot strong {
   color: var(--text);
@@ -781,7 +781,7 @@ tr.est-detail:hover > td {
 .est-manual {
   margin-top: 10px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
 }
 .est-manual > summary {
@@ -838,7 +838,7 @@ tr.est-detail:hover > td {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .bucket-section + .bucket-section {
   margin-top: 32px;
@@ -898,7 +898,7 @@ tr.est-detail:hover > td {
   align-items: center;
   gap: 6px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .s3-path-note,
@@ -923,7 +923,7 @@ tr.est-detail:hover > td {
   gap: 8px;
   padding: 9px 12px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .s3-path-results a > svg {
@@ -941,7 +941,7 @@ tr.est-detail:hover > td {
 }
 .tag-search-path {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .tag-search-path .muted {
@@ -967,11 +967,11 @@ tr.est-detail:hover > td {
 .capacity-summary dt,
 .capacity-metrics dt {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .capacity-summary dd {
   margin: 4px 0 0;
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -1053,7 +1053,7 @@ tr.est-detail:hover > td {
   flex: none;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-metrics {
   display: grid;
@@ -1070,7 +1070,7 @@ tr.est-detail:hover > td {
   margin: 3px 0 0;
   overflow: hidden;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1089,7 +1089,7 @@ tr.est-detail:hover > td {
 .capacity-chart-empty {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-chart-placeholder {
   height: 120px;
@@ -1106,7 +1106,7 @@ tr.est-detail:hover > td {
   border: 1px solid var(--border);
   background: var(--background);
   box-shadow: var(--shadow-popover);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-tooltip p {
   margin: 0;
@@ -1129,7 +1129,7 @@ tr.est-detail:hover > td {
 }
 .capacity-prefixes-heading h4 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 .capacity-prefixes-heading p,

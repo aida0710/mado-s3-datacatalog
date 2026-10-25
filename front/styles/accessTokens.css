@@ -8,12 +8,12 @@
   background: var(--surface);
   overflow-wrap: anywhere;
 }
-.access-token-row h3 { margin: 0 0 6px; font-size: 14px; }
-.access-token-row p { margin: 4px 0; font-size: 12px; }
+.access-token-row h3 { margin: 0 0 6px; font-size: var(--font-size-md); }
+.access-token-row p { margin: 4px 0; font-size: var(--font-size-sm); }
 .access-token-identity, .access-token-grants { min-width: 0; }
-.access-token-identity code { font-size: 11px; }
+.access-token-identity code { font-size: var(--font-size-xs); }
 .access-token-controls { display: flex; align-items: flex-start; gap: 12px; }
-.access-token-scope-list { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; }
+.access-token-scope-list { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: var(--font-size-sm); }
 .access-token-actions { position: relative; }
 .access-token-actions summary { display: flex; padding: 4px; cursor: pointer; list-style: none; }
 .access-token-actions summary::-webkit-details-marker { display: none; }
@@ -24,16 +24,16 @@
 /* 期間を指定するときの長さと単位は、スマホでもフォームの幅を半分ずつ使う (mado ML Tracking と同じ)。 */
 .token-expiry-duration { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .internal-permissions, .token-connections { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border); }
-.internal-permissions legend, .token-connections legend { padding: 0 4px; font-size: 12px; }
-.internal-permissions > p, .token-connections > p { margin: 0 0 10px; font-size: 12px; }
+.internal-permissions legend, .token-connections legend { padding: 0 4px; font-size: var(--font-size-sm); }
+.internal-permissions > p, .token-connections > p { margin: 0 0 10px; font-size: var(--font-size-sm); }
 .internal-permissions__presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
 .internal-permissions__rows { margin-top: 12px; }
-.internal-permissions__row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 12px; }
+.internal-permissions__row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: var(--font-size-sm); }
 .internal-permissions__row > div { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .internal-permissions__row label, .token-connections__option { display: flex; align-items: center; gap: 8px; }
 .internal-permissions__row input, .token-connections__option input { width: auto; flex: 0 0 auto; }
 .token-connections__option { padding: 8px; overflow-wrap: anywhere; }
-.token-connections__option small { display: block; font-size: 11px; }
+.token-connections__option small { display: block; font-size: var(--font-size-xs); }
 .token-connections__list {
   /* Keep a long connection list from pushing the form actions out of reach. */
   --connection-list-height: 200px;
@@ -45,8 +45,8 @@
   .internal-permissions__row label, .token-connections__option { min-height: var(--tap-target); }
 }
 .namespace-selection { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border); }
-.namespace-selection legend { padding: 0 4px; font-size: 12px; }
-.namespace-selection > p { margin: 0 0 8px; font-size: 12px; }
+.namespace-selection legend { padding: 0 4px; font-size: var(--font-size-sm); }
+.namespace-selection > p { margin: 0 0 8px; font-size: var(--font-size-sm); }
 .namespace-selection__option { display: flex; align-items: center; gap: 8px; padding: 8px; overflow-wrap: anywhere; }
 .namespace-selection__option input { flex: 0 0 auto; width: auto; }
 .namespace-selection__search { margin: 8px 0; }

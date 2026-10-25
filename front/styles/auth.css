@@ -23,7 +23,7 @@
 .login-card .login-lead {
   margin: -16px 0 24px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.7;
 }
 .login-card .login-lead > p {
@@ -32,7 +32,7 @@
 .login-card .login-note {
   margin: 10px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.7;
 }
 .login-card .field {

@@ -29,15 +29,15 @@
   font-weight: 550;
 }
 .markdown-body h2 {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
 }
 .markdown-body h3 {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 .markdown-body :is(h4, h5, h6) {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 .markdown-body :is(p, ul, ol, blockquote, pre, table) {
@@ -91,7 +91,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* コードの塊はログと同じく両方のテーマで暗い地にする。折り返さず横にスクロールする。 */
 .markdown-body pre {
@@ -164,7 +164,7 @@
   border-bottom: 1px solid var(--border);
 }
 .readme-panel > .section-heading h2 {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 .readme-panel__title {
@@ -225,7 +225,7 @@
 .readme-search__path {
   align-self: flex-start;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .readme-search__path .muted {
@@ -321,7 +321,7 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .filelist__crumb-wrap {
   display: contents;
@@ -371,7 +371,7 @@
   border: 0;
   background: transparent;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   text-align: left;
 }
 .filelist__name > svg {
@@ -395,7 +395,7 @@
 }
 .filelist__error {
   color: var(--error);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .filelist__hint {
   flex: 0 0 auto;
@@ -495,7 +495,7 @@
     border: 0;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     text-align: left;
   }
   .editpage__sidebar-toggle:hover {
