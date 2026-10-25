@@ -114,8 +114,8 @@ export function ReadmeSearchPanel({ connectionId }: Props) {
 
   return (
     <section className="readme-search">
-      {/* 隣の「S3 パスで移動」と同じ、虫眼鏡と枠の無い入力の帯 (storage.css の .storage-search)。 */}
-      <div className="storage-search" role="search">
+      {/* 隣の「S3 パスで移動」と同じ、虫眼鏡と枠の無い入力の帯 (共通の部品の .toolbar-search)。 */}
+      <div className="toolbar-search" role="search">
         <Search size={16} aria-hidden="true" />
         <input
           type="search"

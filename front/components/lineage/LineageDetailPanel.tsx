@@ -56,7 +56,7 @@ function StatusBadge({ status }: { status: string | null | undefined }) {
   useLocale()
   const label = lineageStatusLabel(status)
   if (!label) return null
-  return <span className={`status-badge status-${lineageStatusTone(status) ?? 'queued'}`}>{label}</span>
+  return <span className={`status-badge status-${lineageStatusTone(status) ?? 'neutral'}`}>{label}</span>
 }
 
 // .details-list の 1 行。JSON は行の幅いっぱいに .json-view で出す。

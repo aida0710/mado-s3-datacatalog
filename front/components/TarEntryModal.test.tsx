@@ -11,8 +11,8 @@ vi.mock('../lib/api/client', () => ({
     readHead: vi.fn(async () => new Uint8Array(0)),
   },
 }))
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 vi.mock('./PreviewVideo', () => ({
   PreviewVideo: ({ entryPath }: { entryPath?: string }) => (
@@ -21,7 +21,7 @@ vi.mock('./PreviewVideo', () => ({
 }))
 
 import { api } from '../lib/api/client'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 
 const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s)
 
@@ -48,7 +48,7 @@ describe('TarEntryModal - 全文コピー', () => {
     // テキスト読み込み後にコピーボタンが現れる
     const button = await screen.findByRole('button', { name: '内容をコピー' })
     await userEvent.click(button)
-    expect(copyToClipboard).toHaveBeenCalledWith('{\n  "a": 1\n}')
+    expect(copyText).toHaveBeenCalledWith('{\n  "a": 1\n}')
   })
 
   it('.jsonl エントリは整形せずそのままコピーする', async () => {
@@ -56,7 +56,7 @@ describe('TarEntryModal - 全文コピー', () => {
     renderEntry('x.jsonl')
     const button = await screen.findByRole('button', { name: '内容をコピー' })
     await userEvent.click(button)
-    expect(copyToClipboard).toHaveBeenCalledWith('{"a":1}\n{"b":2}')
+    expect(copyText).toHaveBeenCalledWith('{"a":1}\n{"b":2}')
   })
 })
 
@@ -106,14 +106,14 @@ describe('TarEntryModal - URL コピー', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: 'URL をコピー' }))
     await userEvent.click(screen.getByRole('menuitem', { name: /Web URL をコピー/ }))
-    expect(copyToClipboard).toHaveBeenCalledWith(
+    expect(copyText).toHaveBeenCalledWith(
       `${window.location.origin}/storage/c/b/rec/?preview=rec%2Fa.tar&entry=audio%2Fu1.bin`,
     )
 
     await userEvent.click(screen.getByRole('button', { name: 'URL をコピー' }))
     await userEvent.click(screen.getByRole('menuitem', { name: /生データ URL をコピー/ }))
     // 相対パスのままコピーするとホストが分からず、受け取った側が開けない。
-    expect(copyToClipboard).toHaveBeenLastCalledWith(
+    expect(copyText).toHaveBeenLastCalledWith(
       `${window.location.origin}/api/internal/storage/c/preview/tar-entry?bucket=b&key=a.tar&entry=x`,
     )
   })

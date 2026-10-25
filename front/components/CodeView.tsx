@@ -1,6 +1,7 @@
 import { useId, useMemo } from 'react'
 import { CODE_LANGUAGES, highlightCode, type CodeLanguage } from '@mado/design-system/code'
-import { codeLanguageName, type CodeLanguageState } from '../lib/useCodeLanguage'
+import type { CodeLanguageState } from '@mado/design-system/react'
+import { codeLanguageName } from '../lib/codeLanguage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 

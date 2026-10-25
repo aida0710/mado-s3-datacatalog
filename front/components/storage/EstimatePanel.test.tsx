@@ -225,7 +225,7 @@ describe('EstimatePanel', () => {
   it('平均オブジェクトサイズを出す (所要時間の律速が読めるように)', async () => {
     vi.mocked(api.estimate).mockResolvedValue(estimate([candidate()]))
     renderPanel()
-    expect(await screen.findByText(/平均 304\.5 MB/)).toBeInTheDocument()
+    expect(await screen.findByText(/平均 304\.5 MiB/)).toBeInTheDocument()
   })
 
   it('料金 API から取れない値の出所を畳んで出す', async () => {

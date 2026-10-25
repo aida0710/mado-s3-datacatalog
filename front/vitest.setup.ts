@@ -45,3 +45,24 @@ class MockResizeObserver {
 }
 ;(globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver =
   MockResizeObserver as unknown as typeof ResizeObserver
+
+// jsdom には Popover API が無く、popover 属性の要素は既定の CSS で隠れたままになる。部品は popover を
+// 開いている間だけ描くので、テストでは描いた popover を開いた状態として見せる。jsdom の
+// getComputedStyle は詳細度だけで規則を選ぶので、既定の CSS の規則より詳細度を高くする。
+// CSS の決まりを読むテスト (styles/designTokens.test.ts) は node の環境で動くので、文書がある時だけ足す。
+if (typeof document !== 'undefined') {
+  const popoverStyle = document.createElement('style')
+  popoverStyle.textContent = '[popover][popover][popover][popover] { display: block; }'
+  document.head.append(popoverStyle)
+}
+
+// jsdom にはモーダルのダイアログ (showModal / close) が無い。ブラウザの開く・閉じるの代わりに、
+// open 属性を付け外しする (デザインシステムのテストと同じ)。
+if (typeof HTMLDialogElement !== 'undefined') {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  }
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  }
+}

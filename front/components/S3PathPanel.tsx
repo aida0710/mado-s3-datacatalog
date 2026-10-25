@@ -127,7 +127,7 @@ export function S3PathPanel({ connectionId }: Props) {
   return (
     <section className="s3-path">
       <div className="s3-path-row">
-        <div className="storage-search">
+        <div className="toolbar-search">
           <Link2 size={16} aria-hidden="true" />
           <input
             type="search"

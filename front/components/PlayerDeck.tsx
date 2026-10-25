@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, Headphones, Pause, Play, Square, Trash2, Volume2, VolumeX, X } from 'lucide-react'
+import { narrowerThan } from '@mado/design-system/layout'
+import { useMediaQuery } from '@mado/design-system/react'
 import {
   canSplitChannels,
   createTrackAudioGraph,
@@ -12,9 +14,7 @@ import {
 import { computeDriftAdjustments, masterTimeOf } from '../lib/driftSync'
 import { basename, fullEntryLabel } from '../lib/format'
 import { usePlayerDeck, type DeckTrack } from '../lib/playerDeck'
-import { narrowerThan } from '../lib/breakpoints'
 import { useAudioSrc } from '../lib/useAudioSrc'
-import { useMediaQuery } from '../lib/useMediaQuery'
 import { CopyablePath } from './CopyablePath'
 import { Waveform } from './Waveform'
 import { api } from '../lib/api/client'

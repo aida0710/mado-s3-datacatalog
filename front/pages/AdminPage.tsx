@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type MouseEvent } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
+import { narrowerThan } from '@mado/design-system/layout'
+import { useMediaQuery } from '@mado/design-system/react'
 import NotFoundPage from './NotFoundPage'
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
@@ -7,8 +9,6 @@ import { SecretNotice } from '../components/SecretNotice'
 import AccessTokensPage from './AccessTokensPage'
 import { errorFromResponse, fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
-import { narrowerThan } from '../lib/breakpoints'
-import { useMediaQuery } from '../lib/useMediaQuery'
 import { fmtDateTimeWithSeconds } from '../lib/format'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -146,14 +146,14 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
 const OUTCOME_BADGES: Record<AuditEventRow['outcome'], string> = {
   pending: 'status-attention',
-  success: 'status-finished',
-  denied: 'status-failed',
-  failure: 'status-failed',
+  success: 'status-success',
+  denied: 'status-danger',
+  failure: 'status-danger',
 }
 
 const STATUS_BADGES: Record<'active' | 'disabled', string> = {
-  active: 'status-finished',
-  disabled: 'status-queued',
+  active: 'status-success',
+  disabled: 'status-neutral',
 }
 
 // 行のクリックで詳細を開く。行の中のボタンや入力欄は、それぞれの操作だけをする。
@@ -498,7 +498,6 @@ function UsersPage() {
 
       {deleting && (
         <DeleteConfirmDialog
-          titleId="admin-user-delete-title"
           title={translate('adminPage.deleteUser')}
           onConfirm={() => deleteUser(deleting)}
           onCancel={() => setDeleting(null)}

@@ -32,29 +32,29 @@ export function lineageStatusLabel(value: string | null | undefined): string | n
   return STATUS_LABELS[value.toLowerCase()] ?? value
 }
 
-/** 状態の色。共通の部品の .status-badge に `status-${tone}` として付ける。 */
-export type LineageStatusTone = 'finished' | 'running' | 'failed' | 'canceled' | 'queued'
+/** 状態の色。共通の部品の .status-badge に、役割の名前で `status-${tone}` として付ける。 */
+export type LineageStatusTone = 'success' | 'info' | 'danger' | 'neutral'
 
 const STATUS_TONES: Record<string, LineageStatusTone> = {
-  start: 'running',
-  starting: 'running',
-  running: 'running',
-  complete: 'finished',
-  completed: 'finished',
-  available: 'finished',
-  fail: 'failed',
-  failed: 'failed',
-  missing: 'failed',
-  abort: 'canceled',
-  aborted: 'canceled',
-  archived: 'canceled',
-  deleted: 'canceled',
+  start: 'info',
+  starting: 'info',
+  running: 'info',
+  complete: 'success',
+  completed: 'success',
+  available: 'success',
+  fail: 'danger',
+  failed: 'danger',
+  missing: 'danger',
+  abort: 'neutral',
+  aborted: 'neutral',
+  archived: 'neutral',
+  deleted: 'neutral',
 }
 
-/** 知らない値は中立の色 (queued) にする。 */
+/** 知らない値は中立の色 (neutral) にする。 */
 export function lineageStatusTone(value: string | null | undefined): LineageStatusTone | null {
   if (!value) return null
-  return STATUS_TONES[value.toLowerCase()] ?? 'queued'
+  return STATUS_TONES[value.toLowerCase()] ?? 'neutral'
 }
 
 export function lineageCompletenessLabel(value: string | null | undefined): string | null {

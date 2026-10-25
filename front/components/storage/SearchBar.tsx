@@ -11,14 +11,14 @@ interface Props {
   onClear: () => void
 }
 
-// 一覧の上の帯 (.storage-toolbar) に置く、検索欄 + 再帰チェック + クリア。
+// 一覧の上の帯 (共通の部品の .toolbar) に置く、検索欄 + 再帰チェック + クリア。
 // 帯そのものは StorageBrowser が持ち、タグの絞り込みも同じ帯に並べる。
 // debounce は親 (StorageBrowser) の onChangeQ ハンドラ内で setTimeout / useRef<timer> 管理。
 export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecursive, onClear }: Props) {
   useLocale()
   return (
     <>
-      <div className="storage-search">
+      <div className="toolbar-search">
         <Search size={16} aria-hidden="true" />
         <input
           type="search"
@@ -41,7 +41,7 @@ export function SearchBar({ q, recursive, isSearching, onChangeQ, onToggleRecurs
           </button>
         )}
       </div>
-      <label className="storage-toolbar-item storage-toolbar-check">
+      <label className="toolbar-item storage-toolbar-check">
         <input
           type="checkbox"
           checked={recursive}

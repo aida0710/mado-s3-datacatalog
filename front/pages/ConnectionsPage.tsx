@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useReducer, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { narrowerThan } from '@mado/design-system/layout'
+import { useMediaQuery } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
 import type { Capabilities, Connection } from '../lib/api/types'
@@ -9,8 +11,6 @@ import { ImportExportButtons } from '../components/ImportExportButtons'
 import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
 import { describeImportFailure, downloadJson, type ImportMode, type ImportSummary } from '../lib/jsonFile'
 import { invalidateCapabilitiesCache } from '../lib/useCapabilities'
-import { narrowerThan } from '../lib/breakpoints'
-import { useMediaQuery } from '../lib/useMediaQuery'
 import { TranslatedMessage } from '../i18n/TranslatedMessage'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -253,12 +253,12 @@ export default function ConnectionsPage() {
           <span className="connection-name">
             <strong>{connection.name}</strong>
             {connection.isDefault && (
-              <span className="status-badge connection-default" title={translate('connectionsPage.storageOpensThisConnection')}>
+              <span className="status-badge status-accent" title={translate('connectionsPage.storageOpensThisConnection')}>
                 {translate('connectionsPage.default')}</span>
             )}
             {connection.visibility.mode === 'whitelist' && (
               <span
-                className="status-badge status-queued"
+                className="status-badge status-neutral"
                 title={translate('connectionsPage.usersAllowed', { value0: connection.visibility.allowedUsers.length })}
               >
                 {translate('connectionsPage.allowlistCount', { value0: connection.visibility.allowedUsers.length })}
@@ -334,7 +334,7 @@ export default function ConnectionsPage() {
       ),
     },
   ]
-  // 狭い画面では名前だけを行に残し、ほかは行の下に開く (mado ML Tracking の表と同じ考え方)。
+  // 狭い画面では名前だけを行に残し、ほかは行の下に開く (共通の部品の .responsive-table)。
   const rowColumns = isNarrow ? columns.filter(column => column.primary) : columns
   const detailColumns = isNarrow ? columns.filter(column => !column.primary) : []
 

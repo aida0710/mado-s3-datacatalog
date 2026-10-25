@@ -42,7 +42,7 @@ export function StorageHeader({
   return (
     <header className="page-header">
       <div>
-        <nav className="eyebrow storage-crumbs" aria-label={translate('breadcrumb.breadcrumbs')}>
+        <nav className="eyebrow breadcrumbs" aria-label={translate('breadcrumb.breadcrumbs')}>
           {crumbs.map((crumb, index) => (
             <Fragment key={crumb.to}>
               {index > 0 && (

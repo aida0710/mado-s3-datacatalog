@@ -17,7 +17,7 @@ export function LineageNode({ data, selected }: NodeProps<Node<LineageNodeData, 
       <span className="lineage-node-card__head">
         <span className="lineage-node-card__kind">{LINEAGE_KIND_LABEL[data.kind]}</span>
         {data.status && (
-          <span className={`status-badge status-${data.statusTone ?? 'queued'}`}>{data.status}</span>
+          <span className={`status-badge status-${data.statusTone ?? 'neutral'}`}>{data.status}</span>
         )}
       </span>
       <strong className="lineage-node-card__title" title={data.title}>{data.title}</strong>

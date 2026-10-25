@@ -134,9 +134,9 @@ describe('ConnectionForm の見積もり設定', () => {
     expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { provider: null } })
   })
 
-  it('容量は TB で入れてバイトで送る', async () => {
+  it('容量は TiB で入れてバイトで送る', async () => {
     const onSubmit = renderEdit(connection)
-    await userEvent.type(screen.getByLabelText('容量 (TB)'), '320')
+    await userEvent.type(screen.getByLabelText('容量 (TiB)'), '320')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { capacityBytes: 320 * TIB } })
@@ -148,7 +148,7 @@ describe('ConnectionForm の見積もり設定', () => {
       pricing: { ...PRICING_FIXTURE, capacityBytes: 320 * TIB },
     }
     const onSubmit = renderEdit(withCapacity)
-    const cap = screen.getByLabelText('容量 (TB)')
+    const cap = screen.getByLabelText('容量 (TiB)')
     expect(cap).toHaveValue(320)
     await userEvent.clear(cap)
     await userEvent.click(screen.getByRole('button', { name: '保存' }))

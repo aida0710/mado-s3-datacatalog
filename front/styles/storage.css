@@ -93,34 +93,20 @@
 tr.selected .storage-meter {
   background: var(--background);
 }
-/* 注意を促す .notice (止まったページ送り、途中までの走査)。 */
-.notice.storage-warning {
-  border-left-color: var(--warning);
-}
-
 /* ── 場所の見出し (Breadcrumb / ViewBreadcrumb) ───────────────────── */
-.storage-crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 2px;
-  min-width: 0;
-}
-.storage-crumbs > a {
+/* 並びは共通の部品の .breadcrumbs。バケット名やフォルダ名は空白の無い長い名前もあるので、どこででも折り返す。 */
+.page-header .breadcrumbs > a {
   overflow-wrap: anywhere;
-}
-.storage-crumbs .breadcrumb-separator {
-  display: inline-flex;
-  margin: 0 6px;
 }
 .storage-header-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
-/* ── 接続先の切り替え (ConnectionSwitcher) ─────────────────────────── */
+/* ── 接続先の切り替え (ConnectionSwitcher) ───────────────────────────
+   メニューは共通の部品の .popover.menu と .menu-item。接続の項目は名前と接続先の 2 行にする。 */
 .connection-switcher {
   position: relative;
   display: inline-flex;
@@ -132,7 +118,7 @@ tr.selected .storage-meter {
 }
 .connection-switcher-label {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .connection-switcher-name {
   min-width: 0;
@@ -143,38 +129,23 @@ tr.selected .storage-meter {
   top: calc(100% + 4px);
   min-width: 260px;
   max-width: 360px;
-  padding: 4px 0;
   box-shadow: var(--shadow-popover);
 }
 .connection-switcher-heading {
   padding: 6px 14px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .connection-switcher-note {
   padding: 10px 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
-.connection-switcher-item {
-  display: flex;
+.menu-item.connection-switcher-item {
   flex-direction: column;
   align-items: flex-start;
-  width: 100%;
-  padding: 8px 14px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-}
-.connection-switcher-item:hover,
-.connection-switcher-item:focus-visible {
-  background: var(--surface-hover);
-  text-decoration: none;
-}
-.connection-switcher-item:focus-visible {
-  outline-offset: -2px;
+  gap: 0;
 }
 .connection-switcher-item-name {
   font-weight: 600;
@@ -183,62 +154,44 @@ tr.selected .storage-meter {
   margin-top: 2px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
 .connection-switcher-manage {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
   margin-top: 4px;
   border-top: 1px solid var(--border);
 }
 
 /* ── 操作のメニュー (CopyMenu) ─────────────────────────────────────
-   位置 (fixed) と幅の上限は CopyMenu.tsx がトリガーの座標から決める。ダイアログ (z-index 60)
-   の中から開くこともあるので、その上に出す。 */
+   メニューは共通の部品の .popover.menu と .menu-item。位置 (fixed) と幅の上限は CopyMenu.tsx が
+   トリガーの座標から決め、popover 属性でトップレイヤーに出す。 */
 .copy-menu {
   display: inline-flex;
 }
-.copy-menu-list {
-  z-index: 65;
-  overflow-y: auto;
-  padding: 4px 0;
-  border: 1px solid var(--border);
-  background: var(--background);
-  box-shadow: var(--shadow-menu);
-}
-.copy-menu-item {
-  display: block;
-  width: 100%;
-  padding: 8px 14px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 13px;
-  text-align: left;
-}
-.copy-menu-item:hover,
-.copy-menu-item:focus-visible {
-  background: var(--surface-hover);
-  text-decoration: none;
-}
-.copy-menu-item:focus-visible {
-  outline-offset: -2px;
+/* コピーの項目は、名前の下にコピーする値を小さく出す。 */
+.menu-item.copy-menu-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 .copy-menu-value {
   display: block;
-  margin-top: 2px;
+  max-width: 100%;
   overflow: hidden;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* コピーした結果の吹き出し。地と文字を反転させ、どちらのテーマでも目に入るようにする。 */
+/* コピーした結果の吹き出し。地と文字を反転させ、どちらのテーマでも目に入るようにする。
+   popover の既定の枠と位置 (inset: 0) は外し、CopyMenu.tsx が書く right と top / bottom で置く。 */
 .copy-menu-feedback {
-  z-index: 65;
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 0;
+  overflow: visible;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -246,7 +199,7 @@ tr.selected .storage-meter {
   background: var(--text);
   color: var(--background);
   box-shadow: var(--shadow-menu);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -256,12 +209,10 @@ tr.selected .storage-meter {
 }
 
 /* ── タグ ─────────────────────────────────────────────────────────── */
-/* 共通の .status-badge (小さなピル) に、利用者が決めた色の点を添える。行の高さを
+/* 共通の .status-badge.status-neutral (小さなピル) に、利用者が決めた色の点を添える。行の高さを
    増やさないよう、上下の余白は .status-badge より詰める。 */
 .tag-badge {
   padding: 2px 8px;
-  background: var(--status-neutral-background);
-  color: var(--status-neutral-text);
 }
 .tag-color-dot {
   flex: none;
@@ -282,7 +233,7 @@ tr.selected .storage-meter {
   border-radius: var(--radius-pill);
   background: var(--background);
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 .tag-chip:hover {
@@ -322,61 +273,8 @@ tr.selected .storage-meter {
   min-width: 0;
 }
 
-/* 一覧の上の帯 (mmt の Runs の .run-toolbar と同じ形): 検索・再帰検索・タグの絞り込み。
-   収まらない分は次の行へ折り返す。 */
-.storage-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  min-height: 40px;
-  background: var(--surface);
-}
-/* 虫眼鏡 + 枠の無い入力欄。帯の中でも単独でも同じ形 (S3 パスで移動もこれ)。 */
-.storage-search {
-  display: flex;
-  flex: 1 1 320px;
-  align-items: center;
-  gap: 10px;
-  min-width: 200px;
-  padding: 0 4px 0 12px;
-  border-bottom: 1px solid var(--input-border);
-  background: var(--surface);
-  color: var(--muted);
-}
-.storage-search:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.storage-search > svg {
-  flex: none;
-}
-.storage-search > input {
-  flex: 1;
-  width: 100%;
-  padding: 10px 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-.storage-search > input:focus-visible {
-  outline: none;
-}
-/* 消すボタンは自前で持つので、ブラウザの × は出さない。 */
-.storage-search > input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-}
-.storage-toolbar-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  padding: 6px 12px;
-  border-left: 1px solid var(--background);
-  font-size: 12px;
-}
+/* 一覧の上の帯 (共通の部品の .toolbar・.toolbar-search・.toolbar-item): 検索・再帰検索・タグの絞り込み。
+   S3 パスで移動と README の全文検索も、単独の .toolbar-search を使う。 */
 .storage-toolbar-check {
   gap: 8px;
   white-space: nowrap;
@@ -404,7 +302,7 @@ tr.selected .storage-meter {
   border-left: 3px solid var(--border-strong);
   background: var(--surface);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .cache-banner-body {
   display: flex;
@@ -423,7 +321,7 @@ tr.selected .storage-meter {
 }
 .cache-banner-at {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 .cache-banner[data-age='within-1h'] .cache-banner-at {
@@ -539,12 +437,13 @@ tr.selected .storage-meter {
 }
 
 /* ── ファイルの表 (EntryTable) ─────────────────────────────────────
-   1 行 40px 前後 (mmt の Runs と同じ)。名前の列が残りの幅を取り、長い名前は省略する。 */
+   1 行 40px 前後。名前の列が残りの幅を取り、長い名前は省略する。 */
 .entry-table table {
   table-layout: fixed;
 }
 .entry-table .entry-col-size {
-  width: 96px;
+  /* 「1,023.9 MiB」(桁区切りと 2 進の単位) が 1 行に収まる幅。 */
+  width: 112px;
 }
 .entry-table .entry-col-modified {
   width: 112px;
@@ -585,7 +484,7 @@ tr.selected .storage-meter {
   max-width: 100%;
   color: var(--link);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .entry-name-main > svg {
   flex: none;
@@ -607,7 +506,7 @@ tr.selected .storage-meter {
   padding-left: 23px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
 }
 .state-message.entry-empty {
@@ -643,7 +542,7 @@ tr.selected .storage-meter {
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 .storage-pager-page:hover:not(:disabled) {
@@ -668,7 +567,7 @@ tr.selected .storage-meter {
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-lineage-label {
   display: inline-flex;
@@ -697,7 +596,7 @@ tr.selected .storage-meter {
   min-width: 0;
 }
 .storage-lineage-name strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -732,14 +631,14 @@ tr.selected .storage-meter {
   gap: 4px;
 }
 .scan-figure-value {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
 }
 .scan-figure-value small {
   margin-left: 3px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 400;
 }
 /* サブディレクトリと拡張子の 2 つの表で列の位置を揃える。 */
@@ -750,7 +649,7 @@ tr.selected .storage-meter {
   width: 88px;
 }
 .scan-table .scan-col-size {
-  width: 104px;
+  width: 112px;
 }
 .scan-table .scan-col-meter {
   width: 30%;
@@ -762,7 +661,7 @@ tr.selected .storage-meter {
   gap: 8px;
   margin-right: auto;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* 見積もり。 */
 .est-summary {
@@ -831,7 +730,7 @@ tr.est-detail:hover > td {
   grid-template-columns: max-content max-content minmax(0, 1fr);
   gap: 4px 16px;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .est-costs > div {
   display: contents;
@@ -851,7 +750,7 @@ tr.est-detail:hover > td {
   margin: 12px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 .est-warns li {
@@ -871,7 +770,7 @@ tr.est-detail:hover > td {
   gap: 6px 12px;
   margin-top: 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .est-foot strong {
   color: var(--text);
@@ -882,7 +781,7 @@ tr.est-detail:hover > td {
 .est-manual {
   margin-top: 10px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
 }
 .est-manual > summary {
@@ -939,7 +838,7 @@ tr.est-detail:hover > td {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .bucket-section + .bucket-section {
   margin-top: 32px;
@@ -999,7 +898,7 @@ tr.est-detail:hover > td {
   align-items: center;
   gap: 6px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .s3-path-note,
@@ -1024,7 +923,7 @@ tr.est-detail:hover > td {
   gap: 8px;
   padding: 9px 12px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .s3-path-results a > svg {
@@ -1033,7 +932,7 @@ tr.est-detail:hover > td {
 }
 
 /* タグ検索 (TagSearchView)。 */
-.tag-search .storage-toolbar {
+.tag-search .toolbar {
   margin-bottom: 16px;
 }
 .tag-search-prompt {
@@ -1042,7 +941,7 @@ tr.est-detail:hover > td {
 }
 .tag-search-path {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .tag-search-path .muted {
@@ -1068,11 +967,11 @@ tr.est-detail:hover > td {
 .capacity-summary dt,
 .capacity-metrics dt {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .capacity-summary dd {
   margin: 4px 0 0;
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -1154,7 +1053,7 @@ tr.est-detail:hover > td {
   flex: none;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-metrics {
   display: grid;
@@ -1171,7 +1070,7 @@ tr.est-detail:hover > td {
   margin: 3px 0 0;
   overflow: hidden;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1190,7 +1089,7 @@ tr.est-detail:hover > td {
 .capacity-chart-empty {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-chart-placeholder {
   height: 120px;
@@ -1207,7 +1106,7 @@ tr.est-detail:hover > td {
   border: 1px solid var(--border);
   background: var(--background);
   box-shadow: var(--shadow-popover);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .capacity-tooltip p {
   margin: 0;
@@ -1230,7 +1129,7 @@ tr.est-detail:hover > td {
 }
 .capacity-prefixes-heading h4 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 .capacity-prefixes-heading p,
@@ -1320,19 +1219,15 @@ tr.capacity-trend-row:hover > td {
     width: 56px;
   }
   .tag-chip,
-  .connection-switcher-item,
-  .copy-menu-item,
   .storage-toolbar-check,
   .s3-path-results a,
   .tag-picker-list .checkbox-field {
     min-height: var(--tap-target);
   }
-  .copy-menu-item {
-    display: flex;
-    flex-direction: column;
+  .menu-item.copy-menu-item {
     justify-content: center;
   }
-  .storage-search .icon-button {
+  .toolbar-search .icon-button {
     flex: none;
   }
   .capacity-col-delta {
@@ -1365,16 +1260,6 @@ tr.capacity-trend-row:hover > td {
     min-width: 0;
     max-width: none;
   }
-  .storage-search {
-    flex-basis: 100%;
-  }
-  .storage-toolbar-item {
-    border-left: 0;
-    border-top: 1px solid var(--background);
-  }
-  .storage-toolbar-item + .storage-toolbar-item {
-    border-left: 1px solid var(--background);
-  }
   .storage-toolbar-end {
     margin-left: 0;
   }
@@ -1405,7 +1290,7 @@ tr.capacity-trend-row:hover > td {
     width: 72px;
   }
   .scan-table .scan-col-size {
-    width: 92px;
+    width: 104px;
   }
   .est-costs {
     grid-template-columns: max-content max-content;

@@ -12,8 +12,8 @@ import Editor, { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 import editorWorker from 'monaco-editor/editor/editor.worker.js?worker'
 import type { editor as monacoEditor } from 'monaco-editor'
-import { useDocumentTheme } from '../lib/useDocumentTheme'
-import type { Theme } from '../lib/useTheme'
+import { defineMonacoTheme, MONACO_THEME_NAMES, monacoFontFamily } from '@mado/design-system/monaco'
+import { useDocumentTheme } from '@mado/design-system/react'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -27,55 +27,6 @@ declare global {
 if (typeof self !== 'undefined' && !self.MonacoEnvironment) {
   self.MonacoEnvironment = { getWorker: () => new editorWorker() }
   loader.config({ monaco })
-}
-
-const THEME_NAMES: Record<Theme, string> = { light: 'mado-light', dark: 'mado-dark' }
-
-/** tokens.css の色 (#rgb / #rrggbb) を #rrggbb で読む。読めなければ undefined (Monaco の既定のまま)。 */
-function readColor(style: CSSStyleDeclaration, name: string): string | undefined {
-  const value = style.getPropertyValue(name).trim()
-  if (/^#[0-9a-f]{6}$/i.test(value)) return value
-  if (/^#[0-9a-f]{3}$/i.test(value)) return `#${[...value.slice(1)].map(c => c + c).join('')}`
-  return undefined
-}
-
-/** #rrggbb に不透明度 (0〜1) を足して #rrggbbaa にする。 */
-function withAlpha(color: string | undefined, alpha: number): string | undefined {
-  return color && color + Math.round(alpha * 255).toString(16).padStart(2, '0')
-}
-
-/**
- * いまの <html data-theme> の token の値で Monaco のテーマを定義する。
- * Monaco は CSS の変数を解決できないので、getComputedStyle で値を読んで渡す。
- * ライトは vs、ダークは vs-dark を元にし、地・文字・行番号・選択範囲を mado の色にする。
- */
-function defineMadoTheme(theme: Theme): void {
-  const style = getComputedStyle(document.documentElement)
-  const background = readColor(style, '--background')
-  const text = readColor(style, '--text')
-  const accent = readColor(style, '--accent')
-  const entries: Array<[string, string | undefined]> = [
-    ['editor.background', background],
-    ['editor.foreground', text],
-    ['editorGutter.background', background],
-    ['editorLineNumber.foreground', readColor(style, '--muted')],
-    ['editorLineNumber.activeForeground', text],
-    ['editor.lineHighlightBackground', readColor(style, '--surface')],
-    ['editorCursor.foreground', text],
-    ['editor.selectionBackground', withAlpha(accent, 0.3)],
-    ['editor.inactiveSelectionBackground', withAlpha(accent, 0.15)],
-    ['editorIndentGuide.background1', readColor(style, '--border')],
-    ['editorIndentGuide.activeBackground1', readColor(style, '--border-strong')],
-    ['editorWhitespace.foreground', readColor(style, '--border-strong')],
-    ['focusBorder', accent],
-  ]
-  const colors = Object.fromEntries(entries.filter((entry): entry is [string, string] => entry[1] !== undefined))
-  monaco.editor.defineTheme(THEME_NAMES[theme], {
-    base: theme === 'dark' ? 'vs-dark' : 'vs',
-    inherit: true,
-    rules: [],
-    colors,
-  })
 }
 
 export interface MonacoMarkdownEditorHandle {
@@ -96,10 +47,10 @@ export const MonacoMarkdownEditor = forwardRef<MonacoMarkdownEditorHandle, Props
     const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null)
     const theme = useDocumentTheme()
 
-    // テーマが変わるたびに、その時点の token の値で定義し直す。layout effect は Editor の
-    // (passive な) effect より先に走るので、Editor が setTheme する前に定義が済む。
+    // テーマが変わるたびに、その時点の tokens.css の値で定義し直す (デザインシステムの配色)。
+    // layout effect は Editor の (passive な) effect より先に走るので、Editor が setTheme する前に定義が済む。
     useLayoutEffect(() => {
-      defineMadoTheme(theme)
+      defineMonacoTheme(monaco.editor, theme)
     }, [theme])
 
     const options = useMemo<monacoEditor.IStandaloneEditorConstructionOptions>(() => ({
@@ -107,7 +58,7 @@ export const MonacoMarkdownEditor = forwardRef<MonacoMarkdownEditorHandle, Props
       wordWrap: 'on',
       minimap: { enabled: false },
       // 書体も tokens.css (--mono) から読む。Monaco は CSS の変数を解決しない。
-      fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace',
+      fontFamily: monacoFontFamily(),
       fontSize: 13,
       lineHeight: 21,
       lineNumbers: 'on',
@@ -156,7 +107,7 @@ export const MonacoMarkdownEditor = forwardRef<MonacoMarkdownEditorHandle, Props
         onChange={v => onChange(v ?? '')}
         language="markdown"
         height={height}
-        theme={THEME_NAMES[theme]}
+        theme={MONACO_THEME_NAMES[theme]}
         onMount={ed => { editorRef.current = ed }}
         options={options}
         loading={<p className="muted">{translate('monacoMarkdownEditor.loadingEditor')}</p>}

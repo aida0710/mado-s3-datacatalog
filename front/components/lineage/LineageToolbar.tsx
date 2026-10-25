@@ -41,7 +41,7 @@ export function LineageToolbar({ route, loading, onModeChange, onApply, onDepthC
   }
 
   return (
-    <div className="lineage-toolbar">
+    <div className="toolbar lineage-toolbar">
       <div className="lineage-segmented" role="group" aria-label={translate('lineageToolbar.dataLineageView')}>
         <button
           type="button"
@@ -57,7 +57,7 @@ export function LineageToolbar({ route, loading, onModeChange, onApply, onDepthC
           {translate('lineageToolbar.inputsOutputsAndProcessingHistory')}</button>
       </div>
 
-      <label className="lineage-toolbar__item">
+      <label className="toolbar-item">
         <span>{translate('lineageToolbar.viewRange')}</span>
         <select value={route.depth} onChange={event => onDepthChange(Number(event.target.value))}>
           {[1, 2, 3, 4, 5, 6].map(depth => <option key={depth} value={depth}>{depth}</option>)}

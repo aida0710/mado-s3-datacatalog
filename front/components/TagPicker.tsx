@@ -1,8 +1,8 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api/client'
 import type { Tag, TargetKind } from '../lib/api/types'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { TagBadge } from './TagBadge'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { TranslatedMessage } from '../i18n/TranslatedMessage'
@@ -29,7 +29,6 @@ export function TagPicker({
   connectionId, bucket, kind, path, label, allTags, assignedTagIds, onChange, onClose,
 }: Props) {
   useLocale()
-  const titleId = useId()
   const [assigned, setAssigned] = useState<Set<string>>(new Set(assignedTagIds))
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +70,6 @@ export function TagPicker({
 
   return (
     <Dialog
-      titleId={titleId}
       title={translate('common.editTags')}
       subtitle={label}
       onClose={onClose}

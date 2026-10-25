@@ -2,7 +2,7 @@
 
 公開先: https://aida0710.github.io/mado-s3-datacatalog/
 
-VitePressで日本語と英語の利用ガイド・管理設定・リファレンスを生成する。日本語は`pages/`直下、英語は`pages/en/`に同じファイル名で置き、片方を変えたらもう片方も同じ構成に直す。サイドバーの並びは`.vitepress/config.ts`の`sidebarSections`で両方の言語をまとめて決める。トップページの文言は`homeContent.ts`の`homeContent(lang)`で言語ごとに返す。本文で太字にする画面の名前は、その言語の画面の表記（`front/i18n/ja.ts`・`en.ts`）どおりに書く。Home・Storage・DataLineage・Settingsなどの区分の名前は、日本語の画面でも英語のまま（辞書の`section.*`）なので、日本語の本文でも英語で書く。画像は日本語のページが`public/screenshots/`、英語のページが`public/screenshots/en/`の、それぞれの言語の画面を撮ったものを使う。色・書体はアプリと同じ`@mado/design-system`の変数を使い、上部バーとサイドバーはアプリと同じ暗い枠にする（`.vitepress/theme/style.css`）。本文はMarkdown、トップページは`.vitepress/theme/Home.vue`、紹介する機能と入口は`.vitepress/theme/homeContent.ts`に置く。タブのアイコン`public/mado-icon.svg`はアプリの`front/public/mado-icon.svg`と同じファイルで、変えるときは両方を替える。
+VitePressで日本語と英語の利用ガイド・管理設定・リファレンスを生成する。日本語は`pages/`直下、英語は`pages/en/`に同じファイル名で置き、片方を変えたらもう片方も同じ構成に直す。サイドバーの並びは`.vitepress/config.ts`の`sidebarSections`で両方の言語をまとめて決める。トップページの文言は`homeContent.ts`の`homeContent(lang)`で言語ごとに返す。本文で太字にする画面の名前は、その言語の画面の表記（`front/i18n/ja.ts`・`en.ts`）どおりに書く。Home・Storage・DataLineage・Settingsなどの区分の名前は、日本語の画面でも英語のまま（辞書の`section.*`）なので、日本語の本文でも英語で書く。画像は日本語のページが`public/screenshots/`、英語のページが`public/screenshots/en/`の、それぞれの言語の画面を撮ったものを使う。色・書体はアプリと同じ`@mado/design-system`の変数を使い、上部バーとサイドバーはアプリと同じ暗い枠にする（デザインシステムの`docs.css`を`.vitepress/theme/index.ts`で読み込む）。本文はMarkdown、トップページは`.vitepress/theme/Home.vue`、紹介する機能と入口は`.vitepress/theme/homeContent.ts`に置く。タブのアイコン`public/mado-icon.svg`はアプリの`front/public/mado-icon.svg`と同じファイルで、変えるときは両方を替える。
 
 ## 起動・ビルド
 

@@ -59,7 +59,7 @@ export function ConnectionSwitcher() {
         <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
-        <div className="popover connection-switcher-menu" role="menu">
+        <div className="popover menu connection-switcher-menu" role="menu">
           <div className="connection-switcher-heading">{translate('section.connections')}</div>
           {list === null && <div className="connection-switcher-note">{translate('common.loading')}</div>}
           {list !== null && others.length === 0 && (
@@ -70,7 +70,7 @@ export function ConnectionSwitcher() {
               key={c.id}
               type="button"
               role="menuitem"
-              className="connection-switcher-item"
+              className="menu-item connection-switcher-item"
               onClick={() => { setOpen(false); navigate(`/storage/${encodeURIComponent(c.id)}/`) }}
             >
               {/* 接続名とアドレスは行を分ける。1 行に並べると、狭い画面では
@@ -84,7 +84,7 @@ export function ConnectionSwitcher() {
           ))}
           <Link
             role="menuitem"
-            className="connection-switcher-item connection-switcher-manage"
+            className="menu-item connection-switcher-manage"
             to="/settings"
             onClick={() => setOpen(false)}
           >
