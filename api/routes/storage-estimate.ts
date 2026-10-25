@@ -12,6 +12,7 @@ import {
   PRICING_REFRESH_DEDUP_KEY, PRICING_REFRESH_KIND,
   isStale, readRefreshDays, shouldAutoRefresh,
 } from './pricing.js'
+import { apiError } from '../lib/api-error.js'
 
 // 転送先ごとの費用・所要時間の見積もり
 // (spec: 2026-08-22-transfer-estimate-design.md)。
@@ -55,25 +56,25 @@ export function mountStorageEstimateRoutes(app: Hono, deps: StorageEstimateDeps)
   app.get('/storage/:connectionId/estimate', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
 
     // 走査は投げ直さない。重い操作を暗黙に起動しないという走査仕様の方針を
     // 踏襲し、無ければ 409 を返して UI に「先に走査して」と言わせる。
     const job = await deps.store.latestDone(SCAN_KIND, scanDedupKey(connectionId, bucket, prefix))
     if (!job) {
-      return c.json({ error: 'このディレクトリはまだ走査されていません' }, 409)
+      return c.json(apiError('directory_not_scanned', 'this directory has not been scanned yet'), 409)
     }
     const scan = ScanShape.safeParse(job.result)
     if (!scan.success) {
-      return c.json({ error: '走査結果を読めませんでした。再走査してください' }, 409)
+      return c.json(apiError('scan_result_unreadable', 'could not read the scan results; scan again'), 409)
     }
 
     const visible = await visibleConnectionIds(deps.pools.ro, c)
     const allRows = (await deps.pools.ro.query<ConnRow>(SELECT_CONNS)).rows
     const rows = allRows.filter(row => visible === null || visible.has(row.id))
     const sourceRow = rows.find(r => r.id === connectionId)
-    if (!sourceRow) return c.json({ error: 'connection not found' }, 404)
+    if (!sourceRow) return c.json(apiError('not_found', 'connection not found'), 404)
 
     const snapshot = await deps.pricing.get()
     const catalog = snapshot.catalog

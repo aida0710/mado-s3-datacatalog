@@ -11,6 +11,7 @@ import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import type { ResponseCache } from '../lib/storage-cache.js'
 import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface StorageReadmeDeps {
   getStorage: GetStorage
@@ -58,7 +59,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
     const storage = r
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
     const Key = prefix + 'README.md'
 
@@ -102,11 +103,11 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
     const connectionId = c.req.param('connectionId')
     const parsed = PutBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) {
-      return c.json({ error: parsed.error.message }, 400)
+      return c.json(apiError('invalid_request', parsed.error.message), 400)
     }
     const { bucket, prefix, body } = parsed.data
     const principal = getRequestPrincipal(c)
-    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    if (!principal) return c.json(apiError('authentication_required', 'unauthorized'), 401)
     const editor = principalEditor(principal)
     const actorUserId = principalUserId(principal)
     const Key = prefix + 'README.md'
@@ -134,7 +135,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
           name: e instanceof Error ? e.name : 'unknown',
           status: (e as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode,
         })
-        return c.json({ error: 'storage request failed' }, 500)
+        return c.json(apiError('storage_request_failed', 'storage request failed'), 500)
       }
 
       // README.md が一覧に現れる / 消えるので、S3 PUT直後にcacheを捨てる。
@@ -183,7 +184,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
   app.get('/storage/:connectionId/readme/history', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
     const limitRaw = parseInt(c.req.query('limit') ?? '50', 10)
     const limit = Math.max(1, Math.min(Number.isFinite(limitRaw) ? limitRaw : 50, 200))
@@ -212,7 +213,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
   app.get('/storage/:connectionId/readme/history/:id', async c => {
     const connectionId = c.req.param('connectionId')
     const id = c.req.param('id')
-    if (!/^\d+$/.test(id)) return c.json({ error: 'id must be integer' }, 400)
+    if (!/^\d+$/.test(id)) return c.json(apiError('invalid_request', 'id must be integer'), 400)
     const r = await deps.pools.ro.query<{
       bucket: string; prefix: string; body: string;
       editor: string; edited_at: Date; size_bytes: number
@@ -222,7 +223,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
          WHERE id=$1 AND connection_id=$2`,
       [id, connectionId]
     )
-    if (!r.rows[0]) return c.json({ error: 'not found' }, 404)
+    if (!r.rows[0]) return c.json(apiError('not_found', 'not found'), 404)
     const row = r.rows[0]
     return c.json({
       id: Number(id),
@@ -242,7 +243,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
   app.get('/storage/:connectionId/readmes/search', async c => {
     const connectionId = c.req.param('connectionId')
     const q = (c.req.query('q') ?? '').trim()
-    if (q.length < 2) return c.json({ error: 'q must be at least 2 chars' }, 400)
+    if (q.length < 2) return c.json(apiError('invalid_request', 'q must be at least 2 chars'), 400)
     const limitRaw = parseInt(c.req.query('limit') ?? '50', 10)
     const limit = Math.max(1, Math.min(Number.isFinite(limitRaw) ? limitRaw : 50, 200))
 

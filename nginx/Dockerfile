@@ -14,6 +14,7 @@ COPY front/package.json front/package-lock.json ./
 RUN npm ci
 COPY front .
 COPY api/shared/access-token-permissions.ts /api/shared/access-token-permissions.ts
+COPY api/shared/api-error-codes.ts /api/shared/api-error-codes.ts
 RUN npm run build
 
 # ステージ 2: nginx に静的成果物と設定を焼く
@@ -24,8 +25,8 @@ FROM nginxinc/nginx-unprivileged:alpine@sha256:d9083fe47768377ef55dedafd67d4da7c
 ARG MADO_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
-LABEL org.opencontainers.image.title="Mado Web" \
-      org.opencontainers.image.description="Mado web UI and ingress" \
+LABEL org.opencontainers.image.title="mado S3 Data Catalog Web" \
+      org.opencontainers.image.description="mado S3 Data Catalog web UI and ingress" \
       org.opencontainers.image.source="https://github.com/aida0710/mado-s3-datacatalog" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="$MADO_VERSION" \

@@ -191,6 +191,6 @@ describe('大容量tar内動画の配信', () => {
     storageMock.on(GetObjectCommand).rejects({ name: 'PreconditionFailed', $metadata: { httpStatusCode: 412 } })
     const second = await app.request(url, { headers: { Range: 'bytes=10-19' } })
     expect(second.status).toBe(412)
-    expect(await second.json()).toEqual({ error: 'object changed; retry the request' })
+    expect(await second.json()).toEqual({ error: 'object changed; retry the request', code: 'object_changed' })
   })
 })

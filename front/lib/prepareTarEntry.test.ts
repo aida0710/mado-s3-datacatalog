@@ -30,7 +30,7 @@ describe('tar本文の準備', () => {
   })
 
   it('本文の不存在や上限エラーは再試行せず表示へ渡す', async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ error: 'entry not found' }), { status: 404 }))
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ error: 'entry not found', code: 'not_found' }), { status: 404 }))
     await expect(prepareTarEntry('/entry', new AbortController().signal)).rejects.toThrow('entry not found')
     expect(fetch).toHaveBeenCalledOnce()
   })

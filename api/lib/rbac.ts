@@ -1,6 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import type { RequestPrincipal, SessionPrincipal } from './auth-types.js'
 import { hasPermission } from './auth-types.js'
+import { apiError } from './api-error.js'
 
 const PRINCIPAL_KEY = 'madoPrincipal'
 
@@ -24,9 +25,9 @@ export function getSessionPrincipal(c: Context): SessionPrincipal | null {
 export function requirePermission(permission: string): MiddlewareHandler {
   return async (c, next) => {
     const principal = getRequestPrincipal(c)
-    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    if (!principal) return c.json(apiError('authentication_required', 'unauthorized'), 401)
     if (!hasPermission(principal, permission)) {
-      return c.json({ error: 'forbidden', permission }, 403)
+      return c.json({ ...apiError('forbidden', 'forbidden'), permission }, 403)
     }
     await next()
   }

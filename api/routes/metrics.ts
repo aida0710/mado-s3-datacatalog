@@ -2,6 +2,7 @@ import type { Hono } from 'hono'
 import type { MetricsCollector } from '../lib/metrics-collector.js'
 import { PROMETHEUS_TEXT_CONTENT_TYPE, renderPrometheusText } from '../lib/prometheus-exposition.js'
 import { getServiceKeyPrincipal, requireServiceKeyScope, type ScopedServicePrincipal } from '../lib/service-key-auth.js'
+import { apiError } from '../lib/api-error.js'
 
 /** A metrics token reads only the connections it lists; ['*'] is every connection. */
 export interface MetricsPrincipal extends ScopedServicePrincipal {
@@ -34,7 +35,7 @@ export function mountMetricsRoutes(app: Hono, deps: MetricsRoutesDeps): void {
         })
       } catch (error) {
         log.error(`metrics collector "${collector.name}" failed`, error)
-        return c.text('metrics unavailable', 503)
+        return c.json(apiError('metrics_unavailable', 'metrics unavailable'), 503)
       }
     })
   }

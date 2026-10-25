@@ -2,6 +2,7 @@
 // canonical request、request IDはcredentialや内部構成を含み得るため返さない。
 
 import { BlockedEndpointError } from './endpoint-policy.js'
+import type { ApiErrorCode } from '../shared/api-error-codes.js'
 
 interface SdkErrorLike {
   name?: string
@@ -12,13 +13,14 @@ interface SdkErrorLike {
 
 export interface ExplainedError {
   status: 400 | 403 | 404 | 409 | 500 | 502
+  code: ApiErrorCode
   message: string
 }
 
-// 接続先が拒否するアドレスを指しているのは、Mado の接続設定の問題。直すのは管理者なので、
+// 接続先が拒否するアドレスを指しているのは、接続設定の問題。直すのは管理者なので、
 // 何をすればよいかを伝える。
 const BLOCKED_ENDPOINT_MESSAGE =
-  'この接続のエンドポイントは、接続を許可していないアドレスを指しています。接続設定でエンドポイントを直してください。'
+  "this connection's endpoint points to an address that connections are not allowed to use; fix the endpoint in the connection settings"
 
 // 我々が返す status。upstream の失敗は 502 に寄せる (404 だけは素通し) —
 // クライアントから見て「mado の不具合」と「ストレージ側の応答」を
@@ -31,7 +33,7 @@ function mapStatus(upstream: number | undefined): ExplainedError['status'] {
 }
 
 export function explainStorageError(e: unknown): ExplainedError | null {
-  if (e instanceof BlockedEndpointError) return { status: 409, message: BLOCKED_ENDPOINT_MESSAGE }
+  if (e instanceof BlockedEndpointError) return { status: 409, code: 'blocked_endpoint', message: BLOCKED_ENDPOINT_MESSAGE }
   const err = e as SdkErrorLike
   const upstream = err.$metadata?.httpStatusCode
   // XML パースに失敗した場合、SDK はパーサの例外文をそのまま message に
@@ -46,9 +48,7 @@ export function explainStorageError(e: unknown): ExplainedError | null {
   }
 
   const status = mapStatus(upstream)
-  return {
-    status,
-    message: status === 404 ? 'storage object not found'
-      : status === 502 ? 'storage service error' : 'storage request failed',
-  }
+  if (status === 404) return { status, code: 'not_found', message: 'storage object not found' }
+  if (status === 502) return { status, code: 'storage_unavailable', message: 'storage service error' }
+  return { status, code: 'storage_request_failed', message: 'storage request failed' }
 }

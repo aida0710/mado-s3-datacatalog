@@ -121,7 +121,7 @@ describe('GET /storage/:connectionId/estimate', () => {
     await addConnection(id, 'source', 'https://minio.lan:9000')
     const res = await get(id)
     expect(res.status).toBe(409)
-    expect((await res.json() as { error: string }).error).toContain('走査')
+    expect(await res.json()).toMatchObject({ code: 'directory_not_scanned' })
   })
 
   it('走査があれば登録済み接続ぶんの候補が返る', async () => {

@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe('useMediaSrc — 書庫内のエントリ', () => {
   it('取得が 401 なら、session を確かめるよう AuthGate へ知らせる', async () => {
-    stubFetch(new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 }))
+    stubFetch(new Response(JSON.stringify({ error: 'unauthorized', code: 'authentication_required' }), { status: 401 }))
     const onUnauthorized = vi.fn()
     const unsubscribe = subscribeUnauthorized(onUnauthorized)
 
@@ -27,7 +27,7 @@ describe('useMediaSrc — 書庫内のエントリ', () => {
   })
 
   it('取得できなければ、サーバーのエラー文言を返す', async () => {
-    stubFetch(new Response(JSON.stringify({ error: 'entry not found' }), { status: 404, statusText: 'Not Found' }))
+    stubFetch(new Response(JSON.stringify({ error: 'entry not found', code: 'not_found' }), { status: 404, statusText: 'Not Found' }))
 
     const { result } = renderHook(() => useMediaSrc({ directUrl: null, archiveEntryUrl: ARCHIVE_ENTRY_URL, archiveKey: 'a.tar.gz' }))
 

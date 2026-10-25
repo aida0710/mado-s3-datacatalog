@@ -3,6 +3,7 @@ import type { InternalApiPermission } from '../shared/access-token-permissions.j
 import { hasPermission } from './auth-types.js'
 import { coversAllConnections } from './access-token-authority.js'
 import { getRequestPrincipal } from './rbac.js'
+import { apiError } from './api-error.js'
 
 interface PermissionRoute {
   methods: readonly string[]
@@ -75,22 +76,22 @@ export function internalApiPermission(method: string, pathname: string): Interna
 export function requireInternalApiPermission(): MiddlewareHandler {
   return async (context, next) => {
     const principal = getRequestPrincipal(context)
-    if (!principal) return context.json({ error: 'unauthorized' }, 401)
+    if (!principal) return context.json(apiError('authentication_required', 'unauthorized'), 401)
     if (principal.kind === 'user' && !hasPermission(principal, 'storage:read')) {
-      return context.json({ error: 'forbidden', permission: 'storage:read' }, 403)
+      return context.json({ ...apiError('forbidden', 'forbidden'), permission: 'storage:read' }, 403)
     }
     const route = findPermissionRoute(context.req.method, context.req.path)
     if (route && !hasPermission(principal, route.permission)) {
-      return context.json({ error: 'forbidden', permission: route.permission }, 403)
+      return context.json({ ...apiError('forbidden', 'forbidden'), permission: route.permission }, 403)
     }
     if (principal.kind === 'user' && route?.permission === 'lineage:curate' && !hasPermission(principal, 'lineage:read')) {
-      return context.json({ error: 'forbidden', permission: 'lineage:read' }, 403)
+      return context.json({ ...apiError('forbidden', 'forbidden'), permission: 'lineage:read' }, 403)
     }
     if (principal.kind === 'service_account') {
       // New endpoints stay closed to tokens until they have an explicit policy.
-      if (!route) return context.json({ error: 'endpoint is not available to access tokens' }, 403)
+      if (!route) return context.json(apiError('token_endpoint_forbidden', 'endpoint is not available to access tokens'), 403)
       if (route.requiresAllConnections && !coversAllConnections(principal)) {
-        return context.json({ error: 'this operation requires a token for all connections' }, 403)
+        return context.json(apiError('all_connections_token_required', 'this operation requires a token for all connections'), 403)
       }
     }
     await next()

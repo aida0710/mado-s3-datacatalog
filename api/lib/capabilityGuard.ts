@@ -1,20 +1,20 @@
 import type { Context, MiddlewareHandler, Next } from 'hono'
 import type { Capability, ConnectionConfig } from '../storage.js'
+import { apiError } from './api-error.js'
 
 export type GetConnectionConfig = (connectionId: string) => Promise<ConnectionConfig>
 
-/** 権限ごとの日本語ラベル。403 のメッセージに使う (UI がボタンを隠していても
- *  共有 Web URL を直に開いた人には理由が見えるように)。front は全文が一致したときだけ
- *  英語に訳すので、変えるときは front/i18n/ja.ts の serverErrors.*Capability と en.ts も直すこと。 */
+/** 403 の英語の文に入れる操作の名前 (UI がボタンを隠していても、共有 URL を直に開いた人に理由が見えるように)。
+ *  画面は文ではなく応答の `capability` から、自分の言語の名前を選ぶ。 */
 export const CAPABILITY_LABELS: Record<Capability, string> = {
-  list:             'バケット / オブジェクトの一覧',
-  preview:          'ファイルのプレビュー',
-  download:         'ファイルのダウンロード',
-  archive:          '圧縮ファイルを開く',
-  audioInfo:        '音声情報の表示',
-  audioSpectrogram: 'スペクトログラムの表示',
-  readmeRead:       'README の読み込み',
-  readmeWrite:      'README の編集',
+  list:             'Bucket and object listing',
+  preview:          'File previews',
+  download:         'File downloads',
+  archive:          'Opening archives',
+  audioInfo:        'Audio information',
+  audioSpectrogram: 'Spectrograms',
+  readmeRead:       'README reading',
+  readmeWrite:      'README editing',
 }
 
 /**
@@ -33,14 +33,14 @@ export function requireCapability(
 ): MiddlewareHandler {
   return async (c: Context, next: Next) => {
     const connectionId = c.req.param('connectionId')
-    if (!connectionId) return c.json({ error: 'connectionId required' }, 400)
+    if (!connectionId) return c.json(apiError('invalid_request', 'connectionId required'), 400)
 
     let config: ConnectionConfig
     try {
       config = await getConnectionConfig(connectionId)
     } catch (e) {
       if (e instanceof Error && (e as { code?: string }).code === 'NOT_FOUND') {
-        return c.json({ error: 'connection not found' }, 404)
+        return c.json(apiError('not_found', 'connection not found'), 404)
       }
       throw e
     }
@@ -48,7 +48,7 @@ export function requireCapability(
     if (!config.capabilities[cap]) {
       // 403: 認証の失敗 (401) ではなく「この接続では無効にされている」。
       return c.json(
-        { error: `この接続では「${CAPABILITY_LABELS[cap]}」が無効になっています`, capability: cap },
+        { ...apiError('capability_disabled', `"${CAPABILITY_LABELS[cap]}" is disabled for this connection`), capability: cap },
         403,
       )
     }

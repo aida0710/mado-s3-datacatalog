@@ -94,7 +94,7 @@ describe('認証 route', () => {
       body: JSON.stringify({ identifier: 'local-user', password: 'wrong' }),
     })
     expect(res.status).toBe(401)
-    expect(await res.json()).toEqual({ error: 'invalid identifier or password' })
+    expect(await res.json()).toEqual({ error: 'invalid identifier or password', code: 'invalid_credentials' })
     expect(res.headers.get('set-cookie')).toBeNull()
     const events = await pools.rw.query(
       `SELECT outcome FROM audit_events WHERE action = 'auth.local.login'`,

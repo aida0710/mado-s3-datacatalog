@@ -49,6 +49,6 @@ printf 'Type %s to create and push the immutable release tag: ' "$tag"
 IFS= read -r confirmation
 [ "$confirmation" = "$tag" ] || { echo "Cancelled." >&2; exit 1; }
 
-git -C "$root" tag -a "$tag" "$head_sha" -m "Mado $tag"
+git -C "$root" tag -a "$tag" "$head_sha" -m "mado S3 Data Catalog $tag"
 git -C "$root" push origin "refs/tags/$tag"
 echo "release workflow triggered for $tag"
