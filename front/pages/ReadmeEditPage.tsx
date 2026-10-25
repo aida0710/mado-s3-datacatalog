@@ -4,20 +4,19 @@
 //
 // 保存後は元の StorageBucket ページに戻る。
 
-import { useCallback, useRef } from 'react'
+import { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { ErrorNotice, LoadingMessage, useQuery } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { encPath } from '../lib/route'
 import { useCapabilities } from '../lib/useCapabilities'
-import { useRetryableLoad } from '../lib/useRetryableLoad'
 import { EditorPageHeader, EditorShell } from '../components/EditorShell'
 import { InsertableFileList, type InsertableEntry } from '../components/InsertableFileList'
-import { LoadFailedNotice } from '../components/LoadFailedNotice'
 import {
   MonacoMarkdownEditor,
   type MonacoMarkdownEditorHandle,
 } from '../components/MonacoMarkdownEditor'
-import { localizeMessage } from '../i18n/localizeMessage'
+import { loadFailedMessage } from '../i18n/loadFailedMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -36,13 +35,16 @@ export default function ReadmeEditPage({ connectionId }: Props) {
   const caps = useCapabilities(connectionId)
   const editorRef = useRef<MonacoMarkdownEditorHandle>(null)
 
-  const loadLatestReadme = useCallback(() => {
-    // キャッシュ（最大 6 時間前）の本文から編集を始めると、その間にほかの人が保存した
-    // 更新を、保存で黙って上書きしてしまう。編集の元は必ずサーバーから取り直す。
-    api.invalidateReadme(connectionId, bucket, prefix)
-    return api.readme({ connectionId, bucket, prefix })
-  }, [connectionId, bucket, prefix])
-  const { state, retry } = useRetryableLoad(bucket && caps.readmeWrite ? loadLatestReadme : null)
+  // 編集できない (バケットが無い・接続で編集が無効) 間は読まない。
+  const readme = useQuery({
+    key: bucket && caps.readmeWrite ? `readme:${connectionId}:${bucket}:${prefix}` : null,
+    load: () => {
+      // キャッシュ（最大 6 時間前）の本文から編集を始めると、その間にほかの人が保存した
+      // 更新を、保存で黙って上書きしてしまう。編集の元は必ずサーバーから取り直す。
+      api.invalidateReadme(connectionId, bucket, prefix)
+      return api.readme({ connectionId, bucket, prefix })
+    },
+  })
 
   if (!bucket) {
     return <p className="state-message">{translate('readmeEditPage.noBucketSpecified')}</p>
@@ -65,24 +67,28 @@ export default function ReadmeEditPage({ connectionId }: Props) {
       </>
     )
   }
-  if (state.status === 'loading') {
+  if (readme.error) {
     return (
       <>
         <EditorPageHeader title={title} description={description} />
-        <p className="state-message">{translate('common.loading')}</p>
+        <ErrorNotice
+          message={loadFailedMessage({ subject: 'README', error: readme.error })}
+          retry={readme.reload}
+          retryLabel={translate('common.retry')}
+        />
+        <p className="muted">{translate('common.editingIsDisabledUntilTheContentLoadsTo')}</p>
       </>
     )
   }
-  if (state.status === 'failed') {
+  const data = readme.value
+  if (!data) {
     return (
       <>
         <EditorPageHeader title={title} description={description} />
-        <LoadFailedNotice subject="README" reason={localizeMessage(state.reason)} onRetry={retry}>
-          {translate('common.editingIsDisabledUntilTheContentLoadsTo')}</LoadFailedNotice>
+        <LoadingMessage label={translate('common.loading')} />
       </>
     )
   }
-  const data = state.value
 
   const handleInsert = (entry: InsertableEntry) => {
     // 表示テキスト: ディレクトリには末尾 / を付ける。

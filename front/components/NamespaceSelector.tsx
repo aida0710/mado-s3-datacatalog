@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { X } from 'lucide-react'
+import { ErrorNotice } from '@mado/design-system/react'
 import { useNamespaceSelection } from '../lib/useNamespaceSelection'
 import { NAMESPACE_MAX_COUNT, NAMESPACE_MAX_LENGTH } from '../lib/namespaceSelection'
 import { translate } from '../i18n/translate'
@@ -13,7 +14,8 @@ export function NamespaceSelector({ selected, onChange, disabled }: {
   useLocale()
   const helpId = useId()
   const selection = useNamespaceSelection({ selected, onChange })
-  const sourceStatus = selection.state.status === 'loaded' ? selection.state.value.sourceStatus : null
+  const { namespaces } = selection
+  const sourceStatus = namespaces.value?.sourceStatus ?? null
   return (
     <fieldset className="namespace-selection" disabled={disabled}>
       <legend>{translate('accessTokens.namespaces')}</legend>
@@ -35,12 +37,12 @@ export function NamespaceSelector({ selected, onChange, disabled }: {
           aria-label={translate('accessTokens.removeNamespace', { value0: name })} disabled={selection.allowsAll}
           onClick={() => selection.toggleName(name)}><span>{name}</span><X size={12} aria-hidden="true" /></button>)}
       </div>}
-      {selection.state.status === 'loading' && <p className="muted" role="status">{translate('common.loading')}</p>}
-      {selection.state.status === 'failed' && <p className="notice error" role="alert">{translate('accessTokens.namespaceLoadFailed')}
-        <button type="button" className="button small" onClick={selection.retry}>{translate('loadFailedNotice.retry')}</button></p>}
+      {namespaces.loading && <p className="muted" role="status">{translate('common.loading')}</p>}
+      <ErrorNotice message={namespaces.error ? translate('accessTokens.namespaceLoadFailed') : null}
+        retry={namespaces.reload} retryLabel={translate('common.retry')} />
       {sourceStatus && sourceStatus !== 'ready' && <p className="muted">{translate(sourceStatus === 'unconfigured'
         ? 'accessTokens.namespaceUnconfigured' : 'accessTokens.namespacePartial')}
-        {sourceStatus !== 'unconfigured' && <button type="button" className="button small" onClick={selection.retry}>{translate('loadFailedNotice.retry')}</button>}
+        {sourceStatus !== 'unconfigured' && <button type="button" className="button small" onClick={namespaces.reload}>{translate('common.retry')}</button>}
       </p>}
       <div className="namespace-selection__list" role="group" aria-label={translate('accessTokens.namespaceList')}>
         {selection.matches.map(name => <label className="namespace-selection__option" key={name}>
@@ -49,7 +51,7 @@ export function NamespaceSelector({ selected, onChange, disabled }: {
             onChange={() => selection.toggleName(name)} />
           <span>{name}</span>
         </label>)}
-        {selection.matches.length === 0 && selection.state.status !== 'loading' && <p className="muted">{translate('accessTokens.noNamespaces')}</p>}
+        {selection.matches.length === 0 && !namespaces.loading && <p className="muted">{translate('accessTokens.noNamespaces')}</p>}
       </div>
       {selection.canAddName && <button type="button" className="button small" disabled={selection.reachedLimit || selection.allowsAll}
         onClick={selection.addName}>{translate('accessTokens.addNamespace', { value0: selection.trimmedQuery })}</button>}

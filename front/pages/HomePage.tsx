@@ -4,11 +4,10 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { History, Pencil } from 'lucide-react'
+import { ErrorNotice, useQuery } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
-import { useRetryableLoad } from '../lib/useRetryableLoad'
-import { LoadFailedNotice } from '../components/LoadFailedNotice'
-import { localizeMessage } from '../i18n/localizeMessage'
 import { getIntlLocale } from '../i18n/locale'
+import { loadFailedMessage } from '../i18n/loadFailedMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -17,7 +16,7 @@ const NoteHistoryModal = lazy(() =>
   import('../components/NoteHistoryModal').then(m => ({ default: m.NoteHistoryModal })),
 )
 
-const loadHomeNote = () => api.note('home')
+const HOME_NOTE_SLUG = 'home'
 
 function formatEditedAt(iso: string): string {
   const d = new Date(iso)
@@ -41,11 +40,10 @@ function lastEditedSummary(editor: string | null, when: string | null): string |
 
 export default function HomePage() {
   useLocale()
-  const { state, retry } = useRetryableLoad(loadHomeNote)
+  const note = useQuery({ key: `note:${HOME_NOTE_SLUG}`, load: () => api.note(HOME_NOTE_SLUG) })
   const [historyOpen, setHistoryOpen] = useState(false)
 
-  if (state.status === 'loading') return null
-  if (state.status === 'failed') {
+  if (note.error) {
     // 読み込めないときは「まだ何も書かれていません」や作成の導線を出さない。
     // 既存のノートがあるのに作成から書き始めると、保存で上書きしてしまうため。
     return (
@@ -55,11 +53,17 @@ export default function HomePage() {
             <h1>{translate('section.teamNote')}</h1>
           </div>
         </header>
-        <LoadFailedNotice subject={translate('section.teamNote')} reason={localizeMessage(state.reason)} onRetry={retry} />
+        <ErrorNotice
+          message={loadFailedMessage({ subject: translate('section.teamNote'), error: note.error })}
+          retry={note.reload}
+          retryLabel={translate('common.retry')}
+        />
       </>
     )
   }
-  const data = state.value
+  // 読み込むまでは何も出さない。「まだ何も書かれていません」を一瞬でも見せないように。
+  const data = note.value
+  if (!data) return null
 
   const summary = data.exists
     ? lastEditedSummary(
@@ -118,7 +122,7 @@ export default function HomePage() {
       {historyOpen && (
         <Suspense fallback={null}>
           <NoteHistoryModal
-            slug="home"
+            slug={HOME_NOTE_SLUG}
             currentBody={data.exists ? data.body : null}
             onClose={() => setHistoryOpen(false)}
           />
