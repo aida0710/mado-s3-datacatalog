@@ -4,7 +4,7 @@ import { clampNavigationWidth, NAVIGATION_WIDTH, storedNavigationWidth } from '.
 import { useMediaQuery } from './useMediaQuery'
 
 // md (900px) 未満はアイコンの列も置けないのでドロワーに入れる。lg (1200px) 未満は名前つきの
-// サイドバーだと一覧の幅が足りないので、アイコンだけの列にする。Mado Model Tracking と同じ。
+// サイドバーだと一覧の幅が足りないので、アイコンだけの列にする。mado ML Tracking と同じ。
 const DRAWER_QUERY = narrowerThan('md')
 const RAIL_QUERY = narrowerThan('lg')
 const COLLAPSED_STORAGE_KEY = 'mado.navigation.collapsed'

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 import { BREAKPOINT_PX } from '../lib/breakpoints'
 
-// 色・余白の値は @mado/design-system の変数を使い、画面幅の切り替え点も Mado Model Tracking と
+// 色・余白の値は @mado/design-system の変数を使い、画面幅の切り替え点も mado ML Tracking と
 // 揃える、という決まりを styles/ と App.css に対して確かめる。
 const withoutComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')
 const stylesDirectory = new URL('./', import.meta.url)
@@ -71,7 +71,7 @@ describe('design tokens (mado)', () => {
     expect(undefinedReferences).toEqual([])
   })
 
-  it('メディアクエリは Mado Model Tracking と同じ 3 つの切り替え点だけを使う', () => {
+  it('メディアクエリは mado ML Tracking と同じ 3 つの切り替え点だけを使う', () => {
     const allowed = new Set(Object.values(BREAKPOINT_PX).map(px => `(width < ${px}px)`))
     const offending = appStylesheets.flatMap(({ name, css }) =>
       [...css.matchAll(/@media\s+([^{]*?)\s*\{/g)]

@@ -2,7 +2,7 @@ import { useEffect, useReducer } from 'react'
 import { api } from './api/client'
 
 // 機能の全体トグル (Settings → 機能)。接続ごとの権限 (useCapabilities) とは別物で、
-// こちらは「Mado 全体でその機能を出すか」だけを決める表示上の設定。
+// こちらは「mado S3 Data Catalog 全体でその機能を出すか」だけを決める表示上の設定。
 //
 // 既定は true。マイグレーションの初期値と揃えてあるので、通常は導線が
 // 一瞬消えてから出る、という挙動にならない。オフにしている場合だけ、

@@ -16,7 +16,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 - **プレビュー** — テキスト / 画像 / 音声 / MP4動画 / `tar`・`tar.gz`・`tar.xz` の中身を、ダウンロードせずその場で確認
 - **URL コピー** — ファイルの Web URL (共有リンク) / S3 URL / ダウンロードをワンクリック
 - **ディレクトリ README** — 各ディレクトリに Markdown のメモを残せる (履歴つき)
-- **チーム共有ノート** — Mado 全体で 1 つの Markdown メモ (履歴つき)
+- **チーム共有ノート** — mado S3 Data Catalog 全体で 1 つの Markdown メモ (履歴つき)
 - **波形 / スペクトログラム** — 音声ファイルの波形とスペクトログラムをその場で確認 (解析結果はキャッシュ)
 - **同期プレイヤー** — 複数の音声ファイルを並べて同期再生し聴き比べる
 - **配下の集計** — ディレクトリ配下のオブジェクト数と合計サイズを数える (サブディレクトリ / 拡張子別の内訳つき)
@@ -79,7 +79,7 @@ Glacier Deep Archive のように **一覧には出るが `GetObject` すると�
 
 Settings の接続一覧には、制限のかかっている接続に「制限: …」が表示されます。
 
-タグは接続ごとではなく **Mado 全体**の表示トグルです (Settings → 機能)。オフにしても登録済みのタグは消えません。
+タグは接続ごとではなく **mado S3 Data Catalog 全体**の表示トグルです (Settings → 機能)。オフにしても登録済みのタグは消えません。
 
 <img width="567" height="767" alt="image" src="https://github.com/user-attachments/assets/e01ab4e2-6139-4f5c-b459-c7c40136ef48" />
 
@@ -133,7 +133,7 @@ Settings の接続一覧には、制限のかかっている接続に「制限: 
 
 ### 7. チーム共有ノート (Home)
 
-**Home** は Mado 全体で 1 つの **Team note** (Markdown)。メンバー全員で追記していく共有メモで、**編集** / **履歴** が使えます。
+**Home** は mado S3 Data Catalog 全体で 1 つの **Team note** (Markdown)。メンバー全員で追記していく共有メモで、**編集** / **履歴** が使えます。
 
 <img width="1298" height="829" alt="image" src="https://github.com/user-attachments/assets/3cf9c21c-bbf6-4ad6-9a68-cf0b1229633f" />
 
@@ -199,7 +199,7 @@ Pipelineへの導入方法、DatasetとVersionの分け方、OpenLineage event�
 - logical表示: `Dataset → Job → Dataset`
 - versions表示: 明示したDatasetVersion UUIDから`Version → Run → Version`
 - 「最新らしい版」は推測しません。版表示には明示version IDが必要です
-- Registryが正本で、Marquez停止中は警告を表示します。MadoからMarquezへ直接書き込みません
+- Registryが正本で、Marquez停止中は警告を表示します。mado S3 Data CatalogからMarquezへ直接書き込みません
 
 Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・DataLineage・ジョブ・接続・設定などの機能ごとに操作と接続・Namespaceを指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。DataLineageの読み取り・送信、Capacityの読み取りを選ぶと、従来の参照・送信・メトリクスAPIも同じトークンで利用できます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
 
@@ -262,7 +262,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
 | `DATASET_REGISTRY_URL` | lineage | Dataset Registry API URL |
-| `DATASET_REGISTRY_TOKEN` | lineage | Mado→Registry内部Bearer token。Pipeline keyとは別物 |
+| `DATASET_REGISTRY_TOKEN` | lineage | mado S3 Data Catalog→Registry内部Bearer token。Pipeline keyとは別物 |
 | `MARQUEZ_URL` | lineage | read-onlyで参照するMarquez URL |
 | `PREVIEW_TEXT_LIMIT` | no | テキストプレビュー最大バイト (default 65536) |
 | `PREVIEW_TAR_ENTRY_LIMIT` | no | tar 内 1 ページのエントリ最大数 (default 200) |
@@ -300,7 +300,7 @@ docker compose -f compose.prod.yaml exec api-internal \
 
 passwordはTTYからのみ読み、引数・環境変数・ログには渡しません。初回bootstrap時も入力した一時passwordは初回ログインで変更必須です。平常時はOIDC Adminを使う構成でも、IdP障害用に独立したLocal Adminを1つ維持してください。
 
-Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。Madoがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MADO_HOSTNAME`と公開API用`MADO_API_HOSTNAME`を別TLS vhostとして終端します。
+Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。mado S3 Data Catalogがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MADO_HOSTNAME`と公開API用`MADO_API_HOSTNAME`を別TLS vhostとして終端します。
 
 連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
@@ -310,7 +310,7 @@ Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセ�
 
 ### OSSリリース
 
-MadoはSemVerを採用し、最初のリリースを`v0.1.0`とします。GitHub上のannotated tagだけがrelease workflowを起動し、通常の`main` pushや社内deployからOSS releaseが始まることはありません。
+mado S3 Data CatalogはSemVerを採用し、最初のリリースを`v0.1.0`とします。GitHub上のannotated tagだけがrelease workflowを起動し、通常の`main` pushや社内deployからOSS releaseが始まることはありません。
 
 公開時は同一commitからLinux amd64/arm64対応のcompiled OCI imageを3つ作り、GHCRへ配置します。
 
@@ -422,9 +422,9 @@ cd api   && npm test && npm run lint
 cd front && npm test && npm run lint
 ```
 
-### 画面の見た目 (Mado Model Tracking と共通)
+### 画面の見た目 (mado ML Tracking と共通)
 
-画面の部品と枠は Mado Model Tracking と同じものを使います。CSS はデザインシステム `@mado/design-system` ([aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)) にあり、`front/` は次の順に読み込みます。
+画面の部品と枠は mado ML Tracking と同じものを使います。CSS はデザインシステム `@mado/design-system` ([aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)) にあり、`front/` は次の順に読み込みます。
 
 | 読み込む物 | 中身 |
 |---|---|
@@ -433,12 +433,12 @@ cd front && npm test && npm run lint
 | `App.css` の `base.css`・`components.css`・`shell.css`・`code.css` (4 つとも `@layer components`) | 要素の既定 (本文 13px、入力欄、リンク、見出し)、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け |
 | `front/styles/*.css` (layer の外) | 画面ごとの指定 (保存先の一覧、プレビュー、メモ・README、設定、DataLineage) |
 
-- 共通の CSS は Tailwind の preflight より強く、ユーティリティ class より弱い層に入ります。共通の CSS どうしの優先順位は Mado Model Tracking と同じです。
+- 共通の CSS は Tailwind の preflight より強く、ユーティリティ class より弱い層に入ります。共通の CSS どうしの優先順位は mado ML Tracking と同じです。
 - 部品は共通の class 名 (`.button`、`.page-header`、`.tabs`、`.field`、`.dialog` など) で使い、領域のファイルにはその画面に固有の指定だけを書きます。ダイアログは `components/Dialog.tsx` を使います。
 - 色は `tokens.css` の変数で書き、値を直接書きません。ダークテーマは上部バーのボタンで切り替え (`localStorage` の `mado.theme`。切り替えるまでは OS の設定に合わせます)、`<html data-theme="dark">` で効きます。
 - 画面幅の切り替え点は 640px・900px・1200px の 3 つです (Tailwind の `sm`・`md`・`lg` も同じ値)。左のサイドバーは 1200px 以上で名前つき (下のボタンでアイコンだけに畳め、右の境目のドラッグで幅を変えられます)、900px 以上でアイコンだけ、それ未満は上部バーのメニューボタンから開くドロワーです。
 - アイコンは [Lucide](https://lucide.dev/) (`lucide-react`) を使います。
-- テキストのプレビューの形式の推測と色付けは、デザインシステムの `@mado/design-system/code` ([highlight.js](https://highlightjs.org/) と、CSV・TSV・ログの色付け) を Mado Model Tracking と共有します。画面の部品は `components/CodeView.tsx`、形式の記憶は `lib/useCodeLanguage.ts` です。本文はどちらのテーマでも暗い面に置き、色はどれも面に対して 4.5:1 以上です。
+- テキストのプレビューの形式の推測と色付けは、デザインシステムの `@mado/design-system/code` ([highlight.js](https://highlightjs.org/) と、CSV・TSV・ログの色付け) を mado ML Tracking と共有します。画面の部品は `components/CodeView.tsx`、形式の記憶は `lib/useCodeLanguage.ts` です。本文はどちらのテーマでも暗い面に置き、色はどれも面に対して 4.5:1 以上です。
 
 デザインシステムは、GitHub Release に添付された tarball に依存しています (`front/package.json`)。見た目を変えるときはデザインシステムのリポジトリで版を上げ (main に入ると Release が作られます)、次の手順で取り込みます。
 
@@ -459,4 +459,4 @@ npm install https://github.com/aida0710/mado-design-systems/releases/download/v<
 
 ## License
 
-Mado is licensed under the [Apache License 2.0](LICENSE).
+mado S3 Data Catalog is licensed under the [Apache License 2.0](LICENSE).

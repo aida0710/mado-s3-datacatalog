@@ -24,7 +24,7 @@ function cssColor(el: HTMLElement, name: string): string {
 
 /**
  * 音声の波形。再生済みは --accent、残りは --muted、中心線は --border、再生ヘッドは
- * --error (Mado Model Tracking の音声プレビューと同じ配色)。テーマを切り替えたら描き直す。
+ * --error (mado ML Tracking の音声プレビューと同じ配色)。テーマを切り替えたら描き直す。
  */
 export function Waveform({ peaks, progress, onSeek, height = 64, durationRatio = 1 }: Props) {
   useLocale()

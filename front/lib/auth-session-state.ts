@@ -13,7 +13,7 @@ export interface AuthSessionState {
   /** ログイン中に session が切れたか。ログイン画面で理由を伝える。 */
   sessionExpired: boolean
   /**
-   * Mado からはサインアウトしたが、SSO（IdP）側のサインアウトができなかったか。
+   * mado S3 Data Catalog からはサインアウトしたが、SSO（IdP）側のサインアウトができなかったか。
    * IdP の session が残ると、同じブラウザで「SSO で続行」を押した人が前の User として入れるので、
    * ログイン画面で伝える。
    */

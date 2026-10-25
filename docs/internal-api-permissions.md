@@ -33,7 +33,7 @@ Storage・Connections・README・Tags・Favorites・Jobs・Capacity・Pricingの
 
 DataLineageにはNamespaceの指定が必要。限定トークンの検索・カタログは`namespace`クエリも必須。Dataset・Version・RunはRegistryの正本のIDとNamespaceを検証する。Runの入出力も範囲内でなければ返さない。グラフは範囲外のノードと辺を除き、Versionグラフが省略された場合は`truncated: true`にする。Namespaceをまたぐジョブの実行は一覧から除く。手動登録でもDataset・処理・入力Version・出力Versionを検証し、同値更新でも検証を省略しない。投影状態の件数・状態は全体の運用情報として返す。
 
-DataLineageの保存先URIはNamespaceの権限で読める。接続の選択はStorage操作と保存先のMado接続IDを制限し、URI自体を隠すものではない。これは従来のデータセット参照APIと同じ扱い。
+DataLineageの保存先URIはNamespaceの権限で読める。接続の選択はStorage操作と保存先のmado S3 Data Catalog接続IDを制限し、URI自体を隠すものではない。これは従来のデータセット参照APIと同じ扱い。
 
 ## 管理権限の委譲
 

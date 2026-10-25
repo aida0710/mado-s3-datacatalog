@@ -440,7 +440,7 @@ describe('AuthGate — サインアウト', () => {
     expect(screen.queryByText('ログイン後の画面')).not.toBeInTheDocument()
   })
 
-  it('Mado からはサインアウトできたが SSO 側のサインアウトができなかったときは、ログイン画面でそれを伝える', async () => {
+  it('mado S3 Data Catalog からはサインアウトできたが SSO 側のサインアウトができなかったときは、ログイン画面でそれを伝える', async () => {
     stubServer({
       '/api/auth/config': () => json(200, SSO_ONLY_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
