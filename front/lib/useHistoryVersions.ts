@@ -36,7 +36,7 @@ function reducer(state: HistoryVersionsState, action: Action): HistoryVersionsSt
       return {
         ...state,
         versions: action.versions,
-        selectedId: action.versions.length > 0 ? action.versions[0].id : null,
+        selectedId: action.versions[0]?.id ?? null,
       }
     case 'selectVersion':
       return { ...state, selectedId: action.id, selectedBody: null }

@@ -8,6 +8,7 @@ import { TranslatedMessage } from './TranslatedMessage'
 import { localizeMessage } from './localizeMessage'
 import { CAPABILITY_UI } from './connectionOptions'
 import { fmtCacheAge, fmtDurationRange } from '../lib/format'
+import { itemAt } from '../tests/itemAt'
 
 afterEach(() => setLocale('ja'))
 
@@ -23,9 +24,9 @@ describe('localized application messages', () => {
 
   it('switches imported options and interpolates user text without altering it', () => {
     setLocale('ja')
-    const japaneseLabel = CAPABILITY_UI[0].label
+    const japaneseLabel = itemAt(CAPABILITY_UI, 0).label
     setLocale('en')
-    expect(CAPABILITY_UI[0].label).not.toBe(japaneseLabel)
+    expect(itemAt(CAPABILITY_UI, 0).label).not.toBe(japaneseLabel)
     expect(translate('loginPage.continueWith', { value0: '研究チーム' })).toBe('Continue with 研究チーム')
   })
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { LineageGraph } from '../api/types'
 import { toFlowElements } from './graphModel'
 import { layoutLineage, LINEAGE_NODE_HEIGHT, LINEAGE_NODE_WIDTH } from './layout'
+import { itemAt } from '../../tests/itemAt'
 
 const graph: LineageGraph = {
   nodes: [
@@ -23,7 +24,7 @@ describe('lineage のグラフモデル', () => {
     const result = toFlowElements(graph)
     expect(result.nodes.map(node => node.id)).toEqual(['d:raw', 'j:clean', 'd:out'])
     expect(result.edges.map(edge => edge.id)).toEqual(['e1', 'e2'])
-    expect(result.nodes[1].data.status).toBe('完了')
+    expect(itemAt(result.nodes, 1).data.status).toBe('完了')
   })
 
   it('保存場所はキャンバスのノードにしない', () => {
@@ -37,9 +38,10 @@ describe('lineage のグラフモデル', () => {
     const before = structuredClone(elements.nodes)
     const laidOut = layoutLineage(elements.nodes, elements.edges)
     expect(elements.nodes).toEqual(before)
-    expect(laidOut.nodes[0].position.x).toBeLessThan(laidOut.nodes[1].position.x)
-    expect(laidOut.nodes[1].position.x).toBeLessThan(laidOut.nodes[2].position.x)
-    expect(laidOut.nodes[0]).toMatchObject({ width: LINEAGE_NODE_WIDTH, height: LINEAGE_NODE_HEIGHT })
+    const positionX = (index: number) => itemAt(laidOut.nodes, index).position.x
+    expect(positionX(0)).toBeLessThan(positionX(1))
+    expect(positionX(1)).toBeLessThan(positionX(2))
+    expect(itemAt(laidOut.nodes, 0)).toMatchObject({ width: LINEAGE_NODE_WIDTH, height: LINEAGE_NODE_HEIGHT })
   })
 
   it('循環があっても有限の座標を返す', () => {

@@ -36,7 +36,7 @@ for (const key of Object.keys(japaneseMessages) as MessageKey[]) {
       continue
     }
     if (!isServerMessageKey(key)) continue
-    const names = placeholders.map(match => match[1])
+    const names = placeholders.flatMap(match => match[1] ?? [])
     const pattern = message.split(/\{value\d+\}/g).map(escapePattern).join('(.*?)')
     serverMessageTemplates.push({ key, pattern: new RegExp(`^${pattern}$`, 's'), names })
   }
@@ -47,15 +47,16 @@ function localizeServerMessage(message: string): string | null {
   for (const template of serverMessageTemplates) {
     const match = template.pattern.exec(message)
     if (!match) continue
-    const values = Object.fromEntries(template.names.map((name, index) => [name, match[index + 1]]))
+    // (.*?) は一致すれば必ず値を持つが、型の上では undefined を含むので空文字に寄せる。
+    const values: Record<string, string> = Object.fromEntries(template.names.map((name, index) => [name, match[index + 1] ?? '']))
     if (template.key === 'serverErrors.operationDisabled') {
-      const capabilityKey = fixedMessages.get(values.value0)
+      const capabilityKey = fixedMessages.get(values.value0 ?? '')
       if (capabilityKey) values.value0 = catalog[capabilityKey]
     }
     if (template.key === 'transferWarnings.ratesUnavailable') {
       // リージョンが分からないとき、サーバーはこの決まった文字列を入れてくる。
       const unknownRegionLabels = [japaneseMessages['connectionForm.unknown'], englishMessages['connectionForm.unknown']]
-      if (unknownRegionLabels.includes(values.value0)) values.value0 = catalog['connectionForm.unknown']
+      if (unknownRegionLabels.includes(values.value0 ?? '')) values.value0 = catalog['connectionForm.unknown']
     }
     return fillMessage(template.key, values)
   }

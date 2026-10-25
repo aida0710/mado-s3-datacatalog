@@ -99,7 +99,7 @@ describe('ConnectionForm の見積もり設定', () => {
     const onSubmit = renderEdit(connection)
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({})
+    expect(onSubmit).toHaveBeenNthCalledWith(1, {})
   })
 
   it('変えた項目だけを差分で送る', async () => {
@@ -110,7 +110,7 @@ describe('ConnectionForm の見積もり設定', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { readMbps: 840 } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { readMbps: 840 } })
   })
 
   it('プロバイダを明示すると送る', async () => {
@@ -118,7 +118,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.selectOptions(screen.getByLabelText('プロバイダ'), 'wasabi')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { provider: 'wasabi' } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { provider: 'wasabi' } })
   })
 
   it('自動判定に戻すと null を送る (設定行を消させる)', async () => {
@@ -131,7 +131,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     // undefined (触らない) ではなく null (既定に戻す) であることが要点。
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { provider: null } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { provider: null } })
   })
 
   it('容量は TB で入れてバイトで送る', async () => {
@@ -139,7 +139,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.type(screen.getByLabelText('容量 (TB)'), '320')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { capacityBytes: 320 * TIB } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { capacityBytes: 320 * TIB } })
   })
 
   it('容量を空にすると null を送る (警告を止める)', async () => {
@@ -153,7 +153,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.clear(cap)
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { capacityBytes: null } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { capacityBytes: null } })
   })
 
   it('ストレージクラスの変更を送る', async () => {
@@ -161,7 +161,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.selectOptions(screen.getByLabelText('ストレージクラス'), 'DEEP_ARCHIVE')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { storageClass: 'DEEP_ARCHIVE' } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { storageClass: 'DEEP_ARCHIVE' } })
   })
 
   it('ストレージ単価を上書きできる', async () => {
@@ -169,7 +169,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.type(screen.getByLabelText('ストレージ単価の上書き ($/GB-月)'), '0.004')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { storagePerGbMonth: 0.004 } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { storagePerGbMonth: 0.004 } })
   })
 
   it('単価の上書きを空にするとカタログに戻す', async () => {
@@ -183,7 +183,7 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.clear(input)
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { storagePerGbMonth: null } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { storagePerGbMonth: null } })
   })
 
   it('手入力の単価は「更新では変わらない」と伝える', () => {
@@ -224,6 +224,6 @@ describe('ConnectionForm の見積もり設定', () => {
     await userEvent.type(inst, '0')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ pricing: { instability: 0 } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { pricing: { instability: 0 } })
   })
 })

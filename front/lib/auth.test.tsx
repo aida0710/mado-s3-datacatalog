@@ -44,7 +44,7 @@ function json(status: number, body: unknown): Response {
 // URL の path ごとに応答を決める fetch。routes に無い path は 404 にする。
 function stubServer(routes: Record<string, Route>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input).split('?')[0]
+    const path = new URL(String(input), 'http://mado.invalid').pathname
     const route = routes[path]
     return route ? route(init) : json(404, { error: 'not found' })
   })

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from './client'
+import { itemAt } from '../../tests/itemAt'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -14,7 +15,7 @@ describe('lineage client', () => {
     await api.lineageGraph({
       mode: 'versions', versionId: 'opaque/a:b', namespace: 'ignored?', depth: 4,
     })
-    const url = String(fetchMock.mock.calls[0][0])
+    const url = String(itemAt(fetchMock.mock.calls, 0)[0])
     expect(url).toContain('/api/internal/lineage/graph?')
     expect(new URL(url, 'http://mado').searchParams.get('versionId')).toBe('opaque/a:b')
     expect(new URL(url, 'http://mado').searchParams.get('mode')).toBe('versions')
@@ -27,7 +28,7 @@ describe('lineage client', () => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     vi.stubGlobal('fetch', fetchMock)
     await api.lineageVersion('v/a:b')
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/internal/lineage/versions/v%2Fa%3Ab')
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/internal/lineage/versions/v%2Fa%3Ab', expect.anything())
   })
 
   it('登録一覧とStorage逆引きqueryをencodeする', async () => {
@@ -43,10 +44,10 @@ describe('lineage client', () => {
     await api.lineageCatalog({ q: 'Podcast 対話', limit: 20, offset: 40 })
     await api.lineageResolveLocation('connection/1', 'dataset', 'a b/')
 
-    const catalog = new URL(String(fetchMock.mock.calls[0][0]), 'http://mado')
+    const catalog = new URL(String(itemAt(fetchMock.mock.calls, 0)[0]), 'http://mado')
     expect(catalog.searchParams.get('q')).toBe('Podcast 対話')
     expect(catalog.searchParams.get('offset')).toBe('40')
-    const location = new URL(String(fetchMock.mock.calls[1][0]), 'http://mado')
+    const location = new URL(String(itemAt(fetchMock.mock.calls, 1)[0]), 'http://mado')
     expect(location.searchParams.get('connectionId')).toBe('connection/1')
     expect(location.searchParams.get('key')).toBe('a b/')
   })

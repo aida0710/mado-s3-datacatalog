@@ -26,7 +26,8 @@ describe('TagBadge', () => {
         <TagBadge tag={{ name: 'light', color: '#ffffff' }} />
       </>,
     )
-    const [dark, light] = ['dark', 'light'].map(name => screen.getByText(name))
+    const dark = screen.getByText('dark')
+    const light = screen.getByText('light')
     for (const el of [dark, light]) {
       expect(el.style.color).toBe('')
       expect(el.style.backgroundColor).toBe('')

@@ -9,9 +9,8 @@ export type CapacityChartPoint = {
 /** 長い欠測区間へnull点を入れ、グラフが未計測期間を補間しないようにする。 */
 export function capacityChartData(points: CapacityPoint[], intervalSeconds: number): CapacityChartPoint[] {
   const rows: CapacityChartPoint[] = []
-  for (let i = 0; i < points.length; i++) {
-    const point = points[i]
-    const previous = points[i - 1]
+  let previous: CapacityPoint | undefined
+  for (const point of points) {
     if (previous && Date.parse(point.collectedAt) - Date.parse(previous.collectedAt) > intervalSeconds * 2.5 * 1000) {
       rows.push({
         collectedAt: (Date.parse(point.collectedAt) + Date.parse(previous.collectedAt)) / 2,
@@ -22,6 +21,7 @@ export function capacityChartData(points: CapacityPoint[], intervalSeconds: numb
       collectedAt: Date.parse(point.collectedAt), totalBytes: point.totalBytes,
       objectCount: point.objectCount,
     })
+    previous = point
   }
   return rows
 }

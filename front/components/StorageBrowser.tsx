@@ -190,6 +190,15 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
     dispatch({ type: 'submitQuery', q: '' })
   }
 
+  // 訪問済みページへのジャンプ。S3 は前方向 cursor のみなので、
+  // history に積まれていないページにはこの API では飛べない。
+  const goto = (idx: number): void => {
+    const cursor = history[idx]
+    if (!cursor || idx === pageIdx || loading) return
+    dispatch({ type: 'startGoto', idx })
+    load(cursor)
+  }
+
   // 次ページ。current の応答に nextCursor が無ければ no-op。
   // 既に「戻る」で過去ページに居て、次の history が積まれているならそれを再利用。
   // 未訪問ページへ進むときは force:true でキャッシュをバイパスする。
@@ -198,29 +207,14 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
     const c = nextCursor(page)
     if (!c) return
     if (pageIdx + 1 < history.length) {
-      const newIdx = pageIdx + 1
-      dispatch({ type: 'startGoto', idx: newIdx })
-      load(history[newIdx])
+      goto(pageIdx + 1)
     } else {
       dispatch({ type: 'startNext', cursor: c })
       load(c, { force: true })
     }
   }
 
-  const prev = (): void => {
-    if (pageIdx === 0 || loading) return
-    const newIdx = pageIdx - 1
-    dispatch({ type: 'startGoto', idx: newIdx })
-    load(history[newIdx])
-  }
-
-  // 訪問済みページへのジャンプ。S3 は前方向 cursor のみなので、
-  // history に積まれていないページにはこの API では飛べない。
-  const goto = (idx: number): void => {
-    if (idx < 0 || idx >= history.length || idx === pageIdx || loading) return
-    dispatch({ type: 'startGoto', idx })
-    load(history[idx])
-  }
+  const prev = (): void => goto(pageIdx - 1)
 
   // 当該ディレクトリ全体のキャッシュを破棄して 1 ページ目から再 fetch。
   // refresh:true でサーバー側キャッシュも貫通する。これが無いとユーザーは

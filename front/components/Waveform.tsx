@@ -57,15 +57,14 @@ export function Waveform({ peaks, progress, onSeek, height = 64, durationRatio =
     const peaksW = w * Math.min(1, Math.max(0, durationRatio))
     const barW = peaksW / peaks.length
     const playedX = progress * w
-    for (let i = 0; i < peaks.length; i++) {
-      const [mn, mx] = peaks[i]
+    peaks.forEach(([mn, mx], i) => {
       const x = i * barW
       // min/max は -1〜1。高さ 1px 未満でも点として見えるように clamp。
       const top = mid - mx * mid
       const bh = Math.max(1, (mx - mn) * mid)
       ctx.fillStyle = x < playedX ? played : rest
       ctx.fillRect(x, top, Math.max(1, barW - 0.5), bh)
-    }
+    })
     // 再生ヘッド線
     if (progress > 0) {
       ctx.fillStyle = cssColor(canvas, '--error')

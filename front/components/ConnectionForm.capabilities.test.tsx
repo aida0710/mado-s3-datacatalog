@@ -6,6 +6,7 @@ import { ConnectionForm } from './ConnectionForm'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
 import type { Connection } from '../lib/api/types'
 import { api } from '../lib/api/client'
+import { itemAt } from '../tests/itemAt'
 
 const connection: Connection = {
   id: 'c1', name: 'primary', endpoint: 'https://s3.example.com/', region: 'auto',
@@ -30,12 +31,12 @@ describe('ConnectionForm の権限トグル', () => {
     await userEvent.type(screen.getByPlaceholderText('https://s3.example.com'), 'https://s3.example.com')
     // アクセスキー ID は placeholder もアクセシブル名も無い最後の textbox。
     const inputs = screen.getAllByRole('textbox')
-    await userEvent.type(inputs[inputs.length - 1], 'AKIAEXAMPLE12345')
+    await userEvent.type(itemAt(inputs, inputs.length - 1), 'AKIAEXAMPLE12345')
     await userEvent.type(document.querySelector('input[type="password"]')!, 'secret-value')
 
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0].capabilities).toEqual(ALL_CAPABILITIES_ON)
+    expect(onSubmit).toHaveBeenNthCalledWith(1, expect.objectContaining({ capabilities: ALL_CAPABILITIES_ON }))
   })
 
   it('編集では変えたトグルだけを差分で送る', async () => {
@@ -46,7 +47,7 @@ describe('ConnectionForm の権限トグル', () => {
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toEqual({ capabilities: { download: false } })
+    expect(onSubmit).toHaveBeenNthCalledWith(1, { capabilities: { download: false } })
   })
 
   it('README 読み込みを切ると編集も一緒に落ちて操作できなくなる', async () => {
@@ -63,7 +64,7 @@ describe('ConnectionForm の権限トグル', () => {
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     // API 側の「編集には読み込みが必要」(400) を踏まない組み合わせで送る。
-    expect(onSubmit.mock.calls[0][0]).toEqual({
+    expect(onSubmit).toHaveBeenNthCalledWith(1, {
       capabilities: { readmeRead: false, readmeWrite: false },
     })
   })

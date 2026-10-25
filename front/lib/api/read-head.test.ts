@@ -11,10 +11,10 @@ function streamOf(chunks: number[][]) {
     cancel,
     body: {
       getReader: () => ({
-        read: async () =>
-          i < chunks.length
-            ? { done: false, value: new Uint8Array(chunks[i++]) }
-            : { done: true, value: undefined },
+        read: async () => {
+          const chunk = chunks[i++]
+          return chunk ? { done: false, value: new Uint8Array(chunk) } : { done: true, value: undefined }
+        },
         cancel,
       }),
     },
