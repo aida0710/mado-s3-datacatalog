@@ -276,7 +276,7 @@ export const englishMessages = {
   "common.contentHash": "Content hash",
   "common.contractReference": "Contract reference",
   "common.copied": "Copied",
-  "common.copyFailed": "Copy failed",
+  "common.copyFailed": "Couldn't copy",
   "common.copyRawDataUrl": "Copy raw data URL",
   "common.copyS3Url": "Copy S3 URL",
   "common.copyWebUrl": "Copy web URL",

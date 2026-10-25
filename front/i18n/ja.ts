@@ -274,7 +274,7 @@ export const japaneseMessages = {
   "common.contentHash": "内容のハッシュ",
   "common.contractReference": "契約参照",
   "common.copied": "コピーしました",
-  "common.copyFailed": "コピー失敗",
+  "common.copyFailed": "コピーできませんでした",
   "common.copyRawDataUrl": "生データ URL をコピー",
   "common.copyS3Url": "S3 URL をコピー",
   "common.copyWebUrl": "Web URL をコピー",

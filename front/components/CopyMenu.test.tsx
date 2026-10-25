@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CopyMenu, type MenuItem } from './CopyMenu'
 
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 
 afterEach(() => {

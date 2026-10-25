@@ -5,7 +5,8 @@ import {
 import { Check, Ellipsis, X } from 'lucide-react'
 import { DROPDOWN_VIEWPORT_MARGIN } from '@mado/design-system/popover'
 import { useAnchoredPopover } from '@mado/design-system/react'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
+import { COPY_FEEDBACK_MS } from '../lib/useCopyFeedback'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -19,8 +20,6 @@ const MENU_MIN_WIDTH = 280
 const MENU_MAX_WIDTH = 480
 // メニューの高さは画面に収まる範囲で中身に任せる (項目は数個なので上限を設けない)。
 const MENU_MAX_HEIGHT = Number.POSITIVE_INFINITY
-// コピーした結果を見せておく時間。
-const FEEDBACK_MS = 1500
 // 結果の吹き出しをトリガーから離す距離。
 const FEEDBACK_GAP = 6
 
@@ -110,12 +109,12 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
       : { right: DROPDOWN_VIEWPORT_MARGIN, bottom: DROPDOWN_VIEWPORT_MARGIN }
     setFeedback({ text, ok, style })
     if (feedbackTimer.current != null) window.clearTimeout(feedbackTimer.current)
-    feedbackTimer.current = window.setTimeout(() => setFeedback(null), FEEDBACK_MS)
+    feedbackTimer.current = window.setTimeout(() => setFeedback(null), COPY_FEEDBACK_MS)
   }
 
   const onCopy = async (label: string, value: string) => {
     setOpen(false)
-    const ok = await copyToClipboard(value)
+    const ok = await copyText(value)
     showFeedback(ok ? label : translate('common.copyFailed'), ok)
   }
 

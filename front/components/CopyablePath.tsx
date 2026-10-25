@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
-import { copyToClipboard } from '../lib/clipboard'
+import { useCopyFeedback } from '../lib/useCopyFeedback'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -22,20 +21,7 @@ interface Props {
 // hover の下線だけを手掛かりにする (見た目は preview.css の .copyable-path)。
 export function CopyablePath({ text, fullPath, className }: Props) {
   useLocale()
-  const [copied, setCopied] = useState<boolean | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // 1.5 秒後に戻す timeout は、その前にカードが外されると unmount 後の
-  // setState になる (ピンはボタン一発で消える)。unmount で必ず止める。
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current)
-  }, [])
-
-  const onCopy = async (): Promise<void> => {
-    setCopied(await copyToClipboard(fullPath))
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(() => setCopied(null), 1500)
-  }
+  const { copied, copy } = useCopyFeedback()
 
   return (
     <button
@@ -43,7 +29,7 @@ export function CopyablePath({ text, fullPath, className }: Props) {
       className={className ? `copyable-path ${className}` : 'copyable-path'}
       title={fullPath}
       aria-label={translate('copyablePath.copyPath', { value0: fullPath })}
-      onClick={() => void onCopy()}
+      onClick={() => void copy(fullPath)}
     >
       {copied && <Check size={14} aria-hidden="true" />}
       <span className="copyable-path-text">

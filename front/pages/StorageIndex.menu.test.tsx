@@ -6,12 +6,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api/client'
 import type { Connection } from '../lib/api/types'
 import { ConnectionContext } from '../lib/connectionContext'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 import StorageIndex from './StorageIndex'
 import { ALL_CAPABILITIES_ON } from '../lib/api/types'
 
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 
 afterEach(() => vi.restoreAllMocks())
@@ -83,7 +83,7 @@ describe('StorageIndex バケット行の ⋯ メニュー', () => {
     await user.click(screen.getByRole('menuitem', { name: /S3 URL をコピー/ }))
 
     // Breadcrumb は prefix='' のとき `s3://<bucket>/` を出す。バケット一覧も同形に揃える。
-    expect(copyToClipboard).toHaveBeenCalledWith('s3://bkt-1/')
+    expect(copyText).toHaveBeenCalledWith('s3://bkt-1/')
   })
 
   it('Web URL はバケット直下を指す絶対 URL をコピーする', async () => {
@@ -94,7 +94,7 @@ describe('StorageIndex バケット行の ⋯ メニュー', () => {
     await user.click(screen.getByRole('button', { name: 'アクション' }))
     await user.click(screen.getByRole('menuitem', { name: /Web URL をコピー/ }))
 
-    expect(copyToClipboard).toHaveBeenCalledWith(`${window.location.origin}/storage/c1/bkt-1/`)
+    expect(copyText).toHaveBeenCalledWith(`${window.location.origin}/storage/c1/bkt-1/`)
   })
 
   it('メニューの「タグを編集」から TagPicker を開ける', async () => {

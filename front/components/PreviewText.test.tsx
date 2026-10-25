@@ -9,12 +9,12 @@ vi.mock('../lib/api/client', () => ({
     readHead: vi.fn(async () => new Uint8Array(0)),
   },
 }))
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 
 import { api } from '../lib/api/client'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 
 const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s)
 
@@ -28,7 +28,7 @@ describe('PreviewText - copy', () => {
     render(<PreviewText connectionId="c" bucket="b" k="x.txt" />)
     const button = await screen.findByRole('button', { name: '内容をコピー' })
     await userEvent.click(button)
-    expect(copyToClipboard).toHaveBeenCalledWith('hello\nworld')
+    expect(copyText).toHaveBeenCalledWith('hello\nworld')
   })
 
   it('読み込み中はコピーボタンを出さない', () => {

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, Link, Pin } from 'lucide-react'
 import { useCodeLanguage } from '@mado/design-system/react'
@@ -6,7 +6,6 @@ import { api } from '../lib/api/client'
 import { classifyEntry } from '../lib/api/mime'
 import { fmtSize, prettyPrintJson } from '../lib/format'
 import { absoluteUrl, tarEntryWebUrl } from '../lib/route'
-import { copyToClipboard } from '../lib/clipboard'
 import { usePinnedPreviews } from '../lib/pinnedPreviews'
 import { TEXT_HEAD_BYTES } from '../lib/textSniff'
 import { CODE_LANGUAGE_STORAGE_KEY } from '../lib/codeLanguage'
@@ -15,7 +14,7 @@ import { CodeFormatSelect, CodeView } from './CodeView'
 import { CopyMenu, type MenuItem } from './CopyMenu'
 import { Dialog } from './Dialog'
 import { PreviewAudio } from './PreviewAudio'
-import { CopyContentButton } from './PreviewText'
+import { CopyButton } from './CopyButton'
 import { PreviewVideo } from './PreviewVideo'
 import { UnsupportedPreview } from './UnsupportedPreview'
 import { useLocale } from '../i18n/useLocale'
@@ -165,17 +164,11 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
 /** 読み込んだテキスト。形式を推測して色を付け、帯の選択欄で形式を選び直せる。 */
 function LoadedText({ name, text, actions }: { name: string; text: string; actions: ReactNode }) {
   useLocale()
-  const [copied, setCopied] = useState<boolean | null>(null)
   const code = useCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName: name, text })
 
   // 末尾の改行で行数が余分に増えないようにする。
   const trimmed = text.endsWith('\n') ? text.slice(0, -1) : text
   const lines = trimmed.length === 0 ? 0 : trimmed.split('\n').length
-
-  const handleCopy = async () => {
-    setCopied(await copyToClipboard(text))
-    setTimeout(() => setCopied(null), 1500)
-  }
 
   return (
     <>
@@ -187,7 +180,7 @@ function LoadedText({ name, text, actions }: { name: string; text: string; actio
           </>
         }
       >
-        <CopyContentButton copied={copied} onCopy={handleCopy} />
+        <CopyButton value={text} label={translate('previewText.copyContent')} />
         {actions}
       </EntryToolbar>
       <CodeView text={text} language={code.language} className="preview-code" />

@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PinnedPreviewCard } from './PinnedPreviewCard'
 import { PinnedPreviewsProvider, usePinnedPreviews, type PinnedItem } from '../lib/pinnedPreviews'
 import { api } from '../lib/api/client'
-import { copyToClipboard } from '../lib/clipboard'
+import { copyText } from '@mado/design-system/clipboard'
 
-vi.mock('../lib/clipboard', () => ({
-  copyToClipboard: vi.fn(async () => true),
+vi.mock('@mado/design-system/clipboard', () => ({
+  copyText: vi.fn(async () => true),
 }))
 
 vi.mock('../lib/api/client', () => ({
@@ -182,14 +182,14 @@ describe('PinnedPreviewCard - パスのコピー', () => {
     const label = screen.getByTitle('rec/shard.tar › audio/u1.wav')
     expect(label).toHaveTextContent('u1.wav')
     fireEvent.click(label)
-    expect(copyToClipboard).toHaveBeenCalledWith('rec/shard.tar › audio/u1.wav')
+    expect(copyText).toHaveBeenCalledWith('rec/shard.tar › audio/u1.wav')
     await waitFor(() => expect(label).toHaveTextContent('コピーしました'))
   })
 
   it('単体ファイルは key をそのままコピーする', () => {
     render(<PinnedPreviewCard item={item({ key: 'notes/readme.txt' })} />)
     fireEvent.click(screen.getByTitle('notes/readme.txt'))
-    expect(copyToClipboard).toHaveBeenCalledWith('notes/readme.txt')
+    expect(copyText).toHaveBeenCalledWith('notes/readme.txt')
   })
 })
 
