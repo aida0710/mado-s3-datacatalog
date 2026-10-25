@@ -11,9 +11,9 @@ vi.mock('../../lib/api/client', () => ({
 
 const GIB = 1024 ** 3
 
-const MANUAL_FACTS = {
+const MANUAL_FACTS: TransferEstimate['catalog']['manualFacts'] = {
   verifiedOn: '2026-08-22',
-  notes: ['AWS の最小保存期間', 'Wasabi の単価とポリシー'],
+  notes: ['awsMinimumRetention', 'wasabiManualRates'],
   sources: ['https://aws.amazon.com/s3/pricing/', 'https://wasabi.com/pricing/faq'],
 }
 
@@ -150,8 +150,8 @@ describe('EstimatePanel', () => {
     vi.mocked(api.estimate).mockResolvedValue(estimate([
       candidate({
         warnings: [
-          { kind: 'minDuration', message: '最小保存期間 180 日。' },
-          { kind: 'archiveRetrievalTime', message: '取り出しは即時ではありません。' },
+          { code: 'minDuration', days: 180 },
+          { code: 'archiveRetrievalTime' },
         ],
       }),
     ]))
@@ -159,8 +159,8 @@ describe('EstimatePanel', () => {
 
     expect(await screen.findByLabelText('注意 2 件')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { expanded: false }))
-    expect(screen.getByText('最小保存期間 180 日。')).toBeInTheDocument()
-    expect(screen.getByText('取り出しは即時ではありません。')).toBeInTheDocument()
+    expect(screen.getByText('最小保存期間 180 日。180 日以内に削除しても 180 日分は課金されます。')).toBeInTheDocument()
+    expect(screen.getByText('取り出しは即時ではありません。要求してから数分〜十数時間かかります。')).toBeInTheDocument()
   })
 
   it('取得済みならその日時を脚注に出す', async () => {
@@ -234,7 +234,7 @@ describe('EstimatePanel', () => {
     // 「取得日が新しい = 全部新しい」と読み違えさせないための注記。
     expect(await screen.findByText(/料金 API から取れないため手入力です（2026-08-22 確認）/))
       .toBeInTheDocument()
-    expect(screen.getByText('AWS の最小保存期間')).toBeInTheDocument()
+    expect(screen.getByText(/^AWS の最小保存期間 \(Standard-IA/)).toBeInTheDocument()
     // 同じドメインの別ページを区別できるよう、パスまで出す。
     expect(screen.getByRole('link', { name: 'wasabi.com/pricing/faq' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'aws.amazon.com/s3/pricing' })).toBeInTheDocument()

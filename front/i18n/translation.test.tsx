@@ -83,17 +83,6 @@ describe('localized application messages', () => {
     expect(screen.getByText('1').parentElement).toHaveTextContent('1 event is pending synchronization.')
     expect(screen.getByText('1').tagName).toBe('STRONG')
   })
-
-  it('translates API warnings in both directions without changing embedded values', () => {
-    const retentionWarning = '最小保存期間 30 日。30 日以内に削除しても 30 日分は課金されます。'
-    const lineageWarning = 'Skipped malformed Marquez node: 研究（A）、B〜C'
-    setLocale('en')
-    const englishRetentionWarning = localizeMessage(retentionWarning)
-    expect(englishRetentionWarning).toBe('Minimum retention: 30 days. Deleting within 30 days still incurs charges for 30 days.')
-    setLocale('ja')
-    expect(localizeMessage(englishRetentionWarning)).toBe(retentionWarning)
-    expect(localizeMessage(lineageWarning)).toBe('形式が不正なMarquezの項目を除外しました: 研究（A）、B〜C')
-  })
 })
 
 it('uses singular English units for one minute ago', () => {

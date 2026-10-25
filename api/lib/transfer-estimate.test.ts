@@ -341,8 +341,8 @@ describe('estimateTransfer / 月額', () => {
 })
 
 describe('estimateTransfer / 警告', () => {
-  function kinds(r: { warnings: Array<{ kind: string }> }): string[] {
-    return r.warnings.map(w => w.kind)
+  function codes(r: { warnings: Array<{ code: string }> }): string[] {
+    return r.warnings.map(w => w.code)
   }
 
   it('最小保存期間', () => {
@@ -351,8 +351,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ minDurationDays: 180 }) },
     })
-    expect(kinds(r)).toContain('minDuration')
-    expect(r.warnings.find(w => w.kind === 'minDuration')?.message).toContain('180')
+    expect(r.warnings).toContainEqual({ code: 'minDuration', days: 180 })
   })
 
   it('アーカイブクラスは取り出し時間も警告する', () => {
@@ -364,8 +363,8 @@ describe('estimateTransfer / 警告', () => {
         rates: rates({ retrievalPerGb: 0.022, minDurationDays: 180 }),
       },
     })
-    expect(kinds(r)).toContain('archiveRetrievalTime')
-    expect(kinds(r)).toContain('retrievalCost')
+    expect(codes(r)).toContain('archiveRetrievalTime')
+    expect(codes(r)).toContain('retrievalCost')
   })
 
   it('Glacier Instant Retrieval は取り出し時間を警告しない', () => {
@@ -377,8 +376,8 @@ describe('estimateTransfer / 警告', () => {
         rates: rates({ retrievalPerGb: 0.03, minDurationDays: 90 }),
       },
     })
-    expect(kinds(r)).not.toContain('archiveRetrievalTime')
-    expect(kinds(r)).toContain('retrievalCost')
+    expect(codes(r)).not.toContain('archiveRetrievalTime')
+    expect(codes(r)).toContain('retrievalCost')
   })
 
   it('移動元がアーカイブなら復元待ちを警告する', () => {
@@ -387,7 +386,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof({ provider: 'aws', storageClass: 'GLACIER' }), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates() },
     })
-    expect(kinds(r)).toContain('sourceArchiveRestore')
+    expect(codes(r)).toContain('sourceArchiveRestore')
   })
 
   it('Wasabi のポリシー', () => {
@@ -396,7 +395,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst', provider: 'wasabi' }), rates: rates() },
     })
-    expect(kinds(r)).toContain('wasabiPolicy')
+    expect(codes(r)).toContain('wasabiPolicy')
   })
 
   it('容量超過', () => {
@@ -405,7 +404,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst', capacityBytes: 50 * GIB }), rates: rates() },
     })
-    expect(kinds(r)).toContain('capacity')
+    expect(r.warnings).toContainEqual({ code: 'capacity', capacityBytes: 50 * GIB, requiredBytes: 100 * GIB })
   })
 
   it('容量に収まるなら警告しない', () => {
@@ -414,7 +413,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst', capacityBytes: 50 * GIB }), rates: rates() },
     })
-    expect(kinds(r)).not.toContain('capacity')
+    expect(codes(r)).not.toContain('capacity')
   })
 
   it('小さいオブジェクトが多い', () => {
@@ -423,7 +422,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ minBillableBytes: 128 * 1024 }) },
     })
-    expect(kinds(r)).toContain('smallObjects')
+    expect(r.warnings).toContainEqual({ code: 'smallObjects', averageObjectBytes: 1024, minimumBillableBytes: 128 * 1024 })
   })
 
   it('代理値の単価', () => {
@@ -432,7 +431,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ storageRateSource: 'proxy' }) },
     })
-    expect(kinds(r)).toContain('proxyRate')
+    expect(codes(r)).toContain('proxyRate')
   })
 
   it('手入力の単価は「更新しても変わらない」と伝える', () => {
@@ -441,8 +440,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ storageRateSource: 'manual' }) },
     })
-    const w = r.warnings.find(x => x.kind === 'manualRate')
-    expect(w?.message).toContain('更新では新しくなりません')
+    expect(r.warnings).toContainEqual({ code: 'manualRate' })
   })
 
   it('人が入れた上書きには注記を出さない', () => {
@@ -451,8 +449,8 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ storageRateSource: 'override' }) },
     })
-    expect(kinds(r)).not.toContain('manualRate')
-    expect(kinds(r)).not.toContain('proxyRate')
+    expect(codes(r)).not.toContain('manualRate')
+    expect(codes(r)).not.toContain('proxyRate')
   })
 
   it('オブジェクトごとの加算が無視できない割合なら警告する', () => {
@@ -462,8 +460,11 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ perObjectOverheadBytes: 40960 }) },
     })
-    const w = r.warnings.find(x => x.kind === 'objectOverhead')
-    expect(w?.message).toContain('1,000,000 件')
+    // 加算 40KB × 100 万件 は本体 10KB × 100 万件の 4 倍で、課金対象の 80% を占める。
+    expect(r.warnings).toContainEqual({
+      code: 'objectOverhead', overheadBytesPerObject: 40960, objectCount: 1_000_000,
+      overheadBytes: 40960 * 1_000_000, percentOfBillable: 80,
+    })
   })
 
   it('加算が全体に比べて小さければ警告しない', () => {
@@ -473,7 +474,7 @@ describe('estimateTransfer / 警告', () => {
       source: { profile: prof(), rates: rates() },
       destination: { profile: prof({ connectionId: 'dst' }), rates: rates({ perObjectOverheadBytes: 40960 }) },
     })
-    expect(kinds(r)).not.toContain('objectOverhead')
+    expect(codes(r)).not.toContain('objectOverhead')
   })
 
   it('単価が引けなかったときは「無料ではない」と伝える', () => {
@@ -485,9 +486,7 @@ describe('estimateTransfer / 警告', () => {
         rates: rates({ ratesResolved: false }),
       },
     })
-    const w = r.warnings.find(x => x.kind === 'ratesUnavailable')
-    expect(w?.message).toContain('eu-west-9')
-    expect(w?.message).toContain('無料という意味ではありません')
+    expect(r.warnings).toContainEqual({ code: 'ratesUnavailable', region: 'eu-west-9' })
   })
 
   it('社内ストレージ同士なら警告は出ない', () => {

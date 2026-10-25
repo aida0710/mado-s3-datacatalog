@@ -12,7 +12,8 @@ export function createNamespaceLineageService(service: LineageService, policy: N
         && (!node.registry || policy.allowed(node.registry.namespace)))
       const ids = new Set(nodes.map(node => node.id))
       return { ...graph, nodes, edges: graph.edges.filter(edge => ids.has(edge.source) && ids.has(edge.target)),
-        warnings: graph.warnings.filter(warning => !warning.startsWith('Skipped malformed Marquez node:')) }
+        // 形の壊れた項目の ID は、許可していない Namespace の名前を含みうるので出さない。
+        warnings: graph.warnings.filter(warning => warning.code !== 'malformedMarquezNode') }
     },
     async versionGraph(query) {
       await policy.version(query.versionId)

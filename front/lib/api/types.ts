@@ -463,13 +463,28 @@ export const StartScanOk = StartJobOk
 
 // ── 転送見積もり (spec: 2026-08-22-transfer-estimate-design.md) ──
 
-// kind は増える前提なので enum にしない。増えた警告が parse エラーで
-// 画面を落とすより、知らない kind でもメッセージを出せる方がよい。
-export const EstimateWarning = z.object({
-  kind: z.string(),
-  message: z.string(),
-})
+// 見積もりの注意。画面は code で訳し、横の値を文に入れる (i18n/noticeMessages.ts)。
+// API と画面は同じ版で配るので、code を足すときは両方を一緒に直す。
+export const EstimateWarning = z.discriminatedUnion('code', [
+  z.object({ code: z.literal('ratesUnavailable'), region: z.string().nullable() }),
+  z.object({ code: z.literal('minDuration'), days: z.number() }),
+  z.object({ code: z.literal('retrievalCost'), usdPerGb: z.number() }),
+  z.object({ code: z.literal('archiveRetrievalTime') }),
+  z.object({ code: z.literal('sourceArchiveRestore') }),
+  z.object({ code: z.literal('wasabiPolicy') }),
+  z.object({ code: z.literal('proxyRate') }),
+  z.object({ code: z.literal('manualRate') }),
+  z.object({ code: z.literal('smallObjects'), averageObjectBytes: z.number(), minimumBillableBytes: z.number() }),
+  z.object({
+    code: z.literal('objectOverhead'), overheadBytesPerObject: z.number(), objectCount: z.number(),
+    overheadBytes: z.number(), percentOfBillable: z.number(),
+  }),
+  z.object({ code: z.literal('capacity'), capacityBytes: z.number(), requiredBytes: z.number() }),
+])
 export type EstimateWarning = z.infer<typeof EstimateWarning>
+
+export const ManualFactNote = z.enum(['awsMinimumRetention', 'awsMinimumBillableSize', 'deepArchiveStorageRate', 'wasabiManualRates'])
+export type ManualFactNote = z.infer<typeof ManualFactNote>
 
 export const TransferCandidate = z.object({
   connectionId: z.string(),
@@ -521,7 +536,7 @@ export const TransferEstimate = z.object({
     /** 料金 API から取れず手で持っている値。**更新しても変わらない部分**。 */
     manualFacts: z.object({
       verifiedOn: z.string(),
-      notes: z.array(z.string()),
+      notes: z.array(ManualFactNote),
       sources: z.array(z.string()),
     }),
   }),
@@ -696,10 +711,22 @@ export const LineageEdge = z.object({
 })
 export type LineageEdge = z.infer<typeof LineageEdge>
 
+export const LineageWarning = z.discriminatedUnion('code', [
+  z.object({ code: z.literal('marquezProjectionUnavailable') }),
+  z.object({ code: z.literal('registryEnrichmentUnavailable') }),
+  z.object({ code: z.literal('malformedMarquezNode'), nodeId: z.string() }),
+  z.object({ code: z.literal('registrySearchUnavailable') }),
+  z.object({ code: z.literal('marquezSearchUnavailable') }),
+])
+export type LineageWarning = z.infer<typeof LineageWarning>
+
 export const LineageProjectionStatus = z.object({
   state: z.string(),
   pendingEvents: z.number().int().nonnegative().nullable().optional().default(0),
   oldestPendingAt: z.string().nullable().optional(),
+  /** 反映状態を取れなかった理由。画面は code で訳す。 */
+  code: z.enum(['registryProjectionUnavailable', 'marquezProjectionUnavailable']).optional(),
+  /** Dataset Registry が返した説明。外部の文なのでそのまま出す。 */
   message: z.string().optional(),
 })
 export type LineageProjectionStatus = z.infer<typeof LineageProjectionStatus>
@@ -717,7 +744,7 @@ export const LineageGraph = z.object({
   projection: LineageProjectionStatus.optional(),
   generatedAt: z.string().optional(),
   truncated: z.boolean().optional().default(false),
-  warnings: z.array(z.string()).optional().default([]),
+  warnings: z.array(LineageWarning).optional().default([]),
 })
 export type LineageGraph = z.infer<typeof LineageGraph>
 
