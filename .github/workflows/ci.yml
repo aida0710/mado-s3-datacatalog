@@ -159,11 +159,14 @@ jobs:
               docker exec "$container" node --input-type=module -e '
                 const STARTUP_LIMIT_MS=10000, POLL_MS=200;
                 const deadline=Date.now()+STARTUP_LIMIT_MS;
+                // DBに届かない起動なので、/healthz は503とdatabase_unavailableを返すはず。
+                let health;
                 for (;;) {
-                  try { const response=await fetch("http://127.0.0.1:3100/healthz"); if(response.ok) break } catch {}
+                  try { health=await fetch("http://127.0.0.1:3100/healthz"); break } catch {}
                   if(Date.now()>=deadline) process.exit(1);
                   await new Promise(resolve=>setTimeout(resolve,POLL_MS));
                 }
+                if(health.status!==503 || (await health.json()).code!=="database_unavailable") process.exit(1);
                 for(const [body,expected] of [[{},400],[{connectionId:"x".repeat(70000)},413]]) {
                   const response=await fetch("http://127.0.0.1:3100/analyze",{
                     method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),

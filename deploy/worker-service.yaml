@@ -12,3 +12,9 @@ services:
       MEDIA_CACHE_MAX_AGE_DAYS: "${MEDIA_CACHE_MAX_AGE_DAYS:-30}"
       MEDIA_SPECTROGRAM_MAX_WIDTH: "${MEDIA_SPECTROGRAM_MAX_WIDTH:-4096}"
       MEDIA_WORKER_PORT: "${MEDIA_WORKER_PORT:-3100}"
+    healthcheck:
+      test: ["CMD", "node", "dist/scripts/healthcheck.js", "${MEDIA_WORKER_PORT:-3100}"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s

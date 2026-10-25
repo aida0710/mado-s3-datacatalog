@@ -394,6 +394,8 @@ Pipeline ─TLS proxy─► nginx :8081 (POST ingest only)              │
 | `media-worker` | `tsx watch worker.ts` | `node dist/worker.js` |
 | `postgres` | postgres:16-alpine (`127.0.0.1:5432`) | postgres:16-alpine (compose 内部のみ) |
 
+`api-internal`・`api-lineage`・`media-worker`は、どれも`GET /healthz`で稼働を返します。DBに届けば200と`{"status":"ok"}`、届かなければ503と`{"error":"database is unavailable","code":"database_unavailable"}`です。Composeのhealthcheckは配布イメージに入っている`node dist/scripts/healthcheck.js <ポート>`でこれを確かめ、Webの`nginx`は両APIがhealthyになってから起動します。
+
 ### よく使うコマンド
 
 ```bash

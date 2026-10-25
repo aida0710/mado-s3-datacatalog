@@ -38,6 +38,12 @@ services:
       target: development
     container_name: mado-dev-api-internal
     command: ["npx", "tsx", "watch", "internal.ts"]
+    healthcheck:
+      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     env_file:
       - .env
     environment:
@@ -58,6 +64,12 @@ services:
       target: development
     container_name: mado-dev-api-lineage
     command: ["npx", "tsx", "watch", "lineage.ts"]
+    healthcheck:
+      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "3001"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     environment:
       LINEAGE_API_PORT: 3001
       DATABASE_URL_RW: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
@@ -84,6 +96,13 @@ services:
       target: development
     container_name: mado-dev-media-worker
     command: ["npx", "tsx", "watch", "worker.ts"]
+    # 開発用のイメージには dist が無いので、deploy/worker-service.yaml の確認をソースで置き換える。
+    healthcheck:
+      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "${MEDIA_WORKER_PORT:-3100}"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     volumes:
       - ./api:/app
       - /app/node_modules

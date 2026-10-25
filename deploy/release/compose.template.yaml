@@ -26,6 +26,12 @@ services:
   api-internal:
     image: "@@MADO_API_IMAGE@@"
     command: ["node", "dist/internal.js"]
+    healthcheck:
+      test: ["CMD", "node", "dist/scripts/healthcheck.js", "3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     env_file: [.env]
     environment:
       MADO_ENV: production
@@ -39,6 +45,12 @@ services:
   api-lineage:
     image: "@@MADO_API_IMAGE@@"
     command: ["node", "dist/lineage.js"]
+    healthcheck:
+      test: ["CMD", "node", "dist/scripts/healthcheck.js", "3001"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     environment:
       LINEAGE_API_PORT: "3001"
       DATABASE_URL_RW: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
@@ -68,7 +80,11 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:8081:8081"
-    depends_on: [api-internal, api-lineage]
+    depends_on:
+      api-internal:
+        condition: service_healthy
+      api-lineage:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

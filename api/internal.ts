@@ -56,6 +56,7 @@ import { mountLineageRoutes } from './routes/lineage.js'
 import { createNamespaceLineagePolicy } from './lib/namespace-lineage-policy.js'
 import { mountLineageCurationRoutes } from './routes/lineage-curation.js'
 import { requestLogger } from './lib/request-logger.js'
+import { mountHealthRoute } from './lib/health-route.js'
 import { createCapacityStore } from './lib/capacity-store.js'
 import { mountStorageCapacityRoutes } from './routes/storage-capacity.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
@@ -121,7 +122,7 @@ const capacityStore = createCapacityStore(pools)
 
 const app = new Hono()
 app.use('*', requestLogger())
-app.get('/healthz', c => c.text('ok'))
+mountHealthRoute(app, pools.ro)
 
 // Login/callbackはbrowser session確立前に到達するpublic route。write系には既存の
 // Origin検証を適用する。
