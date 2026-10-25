@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { api } from '../lib/api/client'
 import type { Tag } from '../lib/api/types'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { TagBadge } from './TagBadge'
 import { ImportExportButtons } from './ImportExportButtons'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
@@ -80,9 +80,9 @@ function TagForm({
 
   return (
     <Dialog
-      titleId="tag-form-title"
       title={initialValue.name ? translate('common.editTags') : translate('tagsSettings.addTag')}
       onClose={onCancel}
+      closeLabel={translate('common.close')}
       dismissible={!saving}
       narrowLayout="sheet"
       footer={
@@ -115,7 +115,6 @@ function DeleteConfirm({
   useLocale()
   return (
     <DeleteConfirmDialog
-      titleId="tag-delete-title"
       title={translate('common.deleteTag')}
       onConfirm={onConfirm}
       onCancel={onCancel}

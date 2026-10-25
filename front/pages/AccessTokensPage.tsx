@@ -38,12 +38,12 @@ export default function AccessTokensPage() {
       </div>}
       {(dialog?.type === 'create' || dialog?.type === 'edit') && <AccessTokenFormDialog
         token={dialog.type === 'edit' ? dialog.token : null} onSave={manager.save} onCancel={() => manager.setDialog(null)} />}
-      {dialog?.type === 'regenerate' && <ActionConfirmDialog titleId="token-regenerate-title" title={translate('accessTokens.regenerate')}
+      {dialog?.type === 'regenerate' && <ActionConfirmDialog title={translate('accessTokens.regenerate')}
         confirmLabel={translate('accessTokens.regenerate')} pendingLabel={translate('common.loading')}
         onConfirm={() => manager.regenerate(dialog.token)} onCancel={() => manager.setDialog(null)}>
         {translate('accessTokens.regenerateConfirmation', { value0: dialog.token.name })}
       </ActionConfirmDialog>}
-      {dialog?.type === 'delete' && <DeleteConfirmDialog titleId="token-delete-title" title={translate('accessTokens.delete')}
+      {dialog?.type === 'delete' && <DeleteConfirmDialog title={translate('accessTokens.delete')}
         onConfirm={() => manager.deleteToken(dialog.token)} onCancel={() => manager.setDialog(null)}>
         {translate('accessTokens.deleteConfirmation', { value0: dialog.token.name })}
       </DeleteConfirmDialog>}

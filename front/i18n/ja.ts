@@ -936,6 +936,7 @@ export const japaneseMessages = {
   "tagsSettings.confirmDeletion": "タグ「{value0}」を削除します。全ての割り当ても消えます。よろしいですか?",
   "tagsSettings.tags": "タグ",
   "tagsSettings.thisIsNotAMadoTagExportFile": "mado のタグのエクスポートファイルではありません。",
+  "tarEntryModal.closeEntry": "エントリを閉じる",
   "tarEntryModal.copyUrl": "URL をコピー",
   "tarEntryModal.rows": "{value0} 行",
   "topBar.goToHome": "{value0} ホームへ",

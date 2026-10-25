@@ -3,9 +3,9 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { Check } from 'lucide-react'
+import { Dialog } from '@mado/design-system/react'
 import { fmtDateTime, fmtSize } from '../lib/format'
 import { useHistoryVersions, type HistorySource } from '../lib/useHistoryVersions'
-import { Dialog } from './Dialog'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -13,7 +13,6 @@ import { translate } from '../i18n/translate'
 interface Props extends HistorySource {
   /** 見出しの下の小さな補足。履歴の対象 (ノートの名前や README の場所) を示す。 */
   subtitle: ReactNode
-  titleId: string
   /** 何の履歴か ("README の履歴" など)。 */
   title: ReactNode
   /** 現在の本文。一致する版に「現在と一致」の注記を出す。null = 現在は本文なし。 */
@@ -24,7 +23,7 @@ interface Props extends HistorySource {
 /** 編集履歴のダイアログ。左に版の一覧、右に選んだ版の Markdown を表示する。
  *  README と Team note で取得元だけが違うので、それは HistorySource で受け取る。 */
 export function HistoryModal({
-  subtitle, titleId, title, currentBody, onClose, loadVersions, loadVersion,
+  subtitle, title, currentBody, onClose, loadVersions, loadVersion,
 }: Props) {
   useLocale()
   const { state, selectVersion } = useHistoryVersions({ loadVersions, loadVersion })
@@ -32,12 +31,13 @@ export function HistoryModal({
 
   return (
     <Dialog
-      titleId={titleId}
       title={title}
       subtitle={subtitle}
       onClose={onClose}
       closeLabel={translate('historyModal.closeHistory')}
       size="extra-wide"
+      // 本文を読むだけのダイアログなので、背景のクリックでも閉じる。
+      closesOnBackdropClick
     >
       <div className="dialog-body">
         {error && <p className="notice error">{localizeMessage(error)}</p>}

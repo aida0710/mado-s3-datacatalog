@@ -1,4 +1,4 @@
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { NamespaceSelector } from './NamespaceSelector'
 import { InternalPermissionSelector } from './InternalPermissionSelector'
 import { TokenConnectionSelector } from './TokenConnectionSelector'
@@ -20,8 +20,8 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
   useLocale()
   const form = useAccessTokenForm({ token, onSave })
   return (
-    <Dialog titleId="access-token-form-title" title={translate(token ? 'accessTokens.edit' : 'accessTokens.create')} size="wide"
-      onClose={onCancel} dismissible={!form.busy}
+    <Dialog title={translate(token ? 'accessTokens.edit' : 'accessTokens.create')} size="wide"
+      onClose={onCancel} closeLabel={translate('common.close')} dismissible={!form.busy}
       footer={<>
         <button className="button" type="button" onClick={onCancel} disabled={form.busy}>{translate('common.cancel')}</button>
         <button className="button primary" type="submit" form="access-token-form" disabled={form.busy}>

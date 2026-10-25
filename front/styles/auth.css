@@ -2,14 +2,20 @@
    .login-page / .login-card を使う。 */
 
 /* session が切れたとき、開いていた画面を残したまま上に重ねるログイン画面 (AuthOverlay)。
-   ダイアログより上に出す。前の User の画面が次にこのブラウザを使う人に見えないよう、
-   地は透かさない。 */
+   モーダルの <dialog> でトップレイヤーに出し、画面いっぱいに広げる。前の User の画面が次に
+   このブラウザを使う人に見えないよう、地は透かさない。 */
 .auth-overlay {
-  position: fixed;
   inset: 0;
-  z-index: 70;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
   overflow-y: auto;
   background: var(--background);
+  color: var(--text);
 }
 .auth-overlay:focus {
   outline: none;

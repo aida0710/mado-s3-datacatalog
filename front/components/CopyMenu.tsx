@@ -76,7 +76,10 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
       setOpen(false)
     }
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      // メニューだけを閉じる。囲むモーダルの <dialog> (tar の中身) が同じ Escape で閉じないように。
+      e.preventDefault()
+      setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)

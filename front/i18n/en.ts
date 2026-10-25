@@ -937,6 +937,7 @@ export const englishMessages = {
   "tagsSettings.confirmDeletion": "Delete tag “{value0}” and all its assignments?",
   "tagsSettings.tags": "Tags",
   "tagsSettings.thisIsNotAMadoTagExportFile": "This is not a Mado tag export file.",
+  "tarEntryModal.closeEntry": "Close entry",
   "tarEntryModal.copyUrl": "Copy URL",
   "tarEntryModal.rows": "{value0} rows",
   "topBar.goToHome": "Go to {value0} home",

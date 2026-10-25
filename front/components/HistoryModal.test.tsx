@@ -14,7 +14,6 @@ function renderModal(overrides: Partial<Parameters<typeof HistoryModal>[0]> = {}
   render(
     <HistoryModal
       subtitle="テスト · 履歴"
-      titleId="test-history-title"
       title="対象"
       currentBody={null}
       onClose={onClose}
@@ -63,9 +62,9 @@ describe('HistoryModal', () => {
   it('Escape と閉じるボタンで onClose が呼ばれる', async () => {
     const { onClose } = renderModal()
     await screen.findByRole('heading', { name: '二版' })
-    fireEvent.keyDown(window, { key: 'Escape' })
+    // Escape はブラウザが <dialog> に cancel を送る。jsdom はキーから送らないので、cancel を直接送る。
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
     expect(onClose).toHaveBeenCalledTimes(1)
-    // 背景のクリック用の見えないボタンも同じ名前を持つので、ダイアログの中の × を押す。
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: '履歴を閉じる' }))
     expect(onClose).toHaveBeenCalledTimes(2)
   })

@@ -206,7 +206,7 @@ describe('PreviewArchive - URL 駆動のエントリ開閉 (?entry=)', () => {
 
     onEntryChange.mockClear()
     renderUrlDriven({ initialEntry: 'blob.bin', onEntryChange })
-    await userEvent.click(await screen.findByRole('button', { name: 'Close entry' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'エントリを閉じる' }))
     expect(onEntryChange).toHaveBeenCalledWith(null)
   })
 

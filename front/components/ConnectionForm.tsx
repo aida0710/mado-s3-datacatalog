@@ -12,7 +12,7 @@ import type {
 import {
   initialState, reducer, toCreateInput, toUpdateInput, validateForm, type FormState,
 } from '../lib/connectionFormState'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -660,9 +660,9 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
 
   return (
     <Dialog
-      titleId={titleId}
       title={title}
       onClose={onClose}
+      closeLabel={translate('common.close')}
       dismissible={!saving}
       size="wide"
       footer={actions}

@@ -498,7 +498,6 @@ function UsersPage() {
 
       {deleting && (
         <DeleteConfirmDialog
-          titleId="admin-user-delete-title"
           title={translate('adminPage.deleteUser')}
           onConfirm={() => deleteUser(deleting)}
           onCancel={() => setDeleting(null)}
