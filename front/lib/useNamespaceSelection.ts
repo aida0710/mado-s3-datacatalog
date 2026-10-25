@@ -1,12 +1,12 @@
 import { useState } from 'react'
+import { useQuery } from '@mado/design-system/react'
 import { accessTokensApi } from './api/accessTokens'
-import { useRetryableLoad } from './useRetryableLoad'
 import { namespaceChoices, NAMESPACE_MAX_COUNT } from './namespaceSelection'
 
 export function useNamespaceSelection(input: { selected: string[]; onChange: (names: string[]) => void }) {
-  const { state, retry } = useRetryableLoad(accessTokensApi.namespaces)
+  const namespaces = useQuery({ key: 'access-token-namespaces', load: () => accessTokensApi.namespaces() })
   const [query, setQuery] = useState('')
-  const choices = namespaceChoices({ available: state.status === 'loaded' ? state.value.namespaces : [], selected: input.selected })
+  const choices = namespaceChoices({ available: namespaces.value?.namespaces ?? [], selected: input.selected })
   const trimmedQuery = query.trim()
   const matches = choices.filter(name => name.toLowerCase().includes(trimmedQuery.toLowerCase()))
   const selectedNames = input.selected.filter(name => name !== '*')
@@ -25,6 +25,6 @@ export function useNamespaceSelection(input: { selected: string[]; onChange: (na
     input.onChange([...selectedNames, trimmedQuery])
     setQuery('')
   }
-  return { state, retry, query, setQuery, matches, selectedNames, allowsAll,
+  return { namespaces, query, setQuery, matches, selectedNames, allowsAll,
     reachedLimit, canAddName, trimmedQuery, toggleName, toggleAll, addName }
 }

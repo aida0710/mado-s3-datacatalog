@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { readJsonFile, summaryText, type ImportMode, type ImportSummary } from '../lib/jsonFile'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -34,7 +34,6 @@ export function ImportExportButtons({
 }: Props) {
   useLocale()
   const inputId = useId()
-  const titleId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null)
@@ -112,9 +111,9 @@ export function ImportExportButtons({
 
       {picked !== null && (
         <Dialog
-          titleId={titleId}
           title={translate('importExportButtons.howToImport', { value0: what })}
           onClose={() => setPicked(null)}
+          closeLabel={translate('common.close')}
           narrowLayout="sheet"
           footer={
             <>

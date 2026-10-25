@@ -2,9 +2,9 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
-import { BREAKPOINT_PX } from '../lib/breakpoints'
+import { BREAKPOINT_PX } from '@mado/design-system/layout'
 
-// 色・余白の値は @mado/design-system の変数を使い、画面幅の切り替え点も mado ML Tracking と
+// 色・文字の大きさは @mado/design-system の変数を使い、画面幅の切り替え点も mado ML Tracking と
 // 揃える、という決まりを styles/ と App.css に対して確かめる。
 const withoutComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')
 const stylesDirectory = new URL('./', import.meta.url)
@@ -15,7 +15,7 @@ const appStylesheets = [
   { name: 'App.css', css: withoutComments(readFileSync(new URL('../App.css', import.meta.url), 'utf8')) },
 ]
 const resolvePackageFile = createRequire(import.meta.url).resolve
-const packageCss = ['tokens.css', 'base.css', 'components.css', 'shell.css', 'code.css']
+const packageCss = ['tokens.css', 'base.css', 'components.css', 'shell.css', 'code.css', 'lineage.css']
   .map(name => withoutComments(readFileSync(resolvePackageFile(`@mado/design-system/${name}`), 'utf8')))
   .join('\n')
 
@@ -69,6 +69,16 @@ describe('design tokens (mado)', () => {
         .map(property => `${name}: ${property}`),
     )
     expect(undefinedReferences).toEqual([])
+  })
+
+  it('文字の大きさは、デザインシステムの 7 段 (10〜18px) にある値を変数で書く', () => {
+    const tokenSizes = new Set(['10px', '11px', '12px', '13px', '14px', '16px', '18px'])
+    const offending = appStylesheets.flatMap(({ name, css }) =>
+      declarations(css)
+        .filter(({ property, value }) => property === 'font-size' && tokenSizes.has(value))
+        .map(({ value }) => `${name}: font-size: ${value}`),
+    )
+    expect(offending).toEqual([])
   })
 
   it('メディアクエリは mado ML Tracking と同じ 3 つの切り替え点だけを使う', () => {

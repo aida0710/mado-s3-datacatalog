@@ -1,9 +1,10 @@
 import { Download, X } from 'lucide-react'
+import { useCodeLanguage } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { classify, classifyEntry } from '../lib/api/mime'
 import { basename, fullEntryLabel, prettyPrintJson } from '../lib/format'
 import { TEXT_HEAD_BYTES } from '../lib/textSniff'
-import { useCodeLanguage } from '../lib/useCodeLanguage'
+import { CODE_LANGUAGE_STORAGE_KEY } from '../lib/codeLanguage'
 import { useSniffedText } from '../lib/useSniffedText'
 import { usePinnedPreviews, type PinnedItem } from '../lib/pinnedPreviews'
 import { useCapabilities } from '../lib/useCapabilities'
@@ -34,7 +35,7 @@ function PinnedTextBody({ name, url }: { name: string; url: string }) {
 // カードは狭いので選択欄は置かず、推測した形式か、プレビューでこの拡張子に選んだ形式で色を付ける。
 function PinnedText({ name, text }: { name: string; text: string }) {
   useLocale()
-  const code = useCodeLanguage(name, text)
+  const code = useCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName: name, text })
   return <CodeView text={text} language={code.language} className="preview-code pinned-text" />
 }
 

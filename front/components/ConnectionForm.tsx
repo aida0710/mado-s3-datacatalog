@@ -12,7 +12,7 @@ import type {
 import {
   initialState, reducer, toCreateInput, toUpdateInput, validateForm, type FormState,
 } from '../lib/connectionFormState'
-import { Dialog } from './Dialog'
+import { Dialog } from '@mado/design-system/react'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -571,7 +571,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
                     min={0}
                     step={1}
                     placeholder={translate('common.notSet')}
-                    aria-label={translate('connectionForm.capacityTb')}
+                    aria-label={translate('connectionForm.capacityTib')}
                     value={pricingCapacityTb}
                     onChange={e => dispatch({
                       type: 'setField',
@@ -580,7 +580,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
                     })}
                   />
                 }
-                title={translate('connectionForm.capacityTb')}
+                title={translate('connectionForm.capacityTib')}
                 help={translate('connectionForm.warnsWhenATransferWouldExceedCapacityLeave')}
               />
 
@@ -660,9 +660,9 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
 
   return (
     <Dialog
-      titleId={titleId}
       title={title}
       onClose={onClose}
+      closeLabel={translate('common.close')}
       dismissible={!saving}
       size="wide"
       footer={actions}

@@ -1,4 +1,4 @@
-// Match the existing access-token API limits for named permissions.
+// アクセストークンの API と同じ、Namespace の数と長さの上限。
 export const NAMESPACE_MAX_LENGTH = 512
 export const NAMESPACE_MAX_COUNT = 128
 

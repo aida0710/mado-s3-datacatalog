@@ -1,12 +1,12 @@
 import {
-  memo, useEffect, useRef, useState,
+  memo, useEffect, useLayoutEffect, useRef, useState,
   type CSSProperties, type KeyboardEvent, type ReactNode,
 } from 'react'
-import { createPortal } from 'react-dom'
 import { Check, Ellipsis, X } from 'lucide-react'
-import { copyToClipboard } from '../lib/clipboard'
-import { DROPDOWN_VIEWPORT_MARGIN } from '../lib/dropdownPlacement'
-import { useAnchoredPopover } from '../lib/useAnchoredPopover'
+import { DROPDOWN_VIEWPORT_MARGIN } from '@mado/design-system/popover'
+import { useAnchoredPopover } from '@mado/design-system/react'
+import { copyText } from '@mado/design-system/clipboard'
+import { COPY_FEEDBACK_MS } from '../lib/useCopyFeedback'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -20,8 +20,6 @@ const MENU_MIN_WIDTH = 280
 const MENU_MAX_WIDTH = 480
 // メニューの高さは画面に収まる範囲で中身に任せる (項目は数個なので上限を設けない)。
 const MENU_MAX_HEIGHT = Number.POSITIVE_INFINITY
-// コピーした結果を見せておく時間。
-const FEEDBACK_MS = 1500
 // 結果の吹き出しをトリガーから離す距離。
 const FEEDBACK_GAP = 6
 
@@ -47,10 +45,10 @@ const stopRowKeys = (e: KeyboardEvent) => {
 // 行や見出しの操作メニュー。アイコンのボタン (.icon-button) で開き、項目を選んで実行する。
 // クリック外 / Escape で閉じる。コピーの結果はトリガーの上に小さな吹き出しで出す。
 //
-// メニューと吹き出しは document.body へ portal し position:fixed で配置する。行を内包する
-// overflow:auto なラッパー — 表の .table-scroll (overflow-x:auto は CSS 仕様で overflow-y も
-// auto になる) / ドロワーの本文 — にクリップされると、最下段や 1 件だけの行でメニューが
-// 枠外へ落ち、見るのに余計なスクロールを強いられるため。
+// メニューと吹き出しは popover 属性でトップレイヤーに出し、position:fixed で置く (共通の部品の
+// .popover.menu.anchored-popover)。行を内包する overflow:auto なラッパー (表の .table-scroll、
+// ドロワーの本文) やドックの重なり順に隠れないように。DOM の上ではこの部品の中に置くので、
+// モーダルのダイアログ (tar の中身) の中から開いても、ダイアログの外として操作できなくならない。
 //
 // memo でラップ: 一覧の各行は items を useMemo で安定化して渡すので、親の再レンダ時
 // (loading フラグ更新等) に各 CopyMenu を再描画しなくて済む。
@@ -61,6 +59,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
   const root = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const feedbackRef = useRef<HTMLSpanElement>(null)
   const feedbackTimer = useRef<number | null>(null)
   // 横はトリガーの右端にそろえ、縦は下に余地が無ければ上向きに開く。開いている間はスクロールと
   // 画面のサイズ変更に合わせて置き直す。置き場所が決まるまで (undefined) は不可視で描いてチラつきを防ぐ。
@@ -72,13 +71,15 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node
-      // トリガ側 (root) と portal 済みメニュー (menuRef) の内側なら閉じない。
-      if (root.current?.contains(t) || menuRef.current?.contains(t)) return
+      // メニューも root の中にあるので、root の内側なら閉じない。
+      if (root.current?.contains(e.target as Node)) return
       setOpen(false)
     }
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      // メニューだけを閉じる。囲むモーダルの <dialog> (tar の中身) が同じ Escape で閉じないように。
+      e.preventDefault()
+      setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
@@ -92,26 +93,31 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
     if (feedbackTimer.current != null) window.clearTimeout(feedbackTimer.current)
   }, [])
 
+  // 吹き出しもトップレイヤーに出す。Popover API の無い環境では position:fixed だけで置く。
+  useLayoutEffect(() => {
+    const bubble = feedbackRef.current
+    if (bubble && typeof bubble.showPopover === 'function' && !bubble.matches(':popover-open')) bubble.showPopover()
+  }, [feedback])
+
   // 吹き出しはトリガーの上 (上に余地が無ければ下) に、右端を揃えて出す。
   const showFeedback = (text: string, ok: boolean) => {
     const r = triggerRef.current?.getBoundingClientRect()
     const style: CSSProperties = r
       ? {
-          position: 'fixed',
           right: Math.max(DROPDOWN_VIEWPORT_MARGIN, Math.round(window.innerWidth - r.right)),
           ...(r.top > 48
             ? { bottom: Math.round(window.innerHeight - r.top + FEEDBACK_GAP) }
             : { top: Math.round(r.bottom + FEEDBACK_GAP) }),
         }
-      : { position: 'fixed', right: DROPDOWN_VIEWPORT_MARGIN, bottom: DROPDOWN_VIEWPORT_MARGIN }
+      : { right: DROPDOWN_VIEWPORT_MARGIN, bottom: DROPDOWN_VIEWPORT_MARGIN }
     setFeedback({ text, ok, style })
     if (feedbackTimer.current != null) window.clearTimeout(feedbackTimer.current)
-    feedbackTimer.current = window.setTimeout(() => setFeedback(null), FEEDBACK_MS)
+    feedbackTimer.current = window.setTimeout(() => setFeedback(null), COPY_FEEDBACK_MS)
   }
 
   const onCopy = async (label: string, value: string) => {
     setOpen(false)
-    const ok = await copyToClipboard(value)
+    const ok = await copyText(value)
     showFeedback(ok ? label : translate('common.copyFailed'), ok)
   }
 
@@ -142,26 +148,30 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
       >
         {triggerContent}
       </button>
-      {feedback && createPortal(
+      {feedback && (
         <span
+          ref={feedbackRef}
           role="status"
+          popover="manual"
           className={feedback.ok ? 'copy-menu-feedback' : 'copy-menu-feedback is-error'}
           style={feedback.style}
         >
           {feedback.ok && <Check size={13} aria-hidden="true" />}
           {feedback.text}
-        </span>,
-        document.body,
+        </span>
       )}
-      {open && createPortal(
+      {open && (
         <div
           ref={menuRef}
           role="menu"
-          className="copy-menu-list"
+          popover="manual"
+          className="popover menu anchored-popover copy-menu-list"
           onKeyDown={stopRowKeys}
           style={{
-            position: 'fixed',
             ...menuStyle,
+            // popover の既定 (inset: 0) を、使わない側の辺だけ外す。
+            top: menuStyle?.top ?? 'auto',
+            bottom: menuStyle?.bottom ?? 'auto',
             // 配置確定前は不可視 (useLayoutEffect が paint 前に確定するのでチラつかない)。
             visibility: menuStyle ? 'visible' : 'hidden',
           }}
@@ -174,7 +184,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
                   role="menuitem"
                   href={it.href}
                   download={it.filename}
-                  className="copy-menu-item"
+                  className="menu-item"
                   // 親行 (FileRow) の onClick=preview 抑止のため stopPropagation。
                   onClick={e => { e.stopPropagation(); setOpen(false) }}
                 >
@@ -188,7 +198,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
                   key={it.label}
                   role="menuitem"
                   type="button"
-                  className="copy-menu-item"
+                  className="menu-item"
                   // 親行 (FileRow) の onClick=preview 抑止のため stopPropagation。
                   onClick={e => { e.stopPropagation(); it.onSelect(); setOpen(false) }}
                 >
@@ -201,7 +211,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
                 key={it.label}
                 role="menuitem"
                 type="button"
-                className="copy-menu-item"
+                className="menu-item copy-menu-item"
                 // 親行 (FileRow) の onClick=preview 抑止のため stopPropagation。
                 onClick={e => { e.stopPropagation(); void onCopy(it.label, it.value) }}
                 title={it.value}
@@ -211,8 +221,7 @@ export const CopyMenu = memo(function CopyMenu({ items, trigger, ariaLabel = tra
               </button>
             )
           })}
-        </div>,
-        document.body,
+        </div>
       )}
     </div>
   )

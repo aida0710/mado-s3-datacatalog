@@ -33,7 +33,7 @@ describe('BucketPrefixCapacity', () => {
   it('ディレクトリごとに容量・割合・前回からの増減を出す', () => {
     mount([prefix('ja/', 1024, 512), prefix('en/', 512)])
     const jaRow = screen.getByRole('button', { name: 'ja/' }).closest<HTMLElement>('tr')!
-    expect(within(jaRow).getByText('1 KiB')).toBeInTheDocument()
+    expect(within(jaRow).getByText('1.0 KiB')).toBeInTheDocument()
     expect(within(jaRow).getByText('50.0%')).toBeInTheDocument()
     expect(within(jaRow).getByText('+512 B (+100.0%)')).toBeInTheDocument()
     const enRow = screen.getByRole('button', { name: 'en/' }).closest<HTMLElement>('tr')!

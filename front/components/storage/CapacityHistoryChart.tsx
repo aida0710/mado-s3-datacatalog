@@ -2,16 +2,13 @@ import {
   CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer,
   Tooltip, XAxis, YAxis,
 } from 'recharts'
+import { useDocumentTheme } from '@mado/design-system/react'
 import type { CapacityPoint } from '../../lib/api/types'
 import { capacityChartData, type CapacityChartPoint } from '../../lib/capacityChart'
-import { fmtCapacityBytes, fmtCount, fmtDateTimeWithSeconds } from '../../lib/format'
-import { useDocumentTheme } from '../../lib/useDocumentTheme'
+import { fmtSize, fmtCount, fmtDateTimeWithSeconds } from '../../lib/format'
 import { getIntlLocale } from '../../i18n/locale'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
-
-// 軸と tooltip は幅が狭いので、表や見出しより 1 桁少なく丸める。
-const CHART_FRACTION_DIGITS = 1
 
 // recharts は色を SVG の属性に書くので、CSS の変数がテーマで切り替わっても自分では
 // 追従しない。描くたびに今のテーマの値を読み、テーマが変わったら描き直す。
@@ -41,7 +38,7 @@ function CapacityTooltip({ active, payload, label }: {
   return (
     <div className="capacity-tooltip">
       <p className="muted">{fmtDateTimeWithSeconds(Number(label))}</p>
-      <p className="capacity-tooltip-value">{fmtCapacityBytes(point.totalBytes, CHART_FRACTION_DIGITS)}</p>
+      <p className="capacity-tooltip-value">{fmtSize(point.totalBytes)}</p>
       <p className="muted">{point.objectCount == null ? null : fmtCount(point.objectCount)} {translate('capacityHistoryChart.objects', { count: point.objectCount ?? 0 })}</p>
     </div>
   )
@@ -74,7 +71,7 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
               axisLine={{ stroke: colors.axis }} tickLine={false}
             />
             <YAxis
-              tickFormatter={value => fmtCapacityBytes(Number(value), CHART_FRACTION_DIGITS)}
+              tickFormatter={value => fmtSize(Number(value))}
               width={70} tick={{ fontSize: 10, fill: colors.tick }}
               axisLine={false} tickLine={false}
             />
@@ -96,7 +93,7 @@ export default function CapacityHistoryChart({ points, intervalSeconds, capacity
         <tbody>{points.map(point => (
           <tr key={point.collectedAt}>
             <td>{fmtDateTimeWithSeconds(point.collectedAt)}</td>
-            <td>{fmtCapacityBytes(point.totalBytes, CHART_FRACTION_DIGITS)}</td>
+            <td>{fmtSize(point.totalBytes)}</td>
             <td>{fmtCount(point.objectCount)}</td>
           </tr>
         ))}</tbody>

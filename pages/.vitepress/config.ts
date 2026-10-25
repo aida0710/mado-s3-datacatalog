@@ -132,7 +132,7 @@ export default defineConfig({
   appearance: false,
   srcExclude: ['README.md'],
   markdown: {
-    // コードの色はアプリと同じデザインシステムの --code-* で塗る。色そのものは theme/style.css で
+    // コードの色はアプリと同じデザインシステムの --code-* で塗る。色そのものはデザインシステムの docs.css で
     // --shiki-* の変数に割り当てる (暗い地に対して、どの色も 4.5:1 以上)。
     theme: createCssVariablesTheme({ name: 'mado-code', variablePrefix: '--shiki-', fontStyle: true }),
     config(md) {

@@ -5,7 +5,7 @@ import { api } from '../lib/api/client'
 import type { CapacityBucketHistory, CapacityOverview, CapacityScanJob } from '../lib/api/types'
 import { useAuth } from '../lib/auth-context'
 import { useConnection } from '../lib/connectionContext'
-import { fmtCapacityBytes, fmtCapacityDelta, fmtCount, fmtDateTimeWithSeconds } from '../lib/format'
+import { fmtSize, fmtCapacityDelta, fmtCount, fmtDateTimeWithSeconds } from '../lib/format'
 import { storageDirectoryHref } from '../lib/route'
 import { ViewBreadcrumb } from '../components/ViewBreadcrumb'
 import { BucketPrefixCapacity } from '../components/storage/BucketPrefixCapacity'
@@ -130,7 +130,7 @@ export default function CapacityMetricsPage({ connectionId }: { connectionId: st
 
       {overview && (
         <dl className="capacity-summary">
-          <Metric label={translate('capacityMetricsPage.totalBucketCapacity')} value={measuredCount ? fmtCapacityBytes(totalBytes) : '—'} />
+          <Metric label={translate('capacityMetricsPage.totalBucketCapacity')} value={measuredCount ? fmtSize(totalBytes) : '—'} />
           <Metric label={translate('capacityMetricsPage.totalBucketObjectCount')} value={measuredCount ? fmtCount(totalObjects) : '—'} />
           <Metric label={translate('capacityMetricsPage.measurementCoverage')} value={translate('capacityMetricsPage.buckets', { value0: fmtCount(measuredCount), value1: fmtCount(bucketCount) })} />
         </dl>
@@ -266,7 +266,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <h3 title={history.bucket}>{history.bucket}</h3>
         <div className="capacity-bucket-actions">
           {scanJob && (
-            <span className={`status-badge ${scanJob.status === 'running' ? 'status-running' : 'status-queued'}`}>
+            <span className={`status-badge ${scanJob.status === 'running' ? 'status-info' : 'status-neutral'}`}>
               {scanJob.status === 'running' ? translate('capacityMetricsPage.scanningItems', { value0: fmtCount(scanJob.objectCount) }) : translate('capacityMetricsPage.waitingForMeasurement')}
             </span>
           )}
@@ -276,7 +276,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         </div>
       </div>
       <dl className="capacity-metrics">
-        <CompactMetric label={translate('capacityMetricsPage.currentCapacity')} value={latest ? fmtCapacityBytes(latest.totalBytes) : '—'} />
+        <CompactMetric label={translate('capacityMetricsPage.currentCapacity')} value={latest ? fmtSize(latest.totalBytes) : '—'} />
         <CompactMetric label={translate('common.changeSincePrevious')} value={latest && previous ? fmtCapacityDelta({ current: latest.totalBytes, previous: previous.totalBytes }) : '—'} />
         <CompactMetric label={translate('common.objectCount')} value={latest ? fmtCount(latest.objectCount) : '—'} />
         <CompactMetric label={translate('capacityMetricsPage.lastRetrieved')} value={latest ? fmtDateTimeWithSeconds(latest.collectedAt) : '—'} />

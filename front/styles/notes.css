@@ -3,8 +3,7 @@
    この領域に固有の指定だけを書く。 */
 
 /* ── Markdown の本文 (.markdown-body) ───────────────────────────────
-   react-markdown の出力を包む。Team note・README・編集履歴で同じ文字組みにする
-   (Mado Model Tracking の Markdown 表示と同じ: 本文 13px、行間 1.7)。
+   MarkdownView の出力を包む。Team note・README・編集履歴で同じ文字組みにする (本文 13px、行間 1.7)。
    Tailwind の preflight が余白とリストの印を消すので、ここで付け直す。 */
 .markdown-body {
   min-width: 0;
@@ -29,15 +28,15 @@
   font-weight: 550;
 }
 .markdown-body h2 {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 550;
 }
 .markdown-body h3 {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 .markdown-body :is(h4, h5, h6) {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 .markdown-body :is(p, ul, ol, blockquote, pre, table) {
@@ -91,7 +90,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* コードの塊はログと同じく両方のテーマで暗い地にする。折り返さず横にスクロールする。 */
 .markdown-body pre {
@@ -150,12 +149,6 @@
   max-width: 80ch;
 }
 
-/* ── 取得の失敗 (LoadFailedNotice) ──────────────────────────────────── */
-.load-failed__note {
-  display: block;
-  margin-top: 4px;
-}
-
 /* ── フォルダの README (ReadmeView) ─────────────────────────────────
    枠の上端に見出しと操作 (編集・履歴・再読み込みと取得時刻)、その下に本文。
    前後の間隔は置く側 (フォルダの画面の縦の並び) が決める。 */
@@ -170,7 +163,7 @@
   border-bottom: 1px solid var(--border);
 }
 .readme-panel > .section-heading h2 {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 .readme-panel__title {
@@ -202,7 +195,7 @@
 }
 
 /* ── README の全文検索 (ReadmeSearchPanel) ────────────────────────── */
-/* 入力の帯は「S3 パスで移動」と同じ .storage-search (storage.css)。 */
+/* 入力の帯は「S3 パスで移動」と同じ、共通の部品の .toolbar-search。 */
 .readme-search {
   display: grid;
   gap: 8px;
@@ -231,7 +224,7 @@
 .readme-search__path {
   align-self: flex-start;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .readme-search__path .muted {
@@ -323,14 +316,11 @@
 }
 .filelist__crumbs {
   flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 2px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .filelist__crumb-wrap {
   display: contents;
@@ -380,7 +370,7 @@
   border: 0;
   background: transparent;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   text-align: left;
 }
 .filelist__name > svg {
@@ -404,7 +394,7 @@
 }
 .filelist__error {
   color: var(--error);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .filelist__hint {
   flex: 0 0 auto;
@@ -463,11 +453,9 @@
 .history-version .muted {
   font-variant-numeric: tabular-nums;
 }
-/* 最新の版の印。Mado Model Tracking の Reports の「最新」と同じ色。 */
-.status-badge.history-latest {
+/* 最新の版の印 (共通の部品の .status-accent)。版の一覧の行を高くしないよう、余白を詰める。 */
+.history-version__editor .status-badge {
   padding: 2px 7px;
-  background: var(--accent-tint);
-  color: var(--link);
 }
 .history-preview {
   min-width: 0;
@@ -506,7 +494,7 @@
     border: 0;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     text-align: left;
   }
   .editpage__sidebar-toggle:hover {

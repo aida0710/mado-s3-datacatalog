@@ -34,7 +34,7 @@
   justify-content: flex-end;
   gap: 2px 10px;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   text-align: right;
 }
 .import-export__error,
@@ -49,7 +49,7 @@
   margin-bottom: 0;
 }
 .import-export__warning {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 /* ── 一覧の表 (接続・タグ) ─────────────────────────────────────────── */
@@ -60,14 +60,9 @@
   gap: 4px 8px;
 }
 .connection-name strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   overflow-wrap: anywhere;
-}
-/* 既定の接続の印。Mado Model Tracking の既定のストレージと同じ色。 */
-.status-badge.connection-default {
-  background: var(--accent-tint);
-  color: var(--link);
 }
 .connection-endpoint {
   display: block;
@@ -132,8 +127,7 @@ td.row-actions .row-actions__buttons {
   min-width: 0;
 }
 
-/* 説明つきの選択肢のまとまり。Mado Model Tracking の Artifact 保存先と同じく、
-   枠の中に一行ずつ罫で区切って並べ、選んだラジオの行は面の色で示す。 */
+/* 説明つきの選択肢のまとまり。枠の中に一行ずつ罫で区切って並べ、選んだラジオの行は面の色で示す。 */
 .choice-group {
   margin-bottom: 16px;
 }
@@ -141,7 +135,7 @@ td.row-actions .row-actions__buttons {
   padding: 0;
   margin-bottom: 7px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .choice-group > p {
   margin: 0 0 8px;
@@ -179,7 +173,7 @@ td.row-actions .row-actions__buttons {
   display: block;
   margin-top: 3px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.55;
 }
 .choice:has(input[type='radio']:checked) {
@@ -249,7 +243,7 @@ td.row-actions .row-actions__buttons {
 }
 .form-submit-row__status {
   color: var(--success);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .account-password {
   margin-top: 24px;
@@ -315,7 +309,7 @@ td.row-actions .row-actions__buttons {
   gap: 4px 14px;
   margin: 0 0 16px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .admin-user-meta > div {
   display: contents;
@@ -380,7 +374,7 @@ td.row-actions .row-actions__buttons {
   padding: 12px;
   background: var(--surface);
   border-left: 3px solid var(--accent);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .secret-notice > strong {
   flex-basis: 100%;
@@ -399,7 +393,7 @@ td.row-actions .row-actions__buttons {
   display: flex;
   gap: 8px;
 }
-/* SSO のグループと Mado の権限の対応。 */
+/* SSO のグループと mado S3 Data Catalog の権限の対応。 */
 .sso-guidance {
   max-width: 760px;
   margin: 28px 0 0;
@@ -407,7 +401,7 @@ td.row-actions .row-actions__buttons {
   background: var(--surface);
   border-left: 3px solid var(--border-strong);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .sso-guidance p {
   margin: 0;

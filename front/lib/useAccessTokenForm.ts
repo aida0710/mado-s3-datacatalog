@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { accessTokenFormInput, localDateTimeInput } from './accessTokenForm'
+import { resolveTokenExpiryTimestamp } from '@mado/design-system/token-expiry'
+import { accessTokenFormInput, initialTokenExpirySelection, isSameTokenExpirySelection } from './accessTokenForm'
 import { translate } from '../i18n/translate'
 import { CONNECTION_PERMISSIONS, INTERNAL_API_PERMISSIONS } from '../../api/shared/access-token-permissions'
 import { accessTokenPreset, type AccessTokenPreset } from './accessTokenPresets'
@@ -11,7 +12,8 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
   const [permissions, setPermissions] = useState<InternalApiPermission[]>(input.token?.permissions ?? [])
   const [connections, setConnections] = useState<string[]>(input.token?.connections ?? [])
   const [namespaces, setNamespaces] = useState<string[]>(input.token?.namespaces ?? [])
-  const [expiry, setExpiry] = useState(localDateTimeInput(input.token?.expiresAt ?? null))
+  const [initialExpiry] = useState(() => initialTokenExpirySelection(input.token))
+  const [expiry, setExpiry] = useState(initialExpiry)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const includesLineage = permissions.some(permission => permission.startsWith('lineage:'))
@@ -37,13 +39,14 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     if (includesLineage && namespaces.length === 0) {
       setError(translate('accessTokens.namespacesRequired')); return
     }
-    const sameExpiry = input.token !== null && expiry === localDateTimeInput(input.token.expiresAt)
-    if (expiry && !sameExpiry && (!Number.isFinite(new Date(expiry).getTime()) || new Date(expiry).getTime() <= Date.now())) {
-      setError(translate('accessTokens.futureExpiry')); return
+    const keepsExpiry = input.token !== null && isSameTokenExpirySelection(expiry, initialExpiry)
+    const expiresAt = keepsExpiry ? undefined : resolveTokenExpiryTimestamp(expiry)
+    if (!keepsExpiry && expiresAt === undefined) {
+      setError(translate(expiry.option === 'calendar' ? 'accessTokens.futureExpiry' : 'accessTokens.expiryInvalid')); return
     }
     setBusy(true)
     try {
-      await input.onSave(accessTokenFormInput({ name, description, permissions, connections, namespaces, expiry, previous: input.token }))
+      await input.onSave(accessTokenFormInput({ name, description, permissions, connections, namespaces, expiresAt }))
     } catch (failure) { setError((failure as Error).message) }
     finally { setBusy(false) }
   }

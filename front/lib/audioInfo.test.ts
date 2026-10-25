@@ -22,7 +22,7 @@ describe('formatAudioInfoLines', () => {
     const lines = formatAudioInfoLines(fullMeta, 12.345, 48000)
     expect(lines).toEqual([
       'FLAC · stereo · 48 kHz · 24 bit',
-      '1411 kbps · 0:12.345 · 2.0 MB',
+      '1411 kbps · 0:12.345 · 2.0 MiB',
       'peak -0.3 dBFS · RMS -18.2 dB',
     ])
   })
@@ -85,6 +85,6 @@ describe('formatAudioInfoLines', () => {
 
   it('sizeBytes は既存 fmtSize を再利用したフォーマットになる', () => {
     const lines = formatAudioInfoLines(fullMeta, 12.345, 48000)
-    expect(lines[1]).toContain('2.0 MB')
+    expect(lines[1]).toContain('2.0 MiB')
   })
 })

@@ -16,7 +16,7 @@ import { CAPABILITY_UI } from '../i18n/connectionOptions'
 // 接続フォームの状態と、それを API の入力へ変換する純粋ロジック。
 // 画面 (ConnectionForm) はここを呼ぶだけで、差分の計算をしない。
 
-/** 容量の入力単位。fmtSize が 1024 系なので、表示と揃えて TiB で扱う。 */
+/** 容量の入力単位。表示 (fmtSize) と同じ 1024 系の TiB で扱う。 */
 export const TIB = 1024 ** 4
 
 export interface FormState {
