@@ -36,7 +36,7 @@
 
 /* Tailwind の設定。値は @mado/design-system の変数を指すだけにする。 */
 @theme {
-  /* 画面幅の切り替え点: Mado Model Tracking・共通の部品と同じ 640 / 900 / 1200px。 */
+  /* 画面幅の切り替え点: デザインシステム (@mado/design-system/layout の BREAKPOINT_PX) と同じ 640 / 900 / 1200px。 */
   --breakpoint-sm: 640px;
   --breakpoint-md: 900px;
   --breakpoint-lg: 1200px;

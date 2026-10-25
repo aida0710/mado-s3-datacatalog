@@ -437,7 +437,7 @@ tr.selected .storage-meter {
 }
 
 /* ── ファイルの表 (EntryTable) ─────────────────────────────────────
-   1 行 40px 前後 (mmt の Runs と同じ)。名前の列が残りの幅を取り、長い名前は省略する。 */
+   1 行 40px 前後。名前の列が残りの幅を取り、長い名前は省略する。 */
 .entry-table table {
   table-layout: fixed;
 }

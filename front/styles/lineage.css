@@ -213,7 +213,7 @@
 }
 
 /* ── グラフと詳細 ────────────────────────────────────────────────────── */
-/* 広い画面ではグラフの右に詳細、900px 未満では下に詳細 (mmt の Registry の一覧と詳細と同じ区切り)。 */
+/* 広い画面ではグラフの右に詳細、900px 未満では下に詳細 (mado ML Tracking の Registry の一覧と詳細と同じ切り替え幅と間隔)。 */
 .lineage-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -279,7 +279,7 @@
   fill: var(--muted);
 }
 
-/* 選んだ項目の詳細 (mmt の .registry-detail と同じく、左の区切り線で一覧と分ける)。 */
+/* 選んだ項目の詳細 (mado ML Tracking の .registry-detail と同じく、左の区切り線で一覧と分ける)。 */
 .lineage-detail {
   min-width: 0;
   padding-left: 28px;
@@ -383,7 +383,7 @@
 .lineage-register-form {
   max-width: 880px;
 }
-/* まとまりごとに上の区切り線と h2 (mmt の設定画面の区切りと同じ)。 */
+/* まとまりごとに上の区切り線と h2。 */
 .lineage-form-section {
   margin-top: 28px;
   padding-top: 20px;

@@ -3,8 +3,7 @@
    この領域に固有の指定だけを書く。 */
 
 /* ── Markdown の本文 (.markdown-body) ───────────────────────────────
-   react-markdown の出力を包む。Team note・README・編集履歴で同じ文字組みにする
-   (Mado Model Tracking の Markdown 表示と同じ: 本文 13px、行間 1.7)。
+   MarkdownView の出力を包む。Team note・README・編集履歴で同じ文字組みにする (本文 13px、行間 1.7)。
    Tailwind の preflight が余白とリストの印を消すので、ここで付け直す。 */
 .markdown-body {
   min-width: 0;

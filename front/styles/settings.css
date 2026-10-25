@@ -127,8 +127,7 @@ td.row-actions .row-actions__buttons {
   min-width: 0;
 }
 
-/* 説明つきの選択肢のまとまり。Mado Model Tracking の Artifact 保存先と同じく、
-   枠の中に一行ずつ罫で区切って並べ、選んだラジオの行は面の色で示す。 */
+/* 説明つきの選択肢のまとまり。枠の中に一行ずつ罫で区切って並べ、選んだラジオの行は面の色で示す。 */
 .choice-group {
   margin-bottom: 16px;
 }
@@ -394,7 +393,7 @@ td.row-actions .row-actions__buttons {
   display: flex;
   gap: 8px;
 }
-/* SSO のグループと Mado の権限の対応。 */
+/* SSO のグループと mado S3 Data Catalog の権限の対応。 */
 .sso-guidance {
   max-width: 760px;
   margin: 28px 0 0;

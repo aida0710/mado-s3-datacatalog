@@ -334,7 +334,7 @@ export default function ConnectionsPage() {
       ),
     },
   ]
-  // 狭い画面では名前だけを行に残し、ほかは行の下に開く (mado ML Tracking の表と同じ考え方)。
+  // 狭い画面では名前だけを行に残し、ほかは行の下に開く (共通の部品の .responsive-table)。
   const rowColumns = isNarrow ? columns.filter(column => column.primary) : columns
   const detailColumns = isNarrow ? columns.filter(column => !column.primary) : []
 

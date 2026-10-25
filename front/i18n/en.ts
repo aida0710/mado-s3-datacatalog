@@ -989,7 +989,7 @@ export const englishMessages = {
   "previewArchive.requests": " · {value0} requests",
 } satisfies Record<keyof typeof japaneseMessages, string>
 
-// Japanese does not distinguish singular and plural count labels.
+// 英語で数が 1 のときだけ使う単数形。日本語には単数と複数の区別が無いので、英語にだけ持つ。
 export const singularEnglishMessages: Partial<Record<keyof typeof japaneseMessages, string>> = {
   "capacityHistoryChart.objects": "object",
   "capacityMetricsPage.days": "{value0} day",
