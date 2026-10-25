@@ -29,7 +29,7 @@ describe('アクセストークンの認証', () => {
     [['lineage:send'], ['lineage:write']],
   ] as const)('%sの値を一度だけ返し、権限から決まるscopeとNamespaceで認証し、削除後は拒否する', async (permissions, scopes) => {
     const issued = await issue({ permissions: [...permissions] })
-    expect(issued.token).toMatch(/^mado_lin_[^.]+\.[A-Za-z0-9_-]+$/)
+    expect(issued.token).toMatch(/^mado_dc_[^.]+\.[A-Za-z0-9_-]+$/)
     const stored = await pools.rw.query<{ secret_hash: Buffer }>(
       'SELECT secret_hash FROM service_account_keys WHERE id = $1', [issued.accessToken.id],
     )
@@ -40,6 +40,8 @@ describe('アクセストークンの認証', () => {
       keyId: issued.accessToken.id, keyName: 'prod', scopes: [...scopes], namespaces: ['speech'], expiresAt: null,
     })
     expect(await authenticate(`${issued.token}x`)).toBeNull()
+    // 前置きが mado_lin_ だった旧形式は、同じ鍵 ID と秘密でも受け付けない。
+    expect(await authenticate(issued.token.replace('mado_dc_', 'mado_lin_'))).toBeNull()
     await tokens.deleteToken({ id: issued.accessToken.id, expectedRevision: issued.accessToken.revision })
     expect(await authenticate(issued.token)).toBeNull()
   })

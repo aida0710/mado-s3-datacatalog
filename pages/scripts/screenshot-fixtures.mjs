@@ -233,7 +233,7 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (path === '/api/internal/access-tokens/namespaces') return sendJson({ namespaces: ['podcast', 'sample-audio', 'sample-evaluation', 'speech'], sourceStatus: 'ready' })
   if (path === '/api/internal/access-tokens') return sendJson({ tokens: [{
     id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'audio-pipeline',
-    description: text.accessTokenDescription, tokenPrefix: 'mado_lin_samplepipeline',
+    description: text.accessTokenDescription, tokenPrefix: 'mado_dc_samplepipeline',
     scopes: ['lineage:read', 'lineage:write'], permissions: ['lineage:read', 'lineage:send'], connections: [],
     namespaces: ['sample-audio'], status: 'active',
     createdAt: capturedAt, expiresAt: null, regeneratedAt: null, lastUsedAt: capturedAt, revision: 1,

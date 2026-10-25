@@ -15,7 +15,7 @@ function appWith(authenticate: (token: string) => Promise<TestPrincipal | null>)
   return app
 }
 
-const bearer = { Authorization: 'Bearer mado_lin_key.secret' }
+const bearer = { Authorization: 'Bearer mado_dc_key.secret' }
 
 describe('requireServiceKeyScope', () => {
   it('Bearerなしは認証を呼ばずに401とWWW-Authenticateを返す', async () => {
@@ -50,7 +50,7 @@ describe('requireServiceKeyScope', () => {
     const response = await appWith(authenticate).request('/protected', { headers: bearer })
     expect(response.status).toBe(200)
     expect(await response.text()).toBe('key-1')
-    expect(authenticate).toHaveBeenCalledWith('mado_lin_key.secret')
+    expect(authenticate).toHaveBeenCalledWith('mado_dc_key.secret')
   })
 })
 

@@ -1,9 +1,9 @@
 import type { Pool } from 'pg'
 import type { ServicePrincipal } from './auth-types.js'
 import { equalDigest, sha256 } from './auth-crypto.js'
-import { ACTIVE_SERVICE_KEY_CONDITION } from './service-account-key-record.js'
+import { ACTIVE_SERVICE_KEY_CONDITION, SERVICE_KEY_TOKEN_PREFIX } from './service-account-key-record.js'
 
-const SERVICE_KEY_PREFIX_PATTERN = /^mado_lin_[A-Za-z0-9_-]{8,32}$/
+const SERVICE_KEY_PREFIX_PATTERN = new RegExp(`^${SERVICE_KEY_TOKEN_PREFIX}[A-Za-z0-9_-]{8,32}$`)
 // last_used_at の更新を、request ごとではなくこの間隔に間引いて書き込みを減らす。
 const LAST_USED_UPDATE_INTERVAL_SECONDS = 300
 

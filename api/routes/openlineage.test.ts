@@ -47,7 +47,7 @@ function auth(overrides: Partial<LineageServiceAuthenticator> = {}): LineageServ
   }
 }
 
-function request(body: unknown, token = 'mado_lin_key.secret'): Request {
+function request(body: unknown, token = 'mado_dc_key.secret'): Request {
   return new Request(`http://mado${OPENLINEAGE_INGEST_PATH}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ describe('OpenLineage 受け口', () => {
       auth: auth({ authenticate: vi.fn().mockResolvedValue(null), recordUse }),
       registry: registry(),
     })
-    const response = await app.request(request(event(), 'mado_lin_abcdefgh12345678.super-secret'))
+    const response = await app.request(request(event(), 'mado_dc_abcdefgh12345678.super-secret'))
     expect(response.status).toBe(401)
     expect(recordUse).not.toHaveBeenCalled()
   })

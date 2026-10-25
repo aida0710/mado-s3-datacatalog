@@ -10,7 +10,7 @@ const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 const token: AccessToken = {
   id: '480ad940-80a2-4a50-8f6e-e0e119ac52a8', name: 'ML Tracking', description: 'Training integration',
-  tokenPrefix: 'mado_lin_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
+  tokenPrefix: 'mado_dc_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
   permissions: ['lineage:read', 'lineage:send'], connections: [],
   status: 'active', createdAt: '2026-10-15T00:00:00.000Z', expiresAt: null,
   regeneratedAt: null, lastUsedAt: null, revision: 1,

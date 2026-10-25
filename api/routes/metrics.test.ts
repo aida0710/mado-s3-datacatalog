@@ -5,7 +5,7 @@ import { mountMetricsRoutes } from './metrics.js'
 
 const metricsKey = { scopes: ['metrics:read'], connections: ['*'] }
 const lineageKey = { scopes: ['lineage:write'], connections: [] }
-const bearer = { Authorization: 'Bearer mado_lin_key.secret' }
+const bearer = { Authorization: 'Bearer mado_dc_key.secret' }
 
 const capacity: MetricsCollector = {
   name: 'capacity',
