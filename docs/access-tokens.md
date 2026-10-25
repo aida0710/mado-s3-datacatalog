@@ -38,6 +38,8 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 
 作成・再発行は`{ accessToken, token }`、変更・削除は`{ accessToken }`を返す。秘密の`token`は作成・再発行時の応答だけに含め、一覧・監査には含めない。応答には`Cache-Control: no-store`を付ける。
 
+`token`の形は`mado_dc_<16桁>.<秘密>`。前の部分（`tokenPrefix`）は一覧にも出る公開の識別子で、再発行しても変わらない。mado ML Trackingのトークンは`mado_mt_`で始まるので、前置きでどちらの製品のトークンか分かる。v0.4.0までの`mado_lin_`で始まる値は受け付けない。`043_access_token_prefix.sql`が発行済みのトークンの前置きを`mado_dc_`に替え、秘密を使えない値に置き換えるので、各トークンを再発行して新しい値を配り直す（名前・権限・期限・状態はそのまま）。
+
 同じ内容を再保存した場合はrevisionを更新せず、操作監査も増やさない。Namespaceの重複は取り除く。
 
 ## Namespaceの選択
