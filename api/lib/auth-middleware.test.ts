@@ -21,7 +21,7 @@ describe('requirePasswordChangeComplete', () => {
     app.get('/settings', c => c.json({ ok: true }))
     const response = await app.request('/settings')
     expect(response.status).toBe(403)
-    expect(await response.json()).toEqual({ error: 'password change required' })
+    expect(await response.json()).toEqual({ error: 'password change required', code: 'password_change_required' })
   })
 
   it('変更済みsessionを通す', async () => {

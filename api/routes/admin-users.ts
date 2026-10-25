@@ -11,6 +11,7 @@ import { canAdministerUsers } from '../lib/access-token-authority.js'
 import { requestMetadata } from '../lib/request-metadata.js'
 import { hashPassword, isAcceptablePasswordLength } from '../lib/password.js'
 import { markAuditChangeCommitted, writeDedicatedAudit } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface AdminUsersDeps {
   users: UserStore
@@ -42,7 +43,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   const authorize: MiddlewareHandler = async (c, next) => {
     const principal = getRequestPrincipal(c)
     if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && principal && !canAdministerUsers(principal)) {
-      return c.json({ error: 'user administration requires unrestricted administrator permissions' }, 403)
+      return c.json(apiError('unrestricted_admin_required', 'user administration requires unrestricted administrator permissions'), 403)
     }
     return requirePermission(c.req.method === 'GET' || c.req.method === 'HEAD' ? 'users:read' : 'users:manage')(c, next)
   }
@@ -57,8 +58,8 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   app.post('/users', async c => {
     const principal = getRequestPrincipal(c)!
     const parsed = CreateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
-    if (!await deps.users.rolesExist(parsed.data.roles)) return c.json({ error: 'unknown role' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
+    if (!await deps.users.rolesExist(parsed.data.roles)) return c.json(apiError('unknown_role', 'unknown role'), 400)
     const initialPassword = parsed.data.password
     try {
       const user = await deps.users.createUser({
@@ -84,7 +85,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
       return c.json({ user }, 201)
     } catch (e) {
       if (e instanceof Error && 'code' in e && e.code === '23505') {
-        return c.json({ error: 'username or email already exists' }, 409)
+        return c.json(apiError('already_exists', 'username or email already exists'), 409)
       }
       throw e
     }
@@ -93,22 +94,22 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   app.patch('/users/:id', async c => {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
-    if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
+    if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
     const parsed = PatchBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     let result
     try {
       result = await deps.users.updateUser(id, parsed.data)
     } catch (e) {
       if (e instanceof LastActiveAdminError) {
-        return c.json({ error: 'cannot disable the last active admin' }, 409)
+        return c.json(apiError('last_active_admin', 'cannot disable the last active admin'), 409)
       }
       if (e instanceof Error && 'code' in e && e.code === '23505') {
-        return c.json({ error: 'username already exists' }, 409)
+        return c.json(apiError('already_exists', 'username already exists'), 409)
       }
       throw e
     }
-    if (!result) return c.json({ error: 'user not found' }, 404)
+    if (!result) return c.json(apiError('not_found', 'user not found'), 404)
     if (result.changedFields.length === 0) return c.json({ user: result.user })
     markAuditChangeCommitted(c)
     const labels = { displayName: '表示名', username: 'ユーザーID', status: '状態' } as const
@@ -133,20 +134,20 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   app.put('/users/:id/roles', async c => {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
-    if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
+    if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
     const parsed = RolesBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
-    if (!await deps.users.rolesExist(parsed.data.roles)) return c.json({ error: 'unknown role' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
+    if (!await deps.users.rolesExist(parsed.data.roles)) return c.json(apiError('unknown_role', 'unknown role'), 400)
     let result
     try {
       result = await deps.users.replaceUserRoles(id, parsed.data.roles, principalUserId(principal))
     } catch (error) {
       if (error instanceof LastActiveAdminError) {
-        return c.json({ error: 'cannot remove the last active admin role' }, 409)
+        return c.json(apiError('last_active_admin', 'cannot remove the last active admin role'), 409)
       }
       throw error
     }
-    if (!result) return c.json({ error: 'user not found' }, 404)
+    if (!result) return c.json(apiError('not_found', 'user not found'), 404)
     if (result.changedFields.length === 0) return c.json({ user: result.user })
     markAuditChangeCommitted(c)
     await writeDedicatedAudit(c, deps.audit, {
@@ -164,17 +165,17 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   app.post('/users/:id/reset-password', async c => {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
-    if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
+    if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
     const parsed = ResetBody.safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     const current = await deps.users.getUser(id)
-    if (!current) return c.json({ error: 'user not found' }, 404)
+    if (!current) return c.json(apiError('not_found', 'user not found'), 404)
     if (current.authMethods.includes('sso') && !current.authMethods.includes('local')) {
-      return c.json({ error: 'SSO user password is managed by the identity provider' }, 409)
+      return c.json(apiError('sso_password_managed', 'SSO user password is managed by the identity provider'), 409)
     }
     const temporaryPassword = parsed.data.password ?? `Mado-${randomToken(18)}`
     if (!await deps.credentials.resetLocalPassword(id, await hashPassword(temporaryPassword))) {
-      return c.json({ error: 'user not found' }, 404)
+      return c.json(apiError('not_found', 'user not found'), 404)
     }
     markAuditChangeCommitted(c)
     await writeDedicatedAudit(c, deps.audit, {
@@ -193,16 +194,16 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   app.delete('/users/:id', async c => {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
-    if (!z.string().uuid().safeParse(id).success) return c.json({ error: 'invalid user id' }, 400)
-    if (id === principalUserId(principal)) return c.json({ error: 'cannot delete your own account' }, 409)
+    if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
+    if (id === principalUserId(principal)) return c.json(apiError('cannot_delete_self', 'cannot delete your own account'), 409)
     const current = await deps.users.getUser(id)
-    if (!current) return c.json({ error: 'user not found' }, 404)
+    if (!current) return c.json(apiError('not_found', 'user not found'), 404)
     try {
-      if (!await deps.users.deleteUser(id)) return c.json({ error: 'user not found' }, 404)
+      if (!await deps.users.deleteUser(id)) return c.json(apiError('not_found', 'user not found'), 404)
       markAuditChangeCommitted(c)
     } catch (error) {
       if (error instanceof LastActiveAdminError) {
-        return c.json({ error: 'cannot delete the last active admin' }, 409)
+        return c.json(apiError('last_active_admin', 'cannot delete the last active admin'), 409)
       }
       throw error
     }

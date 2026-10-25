@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from './client'
+import { itemAt } from '../../tests/itemAt'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -16,7 +17,7 @@ describe('tags client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ id: 't1', name: 'A', color: '#111111' }), { status: 200 }))
     await api.createTag({ name: 'A', color: '#111111' })
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/tags')
     expect((init as RequestInit).method).toBe('POST')
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({ name: 'A', color: '#111111' })
@@ -26,7 +27,7 @@ describe('tags client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ id: 't1', name: 'A', color: '#222222' }), { status: 200 }))
     await api.updateTag('t 1', { color: '#222222' })
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/tags/t%201')
     expect((init as RequestInit).method).toBe('PUT')
   })
@@ -35,7 +36,7 @@ describe('tags client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await api.deleteTag('t1')
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/tags/t1')
     expect((init as RequestInit).method).toBe('DELETE')
   })
@@ -45,7 +46,7 @@ describe('tags client', () => {
       new Response(JSON.stringify({ 'a/': ['t1'] }), { status: 200 }))
     const out = await api.tagAssignments({ connectionId: 'c1', bucket: 'bkt', kind: 'prefix', paths: ['a/', 'b/'] })
     expect(out).toEqual({ 'a/': ['t1'] })
-    const [url] = spy.mock.calls[0]
+    const [url] = itemAt(spy.mock.calls, 0)
     const u = new URL(String(url), 'http://x')
     expect(u.pathname).toBe('/api/internal/storage/c1/tags')
     expect(u.searchParams.getAll('paths')).toEqual(['a/', 'b/'])
@@ -63,7 +64,7 @@ describe('tags client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await api.assignTag({ connectionId: 'c1', bucket: 'bkt', kind: 'file', path: 'a/b.txt', tagId: 't1' })
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/storage/c1/tags')
     expect((init as RequestInit).method).toBe('PUT')
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({
@@ -75,7 +76,7 @@ describe('tags client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await api.unassignTag({ connectionId: 'c1', bucket: 'bkt', kind: 'prefix', path: 'a/', tagId: 't1' })
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/storage/c1/tags')
     expect((init as RequestInit).method).toBe('DELETE')
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({
@@ -88,7 +89,7 @@ describe('tags client', () => {
       new Response(JSON.stringify([{ tagId: 't1', bucket: 'b', kind: 'bucket', path: '' }]), { status: 200 }))
     const out = await api.tagSearch('c1', ['t1', 't2'])
     expect(out).toEqual([{ tagId: 't1', bucket: 'b', kind: 'bucket', path: '' }])
-    const [url] = spy.mock.calls[0]
+    const [url] = itemAt(spy.mock.calls, 0)
     const u = new URL(String(url), 'http://x')
     expect(u.pathname).toBe('/api/internal/storage/c1/tags/search')
     expect(u.searchParams.getAll('tagId')).toEqual(['t1', 't2'])

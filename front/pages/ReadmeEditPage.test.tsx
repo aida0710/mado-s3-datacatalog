@@ -27,9 +27,9 @@ function readmeBody(body: string) {
 function stubServer(readmeResponses: Array<() => Response>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const path = String(input).split('?')[0]
-    if (path !== README_PATH) return json(404, { error: 'not found' })
+    if (path !== README_PATH) return json(404, { error: 'not found', code: 'not_found' })
     const next = readmeResponses.shift()
-    return next ? next() : json(500, { error: 'no more responses' })
+    return next ? next() : json(500, { error: 'no more responses', code: 'internal_error' })
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
@@ -66,7 +66,7 @@ describe('ReadmeEditPage — 編集の元にする本文', () => {
   })
 
   it('README を読み込めないと、空のエディタを開かず、理由と再試行を出す', async () => {
-    stubServer([() => json(502, { error: 'upstream timeout' })])
+    stubServer([() => json(502, { error: 'upstream timeout', code: 'storage_unavailable' })])
     renderReadmeEditPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('READMEを読み込めませんでした（upstream timeout）')
@@ -77,7 +77,7 @@ describe('ReadmeEditPage — 編集の元にする本文', () => {
 
   it('再試行して読み込めれば、既存の本文でエディタを開く', async () => {
     stubServer([
-      () => json(502, { error: 'upstream timeout' }),
+      () => json(502, { error: 'upstream timeout', code: 'storage_unavailable' }),
       () => json(200, readmeBody('既存の本文')),
     ])
     const user = userEvent.setup()

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MEDIA_META_FIXTURE } from './fixtures'
 import { api } from './client'
+import { itemAt } from '../../tests/itemAt'
 
 const okJson = (body: unknown): Response =>
   new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
@@ -20,7 +21,7 @@ describe('media client', () => {
     const r = await api.mediaAnalyze({ connectionId: 'c 1', bucket: 'b', key: 'dir/a.wav', signal: ctl.signal })
     expect(r.cacheKey).toBe('ck')
     expect(r.meta).toEqual(meta)
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/storage/c%201/media/analyze?bucket=b&key=dir%2Fa.wav')
     expect((init as RequestInit).signal).toBe(ctl.signal)
   })
@@ -37,7 +38,7 @@ describe('media client', () => {
       cacheKey: 'ck', peaks: [], durationSec: null, sampleRate: null, hasSpectrogram: false, meta: MEDIA_META_FIXTURE,
     }))
     await api.mediaAnalyze({ connectionId: 'c', bucket: 'b', key: 'shard.tar', entryPath: 'u1.wav' })
-    expect(String(spy.mock.calls[0][0])).toContain('entryPath=u1.wav')
+    expect(String(itemAt(spy.mock.calls, 0)[0])).toContain('entryPath=u1.wav')
   })
 
   it('spectrogramUrl を組み立てる', () => {

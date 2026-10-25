@@ -1,7 +1,7 @@
 # Authentik連携
 
-MadoはOIDC Authorization Code Flow + PKCEを使います。MFA、password policy、recovery、
-login flowはAuthentikを正本とし、MadoはUser、Role、browser session、操作監査を管理します。
+mado S3 Data CatalogはOIDC Authorization Code Flow + PKCEを使います。MFA、password policy、recovery、
+login flowはAuthentikを正本とし、mado S3 Data CatalogはUser、Role、browser session、操作監査を管理します。
 
 ## Authentikに登録する値
 
@@ -19,15 +19,15 @@ AuthentikではApplicationとOAuth2/OIDC Providerを作り、issuerにはapplica
 `profile` scopeに`preferred_username`、`name`、`groups`を含め、emailを既存Userとの連携に
 使う場合は信頼できる`email_verified` claimも返します。
 
-Providerのscope mappingで`offline_access`を有効にし、Madoの`OIDC_SCOPES`にも含めます。
-Madoはaccess/refresh tokenを暗号化してsessionに保存し、UserInfoの現在のgroupを1分ごとに
+Providerのscope mappingで`offline_access`を有効にし、mado S3 Data Catalogの`OIDC_SCOPES`にも含めます。
+mado S3 Data Catalogはaccess/refresh tokenを暗号化してsessionに保存し、UserInfoの現在のgroupを1分ごとに
 確認します。groupの除外やRoleの変更を検出したら同じidentityのsessionを失効させます。
 UserInfoには現在のgroupを返すmappingが必要です。IdP停止時は確認が必要な操作へ503を返し、
 未確認の権限を通しません。失効したtokenや更新手段のない期限切れtokenは再ログインが必要です。
 refresh tokenを発行しない構成ではaccess tokenの有効期限ごとに再ログインになります。
 Authentikの[OAuth2/OIDC Providerの手順](https://docs.goauthentik.io/add-secure-apps/providers/oauth2/)も参照してください。
 
-7日保持するには、［Applications］→［Providers］でMadoのProviderを編集し、
+7日保持するには、［Applications］→［Providers］でmado S3 Data CatalogのProviderを編集し、
 ［Advanced protocol settings］の［Scopes］に標準の
 「authentik default OAuth Mapping: OpenID 'offline_access'」を追加します。
 ［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。
@@ -36,11 +36,11 @@ Authentikの[OAuth2/OIDC Providerの手順](https://docs.goauthentik.io/add-secu
 migration 037より前に作ったSSO sessionはtokenを保持していないため、更新後に一度だけ
 ログインし直します。Local sessionはそのまま使えます。
 
-Back-channel logoutを有効にすると、AuthentikでUserやsessionを無効化した時点でMadoの
-server-side sessionも失効します。Madoは署名、issuer、audience、発行時刻、event、jtiを検証し、
+Back-channel logoutを有効にすると、AuthentikでUserやsessionを無効化した時点でmado S3 Data Catalogの
+server-side sessionも失効します。mado S3 Data Catalogは署名、issuer、audience、発行時刻、event、jtiを検証し、
 同じlogout tokenの再利用を拒否します。
 
-## Madoの設定例
+## mado S3 Data Catalogの設定例
 
 導入時はLocal Adminを緊急経路として残すため`hybrid`を推奨します。SSOの確認後、必要なら
 `oidc`へ変更します。本番ではHTTPSとSecure Cookieが必須です。
@@ -69,26 +69,26 @@ APIを再起動してください。設定例や既定値を変えても、既�
 
 ## UserとRoleの同期規則
 
-- 初回SSOでUserをJIT作成します。self-signup用のMado画面はありません。
+- 初回SSOでUserをJIT作成します。self-signup用のmado S3 Data Catalog画面はありません。
 - 既存Local Userへのemail自動連携は既定で無効です。有効化した場合も`email_verified=true`かつemail一致が必要で、Admin等の特権Local Userは自動連携しません。
 - 未検証emailはUserのemailにも既存Userとの連携にも使いません。
-- `OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではMadoが起動しません。
-- role mappingが設定されている場合、SSOログインのたびにMado RoleをAuthentik groupへ同期します。
+- `OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。
+- role mappingが設定されている場合、SSOログインのたびにmado S3 Data Catalog RoleをAuthentik groupへ同期します。
 - 複数groupから複数Roleを付与できます。該当groupが無い場合は`OIDC_DEFAULT_ROLE`になります。
-- SSO由来の表示名と検証済みemailはログイン時に更新します。Madoの署名は上書きしません。
+- SSO由来の表示名と検証済みemailはログイン時に更新します。mado S3 Data Catalogの署名は上書きしません。
 - Local UserのユーザーIDは連携後も維持します。JIT Userは`preferred_username`が未使用なら採用します。
 
-Role同期を使う環境では、SSO UserのRoleをMado画面から一時的に変えても次回ログインで
+Role同期を使う環境では、SSO UserのRoleをmado S3 Data Catalog画面から一時的に変えても次回ログインで
 Authentik側の状態へ戻ります。恒久変更はAuthentik groupで行います。
 
 groupの判定とRoleの同期はログイン時と、使用中のSSO sessionの再確認（1分ごと）で行います。
 Authentik側で許可groupから外したりRoleを変えたりすると、次の再確認でsessionが失効します。
-すぐに止めたいときは、MadoのSettings > Access > UsersでそのUserを無効にしてください。
+すぐに止めたいときは、mado S3 Data CatalogのSettings > Access > UsersでそのUserを無効にしてください。
 無効にするとsessionはその場で失効します。
 
 ## Login transactionの防御
 
-MadoはAuthorization Code Flowの`state`とPKCEに加え、OIDC開始時に短命のHttpOnly cookieを発行します。callbackは同じbrowser cookieを提示した場合だけ受理するため、別browserで開始した認証transactionや古いtransactionを流用できません。`returnTo`もMado内の相対pathだけを許可します。
+mado S3 Data CatalogはAuthorization Code Flowの`state`とPKCEに加え、OIDC開始時に短命のHttpOnly cookieを発行します。callbackは同じbrowser cookieを提示した場合だけ受理するため、別browserで開始した認証transactionや古いtransactionを流用できません。`returnTo`もmado S3 Data Catalog内の相対pathだけを許可します。
 
 Local loginとOIDC開始には、送信元IPごとの回数制限があります。Local loginとパスワード変更には、
 同時に行うArgon2の処理数の制限もあります。パスワード変更の「現在のパスワード」の確認には、
@@ -103,7 +103,7 @@ callbackで断ったときは、利用者には理由を区別せず`401`を返�
 | `reason` | 意味 | 直し方 |
 | --- | --- | --- |
 | `group_not_allowed` | `OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる |
-| `user_disabled` | MadoでそのUserが無効になっている、または削除されている | 無効ならSettings > Access > Usersで有効にする。削除したUserは有効に戻せず、そのSSOのUserは今は入れ直せない（SSOとの結び付きを外す機能は無い） |
+| `user_disabled` | mado S3 Data CatalogでそのUserが無効になっている、または削除されている | 無効ならSettings > Access > Usersで有効にする。削除したUserは有効に戻せず、そのSSOのUserは今は入れ直せない（SSOとの結び付きを外す機能は無い） |
 | `last_admin` | groupの同期で、最後のactiveなAdminを降格しようとした | 別のAdminを先に用意する |
 | `privileged_link_required` | 検証済みemailが、特権を持つLocal Userと一致した | 乗っ取りを防ぐため自動では連携しない。連携するなら、`OIDC_AUTO_LINK_VERIFIED_EMAIL`が有効な状態で、そのLocal UserのRoleを一時的にviewerだけにしてSSOで1度入ってもらい、Roleを戻す |
 | `deleted_user_email` | 検証済みemailが、削除したUserと一致した | 別のemailにするか、管理者が対応する |

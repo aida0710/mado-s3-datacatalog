@@ -239,7 +239,7 @@ jobs:
             }
           else
             gh release create "$RELEASE_TAG" --verify-tag --draft \
-              --title "Mado $RELEASE_TAG" --notes-file "$notes_file"
+              --title "mado S3 Data Catalog $RELEASE_TAG" --notes-file "$notes_file"
           fi
       - name: Build digest-pinned bundle
         run: |

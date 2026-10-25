@@ -11,10 +11,10 @@ function streamOf(chunks: number[][]) {
     cancel,
     body: {
       getReader: () => ({
-        read: async () =>
-          i < chunks.length
-            ? { done: false, value: new Uint8Array(chunks[i++]) }
-            : { done: true, value: undefined },
+        read: async () => {
+          const chunk = chunks[i++]
+          return chunk ? { done: false, value: new Uint8Array(chunk) } : { done: true, value: undefined }
+        },
         cancel,
       }),
     },
@@ -97,7 +97,7 @@ describe('api.readHead', () => {
     const fake = {
       ok: false,
       statusText: 'Payload Too Large',
-      json: async () => ({ error: 'entry exceeds preview limit' }),
+      json: async () => ({ error: 'entry exceeds preview limit', code: 'preview_limit_exceeded', limitBytes: 1024 }),
     } as unknown as Response
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(fake)
 

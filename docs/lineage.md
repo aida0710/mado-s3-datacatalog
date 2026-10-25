@@ -1,11 +1,11 @@
 # Dataset Lineageを登録する
 
-この文書は、MadoのLineageへデータセットと処理履歴を登録する人のための運用ガイドです。
+この文書は、mado S3 Data CatalogのLineageへデータセットと処理履歴を登録する人のための運用ガイドです。
 内部構成の設計理由は
 [`superpowers/specs/2026-08-26-auth-lineage-platform-design.md`](superpowers/specs/2026-08-26-auth-lineage-platform-design.md)
 を参照してください。
 
-Madoでは、S3のディレクトリ同士を画面から手で線にしません。Pipelineが実行時に送る
+mado S3 Data Catalogでは、S3のディレクトリ同士を画面から手で線にしません。Pipelineが実行時に送る
 OpenLineageイベント、または根拠を確認した既存データのbackfillから、次の関係を作ります。
 
 ```text
@@ -52,13 +52,13 @@ Versionにはrelease ID、manifest hash、content hashなど、後から同じ�
 
 ## 2. 新しいPipelineから自動登録する
 
-通常はこちらを使います。PipelineはMadoだけへOpenLineageイベントを送り、RegistryやMarquezへ
+通常はこちらを使います。Pipelineはmado S3 Data CatalogだけへOpenLineageイベントを送り、RegistryやMarquezへ
 直接接続しません。
 
 ```text
 Pipeline
   └─ POST /api/openlineage/v1/lineage
-       └─ Mado: API key、scope、namespaceを検証
+       └─ mado S3 Data Catalog: API key、scope、namespaceを検証
             └─ Dataset Registry: 正本をtransaction保存
                  └─ outbox worker
                       └─ Marquez: 再構築可能な論理グラフ
@@ -66,7 +66,7 @@ Pipeline
 
 ### 2.1 アクセストークンを発行する
 
-管理者がMadoの次の画面で発行します。
+管理者がmado S3 Data Catalogの次の画面で発行します。
 
 ```text
 Settings → Access → Access Tokens
@@ -92,7 +92,7 @@ Content-Type: application/json
 ```
 
 本番ではkeyを環境変数またはsecret fileから読みます。以下では名前を
-`MADO_LINEAGE_KEY`、Madoのoriginを`MADO_URL`とします。
+`MADO_LINEAGE_KEY`、mado S3 Data Catalogのoriginを`MADO_URL`とします。
 
 作成したevent fileは次のように送れます。`--data-binary`を使い、再送時にも同じJSONを送ってください。
 
@@ -106,7 +106,7 @@ curl --fail-with-body \
 
 ### 2.3 最小イベント
 
-Mado profileでは、すべての内部Dataset input/outputにVersion identityが必須です。
+mado S3 Data Catalog profileでは、すべての内部Dataset input/outputにVersion identityが必須です。
 標準OpenLineageの`version.datasetVersion`を使うのが最も簡単です。
 
 ```json
@@ -221,9 +221,9 @@ Mado profileでは、すべての内部Dataset input/outputにVersion identity�
 失敗時は同じ`runId`で`FAIL`、利用者による中断なら`ABORT`を送ります。失敗理由は
 `run.facets.datasetRegistry.errorMessage`へ、秘密値や巨大なstack traceを除いて入れます。
 
-### 2.4 Madoが読む追加field
+### 2.4 mado S3 Data Catalogが読む追加field
 
-OpenLineage標準fieldに加え、Madoは次の`datasetRegistry` custom facetを読みます。
+OpenLineage標準fieldに加え、mado S3 Data Catalogは次の`datasetRegistry` custom facetを読みます。
 
 Dataset facet:
 
@@ -248,7 +248,7 @@ Run facet:
 | `metrics` | 入出力件数、除外件数、品質指標等 |
 | `errorMessage` | FAIL/ABORTの要約 |
 
-Custom facetのfieldは増やせますが、Mado詳細画面に構造化表示されるのは上記です。API key、
+Custom facetのfieldは増やせますが、mado S3 Data Catalog詳細画面に構造化表示されるのは上記です。API key、
 password、presigned URLなどのsecretはfacetへ入れないでください。
 
 ### 2.5 Pipeline実装の骨格
@@ -286,21 +286,21 @@ else:
 送信に失敗しても処理本体の結果を失わないよう、eventをローカルqueueへ残して再送できる構成を推奨します。
 同じJSON eventの再送はRegistry側でdeduplicateされます。
 
-## 3. 保存場所からMado Storageへ移動できるようにする
+## 3. 保存場所からmado S3 Data Catalog Storageへ移動できるようにする
 
-OpenLineageの`storageLocations[].systemKey`と、MadoのS3 Connection IDは別の識別子です。
+OpenLineageの`storageLocations[].systemKey`と、mado S3 Data CatalogのS3 Connection IDは別の識別子です。
 管理者が一度だけ`lineage_storage_bindings`で対応付けます。
 
 ```text
 Registry StorageSystem `mdx-s3`
         ↕ binding
-Mado Connection `mW5dNSSMcQ`
+mado S3 Data Catalog Connection `mW5dNSSMcQ`
 ```
 
 これにより次の往復が可能になります。
 
 - Storageのprefix → 登録されたDataset → Lineage
-- LineageのVersion → StorageLocation → Mado Storage
+- LineageのVersion → StorageLocation → mado S3 Data Catalog Storage
 
 現在はbinding用UIがないため、Compose管理者がDBへ登録します。まず対象を確認します。
 
@@ -327,13 +327,13 @@ ON CONFLICT (connection_id) DO UPDATE SET
 ```
 
 `systemKey`をPipelineごとに変えないでください。同じendpointを表す安定した値を運用で決めます。
-credentialはMadoのConnectionだけが保持し、Registryへは保存しません。
+credentialはmado S3 Data CatalogのConnectionだけが保持し、Registryへは保存しません。
 
 ## 4. 既存データをbackfillする
 
-過去データは実行時のOpenLineage eventがないため、Madoの`Lineage → 手動で登録`から
+過去データは実行時のOpenLineage eventがないため、mado S3 Data Catalogの`Lineage → 手動で登録`から
 根拠を確認できた範囲を登録します。画面を利用できるのは`lineage:curate`権限を持つ
-CuratorまたはAdminです。Madoは認証と監査を行い、Compose bridge内のRegistry APIへ
+CuratorまたはAdminです。mado S3 Data Catalogは認証と監査を行い、Compose bridge内のRegistry APIへ
 1回のtransactionとして保存します。Registry APIは外部公開しません。
 
 ### 画面の3つの使い分け
@@ -406,7 +406,7 @@ catalog整備時に、最低限次を追加してください。
 
 ## 5. 登録を確認する
 
-### Mado画面
+### mado S3 Data Catalog画面
 
 1. `Lineage`を開く。
 2. 「登録一覧・検索」で表示名、説明、S3 URIのいずれかを検索する。
@@ -445,7 +445,7 @@ Registryへの保存が成功していれば、Marquez停止中でも正本は�
 
 ## 6. よくある誤り
 
-- Marquezへ直接送る。Madoの認証とRegistry正本を迂回するため禁止。
+- Marquezへ直接送る。mado S3 Data Catalogの認証とRegistry正本を迂回するため禁止。
 - `START`と`COMPLETE`で別のRun IDを使う。1回の実行が2件に分裂する。
 - VersionなしのDatasetを送る。「現在の最新版」へ暗黙に接続できないため422になる。
 - 同じVersion名の内容を差し替える。過去Runの再現性が壊れる。
@@ -466,9 +466,9 @@ Registryへの保存が成功していれば、Marquez停止中でも正本は�
 - [ ] 全input/outputへVersion identityを付ける
 - [ ] outputへmanifest URI/hashとcontent hashを付ける
 - [ ] StorageLocationへ安定した`systemKey`を付ける
-- [ ] Registry StorageSystemとMado Connectionをbindingした
+- [ ] Registry StorageSystemとmado S3 Data Catalog Connectionをbindingした
 - [ ] Git SHA、container digest、config URI/hash、model revisionを記録する
 - [ ] secretや巨大なログをfacetへ入れていない
 - [ ] event再送queueがある
-- [ ] Madoの論理表示、版表示、Storageリンクを確認した
+- [ ] mado S3 Data Catalogの論理表示、版表示、Storageリンクを確認した
 - [ ] outboxのpendingが0へ戻ることを確認した

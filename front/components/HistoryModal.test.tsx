@@ -19,7 +19,7 @@ function renderModal(overrides: Partial<Parameters<typeof HistoryModal>[0]> = {}
       currentBody={null}
       onClose={onClose}
       loadVersions={async () => versions}
-      loadVersion={async id => ({ id, body: bodies[id] })}
+      loadVersion={async id => ({ id, body: bodies[id] ?? '' })}
       {...overrides}
     />,
   )

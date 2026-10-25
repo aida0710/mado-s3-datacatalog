@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { LineageDetailPanel } from './LineageDetailPanel'
+import { itemAt } from '../../tests/itemAt'
 
 const version = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -59,7 +60,7 @@ describe('LineageDetailPanel', () => {
       <MemoryRouter>
         <LineageDetailPanel
           node={{ id: version.id, kind: 'version', label: 'CALLHOME v1', summary: {}, data: {} }}
-          detail={{ ...version, locations: [{ ...version.locations[0], madoConnectionId: null }] }}
+          detail={{ ...version, locations: [{ ...itemAt(version.locations, 0), madoConnectionId: null }] }}
           loading={false}
           error={null}
           onClose={vi.fn()}

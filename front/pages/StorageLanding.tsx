@@ -10,10 +10,10 @@ import { translate } from '../i18n/translate'
 // Storage タブの入口。デフォルト接続 → created_at 最古 → 0 件なら空状態、へ振り分ける。
 // 接続の切り替えは画面右上の CONN スイッチャーが担うため、選択画面はもう無い。
 function pickConnection(list: Connection[]): Connection | null {
-  if (list.length === 0) return null
   return (
     list.find(c => c.isDefault)
     ?? [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))[0]
+    ?? null
   )
 }
 

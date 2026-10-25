@@ -36,16 +36,16 @@ describe('requireCapability', () => {
   it('権限が無効なら 403 で止め、ハンドラを実行しない', async () => {
     const res = await appWith({ download: false }).request('/storage/abc/preview/raw?bucket=b&key=k')
     expect(res.status).toBe(403)
-    const body = (await res.json()) as { error: string; capability: string }
-    expect(body.capability).toBe('download')
-    // 共有 Web URL を直に開いた人にも理由が分かるよう、権限名を含める。
-    expect(body.error).toContain('ダウンロード')
+    // 共有 Web URL を直に開いた人にも理由が分かるよう、文にも権限名を含める。
+    expect(await res.json()).toEqual({
+      error: '"File downloads" is disabled for this connection', code: 'capability_disabled', capability: 'download',
+    })
   })
 
   it('接続が存在しなければ 404 (403 ではなく)', async () => {
     const res = await appWith({}, { missing: true }).request('/storage/nope/preview/raw?bucket=b&key=k')
     expect(res.status).toBe(404)
-    expect(await res.json()).toEqual({ error: 'connection not found' })
+    expect(await res.json()).toEqual({ error: 'connection not found', code: 'not_found' })
   })
 
   it('README は GET と PUT で別々の権限を見る', async () => {

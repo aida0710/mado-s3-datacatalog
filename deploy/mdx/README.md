@@ -1,8 +1,8 @@
 # mdx deployment
 
-`compose.mdx.yaml` runs Mado, Dataset Registry, and Marquez API in one Compose
+`compose.mdx.yaml` runs mado S3 Data Catalog, Dataset Registry, and Marquez API in one Compose
 project and one private bridge network. Marquez UI is intentionally omitted.
-Registry and Marquez do not publish host ports. Mado nginx binds its intranet UI
+Registry and Marquez do not publish host ports. mado S3 Data Catalog nginx binds its intranet UI
 to `127.0.0.1:8080`, and Apache publishes that listener to the mdx LAN. The
 dedicated OpenLineage ingest listener binds `127.0.0.1:8081`; it accepts only
 `POST /api/openlineage/v1/lineage` and is reserved for a host TLS reverse proxy.
@@ -10,8 +10,8 @@ Do not point the public vhost at `:8080`.
 
 ## Prometheus metrics
 
-Access tokens read Mado's own data under `/api/mado/`; every route
-there is read-only and nginx passes only GET. Prometheus reads Mado metrics from
+Access tokens read mado S3 Data Catalog's own data under `/api/mado/`; every route
+there is read-only and nginx passes only GET. Prometheus reads mado S3 Data Catalog metrics from
 the intranet host at `https://mado.internal.dubguild.com/api/mado/metrics/<area>`.
 Each area has its own path so that it can be scraped at a rate that matches how
 fast it changes; bucket capacity (the "容量メトリクス" screen) is served at
@@ -52,7 +52,7 @@ scrape_configs:
 `bucket`). Buckets without a successful scan have no size, object count, or age
 sample; failed scans leave the last successful values in place. Scraping does
 not initiate a scan. Enable capacity tracking for a connection or run a manual
-capacity scan in Mado to populate results.
+capacity scan in mado S3 Data Catalog to populate results.
 
 The same scan also counts each top-level directory of the bucket, so the
 largest 50 are exported as `mado_storage_prefix_bytes` and
@@ -92,7 +92,7 @@ Required layout:
   deploy/mdx/apache-mado.conf
 ```
 
-Required `.env` keys include the normal Mado production values plus
+Required `.env` keys include the normal mado S3 Data Catalog production values plus
 `REGISTRY_DB_PASSWORD`, `MARQUEZ_DB_PASSWORD`, `REGISTRY_INGEST_TOKEN`,
 `LINEAGE_DB_PASSWORD`, `AUTH_MODE`, `AUTH_COOKIE_SECURE`, and
 `ALLOWED_ORIGINS`. Do not commit `.env`.
@@ -105,7 +105,7 @@ docker compose -f compose.mdx.yaml up -d postgres registry-db marquez-db
 docker compose -f compose.mdx.yaml up -d --build
 ```
 
-For an existing Mado database, follow `db/README.md` exactly: backup, apply
+For an existing mado S3 Data Catalog database, follow `db/README.md` exactly: backup, apply
 missing migrations through 027, start only the new `api-internal`, apply 028
 then 029 as the PostgreSQL administrator, enable `mado_lineage` with the
 deployment-specific `LINEAGE_DB_PASSWORD`, and only then start `api-lineage`

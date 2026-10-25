@@ -1,6 +1,7 @@
 import type { Hono } from 'hono'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 // アプリ全体の設定 (接続に紐づかない、Mado 全体で 1 つ)。
 // 認証と操作権限は internal.ts で検証する。
@@ -26,11 +27,11 @@ export function mountSettingsRoutes(app: Hono, deps: SettingsDeps): void {
 
   app.put('/settings/:key', async c => {
     const key = c.req.param('key')
-    if (!WRITABLE_KEYS.has(key)) return c.json({ error: 'unknown setting key' }, 400)
+    if (!WRITABLE_KEYS.has(key)) return c.json(apiError('unknown_setting', 'unknown setting key'), 400)
 
     const body = await c.req.json().catch(() => null) as { value?: unknown } | null
     const value = body?.value
-    if (typeof value !== 'string') return c.json({ error: 'value must be a string' }, 400)
+    if (typeof value !== 'string') return c.json(apiError('invalid_request', 'value must be a string'), 400)
 
     const result = await deps.pools.rw.query(
       `INSERT INTO app_settings(key, value) VALUES ($1, $2)

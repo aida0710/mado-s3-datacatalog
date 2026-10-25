@@ -1,6 +1,7 @@
 import type { Hono } from 'hono'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 // お気に入りは接続ごとに共有する。認証と操作権限は internal.ts で検証する。
 
@@ -23,7 +24,7 @@ export function mountStorageFavoritesRoutes(app: Hono, deps: StorageFavoritesDep
   app.put('/storage/:connectionId/favorites/:bucket', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.param('bucket')
-    if (!bucket) return c.json({ error: 'bucket required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket required'), 400)
     const result = await deps.pools.rw.query(
       `INSERT INTO storage_favorite_buckets(connection_id, bucket) VALUES ($1, $2)
          ON CONFLICT (connection_id, bucket) DO NOTHING`,
@@ -36,7 +37,7 @@ export function mountStorageFavoritesRoutes(app: Hono, deps: StorageFavoritesDep
   app.delete('/storage/:connectionId/favorites/:bucket', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.param('bucket')
-    if (!bucket) return c.json({ error: 'bucket required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket required'), 400)
     const result = await deps.pools.rw.query(
       `DELETE FROM storage_favorite_buckets
          WHERE connection_id = $1 AND bucket = $2`,

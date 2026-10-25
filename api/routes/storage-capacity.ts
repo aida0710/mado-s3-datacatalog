@@ -7,6 +7,7 @@ import type { Pools } from '../db.js'
 import { PRICING_SETTING_KEYS } from '../lib/pricing.js'
 import type { JobStore } from '../lib/jobs.js'
 import { enqueueCapacityScans } from '../lib/capacity-scheduler.js'
+import { apiError } from '../lib/api-error.js'
 
 const Days = z.coerce.number().int().refine(value => [7, 30, 90, 400].includes(value))
 const PrefixHistoryQuery = z.object({
@@ -26,7 +27,7 @@ export interface StorageCapacityDeps {
 export function mountStorageCapacityRoutes(app: Hono, deps: StorageCapacityDeps): void {
   app.get('/storage/:connectionId/capacity', async c => {
     const parsedDays = Days.safeParse(c.req.query('days') ?? '90')
-    if (!parsedDays.success) return c.json({ error: 'days must be one of 7, 30, 90, 400' }, 400)
+    if (!parsedDays.success) return c.json(apiError('invalid_request', 'days must be one of 7, 30, 90, 400'), 400)
     const connectionId = c.req.param('connectionId')
     const buckets = await deps.listBuckets(connectionId)
     const data = await deps.store.overview(connectionId, buckets, parsedDays.data)
@@ -45,7 +46,7 @@ export function mountStorageCapacityRoutes(app: Hono, deps: StorageCapacityDeps)
   // 内訳のディレクトリはbucketごとに数十件あるので、推移は画面で開いたものだけ個別に読む。
   app.get('/storage/:connectionId/capacity/prefix', async c => {
     const query = PrefixHistoryQuery.safeParse(c.req.query())
-    if (!query.success) return c.json({ error: 'bucket and prefix are required; days must be one of 7, 30, 90, 400' }, 400)
+    if (!query.success) return c.json(apiError('invalid_request', 'bucket and prefix are required; days must be one of 7, 30, 90, 400'), 400)
     const points = await deps.store.prefixHistory({ connectionId: c.req.param('connectionId'), ...query.data })
     return c.json({ points })
   })
@@ -53,14 +54,14 @@ export function mountStorageCapacityRoutes(app: Hono, deps: StorageCapacityDeps)
   app.post('/storage/:connectionId/capacity/scan', async c => {
     const connectionId = c.req.param('connectionId')
     const config = await deps.getConnectionConfig(connectionId)
-    if (!config.scanEnabled) return c.json({ error: 'この接続では走査が無効になっています' }, 403)
+    if (!config.scanEnabled) return c.json(apiError('scan_disabled', 'scanning is disabled for this connection'), 403)
     if (!config.capacityMetricsEnabled) {
-      return c.json({ error: 'この接続ではバケットのメトリクス集計が無効になっています' }, 403)
+      return c.json(apiError('bucket_metrics_disabled', 'bucket metrics are disabled for this connection'), 403)
     }
 
     const active = await deps.store.scanActivity(connectionId)
     if (active.jobs.length > 0) {
-      return c.json({ error: 'この接続のバケット計測はすでに進行中です' }, 409)
+      return c.json(apiError('capacity_scan_running', 'a bucket measurement is already running for this connection'), 409)
     }
 
     const buckets = await deps.listBuckets(connectionId)

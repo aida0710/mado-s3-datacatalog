@@ -51,7 +51,7 @@ describe('metrics route', () => {
     const { app, log } = appWith([capacity, broken])
     const failed = await app.request('/metrics/jobs', { headers: bearer })
     expect(failed.status).toBe(503)
-    expect(await failed.text()).toBe('metrics unavailable')
+    expect(await failed.json()).toEqual({ error: 'metrics unavailable', code: 'metrics_unavailable' })
     expect(log.error).toHaveBeenCalledOnce()
     expect((await app.request('/metrics/capacity', { headers: bearer })).status).toBe(200)
   })

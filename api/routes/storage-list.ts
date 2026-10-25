@@ -9,6 +9,7 @@ import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
 import type { ConnectionConfig } from '../storage.js'
 import { cacheKey, LIST_CACHE_TTL_MS, type CacheScope, type ResponseCache } from '../lib/storage-cache.js'
 import { SharedRequests } from '../lib/shared-requests.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface StorageListDeps {
   getStorage: GetStorage
@@ -136,7 +137,7 @@ export function mountStorageListRoutes(app: Hono, deps: StorageListDeps): void {
     if (r instanceof Response) return r
     const storage = r
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
     const continuation = c.req.query('continuation') || undefined
     const startAfter = c.req.query('startAfter') || undefined

@@ -400,7 +400,7 @@ describe('接続が見つからないとき', () => {
     })
     const res = await localApp.request('/storage/missing0001/readme?bucket=b')
     expect(res.status).toBe(404)
-    expect(await res.json()).toEqual({ error: 'connection not found' })
+    expect(await res.json()).toEqual({ error: 'connection not found', code: 'not_found' })
   })
 })
 

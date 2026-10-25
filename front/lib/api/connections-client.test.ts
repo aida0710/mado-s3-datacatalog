@@ -2,6 +2,7 @@ import { CONNECTION_SETTINGS_FIXTURE, PRICING_FIXTURE } from './fixtures'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from './client'
 import { ALL_CAPABILITIES_ON, Connection } from './types'
+import { itemAt } from '../../tests/itemAt'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -19,9 +20,10 @@ describe('connections client', () => {
       isDefault: true, visibility: { mode: 'public', allowedUsers: [] },
     }]), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const list = await api.listConnections()
-    expect(list[0].isDefault).toBe(true)
-    expect(list[0].capabilities.download).toBe(false)
-    expect(list[0].capabilities.list).toBe(true)
+    const connection = itemAt(list, 0)
+    expect(connection.isDefault).toBe(true)
+    expect(connection.capabilities.download).toBe(false)
+    expect(connection.capabilities.list).toBe(true)
   })
 
   it.each(['scanPageSize', 'capacityMetricsEnabled', 'capacityTracking', 'visibility'])('%sが応答にないと検証エラーになる', missing => {
@@ -41,7 +43,7 @@ describe('connections client', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await api.setDefaultConnection('c 1')
-    const [url, init] = spy.mock.calls[0]
+    const [url, init] = itemAt(spy.mock.calls, 0)
     expect(String(url)).toBe('/api/internal/connections/c%201/default')
     expect((init as RequestInit).method).toBe('PUT')
   })

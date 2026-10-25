@@ -159,6 +159,7 @@ export function PlayerDeck() {
       setMasterTime(master)
       for (const adj of computeDriftAdjustments(master, secs)) {
         const e = entries[adj.index]
+        if (!e) continue
         const dur = durations[e.t.id] ?? Infinity
         // 自分の長さを超える位置へは飛ばさない (終端で自然に無音 = 0 パディング)。
         if (adj.to < dur) e.a.currentTime = adj.to
