@@ -517,8 +517,7 @@
     height: var(--tap-target);
   }
   .lineage-segmented > button,
-  .lineage-catalog__toggle,
-  .lineage-graph__results .menu-item {
+  .lineage-catalog__toggle {
     min-height: var(--tap-target);
   }
   /* 折り返したツールバーのどこにあっても、技術 ID の入力欄はツールバーの幅で開く。 */

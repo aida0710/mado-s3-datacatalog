@@ -63,5 +63,4 @@
   .access-token-row { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
   .access-token-grants { grid-column: 1 / -1; grid-row: 2; }
   .access-token-actions summary { min-width: var(--tap-target); min-height: var(--tap-target); justify-content: center; align-items: center; }
-  .access-token-menu .menu-item { min-height: var(--tap-target); }
 }

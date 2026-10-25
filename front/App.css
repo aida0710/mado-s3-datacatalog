@@ -24,16 +24,6 @@
 @import "./styles/settings.css";
 @import "./styles/lineage.css";
 
-/* Tailwind の preflight は <dialog> の既定の margin: auto も 0 にするので、モーダルのダイアログ
-   (共通の部品の .dialog) が画面の左上に寄る。ブラウザの既定 (画面の中央) に戻す。狭い画面の形
-   (.dialog.fullscreen-on-narrow など) はより詳しい指定なので、そちらが勝つ。
-   デザインシステムの .dialog が自分で margin を持ったら、この指定は消す。 */
-@layer components {
-  .dialog {
-    margin: auto;
-  }
-}
-
 /* Tailwind の設定。値は @mado/design-system の変数を指すだけにする。 */
 @theme {
   /* 画面幅の切り替え点: デザインシステム (@mado/design-system/layout の BREAKPOINT_PX) と同じ 640 / 900 / 1200px。 */

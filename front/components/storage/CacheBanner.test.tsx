@@ -29,7 +29,7 @@ describe('CacheBanner', () => {
   it('取得からの経過時間の段階を色分け用に持ち、範囲を title で示す', () => {
     const fetchedAt = new Date(Date.now() - 7 * 3_600_000)
     render(<CacheBanner fetchedAt={fetchedAt} revalidating={false} onRefresh={noop} />)
-    const time = screen.getByText(/\(7 時間前\)$/)
+    const time = screen.getByText(/\(7時間前\)$/)
     expect(time).toHaveAttribute('data-age', 'within-12h')
     expect(time).toHaveAttribute('title', '取得から6〜12時間')
   })

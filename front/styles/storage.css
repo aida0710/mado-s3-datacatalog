@@ -1219,8 +1219,6 @@ tr.capacity-trend-row:hover > td {
     width: 56px;
   }
   .tag-chip,
-  .connection-switcher-menu .menu-item,
-  .copy-menu-list .menu-item,
   .storage-toolbar-check,
   .s3-path-results a,
   .tag-picker-list .checkbox-field {

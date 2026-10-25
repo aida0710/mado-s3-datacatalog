@@ -38,24 +38,24 @@ describe('fmtCacheAge', () => {
     expect(fmtCacheAge(d, NOW)).toContain('(今)')
   })
 
-  it('60 分未満は n 分前', () => {
+  it('60 分未満は n分前', () => {
     const d = new Date(NOW.getTime() - 5 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(5 分前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(5分前)')
   })
 
-  it('24 時間未満は n 時間前', () => {
+  it('24 時間未満は n時間前', () => {
     const d = new Date(NOW.getTime() - 2 * 60 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(2 時間前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(2時間前)')
   })
 
-  it('24 時間以上は n 日前、1 日は「昨日」', () => {
-    expect(fmtCacheAge(new Date(NOW.getTime() - 3 * 24 * 60 * 60_000), NOW)).toContain('(3 日前)')
+  it('24 時間以上は n日前、1 日は「昨日」', () => {
+    expect(fmtCacheAge(new Date(NOW.getTime() - 3 * 24 * 60 * 60_000), NOW)).toContain('(3日前)')
     expect(fmtCacheAge(new Date(NOW.getTime() - 24 * 60 * 60_000), NOW)).toContain('(昨日)')
   })
 
-  it('境界: ちょうど 60 分は 1 時間前', () => {
+  it('境界: ちょうど 60 分は 1時間前', () => {
     const d = new Date(NOW.getTime() - 60 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(1 時間前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(1時間前)')
   })
 })
 
@@ -64,12 +64,12 @@ describe('fmtCacheAge — compact', () => {
 
   it('同日なら日付を落として HH:mm(相対) にする', () => {
     const d = new Date(NOW.getTime() - 5 * 60_000)
-    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('16:09(5 分前)')
+    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('16:09(5分前)')
   })
 
   it('日を跨いだら MM/DD を足す (時刻だけでは曖昧になるため)', () => {
     const d = new Date('2026-08-16T22:13:00+09:00')
-    // 8/16 22:13 → 8/18 16:14 は 41 時間 = 1 日前 (24 時間単位の切り捨て) なので「昨日」
+    // 8/16 22:13 → 8/18 16:14 は 41 時間 = 1日前 (24 時間単位の切り捨て) なので「昨日」
     expect(fmtCacheAge(d, NOW, { compact: true })).toBe('08/16 22:13(昨日)')
   })
 
