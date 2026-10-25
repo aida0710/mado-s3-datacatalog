@@ -23,6 +23,8 @@
 }
 .access-token-menu button { text-align: start; white-space: nowrap; }
 .access-token-form { display: grid; gap: 16px; }
+/* 期間を指定するときの長さと単位は、スマホでもフォームの幅を半分ずつ使う (mado ML Tracking と同じ)。 */
+.token-expiry-duration { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .internal-permissions, .token-connections { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border); }
 .internal-permissions legend, .token-connections legend { padding: 0 4px; font-size: 12px; }
 .internal-permissions > p, .token-connections > p { margin: 0 0 10px; font-size: 12px; }

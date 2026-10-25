@@ -6,6 +6,8 @@ import { setLocale } from '../i18n/locale'
 import type { AccessToken } from '../types/accessTokens'
 
 afterEach(() => vi.restoreAllMocks())
+const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
 const token: AccessToken = {
   id: '480ad940-80a2-4a50-8f6e-e0e119ac52a8', name: 'ML Tracking', description: 'Training integration',
   tokenPrefix: 'mado_lin_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
@@ -67,6 +69,39 @@ describe('Access Tokens', () => {
     const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')![1]!.body))
     expect(saved).toMatchObject({ permissions: ['capacity:read'], connections: ['*'], namespaces: [] })
     expect(saved).not.toHaveProperty('scopes')
+    // 期限を選び直していないので、今の期限 (無期限) のまま送らない。
+    expect(saved).not.toHaveProperty('expiresAt')
+  })
+
+  it('期限は分・時間・日で長さを指定でき、カレンダーの過去の日時は発行しない', async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
+      ? response({ accessToken: token, token: 'fixture-custom-expiry-value' }, 201) : response({ tokens: [] }))
+    render(<AccessTokensPage />)
+    await user.click(await screen.findByRole('button', { name: 'アクセストークンを作成' }))
+    const dialog = screen.getByRole('dialog')
+    await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'Short lived')
+    await user.click(within(within(dialog).getByRole('group', { name: 'Storage' })).getByRole('checkbox', { name: '読み取り' }))
+    await user.click(within(dialog).getByRole('checkbox', { name: 'すべての接続を許可' }))
+    const expiry = within(dialog).getByRole('combobox', { name: '有効期限' })
+    expect(expiry).toHaveValue('90')
+    await user.selectOptions(expiry, 'calendar')
+    const dateTime = within(dialog).getByLabelText('有効期限の日時')
+    await user.clear(dateTime)
+    await user.type(dateTime, '2020-01-01T00:00')
+    await user.click(within(dialog).getByRole('button', { name: '発行する' }))
+    // 過去の日時は入力欄の min でも、送る前の確かめでも止まる。
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0)
+    await user.selectOptions(expiry, 'custom')
+    const duration = within(dialog).getByRole('spinbutton', { name: '有効期間' })
+    await user.clear(duration)
+    await user.type(duration, '2')
+    await user.selectOptions(within(dialog).getByRole('combobox', { name: '単位' }), 'hours')
+    await user.click(within(dialog).getByRole('button', { name: '発行する' }))
+    await screen.findByText('fixture-custom-expiry-value')
+    const body = JSON.parse(String(fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body))
+    expect(Date.parse(body.expiresAt) - Date.now()).toBeGreaterThan(HOUR_MS)
+    expect(Date.parse(body.expiresAt) - Date.now()).toBeLessThanOrEqual(2 * HOUR_MS)
   })
 
   it('アカウントを別に作らず参照と送信を同じトークンで発行し、言語変更で入力を保つ', async () => {
@@ -86,7 +121,7 @@ describe('Access Tokens', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'podcast' }))
     expect(within(lineage).getByRole('checkbox', { name: '読み取り' })).toBeChecked()
     expect(within(lineage).getByRole('checkbox', { name: '送信' })).toBeChecked()
-    expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('combobox', { name: /アカウント/ })).not.toBeInTheDocument()
     act(() => setLocale('en'))
     expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('ML Tracking')
     expect(within(dialog).getByRole('checkbox', { name: 'speech' })).toBeChecked()
@@ -96,8 +131,12 @@ describe('Access Tokens', () => {
     expect(await screen.findByText('fixture-not-a-real-credential')).toBeInTheDocument()
     const issued = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')!
     expect(issued[0]).toBe('/api/internal/access-tokens')
-    expect(JSON.parse(String(issued[1]!.body))).toEqual({ name: 'ML Tracking', description: '',
-      permissions: ['lineage:read', 'lineage:send'], connections: [], namespaces: ['speech', 'podcast'], expiresAt: null })
+    const issuedBody = JSON.parse(String(issued[1]!.body))
+    expect(issuedBody).toEqual({ name: 'ML Tracking', description: '',
+      permissions: ['lineage:read', 'lineage:send'], connections: [], namespaces: ['speech', 'podcast'], expiresAt: expect.any(String) })
+    // 期限は既定の90日後 (デザインシステムの token-expiry)。
+    expect(Date.parse(issuedBody.expiresAt) - Date.now()).toBeGreaterThan(89 * DAY_MS)
+    expect(Date.parse(issuedBody.expiresAt) - Date.now()).toBeLessThanOrEqual(90 * DAY_MS)
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.queryByText('fixture-not-a-real-credential')).not.toBeInTheDocument()
   })
