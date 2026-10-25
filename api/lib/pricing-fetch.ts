@@ -16,8 +16,9 @@
 // AWS 側の名前が変わったときに「静かに 0 になる」のが最悪なので、必須の行が
 // 引けなければ例外にする。ジョブは失敗として記録され、キャッシュは前の値のまま残る。
 
-import type {
-  AwsRegionPricing, EgressTier, PricingCatalog, StorageClassKey, StorageClassPricing, Tier,
+import {
+  MANUAL_FACT_NOTES,
+  type AwsRegionPricing, type EgressTier, type PricingCatalog, type StorageClassKey, type StorageClassPricing, type Tier,
 } from './pricing-types.js'
 
 const S3_METERED = 'https://calculator.aws/pricing/2.0/meteredUnitMaps/s3/USD/current/s3.json'
@@ -152,12 +153,7 @@ const WASABI = {
  *  値を直したら verifiedOn も更新すること。 */
 const MANUAL_FACTS = {
   verifiedOn: '2026-08-22',
-  notes: [
-    'AWS の最小保存期間 (Standard-IA / One Zone-IA は 30 日、Glacier IR / FR は 90 日、Deep Archive は 180 日)',
-    'AWS の最小課金サイズ (IA 系と Glacier IR は 128KB) と、Glacier FR / Deep Archive でオブジェクトごとに加算される 40KB',
-    'Glacier Deep Archive のストレージ単価 (料金 API に無いため、同額の Intelligent-Tiering Deep Archive Access 層で代用)',
-    'Wasabi の単価とポリシー (料金 API を公開していないため全て手入力)',
-  ],
+  notes: [...MANUAL_FACT_NOTES],
   sources: [
     'https://aws.amazon.com/s3/storage-classes/',
     'https://aws.amazon.com/s3/pricing/',

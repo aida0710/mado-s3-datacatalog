@@ -34,23 +34,20 @@ export interface Endpoint {
   rates: EffectiveRates
 }
 
-export type WarningKind =
-  | 'minDuration'
-  | 'retrievalCost'
-  | 'archiveRetrievalTime'
-  | 'sourceArchiveRestore'
-  | 'wasabiPolicy'
-  | 'capacity'
-  | 'smallObjects'
-  | 'objectOverhead'
-  | 'proxyRate'
-  | 'manualRate'
-  | 'ratesUnavailable'
-
-export interface EstimateWarning {
-  kind: WarningKind
-  message: string
-}
+/** 見積もりの注意。画面は code で訳し、横の値を文に入れる (front/i18n/noticeMessages.ts)。値は書式を付けない数のまま渡す。 */
+export type EstimateWarning =
+  /** 移動先のリージョンの単価がカタログに無い。region は接続にリージョンが無ければ null。 */
+  | { code: 'ratesUnavailable'; region: string | null }
+  | { code: 'minDuration'; days: number }
+  | { code: 'retrievalCost'; usdPerGb: number }
+  | { code: 'archiveRetrievalTime' }
+  | { code: 'sourceArchiveRestore' }
+  | { code: 'wasabiPolicy' }
+  | { code: 'proxyRate' }
+  | { code: 'manualRate' }
+  | { code: 'smallObjects'; averageObjectBytes: number; minimumBillableBytes: number }
+  | { code: 'objectOverhead'; overheadBytesPerObject: number; objectCount: number; overheadBytes: number; percentOfBillable: number }
+  | { code: 'capacity'; capacityBytes: number; requiredBytes: number }
 
 export interface UpfrontCost {
   /** 移動元から出す費用。同一接続内のコピーでは発生しない。 */
@@ -118,20 +115,6 @@ export function putRequestCount(
   return parts > 1 ? objectCount * (parts + 2) : objectCount
 }
 
-function fmtBytes(n: number): string {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-  let v = n
-  let i = 0
-  while (v >= 1024 && i < units.length - 1) { v /= 1024; i += 1 }
-  return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`
-}
-
-function fmtUsd(n: number): string {
-  if (n >= 1) return `$${n.toFixed(2)}`
-  // 末尾の 0 は落とす。単価は桁そのものが情報なので、$0.0220 より $0.022。
-  return `$${Number(n.toFixed(4))}`
-}
-
 function buildWarnings({ source, destination, scan, avgObjectBytes, billableBytes }: {
   source: Endpoint
   destination: Endpoint
@@ -142,80 +125,28 @@ function buildWarnings({ source, destination, scan, avgObjectBytes, billableByte
   const out: EstimateWarning[] = []
   const cls = destination.profile.storageClass
 
-  if (!destination.rates.ratesResolved) {
-    out.push({
-      kind: 'ratesUnavailable',
-      message: `リージョン ${destination.profile.region ?? '(不明)'} の単価が料金カタログにありません。`
-        + '費用は 0 と表示されていますが、無料という意味ではありません。'
-        + '接続の設定で単価を手入力するか、カタログを更新してください。',
-    })
-  }
+  if (!destination.rates.ratesResolved) out.push({ code: 'ratesUnavailable', region: destination.profile.region })
 
-  if (destination.rates.minDurationDays > 0) {
-    const d = destination.rates.minDurationDays
-    out.push({
-      kind: 'minDuration',
-      message: `最小保存期間 ${d} 日。${d} 日以内に削除しても ${d} 日分は課金されます。`,
-    })
-  }
+  if (destination.rates.minDurationDays > 0) out.push({ code: 'minDuration', days: destination.rates.minDurationDays })
 
-  if (destination.rates.retrievalPerGb > 0) {
-    out.push({
-      kind: 'retrievalCost',
-      message: `このクラスは読み出しに ${fmtUsd(destination.rates.retrievalPerGb)}/GB かかります`
-        + '(置いたあと読み返す用途では月額の安さが相殺されます)。',
-    })
-  }
+  if (destination.rates.retrievalPerGb > 0) out.push({ code: 'retrievalCost', usdPerGb: destination.rates.retrievalPerGb })
 
   // Glacier Instant Retrieval は即時なので時間の警告は要らない。
-  if (cls === 'GLACIER' || cls === 'DEEP_ARCHIVE') {
-    out.push({
-      kind: 'archiveRetrievalTime',
-      message: '取り出しは即時ではありません。要求してから数分〜十数時間かかります。',
-    })
-  }
+  if (cls === 'GLACIER' || cls === 'DEEP_ARCHIVE') out.push({ code: 'archiveRetrievalTime' })
 
   if (source.profile.storageClass === 'GLACIER' || source.profile.storageClass === 'DEEP_ARCHIVE') {
-    out.push({
-      kind: 'sourceArchiveRestore',
-      message: '移動元がアーカイブクラスです。転送前に復元 (restore) が必要で、'
-        + 'その待ち時間は所要時間に含まれていません。',
-    })
+    out.push({ code: 'sourceArchiveRestore' })
   }
 
-  if (destination.profile.provider === 'wasabi') {
-    out.push({
-      kind: 'wasabiPolicy',
-      message: 'egress は無料ですが、月間ダウンロード量が保存量を超えると制限対象です'
-        + '(1:1 ポリシー)。またアカウント全体で最低 1TB/月の課金があります。',
-    })
-  }
+  if (destination.profile.provider === 'wasabi') out.push({ code: 'wasabiPolicy' })
 
-  if (destination.rates.storageRateSource === 'proxy') {
-    out.push({
-      kind: 'proxyRate',
-      message: 'このクラスのストレージ単価は AWS の料金 API に存在しないため、'
-        + '同額の別クラス (Intelligent-Tiering の Deep Archive Access 層) の値を使っています。',
-    })
-  }
+  if (destination.rates.storageRateSource === 'proxy') out.push({ code: 'proxyRate' })
 
-  if (destination.rates.storageRateSource === 'manual') {
-    // 「単価を更新」を押しても変わらない値であることを、行を開けば分かるようにする。
-    out.push({
-      kind: 'manualRate',
-      message: 'このプロバイダは料金 API を公開していないため、単価は Mado が'
-        + '手で持っている公表値です。単価の更新では新しくなりません — '
-        + '実際の契約単価があれば接続の設定で上書きしてください。',
-    })
-  }
+  // 「単価を更新」を押しても変わらない値であることを、行を開けば分かるようにする。
+  if (destination.rates.storageRateSource === 'manual') out.push({ code: 'manualRate' })
 
   if (destination.rates.minBillableBytes > 0 && avgObjectBytes < destination.rates.minBillableBytes) {
-    out.push({
-      kind: 'smallObjects',
-      message: `平均 ${fmtBytes(avgObjectBytes)} は最小課金サイズ `
-        + `${fmtBytes(destination.rates.minBillableBytes)} を下回ります。`
-        + '小さいオブジェクトもこのサイズとして課金されます。',
-    })
+    out.push({ code: 'smallObjects', averageObjectBytes: avgObjectBytes, minimumBillableBytes: destination.rates.minBillableBytes })
   }
 
   // 最小課金サイズ (IA 系の 128KB) とは別に、Glacier 系はオブジェクトごとに
@@ -223,23 +154,17 @@ function buildWarnings({ source, destination, scan, avgObjectBytes, billableByte
   // 小さいものを大量に置くとここが効く。
   const overheadBytes = scan.objectCount * destination.rates.perObjectOverheadBytes
   if (overheadBytes > scan.totalBytes * OVERHEAD_WARN_RATIO) {
-    const pct = Math.round((overheadBytes / (scan.totalBytes + overheadBytes)) * 100)
     out.push({
-      kind: 'objectOverhead',
-      message: `このクラスはオブジェクトごとに ${fmtBytes(destination.rates.perObjectOverheadBytes)} の`
-        + `メタデータが加算されます。${scan.objectCount.toLocaleString()} 件では`
-        + ` ${fmtBytes(overheadBytes)} 分が上乗せされ、課金対象の約 ${pct}% を占めます。`,
+      code: 'objectOverhead',
+      overheadBytesPerObject: destination.rates.perObjectOverheadBytes,
+      objectCount: scan.objectCount,
+      overheadBytes,
+      percentOfBillable: Math.round((overheadBytes / (scan.totalBytes + overheadBytes)) * 100),
     })
   }
 
   const cap = destination.profile.capacityBytes
-  if (cap !== null && billableBytes > cap) {
-    out.push({
-      kind: 'capacity',
-      message: `移動先の容量 ${fmtBytes(cap)} を超えます (必要 ${fmtBytes(billableBytes)})。`
-        + 'なお既に使っている分は差し引かれていません。',
-    })
-  }
+  if (cap !== null && billableBytes > cap) out.push({ code: 'capacity', capacityBytes: cap, requiredBytes: billableBytes })
 
   return out
 }

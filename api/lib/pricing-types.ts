@@ -89,13 +89,17 @@ export interface WasabiPricing {
   rateSource: RateSource
 }
 
+/** 手で持っている値の種類。画面は code で訳して脚注に出す (front/i18n/noticeMessages.ts)。 */
+export const MANUAL_FACT_NOTES = ['awsMinimumRetention', 'awsMinimumBillableSize', 'deepArchiveStorageRate', 'wasabiManualRates'] as const
+export type ManualFactNote = typeof MANUAL_FACT_NOTES[number]
+
 /** 料金 API から取れない値の出所。**「単価を更新」しても変わらない部分**なので、
  *  取得日 (asOf) とは別に、人が確認した日を持って UI に出す。 */
 export interface ManualFacts {
   /** 手で持っている値を最後に一次ソースで確認した日 (YYYY-MM-DD)。 */
   verifiedOn: string
-  /** 何を手で持っているか。UI の脚注にそのまま出す。 */
-  notes: string[]
+  /** 何を手で持っているか。 */
+  notes: ManualFactNote[]
   /** 確認に使った一次ソース。 */
   sources: string[]
 }

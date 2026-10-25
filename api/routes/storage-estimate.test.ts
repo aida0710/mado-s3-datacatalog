@@ -35,7 +35,7 @@ interface Candidate {
   durationSec: { optimistic: number; pessimistic: number }
   upfront: { egress: number; retrieval: number; getRequests: number; putRequests: number; total: number }
   monthlyUsd: number
-  warnings: Array<{ kind: string; message: string }>
+  warnings: Array<{ code: string }>
 }
 
 interface EstimateBody {
@@ -237,8 +237,8 @@ describe('GET /storage/:connectionId/estimate', () => {
     const body = await (await get(source)).json() as EstimateBody
     const c = body.candidates.find(x => x.connectionId === gda)!
     expect(c.storageClass).toBe('DEEP_ARCHIVE')
-    expect(c.warnings.map(w => w.kind)).toContain('minDuration')
-    expect(c.warnings.map(w => w.kind)).toContain('archiveRetrievalTime')
+    expect(c.warnings.map(w => w.code)).toContain('minDuration')
+    expect(c.warnings.map(w => w.code)).toContain('archiveRetrievalTime')
     // 1TiB × $0.002 ≒ $2
     expect(c.monthlyUsd).toBeCloseTo(1024 * 0.002, 1)
   })

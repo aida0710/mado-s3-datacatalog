@@ -14,6 +14,7 @@ import { LineageDetailPanel, type LineageDetail } from '../components/lineage/Li
 import { LineageCatalog } from '../components/lineage/LineageCatalog'
 import { useAuth } from '../lib/auth-context'
 import { localizeMessage } from '../i18n/localizeMessage'
+import { lineageWarningMessage, projectionUnavailableMessage } from '../i18n/noticeMessages'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
@@ -190,7 +191,9 @@ export default function LineagePage() {
         <div className="notice warning" role="status">
           <span>
             <strong>{translate('lineagePage.graphSynchronization')}{' '}{projectionStateLabel(projection.state)}</strong>
-            {' '}{localizeMessage(projection.message ?? translate('lineagePage.eventsArePendingSynchronization', { value0: projection.pendingEvents ?? 0 }))}
+            {' '}{projection.code
+              ? projectionUnavailableMessage(projection.code)
+              : localizeMessage(projection.message ?? translate('lineagePage.eventsArePendingSynchronization', { value0: projection.pendingEvents ?? 0 }))}
           </span>
         </div>
       )}
@@ -200,7 +203,7 @@ export default function LineagePage() {
         </div>
       )}
       {graphState.data?.warnings.map((warning, index) => (
-        <div key={`${warning}:${index}`} className="notice warning" role="status"><span>{localizeMessage(warning)}</span></div>
+        <div key={`${warning.code}:${index}`} className="notice warning" role="status"><span>{lineageWarningMessage(warning)}</span></div>
       ))}
 
       {!ready && (

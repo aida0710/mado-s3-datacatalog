@@ -16,6 +16,7 @@ import { api } from '../../lib/api/client'
 import type { TransferCandidate, TransferEstimate } from '../../lib/api/types'
 import { fmtCacheAge, fmtCount, fmtDurationRange, fmtSize, fmtUsd } from '../../lib/format'
 import { localizeMessage } from '../../i18n/localizeMessage'
+import { pricingNoteMessage, transferWarningMessage } from '../../i18n/noticeMessages'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 import { PROVIDER_LABELS } from '../../i18n/connectionOptions'
@@ -139,9 +140,9 @@ function CandidateRow({ c, expanded, onToggle }: {
             {c.warnings.length > 0 && (
               <ul className="est-warns">
                 {c.warnings.map(w => (
-                  <li key={w.kind}>
+                  <li key={w.code}>
                     <TriangleAlert size={14} aria-hidden="true" />
-                    <span>{localizeMessage(w.message)}</span>
+                    <span>{transferWarningMessage(w)}</span>
                   </li>
                 ))}
               </ul>
@@ -306,7 +307,7 @@ export function EstimatePanel({ connectionId, bucket, prefix, onNeedScan }: Prop
           {translate('estimatePanel.manualPricesVerifiedOn', { value0: catalog.manualFacts.verifiedOn })}
         </summary>
         <ul>
-          {catalog.manualFacts.notes.map(note => <li key={note}>{localizeMessage(note)}</li>)}
+          {catalog.manualFacts.notes.map(note => <li key={note}>{pricingNoteMessage(note)}</li>)}
         </ul>
         <p className="est-manual-sources">
           {translate('estimatePanel.source2')}{' '}

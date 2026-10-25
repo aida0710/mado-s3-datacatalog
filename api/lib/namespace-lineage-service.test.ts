@@ -61,7 +61,7 @@ describe('内部DataLineageのNamespace制限', () => {
     const { service, base } = fixture()
     vi.mocked(base.logicalGraph).mockResolvedValue({
       nodes: [{ id: 'allowed', namespace: 'speech', registry: null }, { id: 'hidden', namespace: 'private', registry: null }],
-      edges: [{ source: 'allowed', target: 'hidden' }], warnings: ['Skipped malformed Marquez node: private'],
+      edges: [{ source: 'allowed', target: 'hidden' }], warnings: [{ code: 'malformedMarquezNode', nodeId: 'dataset:private:broken' }],
     } as LogicalLineageGraph)
     const graph = await service.logicalGraph({ kind: 'dataset', namespace: 'speech', name: 'dataset', depth: 3 })
     expect(graph.nodes.map(node => node.id)).toEqual(['allowed'])

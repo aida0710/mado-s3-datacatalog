@@ -34,6 +34,12 @@ export function fmtUsd(n: number): string {
   return `$${fmtCount(Math.round(n))}`
 }
 
+// 単価 (/GB など)。桁そのものが情報なので、小さい額も丸めずに 4 桁まで出す ($0.0220 ではなく $0.022)。
+export function fmtUnitPriceUsd(n: number): string {
+  if (n >= 1) return `$${n.toFixed(2)}`
+  return `$${Number(n.toFixed(4))}`
+}
+
 /** 所要時間の単位。上振れ側の大きさで決め、両端で単位を揃える。 */
 function durationUnit(sec: number): { div: number; message: 'format.seconds' | 'format.minutes' | 'format.hours' | 'format.days' } {
   if (sec < 90) return { div: 1, message: 'format.seconds' }

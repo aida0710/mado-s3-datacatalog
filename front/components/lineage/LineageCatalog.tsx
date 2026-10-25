@@ -42,11 +42,14 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      const nextQuery = query.trim()
+      // 開いた直後にも走るので、検索語が変わったときだけ 1 ページ目へ戻す。
+      if (nextQuery === submitted) return
       resetPages()
-      setSubmitted(query.trim())
+      setSubmitted(nextQuery)
     }, SEARCH_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [query, resetPages])
+  }, [query, submitted, resetPages])
 
   const expanded = open
   const requestKey = `${submitted}\u0000${cursor ?? ''}`
