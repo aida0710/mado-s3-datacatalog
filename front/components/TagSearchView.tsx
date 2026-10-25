@@ -235,16 +235,16 @@ export function TagSearchView({ connectionId }: Props) {
   return (
     <section className="tag-search">
       {/* 一覧の上の帯と同じ形: 左にタグの選択、右に割り当ての入出力。 */}
-      <div className="storage-toolbar">
+      <div className="toolbar">
         {allTags.length > 0 && (
-          <div className="storage-toolbar-item">
+          <div className="toolbar-item">
             <TagToggleChips
               tags={allTags} selected={selected} onToggle={toggle} onClear={() => setSelected(new Set())}
             />
             {loading && <span className="muted">{translate('common.searching')}</span>}
           </div>
         )}
-        <div className="storage-toolbar-item storage-toolbar-end">
+        <div className="toolbar-item storage-toolbar-end">
           <ImportExportButtons
             what={translate('tagSearchView.tagAssignments')}
             onExport={() => { void handleExport() }}

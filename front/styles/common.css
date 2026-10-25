@@ -47,6 +47,21 @@
   margin-top: 6px;
 }
 
+/* ── 一覧の上の帯 (共通の部品の .toolbar) ─────────────────────────────
+   帯が折り返すスマホの幅では、検索欄を 1 行に取り、操作の部品はその下に並べる。 */
+@media (width < 640px) {
+  .toolbar-search {
+    flex-basis: 100%;
+  }
+  .toolbar-item {
+    border-left: 0;
+    border-top: 1px solid var(--background);
+  }
+  .toolbar-item + .toolbar-item {
+    border-left: 1px solid var(--background);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
 }

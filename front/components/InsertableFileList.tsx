@@ -86,7 +86,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
 
   return (
     <div className="filelist">
-      <nav className="filelist__crumbs" aria-label={translate('insertableFileList.currentDirectory')}>
+      <nav className="breadcrumbs filelist__crumbs" aria-label={translate('insertableFileList.currentDirectory')}>
         <button
           type="button"
           className="filelist__crumb"

@@ -17,11 +17,9 @@
 .access-token-actions { position: relative; }
 .access-token-actions summary { display: flex; padding: 4px; cursor: pointer; list-style: none; }
 .access-token-actions summary::-webkit-details-marker { display: none; }
-.access-token-menu {
-  position: absolute; top: 100%; right: 0; z-index: 20;
-  display: flex; flex-direction: column; min-width: 150px;
-}
-.access-token-menu button { text-align: start; white-space: nowrap; }
+/* 行の操作のメニューは共通の部品の .popover.menu と .menu-item。 */
+.access-token-menu { z-index: 20; min-width: 150px; }
+.access-token-menu .menu-item { white-space: nowrap; }
 .access-token-form { display: grid; gap: 16px; }
 /* 期間を指定するときの長さと単位は、スマホでもフォームの幅を半分ずつ使う (mado ML Tracking と同じ)。 */
 .token-expiry-duration { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
@@ -65,5 +63,5 @@
   .access-token-row { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
   .access-token-grants { grid-column: 1 / -1; grid-row: 2; }
   .access-token-actions summary { min-width: var(--tap-target); min-height: var(--tap-target); justify-content: center; align-items: center; }
-  .access-token-menu button { min-height: var(--tap-target); }
+  .access-token-menu .menu-item { min-height: var(--tap-target); }
 }

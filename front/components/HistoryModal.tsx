@@ -57,7 +57,7 @@ export function HistoryModal({
                   >
                     <span className="history-version__editor">
                       {version.editor}
-                      {index === 0 && <span className="status-badge history-latest">{translate('historyModal.latest')}</span>}
+                      {index === 0 && <span className="status-badge status-accent">{translate('historyModal.latest')}</span>}
                     </span>
                     <span className="muted">
                       {fmtDateTime(version.edited_at)} · {fmtSize(version.size_bytes)}

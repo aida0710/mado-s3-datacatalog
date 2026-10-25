@@ -64,11 +64,6 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-/* 既定の接続の印。Mado Model Tracking の既定のストレージと同じ色。 */
-.status-badge.connection-default {
-  background: var(--accent-tint);
-  color: var(--link);
-}
 .connection-endpoint {
   display: block;
 }

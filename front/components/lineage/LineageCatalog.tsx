@@ -101,7 +101,7 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
 
       {expanded && (
         <div className="lineage-catalog__body">
-          <div className="lineage-toolbar">
+          <div className="toolbar lineage-toolbar">
             <label className="lineage-search-field">
               <Search size={16} aria-hidden="true" />
               <span className="sr-only">{translate('lineageCatalog.searchDatasets')}</span>

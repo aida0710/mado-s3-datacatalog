@@ -196,7 +196,7 @@
 }
 
 /* ── README の全文検索 (ReadmeSearchPanel) ────────────────────────── */
-/* 入力の帯は「S3 パスで移動」と同じ .storage-search (storage.css)。 */
+/* 入力の帯は「S3 パスで移動」と同じ、共通の部品の .toolbar-search。 */
 .readme-search {
   display: grid;
   gap: 8px;
@@ -317,9 +317,6 @@
 }
 .filelist__crumbs {
   flex: 0 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 2px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
@@ -457,11 +454,9 @@
 .history-version .muted {
   font-variant-numeric: tabular-nums;
 }
-/* 最新の版の印。Mado Model Tracking の Reports の「最新」と同じ色。 */
-.status-badge.history-latest {
+/* 最新の版の印 (共通の部品の .status-accent)。版の一覧の行を高くしないよう、余白を詰める。 */
+.history-version__editor .status-badge {
   padding: 2px 7px;
-  background: var(--accent-tint);
-  color: var(--link);
 }
 .history-preview {
   min-width: 0;

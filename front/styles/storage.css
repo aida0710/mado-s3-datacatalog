@@ -93,25 +93,10 @@
 tr.selected .storage-meter {
   background: var(--background);
 }
-/* 注意を促す .notice (止まったページ送り、途中までの走査)。 */
-.notice.storage-warning {
-  border-left-color: var(--warning);
-}
-
 /* ── 場所の見出し (Breadcrumb / ViewBreadcrumb) ───────────────────── */
-.storage-crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 2px;
-  min-width: 0;
-}
-.storage-crumbs > a {
+/* 並びは共通の部品の .breadcrumbs。バケット名やフォルダ名は空白の無い長い名前もあるので、どこででも折り返す。 */
+.page-header .breadcrumbs > a {
   overflow-wrap: anywhere;
-}
-.storage-crumbs .breadcrumb-separator {
-  display: inline-flex;
-  margin: 0 6px;
 }
 .storage-header-link {
   display: inline-flex;
@@ -120,7 +105,8 @@ tr.selected .storage-meter {
   font-size: 12px;
 }
 
-/* ── 接続先の切り替え (ConnectionSwitcher) ─────────────────────────── */
+/* ── 接続先の切り替え (ConnectionSwitcher) ───────────────────────────
+   メニューは共通の部品の .popover.menu と .menu-item。接続の項目は名前と接続先の 2 行にする。 */
 .connection-switcher {
   position: relative;
   display: inline-flex;
@@ -143,7 +129,6 @@ tr.selected .storage-meter {
   top: calc(100% + 4px);
   min-width: 260px;
   max-width: 360px;
-  padding: 4px 0;
   box-shadow: var(--shadow-popover);
 }
 .connection-switcher-heading {
@@ -157,24 +142,10 @@ tr.selected .storage-meter {
   color: var(--muted);
   font-size: 12px;
 }
-.connection-switcher-item {
-  display: flex;
+.menu-item.connection-switcher-item {
   flex-direction: column;
   align-items: flex-start;
-  width: 100%;
-  padding: 8px 14px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-}
-.connection-switcher-item:hover,
-.connection-switcher-item:focus-visible {
-  background: var(--surface-hover);
-  text-decoration: none;
-}
-.connection-switcher-item:focus-visible {
-  outline-offset: -2px;
+  gap: 0;
 }
 .connection-switcher-item-name {
   font-weight: 600;
@@ -187,9 +158,6 @@ tr.selected .storage-meter {
   overflow-wrap: anywhere;
 }
 .connection-switcher-manage {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
   margin-top: 4px;
   border-top: 1px solid var(--border);
 }
@@ -241,12 +209,10 @@ tr.selected .storage-meter {
 }
 
 /* ── タグ ─────────────────────────────────────────────────────────── */
-/* 共通の .status-badge (小さなピル) に、利用者が決めた色の点を添える。行の高さを
+/* 共通の .status-badge.status-neutral (小さなピル) に、利用者が決めた色の点を添える。行の高さを
    増やさないよう、上下の余白は .status-badge より詰める。 */
 .tag-badge {
   padding: 2px 8px;
-  background: var(--status-neutral-background);
-  color: var(--status-neutral-text);
 }
 .tag-color-dot {
   flex: none;
@@ -307,61 +273,8 @@ tr.selected .storage-meter {
   min-width: 0;
 }
 
-/* 一覧の上の帯 (mmt の Runs の .run-toolbar と同じ形): 検索・再帰検索・タグの絞り込み。
-   収まらない分は次の行へ折り返す。 */
-.storage-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  min-height: 40px;
-  background: var(--surface);
-}
-/* 虫眼鏡 + 枠の無い入力欄。帯の中でも単独でも同じ形 (S3 パスで移動もこれ)。 */
-.storage-search {
-  display: flex;
-  flex: 1 1 320px;
-  align-items: center;
-  gap: 10px;
-  min-width: 200px;
-  padding: 0 4px 0 12px;
-  border-bottom: 1px solid var(--input-border);
-  background: var(--surface);
-  color: var(--muted);
-}
-.storage-search:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.storage-search > svg {
-  flex: none;
-}
-.storage-search > input {
-  flex: 1;
-  width: 100%;
-  padding: 10px 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-.storage-search > input:focus-visible {
-  outline: none;
-}
-/* 消すボタンは自前で持つので、ブラウザの × は出さない。 */
-.storage-search > input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-}
-.storage-toolbar-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  padding: 6px 12px;
-  border-left: 1px solid var(--background);
-  font-size: 12px;
-}
+/* 一覧の上の帯 (共通の部品の .toolbar・.toolbar-search・.toolbar-item): 検索・再帰検索・タグの絞り込み。
+   S3 パスで移動と README の全文検索も、単独の .toolbar-search を使う。 */
 .storage-toolbar-check {
   gap: 8px;
   white-space: nowrap;
@@ -529,7 +442,8 @@ tr.selected .storage-meter {
   table-layout: fixed;
 }
 .entry-table .entry-col-size {
-  width: 96px;
+  /* 「1,023.9 MiB」(桁区切りと 2 進の単位) が 1 行に収まる幅。 */
+  width: 112px;
 }
 .entry-table .entry-col-modified {
   width: 112px;
@@ -735,7 +649,7 @@ tr.selected .storage-meter {
   width: 88px;
 }
 .scan-table .scan-col-size {
-  width: 104px;
+  width: 112px;
 }
 .scan-table .scan-col-meter {
   width: 30%;
@@ -1018,7 +932,7 @@ tr.est-detail:hover > td {
 }
 
 /* タグ検索 (TagSearchView)。 */
-.tag-search .storage-toolbar {
+.tag-search .toolbar {
   margin-bottom: 16px;
 }
 .tag-search-prompt {
@@ -1305,7 +1219,7 @@ tr.capacity-trend-row:hover > td {
     width: 56px;
   }
   .tag-chip,
-  .connection-switcher-item,
+  .connection-switcher-menu .menu-item,
   .copy-menu-list .menu-item,
   .storage-toolbar-check,
   .s3-path-results a,
@@ -1315,7 +1229,7 @@ tr.capacity-trend-row:hover > td {
   .menu-item.copy-menu-item {
     justify-content: center;
   }
-  .storage-search .icon-button {
+  .toolbar-search .icon-button {
     flex: none;
   }
   .capacity-col-delta {
@@ -1348,16 +1262,6 @@ tr.capacity-trend-row:hover > td {
     min-width: 0;
     max-width: none;
   }
-  .storage-search {
-    flex-basis: 100%;
-  }
-  .storage-toolbar-item {
-    border-left: 0;
-    border-top: 1px solid var(--background);
-  }
-  .storage-toolbar-item + .storage-toolbar-item {
-    border-left: 1px solid var(--background);
-  }
   .storage-toolbar-end {
     margin-left: 0;
   }
@@ -1388,7 +1292,7 @@ tr.capacity-trend-row:hover > td {
     width: 72px;
   }
   .scan-table .scan-col-size {
-    width: 92px;
+    width: 104px;
   }
   .est-costs {
     grid-template-columns: max-content max-content;

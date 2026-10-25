@@ -253,12 +253,12 @@ export default function ConnectionsPage() {
           <span className="connection-name">
             <strong>{connection.name}</strong>
             {connection.isDefault && (
-              <span className="status-badge connection-default" title={translate('connectionsPage.storageOpensThisConnection')}>
+              <span className="status-badge status-accent" title={translate('connectionsPage.storageOpensThisConnection')}>
                 {translate('connectionsPage.default')}</span>
             )}
             {connection.visibility.mode === 'whitelist' && (
               <span
-                className="status-badge status-queued"
+                className="status-badge status-neutral"
                 title={translate('connectionsPage.usersAllowed', { value0: connection.visibility.allowedUsers.length })}
               >
                 {translate('connectionsPage.allowlistCount', { value0: connection.visibility.allowedUsers.length })}

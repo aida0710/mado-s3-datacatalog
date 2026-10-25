@@ -266,7 +266,7 @@ export function ScanModal({ connectionId, bucket, prefix, onClose, onResult }: P
             {!running && result && (
               <>
                 {result.partial && (
-                  <p className="notice storage-warning">
+                  <p className="notice warning">
                     {translate('scanModal.anErrorOccurredDuringTheScanTheSummary')}</p>
                 )}
                 <Breakdown

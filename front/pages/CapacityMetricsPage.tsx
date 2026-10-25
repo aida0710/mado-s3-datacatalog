@@ -266,7 +266,7 @@ function BucketMetrics({ connectionId, history, days, intervalSeconds, scanJob }
         <h3 title={history.bucket}>{history.bucket}</h3>
         <div className="capacity-bucket-actions">
           {scanJob && (
-            <span className={`status-badge ${scanJob.status === 'running' ? 'status-running' : 'status-queued'}`}>
+            <span className={`status-badge ${scanJob.status === 'running' ? 'status-info' : 'status-neutral'}`}>
               {scanJob.status === 'running' ? translate('capacityMetricsPage.scanningItems', { value0: fmtCount(scanJob.objectCount) }) : translate('capacityMetricsPage.waitingForMeasurement')}
             </span>
           )}

@@ -21,7 +21,7 @@ import { translate } from '../../i18n/translate'
 const nodeTypes = { lineage: LineageNode }
 
 // 強調した経路の矢印の色。矢印は辺ごとではなく共有の <marker> なので、色ごとに別の marker を使う。
-// 色は CSS の変数で渡し、テーマの切り替えに追従させる。ほかの矢印は --xy-edge-stroke (lineage.css)。
+// 色は CSS の変数で渡し、テーマの切り替えに追従させる。ほかの矢印は --xy-edge-stroke (デザインシステムの lineage.css)。
 const PATH_MARKER_COLOR = 'var(--link)'
 
 // ミニマップの四角の色を種類ごとに変えるための class (lineage.css)。
@@ -160,7 +160,7 @@ export function LineageGraph(props: Props) {
 
   return (
     <div className="lineage-graph">
-      <div className="lineage-toolbar lineage-graph__tools">
+      <div className="toolbar lineage-toolbar lineage-graph__tools">
         <div className="lineage-graph__search">
           <label className="lineage-search-field">
             <Search size={16} aria-hidden="true" />
@@ -174,14 +174,14 @@ export function LineageGraph(props: Props) {
             />
           </label>
           {searching && (
-            <div className="popover lineage-graph__results">
+            <div className="popover menu lineage-graph__results">
               {visibleResults.length === 0 ? (
                 <p className="muted">{translate('lineageGraph.noMatchingItems')}</p>
               ) : (
                 <ul>
                   {visibleResults.map(node => (
                     <li key={node.id}>
-                      <button type="button" onClick={() => { props.onSelect(node); setQuery('') }}>
+                      <button type="button" className="menu-item" onClick={() => { props.onSelect(node); setQuery('') }}>
                         <strong>{node.label}</strong>
                         <span className="lineage-kind" data-kind={node.kind}>
                           {LINEAGE_KIND_LABEL[node.kind]}{node.namespace ? ` · ${node.namespace}` : ''}
@@ -197,7 +197,7 @@ export function LineageGraph(props: Props) {
             </div>
           )}
         </div>
-        <div className="lineage-toolbar__item">
+        <div className="toolbar-item">
           <span>{translate('lineageGraph.traversalDirection')}</span>
           <div className="lineage-segmented" role="group" aria-label={translate('lineageGraph.traversalDirectionFromTheSelectedItem')}>
             {DIRECTIONS.map(option => (

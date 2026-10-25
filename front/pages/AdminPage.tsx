@@ -146,14 +146,14 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
 const OUTCOME_BADGES: Record<AuditEventRow['outcome'], string> = {
   pending: 'status-attention',
-  success: 'status-finished',
-  denied: 'status-failed',
-  failure: 'status-failed',
+  success: 'status-success',
+  denied: 'status-danger',
+  failure: 'status-danger',
 }
 
 const STATUS_BADGES: Record<'active' | 'disabled', string> = {
-  active: 'status-finished',
-  disabled: 'status-queued',
+  active: 'status-success',
+  disabled: 'status-neutral',
 }
 
 // 行のクリックで詳細を開く。行の中のボタンや入力欄は、それぞれの操作だけをする。

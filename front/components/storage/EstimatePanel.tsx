@@ -94,7 +94,7 @@ function CandidateRow({ c, expanded, onToggle }: {
                 : <ChevronRight size={14} aria-hidden="true" />}
               <span className="est-toggle-label">
                 <span>{label}</span>
-                {c.sameConnection && <span className="status-badge status-queued">{translate('estimatePanel.currentLocation')}</span>}
+                {c.sameConnection && <span className="status-badge status-neutral">{translate('estimatePanel.currentLocation')}</span>}
               </span>
             </button>
             {/* 警告は件数だけを名前の横に出し、全文は開いた行で読む。 */}
