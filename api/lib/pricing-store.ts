@@ -11,7 +11,7 @@
 import type { Pools } from '../db.js'
 import { CATALOG } from '../pricing/catalog.js'
 import type { PricingCatalog } from './pricing-types.js'
-import { STORAGE_CLASS_KEYS } from './pricing-types.js'
+import { MANUAL_FACT_NOTES, STORAGE_CLASS_KEYS } from './pricing-types.js'
 
 export type CatalogSource = 'bundled' | 'fetched'
 
@@ -51,7 +51,9 @@ export function looksLikeCatalog(v: unknown): v is PricingCatalog {
   // 構造を変えたときに古いキャッシュを弾くのがここの役目なので、
   // **新しく足したフィールドも必ず見る**。undefined のまま計算に入ると
   // NaN になり、費用が「-」や 0 として表示されてしまう。
+  const notes = c.manualFacts?.notes
   return typeof c.manualFacts?.verifiedOn === 'string'
+    && Array.isArray(notes) && notes.every(note => (MANUAL_FACT_NOTES as readonly unknown[]).includes(note))
     && entries.every(r =>
       Array.isArray(r?.egressTiers) &&
       STORAGE_CLASS_KEYS.every(k => {

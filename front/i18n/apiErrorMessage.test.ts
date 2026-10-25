@@ -31,6 +31,15 @@ describe('API のエラー応答の文', () => {
     ])
   })
 
+  it('入力の誤りは、英語の画面では API の文をそのまま、日本語の画面では案内の後に API の文を括弧で添える', () => {
+    setLocale('ja')
+    const message = apiErrorMessage({ error: 'bucket is required', code: 'invalid_request' })
+    expect(message).toBe('入力内容を確認してください。（bucket is required）')
+    setLocale('en')
+    expect(localizeMessage(message!)).toBe('bucket is required')
+    expect(apiErrorMessage({ error: 'invalid catalog query', code: 'invalid_request' })).toBe('invalid catalog query')
+  })
+
   it('訳の無い code は API の英語の文をそのまま出す', () => {
     setLocale('ja')
     expect(apiErrorMessage({ error: 'user not found', code: 'not_found' })).toBe('user not found')

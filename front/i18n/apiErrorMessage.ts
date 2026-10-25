@@ -37,6 +37,8 @@ function capabilityName(capability: unknown): MessageValue {
 const MESSAGE_VALUES: Partial<Record<TranslatedApiErrorCode, (body: ApiErrorBody) => Record<string, MessageValue>>> = {
   capability_disabled: body => ({ value0: capabilityName(body.capability) }),
   analysis_failed: body => ({ value0: String(body.reason ?? '') }),
+  // 入力の誤りは API の文が何を直せばよいかを書いている。英語の画面はそのまま、日本語の画面は案内の後に添える。
+  invalid_request: body => ({ value0: body.error }),
 }
 
 function rememberedSource(key: ApiErrorMessageKey, messageValues: Record<string, MessageValue>): TranslationSource {

@@ -4,6 +4,7 @@ import type {
   LineageProjectionStatus,
   LineageRunDetail,
   LineageSearchResponse,
+  LineageWarning,
   LogicalLineageEdge,
   LogicalLineageGraph,
   LogicalLineageNode,
@@ -77,12 +78,12 @@ function edgeKind(
   return 'lineage'
 }
 
-function unavailableProjection(message: string): LineageProjectionStatus {
+function unavailableProjection(code: NonNullable<LineageProjectionStatus['code']>): LineageProjectionStatus {
   return {
     state: 'unavailable',
     pendingEvents: null,
     oldestPendingAt: null,
-    message,
+    code,
   }
 }
 
@@ -99,12 +100,12 @@ export function createLineageService(deps: {
     try {
       return await deps.registry.getProjectionStatus()
     } catch {
-      return unavailableProjection('Registry projection status is unavailable')
+      return unavailableProjection('registryProjectionUnavailable')
     }
   }
 
   const logicalGraph = async (query: LogicalGraphQuery): Promise<LogicalLineageGraph> => {
-    const warnings: string[] = []
+    const warnings: LineageWarning[] = []
     const root = {
       kind: query.kind,
       namespace: query.namespace,
@@ -120,7 +121,7 @@ export function createLineageService(deps: {
       const rootIsNotProjected = error instanceof MarquezClientError
         && error.code === 'not_found'
       if (!rootIsNotProjected) {
-        warnings.push('Marquez lineage projection is unavailable')
+        warnings.push({ code: 'marquezProjectionUnavailable' })
       }
       let rootRegistry: RegistryDatasetSummary | null = null
       if (query.kind === 'dataset') {
@@ -129,7 +130,7 @@ export function createLineageService(deps: {
             { namespace: query.namespace, name: query.name },
           ]))[0] ?? null
         } catch {
-          warnings.push('Registry dataset enrichment is unavailable')
+          warnings.push({ code: 'registryEnrichmentUnavailable' })
         }
       }
       return {
@@ -148,7 +149,7 @@ export function createLineageService(deps: {
         edges: [],
         projection: rootIsNotProjected
           ? await projectionPromise
-          : unavailableProjection('Marquez lineage projection is unavailable'),
+          : unavailableProjection('marquezProjectionUnavailable'),
         warnings,
       }
     }
@@ -162,7 +163,7 @@ export function createLineageService(deps: {
     try {
       resolved = await deps.registry.resolveDatasets(identities)
     } catch {
-      warnings.push('Registry dataset enrichment is unavailable')
+      warnings.push({ code: 'registryEnrichmentUnavailable' })
     }
     const registryByIdentity = new Map(
       resolved.map(item => [registryKey(item.namespace, item.name), item]),
@@ -173,7 +174,7 @@ export function createLineageService(deps: {
     for (const node of rawNodes) {
       const identity = nodeIdentity(node)
       if (!identity) {
-        warnings.push(`Skipped malformed Marquez node: ${node.id}`)
+        warnings.push({ code: 'malformedMarquezNode', nodeId: node.id })
         continue
       }
       const registry = node.type === 'DATASET'
@@ -223,13 +224,13 @@ export function createLineageService(deps: {
   const search = async (
     query: { q: string; namespace?: string; limit: number },
   ): Promise<LineageSearchResponse> => {
-    const warnings: string[] = []
+    const warnings: LineageWarning[] = []
     const [registryResult, marquezResult] = await Promise.allSettled([
       deps.registry.searchDatasets(query),
       deps.marquez.search(query),
     ])
-    if (registryResult.status === 'rejected') warnings.push('Registry search is unavailable')
-    if (marquezResult.status === 'rejected') warnings.push('Marquez search is unavailable')
+    if (registryResult.status === 'rejected') warnings.push({ code: 'registrySearchUnavailable' })
+    if (marquezResult.status === 'rejected') warnings.push({ code: 'marquezSearchUnavailable' })
 
     const byId = new Map<string, LineageSearchResponse['results'][number]>()
     if (marquezResult.status === 'fulfilled') {

@@ -70,15 +70,26 @@ export interface LineageProjectionStatus {
   state: 'synced' | 'lagging' | 'unavailable'
   pendingEvents: number | null
   oldestPendingAt: string | null
+  /** 反映状態を取れなかった理由。画面は code で訳す。 */
+  code?: 'registryProjectionUnavailable' | 'marquezProjectionUnavailable'
+  /** Dataset Registry が返した説明。外部の文なのでそのまま出す。 */
   message?: string
 }
+
+/** グラフと検索の警告。画面は code で訳し、横の値を文に入れる (front/i18n/noticeMessages.ts)。 */
+export type LineageWarning =
+  | { code: 'marquezProjectionUnavailable' }
+  | { code: 'registryEnrichmentUnavailable' }
+  | { code: 'malformedMarquezNode'; nodeId: string }
+  | { code: 'registrySearchUnavailable' }
+  | { code: 'marquezSearchUnavailable' }
 
 export interface LogicalLineageGraph {
   root: LineageNodeRef
   nodes: LogicalLineageNode[]
   edges: LogicalLineageEdge[]
   projection: LineageProjectionStatus
-  warnings: string[]
+  warnings: LineageWarning[]
 }
 
 export interface VersionGraphNode {
@@ -185,7 +196,7 @@ export interface LineageSearchResult {
 export interface LineageSearchResponse {
   results: LineageSearchResult[]
   totalCount: number
-  warnings: string[]
+  warnings: LineageWarning[]
 }
 
 export interface OpenLineageIngestResult {

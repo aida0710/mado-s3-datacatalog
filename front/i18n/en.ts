@@ -865,7 +865,7 @@ export const englishMessages = {
   "apiErrors.invalid_cursor": "Could not load the next page. Open the list again from the first page.",
   "apiErrors.invalid_dataset_id": "Check the Dataset ID.",
   "apiErrors.invalid_reference": "Check the referenced data and your input.",
-  "apiErrors.invalid_request": "Check your input.",
+  "apiErrors.invalid_request": "{value0}",
   "apiErrors.media_worker_unavailable": "Could not connect to the media worker.",
   "apiErrors.readme_read_required": "Enable README reading before allowing edits.",
   "apiErrors.registry_not_linked": "This connection is not linked to a Dataset Registry.",
@@ -963,7 +963,7 @@ export const englishMessages = {
   "pricingNotes.deepArchiveStorageRate": "Glacier Deep Archive storage rates (the pricing API does not provide these, so the equivalent Intelligent-Tiering Deep Archive Access rate is used)",
   "pricingNotes.wasabiManualRates": "Wasabi rates and policies (all maintained manually because Wasabi does not publish a pricing API)",
   "transferWarnings.ratesUnavailable": "Pricing for region {value0} is not available in the catalog. The cost is shown as 0, which does not mean it is free. Enter a price in the connection settings or update the catalog.",
-  "transferWarnings.minDuration": "Minimum retention: {value0} days. Deleting within {value1} days still incurs charges for {value2} days.",
+  "transferWarnings.minDuration": "Minimum retention: {value0} days. Deleting within {value0} days still incurs charges for {value0} days.",
   "transferWarnings.retrievalCost": "Retrieval costs {value0}/GB for this storage class. Reading the data again can offset the lower monthly storage cost.",
   "transferWarnings.archiveRetrievalTime": "Retrieval is not immediate. It can take minutes to more than twelve hours after a request.",
   "transferWarnings.sourceArchiveRestore": "The source uses an archive storage class and must be restored before transfer. The restore wait time is excluded from this estimate.",
@@ -1015,5 +1015,5 @@ export const singularEnglishMessages: Partial<Record<keyof typeof japaneseMessag
   "previewArchive.items": " item · ",
   "previewArchive.requests": " · {value0} request",
   "tarEntryModal.rows": "{value0} row",
-  "transferWarnings.minDuration": "Minimum retention: {value0} day. Deleting within {value1} day still incurs charges for {value2} day."
+  "transferWarnings.minDuration": "Minimum retention: {value0} day. Deleting within {value0} day still incurs charges for {value0} day."
 }

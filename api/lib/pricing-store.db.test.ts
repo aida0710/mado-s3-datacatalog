@@ -61,6 +61,12 @@ describe('looksLikeCatalog', () => {
     expect(looksLikeCatalog(old)).toBe(false)
   })
 
+  it('手入力の注記が code でなければ弾く (文で持っていた古いキャッシュ)', () => {
+    const old = structuredClone(CATALOG) as unknown as { manualFacts: { notes: string[] } }
+    old.manualFacts.notes = ['AWS の最小保存期間 (Standard-IA / One Zone-IA は 30 日)']
+    expect(looksLikeCatalog(old)).toBe(false)
+  })
+
   it('Wasabi の単価が無ければ弾く', () => {
     const broken = structuredClone(CATALOG) as { wasabi: { perTbMonthUsd?: number } }
     delete broken.wasabi.perTbMonthUsd

@@ -144,10 +144,10 @@ describe('LineagePage', () => {
   })
 
   it('打ち切りと backend の警告を出す', async () => {
-    vi.mocked(api.lineageGraph).mockResolvedValue({ ...graph, truncated: true, warnings: ['Marquez is stale'] })
+    vi.mocked(api.lineageGraph).mockResolvedValue({ ...graph, truncated: true, warnings: [{ code: 'registryEnrichmentUnavailable' }] })
     renderPage('/lineage?namespace=speech&name=raw')
     expect(await screen.findByText(/表示範囲を広げる/)).toBeInTheDocument()
-    expect(screen.getByText('Marquez is stale')).toBeInTheDocument()
+    expect(screen.getByText('台帳からデータセットの補足情報を取得できません。')).toBeInTheDocument()
   })
 
   it('取得に失敗しても白紙にせず理由を出す', async () => {

@@ -21,10 +21,10 @@ export const CATALOG: PricingCatalog = {
   "manualFacts": {
     "verifiedOn": "2026-08-22",
     "notes": [
-      "AWS の最小保存期間 (Standard-IA / One Zone-IA は 30 日、Glacier IR / FR は 90 日、Deep Archive は 180 日)",
-      "AWS の最小課金サイズ (IA 系と Glacier IR は 128KB) と、Glacier FR / Deep Archive でオブジェクトごとに加算される 40KB",
-      "Glacier Deep Archive のストレージ単価 (料金 API に無いため、同額の Intelligent-Tiering Deep Archive Access 層で代用)",
-      "Wasabi の単価とポリシー (料金 API を公開していないため全て手入力)"
+      "awsMinimumRetention",
+      "awsMinimumBillableSize",
+      "deepArchiveStorageRate",
+      "wasabiManualRates"
     ],
     "sources": [
       "https://aws.amazon.com/s3/storage-classes/",

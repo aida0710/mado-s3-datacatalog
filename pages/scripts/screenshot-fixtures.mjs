@@ -85,7 +85,6 @@ const SAMPLE_TEXT = {
       segments: { displayName: '分割した音声', description: '発話ごとに分割した音声' },
     },
     denoiseJob: { label: 'ノイズ除去', description: '音声から背景ノイズを除去' },
-    estimateNote: 'スクリーンショット用のサンプル見積もり',
     accessTokenDescription: '音声処理のOpenLineage送信',
     missingResponse: 'この画面用のサンプル応答はありません',
   },
@@ -130,7 +129,6 @@ You can follow how the data was processed from **DataLineage**.`,
       segments: { displayName: 'Audio segments', description: 'Audio split by utterance' },
     },
     denoiseJob: { label: 'Noise reduction', description: 'Removes background noise from audio' },
-    estimateNote: 'Sample estimate for screenshots',
     accessTokenDescription: 'Sends OpenLineage events from audio processing',
     missingResponse: 'There is no sample response for this screen',
   },
@@ -205,7 +203,7 @@ function transferEstimate(text) {
   return {
     source: { connectionId: 'demo', name: 'Research storage', provider: 'onprem', storageClass: null, storageClassLabel: null },
     scan: { objectCount: scan.objectCount, totalBytes: scan.totalBytes, scannedAt: capturedAt },
-    catalog: { asOf: '2026-10-08', awsPublishedAt: null, source: 'bundled', fetchedAt: null, stale: false, manualFacts: { verifiedOn: '2026-10-08', notes: [text.estimateNote], sources: [] } },
+    catalog: { asOf: '2026-10-08', awsPublishedAt: null, source: 'bundled', fetchedAt: null, stale: false, manualFacts: { verifiedOn: '2026-10-08', notes: ['awsMinimumRetention'], sources: [] } },
     candidates: [
       { connectionId: 'archive', name: 'Archive storage', provider: 'onprem', storageClass: null, storageClassLabel: null, sameConnection: false, durationSec: { optimistic: 2304, pessimistic: 4608 }, upfront: { egress: 0, retrieval: 0, getRequests: 0, putRequests: 0, total: 0 }, monthlyUsd: 0, billableBytes: scan.totalBytes, putRequestCount: scan.objectCount, avgObjectBytes: scan.totalBytes / scan.objectCount, warnings: [] },
       { connectionId: 'aws', name: 'AWS S3', provider: 'aws', storageClass: 'STANDARD', storageClassLabel: 'S3 Standard', sameConnection: false, durationSec: { optimistic: 3456, pessimistic: 6912 }, upfront: { egress: 0, retrieval: 0, getRequests: 0, putRequests: 0.06, total: 0.06 }, monthlyUsd: 2.02, billableBytes: scan.totalBytes, putRequestCount: scan.objectCount, avgObjectBytes: scan.totalBytes / scan.objectCount, warnings: [] },
@@ -238,10 +236,10 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
     namespaces: ['sample-audio'], status: 'active',
     createdAt: capturedAt, expiresAt: null, regeneratedAt: null, lastUsedAt: capturedAt, revision: 1,
   }] })
-  if (path === '/api/internal/audit-events') return sendJson({ events: [], nextBeforeId: null })
+  if (path === '/api/internal/audit-events') return sendJson({ events: [], nextCursor: null })
   if (path === '/api/internal/lineage/catalog') {
     const datasets = registryDatasets(text)
-    return sendJson({ results: datasets, totalCount: datasets.length })
+    return sendJson({ results: datasets, totalCount: datasets.length, nextCursor: null })
   }
   if (path === '/api/internal/lineage/graph') return sendJson(lineageGraph(text))
   if (path.endsWith('/lineage/resolve-location')) return sendJson({ storageSystemKey: 'demo', uri: `s3://${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`, matches: [] })
@@ -254,7 +252,7 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (suffix.startsWith('/readme/history/')) return sendJson({ id: 3, bucket: SAMPLE_BUCKET, prefix: SAMPLE_PREFIX, body: text.readmeBody, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 })
   if (suffix === '/list') {
     const prefix = url.searchParams.get('prefix') ?? ''
-    return sendJson({ directories: prefix ? ['samples/train/', 'samples/validation/'] : ['samples/', 'train/', 'validation/', 'test/'], files: prefix ? filenames.map(([name, size]) => ({ key: `${prefix}${name}`, size, lastModified: capturedAt })) : [], nextContinuation: null, nextStartAfter: null, cache: { fetchedAt: capturedAt, expiresAt: new Date(Date.now() + 86400000).toISOString(), hit: false } })
+    return sendJson({ directories: prefix ? ['samples/train/', 'samples/validation/'] : ['samples/', 'train/', 'validation/', 'test/'], files: prefix ? filenames.map(([name, size]) => ({ key: `${prefix}${name}`, size, lastModified: capturedAt })) : [], nextCursor: null, cache: { fetchedAt: capturedAt, expiresAt: new Date(Date.now() + 86400000).toISOString(), hit: false } })
   }
   if (suffix === '/preview/text' || (suffix === '/preview/tar-entry' && url.searchParams.get('entry')?.endsWith('.json'))) return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ id: 'sample-001', filename: 'original.wav', sample_rate: 48000, channels: 1, duration_seconds: 12, language, processing: { noise_reduction: true, version: '1.0' }, split: 'validation' }, null, 2) })
   if (suffix === '/preview/image' || suffix === '/media/spectrogram') return route.fulfill({ contentType: 'image/png', body: media.spectrogram })

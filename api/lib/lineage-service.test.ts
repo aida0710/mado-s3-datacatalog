@@ -67,8 +67,8 @@ describe('lineage service', () => {
       kind: 'dataset', namespace: 'speech', name: 'raw', depth: 3,
     })
     expect(graph.nodes).toHaveLength(1)
-    expect(graph.projection.state).toBe('unavailable')
-    expect(graph.warnings[0]).toContain('Marquez')
+    expect(graph.projection).toMatchObject({ state: 'unavailable', code: 'marquezProjectionUnavailable' })
+    expect(graph.warnings).toEqual([{ code: 'marquezProjectionUnavailable' }])
   })
 
   it('Run未接続DatasetのMarquez 404は正常な空グラフとして返す', async () => {
