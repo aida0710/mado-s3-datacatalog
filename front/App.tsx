@@ -1,5 +1,6 @@
 import { lazy, Suspense, type CSSProperties, type ReactNode } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
+import { NavigationSidebar, useNavigationLayout } from '@mado/design-system/react'
 import HomePage from './pages/HomePage'
 import StoragePage from './pages/StoragePage'
 import StorageLanding from './pages/StorageLanding'
@@ -7,9 +8,8 @@ import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { PlayerDeckProvider, usePlayerDeck } from './lib/playerDeck'
 import { PinnedPreviewsProvider, usePinnedPreviews } from './lib/pinnedPreviews'
-import { useNavigation } from './lib/useNavigation'
 import { BottomDock } from './components/BottomDock'
-import { NavigationSidebar } from './components/shell/NavigationSidebar'
+import { NavigationLinkList } from './components/shell/NavigationLinkList'
 import { TopBar } from './components/shell/TopBar'
 import './App.css'
 import { useLocale } from './i18n/useLocale'
@@ -43,13 +43,13 @@ function MainContent({ children }: { children: ReactNode }) {
 }
 
 /**
- * 画面の枠。mado ML Tracking と同じ形 (@mado/design-system の shell.css):
- * 上部バー、左のサイドバー (1200px 以上は名前つき、900px 以上はアイコンだけ、
- * それ未満は上部バーのメニューボタンから開くドロワー)、その右に画面。
+ * 画面の枠 (@mado/design-system の shell.css と React の部品): 上部バー、左のサイドバー
+ * (1200px 以上は名前つき、900px 以上はアイコンだけ、それ未満は上部バーのメニューボタンから開く
+ * ドロワー)、その右に画面。サイドバーの幅と畳んだかどうかは mado.navigation.* に保存する。
  */
 export default function App() {
   useLocale()
-  const navigation = useNavigation()
+  const navigation = useNavigationLayout({ storageKeyPrefix: 'mado.navigation' })
   return (
     <PlayerDeckProvider>
       <PinnedPreviewsProvider>
@@ -60,7 +60,18 @@ export default function App() {
         >
           <TopBar navigation={navigation} />
           <div className="app-body">
-            {navigation.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
+            {navigation.mode !== 'drawer' && (
+              <NavigationSidebar
+                layout={navigation}
+                labels={{
+                  sidebar: translate('navigationSidebar.label'),
+                  expand: translate('navigationSidebar.expandSidebar'),
+                  collapse: translate('navigationSidebar.showSidebarIconsOnly'),
+                  width: translate('navigationResizeHandle.sidebarWidth'),
+                }}
+                renderLinks={({ showsTitles }) => <NavigationLinkList showsTitles={showsTitles} />}
+              />
+            )}
             <div className="app-content">
               <MainContent>
                 <Suspense fallback={<p className="state-message">{translate('common.loading')}</p>}>

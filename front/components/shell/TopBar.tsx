@@ -1,13 +1,13 @@
-import { LanguagePicker } from '../LanguagePicker'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LogOut, Moon, Sun } from 'lucide-react'
+import { initialsOf } from '@mado/design-system/format'
+import { NavigationDrawer, useTheme, type NavigationLayout } from '@mado/design-system/react'
+import { LanguagePicker } from '../LanguagePicker'
 import { useAuth } from '../../lib/auth-context'
-import { initials } from '../../lib/initials'
-import type { Navigation } from '../../lib/useNavigation'
-import { useTheme } from '../../lib/useTheme'
+import { THEME_STORAGE_KEY } from '../../lib/theme'
 import { useIsCompact } from '../../lib/useIsCompact'
-import { NavigationDrawer } from './NavigationDrawer'
+import { NavigationLinkList } from './NavigationLinkList'
 import { PRODUCT_FULL_NAME, ProductLogo } from './ProductLogo'
 import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
@@ -17,10 +17,10 @@ import { translate } from '../../i18n/translate'
  * 上部バー: アプリ名、テーマの切り替え、ログイン中の利用者とサインアウト。画面の切り替えは
  * サイドバーにあり、md (900px) 未満ではこのバーのメニューボタンからドロワーで開く。
  */
-export function TopBar({ navigation }: { navigation: Navigation }) {
+export function TopBar({ navigation }: { navigation: NavigationLayout }) {
   useLocale()
   const { user, logout } = useAuth()
-  const theme = useTheme()
+  const theme = useTheme({ storageKey: THEME_STORAGE_KEY })
   const compact = useIsCompact()
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
@@ -40,7 +40,18 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
     <>
       <a className="skip-link" href="#content">{translate('topBar.skipToContent')}</a>
       <header className="topbar">
-        {navigation.mode === 'drawer' && <NavigationDrawer />}
+        {navigation.mode === 'drawer' && (
+          <NavigationDrawer
+            labels={{
+              open: translate('navigationDrawer.openMenu'),
+              close: translate('navigationDrawer.closeMenu'),
+              navigation: translate('common.mainNavigation'),
+            }}
+            header={<ProductLogo />}
+          >
+            <NavigationLinkList />
+          </NavigationDrawer>
+        )}
         <Link to="/" className="brand" aria-label={translate('topBar.goToHome', { value0: PRODUCT_FULL_NAME })}><ProductLogo compact={compact} /></Link>
         <div className="topbar-actions">
           <LanguagePicker />
@@ -61,7 +72,7 @@ export function TopBar({ navigation }: { navigation: Navigation }) {
                 aria-label={translate('topBar.sAccount', { value0: user.displayName })}
                 title={user.displayName}
               >
-                {initials(user.displayName)}
+                {initialsOf(user.displayName)}
               </Link>
               <button
                 type="button"

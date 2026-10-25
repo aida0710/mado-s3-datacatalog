@@ -738,6 +738,7 @@ export const japaneseMessages = {
   "navigationDrawer.openMenu": "メニューを開く",
   "navigationResizeHandle.sidebarWidth": "サイドバーの幅",
   "navigationSidebar.expandSidebar": "サイドバーを広げる",
+  "navigationSidebar.label": "サイドバー",
   "navigationSidebar.showSidebarIconsOnly": "サイドバーをアイコンだけにする",
   "noteEditPage.editNote": "ノートを編集",
   "noteEditPage.noteContentMarkdown": "ノート本文 (Markdown)",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useDocumentTheme } from '../lib/useDocumentTheme'
+import { useDocumentTheme } from '@mado/design-system/react'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 

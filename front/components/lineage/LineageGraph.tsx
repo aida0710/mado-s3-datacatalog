@@ -4,9 +4,9 @@ import {
   type NodeMouseHandler, useReactFlow,
 } from '@xyflow/react'
 import { Search } from 'lucide-react'
+import { narrowerThan } from '@mado/design-system/layout'
+import { useMediaQuery } from '@mado/design-system/react'
 import type { LineageGraph as LineageGraphDto, LineageNodeSummary } from '../../lib/api/types'
-import { narrowerThan } from '../../lib/breakpoints'
-import { useMediaQuery } from '../../lib/useMediaQuery'
 import { toFlowElements, type LineageFlowNode } from '../../lib/lineage/graphModel'
 import {
   searchLineageNodes, traceLineagePath, type LineageDirection,

@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
-import { BREAKPOINT_PX } from '../lib/breakpoints'
+import { BREAKPOINT_PX } from '@mado/design-system/layout'
 
 // 色・余白の値は @mado/design-system の変数を使い、画面幅の切り替え点も mado ML Tracking と
 // 揃える、という決まりを styles/ と App.css に対して確かめる。

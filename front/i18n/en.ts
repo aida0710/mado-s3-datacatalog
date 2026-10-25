@@ -740,6 +740,7 @@ export const englishMessages = {
   "navigationDrawer.openMenu": "Open menu",
   "navigationResizeHandle.sidebarWidth": "Sidebar width",
   "navigationSidebar.expandSidebar": "Expand sidebar",
+  "navigationSidebar.label": "Sidebar",
   "navigationSidebar.showSidebarIconsOnly": "Show sidebar icons only",
   "noteEditPage.editNote": "Edit note",
   "noteEditPage.noteContentMarkdown": "Note content (Markdown)",

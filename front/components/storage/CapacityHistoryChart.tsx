@@ -2,10 +2,10 @@ import {
   CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer,
   Tooltip, XAxis, YAxis,
 } from 'recharts'
+import { useDocumentTheme } from '@mado/design-system/react'
 import type { CapacityPoint } from '../../lib/api/types'
 import { capacityChartData, type CapacityChartPoint } from '../../lib/capacityChart'
 import { fmtCapacityBytes, fmtCount, fmtDateTimeWithSeconds } from '../../lib/format'
-import { useDocumentTheme } from '../../lib/useDocumentTheme'
 import { getIntlLocale } from '../../i18n/locale'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'

@@ -1,5 +1,5 @@
-import { narrowerThan } from './breakpoints'
-import { useMediaQuery } from './useMediaQuery'
+import { narrowerThan } from '@mado/design-system/layout'
+import { useMediaQuery } from '@mado/design-system/react'
 
 /**
  * 640px 未満 (スマホ) なら true。一覧の表の列を減らすのに使う。
