@@ -20,7 +20,7 @@ const rect = (top: number, bottom: number): DOMRect =>
 
 describe('CopyMenu - ダウンロード項目の揃え', () => {
   // ダウンロード項目 (<a>) は親の td の text-align: right を継承して右寄せにならないよう、
-  // コピー項目 (<button>) と同じ項目の形 (左寄せを明示した class) を使う。
+  // コピー項目 (<button>) と同じ共通の項目の形 (左寄せを明示した .menu-item) を使う。
   it('ダウンロードのリンクもコピー項目と同じ形 (左寄せ) になる', async () => {
     const user = userEvent.setup()
     const items: MenuItem[] = [
@@ -31,8 +31,8 @@ describe('CopyMenu - ダウンロード項目の揃え', () => {
     await user.click(screen.getByRole('button', { name: 'アクション' }))
     const dl = screen.getByRole('menuitem', { name: 'このファイルをダウンロード' })
     const copy = screen.getByRole('menuitem', { name: /S3 URL をコピー/ })
-    expect(dl.className).not.toBe('')
-    expect(dl.className).toBe(copy.className)
+    expect(dl).toHaveClass('menu-item')
+    expect(copy).toHaveClass('menu-item')
   })
 })
 
@@ -58,23 +58,23 @@ describe('CopyMenu - キーボードで閉じる', () => {
   })
 })
 
-describe('CopyMenu - 開く向き (portal + fixed)', () => {
+describe('CopyMenu - 開く向き (トップレイヤー + fixed)', () => {
   const items: MenuItem[] = [
     { kind: 'copy', label: 'A', value: 'a' },
     { kind: 'copy', label: 'B', value: 'b' },
   ]
 
-  it('メニューは行の外に fixed で描く (body へ portal)', async () => {
+  it('メニューは popover としてトップレイヤーに開き、DOM の上ではトリガーのそばに置く', async () => {
     const user = userEvent.setup()
     const { container } = render(<CopyMenu items={items} />)
     const trigger = screen.getByRole('button', { name: 'アクション' })
     vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(rect(80, 100))
     await user.click(trigger)
     const menu = screen.getByRole('menu')
-    // overflow ラッパーにクリップされないよう body 直下に portal される。
-    expect(container).not.toContainElement(menu)
-    expect(document.body).toContainElement(menu)
-    expect(menu.style.position).toBe('fixed')
+    // overflow ラッパーにクリップされないようトップレイヤーに出しつつ、モーダルのダイアログの
+    // 中から開いても操作できるよう、部品の中に置く。
+    expect(menu).toHaveAttribute('popover', 'manual')
+    expect(container).toContainElement(menu)
   })
 
   it('トリガーの下に余裕があれば下に開く', async () => {
@@ -84,8 +84,8 @@ describe('CopyMenu - 開く向き (portal + fixed)', () => {
     vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(rect(80, 100))
     await user.click(trigger)
     const menu = screen.getByRole('menu')
-    expect(menu.style.top).not.toBe('') // r.bottom + gap
-    expect(menu.style.bottom).toBe('')
+    expect(menu.style.top).not.toBe('auto') // r.bottom + gap
+    expect(menu.style.bottom).toBe('auto')
   })
 
   it('トリガーが画面下端に近ければ上に開く', async () => {
@@ -96,8 +96,8 @@ describe('CopyMenu - 開く向き (portal + fixed)', () => {
     vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(rect(740, 760))
     await user.click(trigger)
     const menu = screen.getByRole('menu')
-    expect(menu.style.bottom).not.toBe('')
-    expect(menu.style.top).toBe('')
+    expect(menu.style.bottom).not.toBe('auto')
+    expect(menu.style.top).toBe('auto')
   })
 })
 

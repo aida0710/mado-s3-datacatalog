@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, Link, Pin } from 'lucide-react'
+import { useCodeLanguage } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { classifyEntry } from '../lib/api/mime'
 import { fmtSize, prettyPrintJson } from '../lib/format'
@@ -8,7 +9,7 @@ import { absoluteUrl, tarEntryWebUrl } from '../lib/route'
 import { copyToClipboard } from '../lib/clipboard'
 import { usePinnedPreviews } from '../lib/pinnedPreviews'
 import { TEXT_HEAD_BYTES } from '../lib/textSniff'
-import { useCodeLanguage } from '../lib/useCodeLanguage'
+import { CODE_LANGUAGE_STORAGE_KEY } from '../lib/codeLanguage'
 import { useSniffedText } from '../lib/useSniffedText'
 import { CodeFormatSelect, CodeView } from './CodeView'
 import { CopyMenu, type MenuItem } from './CopyMenu'
@@ -165,7 +166,7 @@ function TextBody({ url, name, actions }: { url: string; name: string; actions: 
 function LoadedText({ name, text, actions }: { name: string; text: string; actions: ReactNode }) {
   useLocale()
   const [copied, setCopied] = useState<boolean | null>(null)
-  const code = useCodeLanguage(name, text)
+  const code = useCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName: name, text })
 
   // 末尾の改行で行数が余分に増えないようにする。
   const trimmed = text.endsWith('\n') ? text.slice(0, -1) : text

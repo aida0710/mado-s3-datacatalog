@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
+import { useCodeLanguage } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
 import { copyToClipboard } from '../lib/clipboard'
-import { useCodeLanguage } from '../lib/useCodeLanguage'
+import { CODE_LANGUAGE_STORAGE_KEY } from '../lib/codeLanguage'
 import { useSniffedText } from '../lib/useSniffedText'
 import { CodeFormatSelect, CodeView } from './CodeView'
 import { UnsupportedPreview } from './UnsupportedPreview'
@@ -23,7 +24,7 @@ export function PreviewText({ connectionId, bucket, k }: { connectionId: string;
 function TextBody({ name, text }: { name: string; text: string }) {
   useLocale()
   const [copied, setCopied] = useState<boolean | null>(null)
-  const code = useCodeLanguage(name, text)
+  const code = useCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName: name, text })
 
   const handleCopy = async () => {
     setCopied(await copyToClipboard(text))
