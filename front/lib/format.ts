@@ -1,25 +1,12 @@
-// 複数コンポーネントで共有する表示フォーマッター。
+// 複数コンポーネントで共有する表示フォーマッター。表示言語は i18n のストアから読む。
 
+import { formatBytes, formatRelativeTime } from '@mado/design-system/format'
 import { getIntlLocale, getLocale } from '../i18n/locale'
 import { translate } from '../i18n/translate'
-export function fmtSize(n: number): string {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`
-  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`
-  if (n < 1024 ** 4) return `${(n / 1024 ** 3).toFixed(1)} GB`
-  // 配下の集計で TB / PB 規模を扱う (dataset は 774 TB)。GB 頭打ちだと
-  // 「793,530.4 GB」になって桁が読めない。
-  if (n < 1024 ** 5) return `${(n / 1024 ** 4).toFixed(1)} TB`
-  return `${(n / 1024 ** 5).toFixed(1)} PB`
-}
 
-// 容量メトリクスの値。fmtSize と違い 2 進接頭辞 (KiB) で、桁区切りを付ける。
-// 走査が数えた正確なバイト数を、グラフの軸と同じ単位で読めるようにするため。
-export function fmtCapacityBytes(bytes: number, maximumFractionDigits = 2): string {
-  if (bytes === 0) return '0 B'
-  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
-  const unit = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
-  return `${(bytes / 1024 ** unit).toLocaleString(getIntlLocale(), { maximumFractionDigits })} ${units[unit]}`
+/** バイト数を「1.5 MiB」の形にする (デザインシステムの formatBytes。1024 で割るので 2 進の単位)。 */
+export function fmtSize(bytes: number): string {
+  return formatBytes(bytes, getIntlLocale())
 }
 
 // 前回の計測からの増減。「+1.5 GiB (+3.2%)」。前回が 0 バイトなら率は出さない。
@@ -28,7 +15,7 @@ export function fmtCapacityDelta({ current, previous }: { current: number; previ
   const sign = delta >= 0 ? '+' : '−'
   const rate = previous > 0 ? delta / previous * 100 : null
   const rateText = rate == null ? '' : ` (${rate >= 0 ? '+' : ''}${rate.toFixed(1)}%)`
-  return `${sign}${fmtCapacityBytes(Math.abs(delta))}${rateText}`
+  return `${sign}${fmtSize(Math.abs(delta))}${rateText}`
 }
 
 /** 件数・個数を、表示言語の桁区切りで書く。 */
@@ -99,32 +86,6 @@ export function fmtDateTime(value: string | Date): string {
   })
 }
 
-const RELATIVE_MESSAGES = {
-  second: 'relativeTime.secondsAgo',
-  minute: 'format.minutesAgo',
-  hour: 'format.hoursAgo',
-  day: 'format.daysAgo',
-} as const
-
-function formatTimeAgo(amount: number, unit: keyof typeof RELATIVE_MESSAGES): string {
-  if (getLocale() === 'en') {
-    return new Intl.RelativeTimeFormat(getIntlLocale(), { numeric: 'always' }).format(-amount, unit)
-  }
-  return translate(RELATIVE_MESSAGES[unit], { value0: amount })
-}
-
-export function fmtAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime()
-  const s = Math.max(0, Math.floor(ms / 1000))
-  if (s < 60) return formatTimeAgo(s, 'second')
-  const m = Math.floor(s / 60)
-  if (m < 60) return formatTimeAgo(m, 'minute')
-  const h = Math.floor(m / 60)
-  if (h < 24) return formatTimeAgo(h, 'hour')
-  const d = Math.floor(h / 24)
-  return formatTimeAgo(d, 'day')
-}
-
 // 一覧ヘッダ上の CacheBanner 用。「2026/08/18 16:14(2時間前)」のように
 // 絶対時刻と相対時刻を併記する。絶対時刻だけだと「古いのか」が瞬時に分からず、
 // 相対時刻だけだと正確な時点が分からないので両方出す。
@@ -151,12 +112,8 @@ export function fmtCacheAge(d: Date, now: Date = new Date(), opts: CacheAgeOptio
           }))
     : fmtDateTime(d)
 
-  const min = Math.floor((now.getTime() - d.getTime()) / 60_000)
-  const rel =
-    min < 1  ? translate('format.justNow')
-    : min < 60 ? formatTimeAgo(min, 'minute')
-    : min < 60 * 24 ? formatTimeAgo(Math.floor(min / 60), 'hour')
-    : formatTimeAgo(Math.floor(min / (60 * 24)), 'day')
+  // 経過時間はデザインシステムの formatRelativeTime (「5 分前」「昨日」など)。
+  const rel = formatRelativeTime(d, { intlLocale: getIntlLocale(), now: now.getTime() })
   return translate('format.timeWithRelative', { value0: abs, value1: rel })
 }
 

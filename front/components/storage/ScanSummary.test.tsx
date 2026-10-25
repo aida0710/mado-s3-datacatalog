@@ -13,7 +13,7 @@ describe('ScanSummary', () => {
   it('走査済みなら件数とサイズをその場に出す', () => {
     render(<ScanSummary result={RESULT} onOpen={() => {}} />)
     expect(screen.getByText(/247,078/)).toBeInTheDocument()
-    expect(screen.getByText(/TB/)).toBeInTheDocument()
+    expect(screen.getByText(/TiB/)).toBeInTheDocument()
   })
 
   it('走査済みなら内訳を開ける', async () => {

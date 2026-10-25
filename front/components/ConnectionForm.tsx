@@ -571,7 +571,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
                     min={0}
                     step={1}
                     placeholder={translate('common.notSet')}
-                    aria-label={translate('connectionForm.capacityTb')}
+                    aria-label={translate('connectionForm.capacityTib')}
                     value={pricingCapacityTb}
                     onChange={e => dispatch({
                       type: 'setField',
@@ -580,7 +580,7 @@ export function ConnectionForm({ mode, onClose, presentation = 'modal' }: Props)
                     })}
                   />
                 }
-                title={translate('connectionForm.capacityTb')}
+                title={translate('connectionForm.capacityTib')}
                 help={translate('connectionForm.warnsWhenATransferWouldExceedCapacityLeave')}
               />
 

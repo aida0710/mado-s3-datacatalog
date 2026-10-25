@@ -78,7 +78,7 @@ describe('CapacityMetricsPage', () => {
     mount()
     expect(await screen.findByRole('heading', { name: 'archive' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'dataset' })).toBeInTheDocument()
-    expect(screen.getByText('3.91 KiB')).toBeInTheDocument()
+    expect(screen.getByText('3.9 KiB')).toBeInTheDocument()
     expect(screen.getByText('32')).toBeInTheDocument()
     expect(screen.getByText('2 / 3 バケット')).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'バケット' })).not.toBeInTheDocument()

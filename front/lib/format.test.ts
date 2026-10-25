@@ -32,29 +32,30 @@ describe('fmtCacheAge', () => {
     expect(fmtCacheAge(NOW, NOW)).toMatch(/^2026\/08\/18 16:14\(/)
   })
 
-  it('1 分未満は「たった今」', () => {
+  // 経過時間はデザインシステムの formatRelativeTime (Intl.RelativeTimeFormat、numeric: 'auto')。
+  it('1 分未満は「今」', () => {
     const d = new Date(NOW.getTime() - 30_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(たった今)')
+    expect(fmtCacheAge(d, NOW)).toContain('(今)')
   })
 
-  it('60 分未満は n分前', () => {
+  it('60 分未満は n 分前', () => {
     const d = new Date(NOW.getTime() - 5 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(5分前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(5 分前)')
   })
 
-  it('24 時間未満は n時間前', () => {
+  it('24 時間未満は n 時間前', () => {
     const d = new Date(NOW.getTime() - 2 * 60 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(2時間前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(2 時間前)')
   })
 
-  it('24 時間以上は n日前', () => {
-    const d = new Date(NOW.getTime() - 3 * 24 * 60 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(3日前)')
+  it('24 時間以上は n 日前、1 日は「昨日」', () => {
+    expect(fmtCacheAge(new Date(NOW.getTime() - 3 * 24 * 60 * 60_000), NOW)).toContain('(3 日前)')
+    expect(fmtCacheAge(new Date(NOW.getTime() - 24 * 60 * 60_000), NOW)).toContain('(昨日)')
   })
 
-  it('境界: ちょうど 60 分は 1時間前', () => {
+  it('境界: ちょうど 60 分は 1 時間前', () => {
     const d = new Date(NOW.getTime() - 60 * 60_000)
-    expect(fmtCacheAge(d, NOW)).toContain('(1時間前)')
+    expect(fmtCacheAge(d, NOW)).toContain('(1 時間前)')
   })
 })
 
@@ -63,36 +64,28 @@ describe('fmtCacheAge — compact', () => {
 
   it('同日なら日付を落として HH:mm(相対) にする', () => {
     const d = new Date(NOW.getTime() - 5 * 60_000)
-    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('16:09(5分前)')
+    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('16:09(5 分前)')
   })
 
   it('日を跨いだら MM/DD を足す (時刻だけでは曖昧になるため)', () => {
     const d = new Date('2026-08-16T22:13:00+09:00')
-    // 8/16 22:13 → 8/18 16:14 は 41 時間 = 1 日前 (24 時間単位の切り捨て)
-    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('08/16 22:13(1日前)')
+    // 8/16 22:13 → 8/18 16:14 は 41 時間 = 1 日前 (24 時間単位の切り捨て) なので「昨日」
+    expect(fmtCacheAge(d, NOW, { compact: true })).toBe('08/16 22:13(昨日)')
   })
 
   it('compact でない既定は年から出す', () => {
-    expect(fmtCacheAge(NOW, NOW)).toBe('2026/08/18 16:14(たった今)')
+    expect(fmtCacheAge(NOW, NOW)).toBe('2026/08/18 16:14(今)')
   })
 })
 
-describe('fmtSize — TB / PB', () => {
-  // 走査で 774 TB のような値を扱うようになった。GB 頭打ちだと
-  // 「793,530.4 GB」になって桁が読めない。
-  it('1 TB 以上は TB', () => {
-    expect(fmtSize(1024 ** 4)).toBe('1.0 TB')
-    expect(fmtSize(851893405098712)).toBe('774.8 TB')
-  })
-
-  it('1 PB 以上は PB', () => {
-    expect(fmtSize(1024 ** 5)).toBe('1.0 PB')
-  })
-
-  it('既存の桁は変わらない', () => {
+describe('fmtSize', () => {
+  // 1024 で割るので 2 進の単位 (デザインシステムの formatBytes)。走査で 774 TiB のような値も扱う。
+  it('1024 ごとに KiB・MiB・GiB・TiB・PiB へ上げ、小数 1 桁で出す', () => {
     expect(fmtSize(512)).toBe('512 B')
-    expect(fmtSize(1024)).toBe('1.0 KB')
-    expect(fmtSize(1024 ** 3)).toBe('1.0 GB')
+    expect(fmtSize(1024)).toBe('1.0 KiB')
+    expect(fmtSize(1024 ** 3)).toBe('1.0 GiB')
+    expect(fmtSize(851893405098712)).toBe('774.8 TiB')
+    expect(fmtSize(1024 ** 5)).toBe('1.0 PiB')
   })
 })
 
