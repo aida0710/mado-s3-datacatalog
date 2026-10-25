@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { LogOut, Moon, Sun } from 'lucide-react'
-import { initialsOf } from '@mado/design-system/format'
-import { NavigationDrawer, useTheme, type NavigationLayout } from '@mado/design-system/react'
+import {
+  NavigationDrawer, UserMenu, useTheme, type NavigationLayout, type UserMenuLinkRenderer,
+} from '@mado/design-system/react'
 import { LanguagePicker } from '../LanguagePicker'
 import { useAuth } from '../../lib/auth-context'
 import { THEME_STORAGE_KEY } from '../../lib/theme'
@@ -13,13 +14,19 @@ import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 
+// ユーザーメニューの項目は react-router の Link で描き、ページを読み直さずに移る。
+const renderUserMenuLink: UserMenuLinkRenderer = (item, { children, ...props }) => (
+  <Link {...props} to={item.href}>{children}</Link>
+)
+
 /**
- * 上部バー: アプリ名、テーマの切り替え、ログイン中の利用者とサインアウト。画面の切り替えは
+ * 上部バー: アプリ名、テーマの切り替え、ログイン中の利用者のメニューとサインアウト。画面の切り替えは
  * サイドバーにあり、md (900px) 未満ではこのバーのメニューボタンからドロワーで開く。
  */
 export function TopBar({ navigation }: { navigation: NavigationLayout }) {
   useLocale()
   const { user, logout } = useAuth()
+  const { pathname } = useLocation()
   const theme = useTheme({ storageKey: THEME_STORAGE_KEY })
   const compact = useIsCompact()
   const [loggingOut, setLoggingOut] = useState(false)
@@ -66,14 +73,19 @@ export function TopBar({ navigation }: { navigation: NavigationLayout }) {
           </button>
           {user && (
             <>
-              <Link
-                to="/settings/account"
-                className="avatar"
-                aria-label={translate('topBar.sAccount', { value0: user.displayName })}
-                title={user.displayName}
-              >
-                {initialsOf(user.displayName)}
-              </Link>
+              {/* サインアウトは操作 (リンクでない) で、デザインシステムの UserMenu の項目はリンクだけなので、
+                  mado ML Tracking と同じく丸の横のボタンに置く。 */}
+              <UserMenu
+                displayName={user.displayName}
+                email={user.email}
+                label={translate('topBar.userMenu')}
+                items={[
+                  { label: translate('section.account'), href: '/settings/account' },
+                  { label: translate('section.settings'), href: '/settings', startsGroup: true },
+                ]}
+                renderLink={renderUserMenuLink}
+                closeKey={pathname}
+              />
               <button
                 type="button"
                 className="icon-button"
