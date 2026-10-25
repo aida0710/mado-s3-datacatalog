@@ -63,7 +63,7 @@ docker compose -f compose.dev.yaml up -d --build postgres api-internal media-wor
 docker compose -f compose.dev.yaml ps
 ```
 
-Start the services that Storage needs first. Once PostgreSQL is healthy, create the initial Admin. After you configure the connection to the Registry, you can start OpenLineage ingest with `docker compose -f compose.dev.yaml up -d --build api-lineage`.
+Start the services that Storage needs first. `api-internal` applies the database migrations when it starts. Once `api-internal` is healthy, create the initial Admin. After you configure the connection to the Registry, you can start OpenLineage ingest with `docker compose -f compose.dev.yaml up -d --build api-lineage`.
 
 ## Create the initial Admin {#initial-admin}
 ```bash
@@ -93,16 +93,16 @@ To start the production setup from source, use `compose.prod.yaml`. The main set
 | `ALLOWED_ORIGINS` | Origin of the URL that browsers use |
 | `DATASET_REGISTRY_URL` / `DATASET_REGISTRY_TOKEN` | Connection settings for the compatible Registry. Required in production |
 
-In a new environment, create the Admin before you start the web entry point.
+In a new environment, create the Admin before you start the web entry point. Starting only `api-internal` also starts PostgreSQL and applies the database migrations.
 
 ```bash
 docker compose -f compose.prod.yaml build
-docker compose -f compose.prod.yaml up -d postgres
-docker compose -f compose.prod.yaml run --rm api-internal \
+docker compose -f compose.prod.yaml up -d api-internal
+docker compose -f compose.prod.yaml exec api-internal \
   node dist/scripts/bootstrap-admin.js --username admin
-docker compose -f compose.prod.yaml up -d --build
+docker compose -f compose.prod.yaml up -d
 ```
 
 The UI listens on `127.0.0.1:8080`, and the entry point dedicated to sending OpenLineage events listens on `127.0.0.1:8081`. Put a TLS proxy inside your intranet in front of the UI. If you expose the endpoint that pipelines send events to, connect a separate TLS hostname to 8081.
 
-Updating an existing DB requires applying migrations in a specific order. Follow the [DB update procedure](https://github.com/aida0710/mado-s3-datacatalog/blob/main/db/README.md). If you use a release bundle, see the [bundle installation steps](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/release/README.md).
+`api-internal` also applies the migrations to an existing DB when it starts. Only when you update a DB whose migrations were applied by hand (up to v0.4.0), record the applied files once before the first start. See the [DB procedure](https://github.com/aida0710/mado-s3-datacatalog/blob/main/db/README.md#databases-migrated-by-hand). If you use a release bundle, see the [bundle installation steps](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/release/README.md).

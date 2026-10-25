@@ -29,7 +29,7 @@ describe('migration 041', () => {
           ('sql-null', NULL, 'configured'), ('json-null', 'null', 'configured'),
           ('no-connection', '{}', NULL), ('complete', '{"channels":null}', 'configured');
       `)
-      const migration = await readFile(new URL('../../db/migrations/041_explicit_connection_settings_media_cache.sql', import.meta.url), 'utf8')
+      const migration = await readFile(new URL('../migrations/041_explicit_connection_settings_media_cache.sql', import.meta.url), 'utf8')
       await client.query(migration)
       const settings = await client.query<{ connection_id: string; key: string; value: string }>(
         'SELECT connection_id, key, value FROM connection_settings',

@@ -101,18 +101,16 @@ Start databases first when restoring existing data:
 
 ```bash
 docker compose -f compose.mdx.yaml up -d postgres registry-db marquez-db
-# restore verified backups, then apply additive migrations
+# restore verified backups, then start the services
 docker compose -f compose.mdx.yaml up -d --build
 ```
 
-For an existing mado S3 Data Catalog database, follow `db/README.md` exactly: backup, apply
-missing migrations through 027, start only the new `api-internal`, apply 028
-then 029 as the PostgreSQL administrator, enable `mado_lineage` with the
-deployment-specific `LINEAGE_DB_PASSWORD`, and only then start `api-lineage`
-and the remaining services. Migration 028 removes columns referenced by the
-old API; migration 029 removes the untouched known bootstrap credential and
-creates the least-privilege role. Do not start the entire new Compose project
-before completing this sequence.
+`api-internal` applies the mado S3 Data Catalog migrations when it starts, as
+the PostgreSQL administrator (`DATABASE_URL_MIGRATE`, built from
+`POSTGRES_PASSWORD`); `api-lineage` and `media-worker` start after it is
+healthy. A database migrated by hand up to v0.4.0 has no `schema_migrations`:
+record the applied files once before the first start, as described in
+[`db/README.md`](../../db/README.md#databases-migrated-by-hand).
 
 Apache requires `proxy` and `proxy_http`. Install the tracked vhost as
 `/etc/apache2/sites-available/mado.conf`, disable `000-default`, enable `mado`,

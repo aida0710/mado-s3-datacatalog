@@ -10,7 +10,7 @@ tagが指す同一commitから、Linux amd64/arm64対応のOCI imageを3つ作�
 - `mado-media-worker`: compiled workerとffmpeg
 - `mado-web`: static Web UIと用途別nginx listener
 
-workflowは各imageへSBOMとprovenanceを付け、digest固定の`compose.yaml`、全migration、設定例、licenseをrelease bundleへ収録する。GitHub Release本文は`docs/releases/<tag>.md`が正本。
+workflowは各imageへSBOMとprovenanceを付け、digest固定の`compose.yaml`、DBのロールを作る初期化スクリプト、設定例、licenseをrelease bundleへ収録する。DBの移行は`mado-api`のimageに入っており、`api-internal`が起動時に当てる。GitHub Release本文は`docs/releases/<tag>.md`が正本。
 
 ## 公開条件
 

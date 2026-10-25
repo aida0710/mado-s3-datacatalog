@@ -10,6 +10,7 @@ describe('loadEnv', () => {
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })
@@ -32,6 +33,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
       ALLOWED_ORIGINS: 'http://localhost:5173, http://lab-server ,',
     })
@@ -47,6 +49,7 @@ describe('loadEnv', () => {
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
     })).toThrow(/ALLOWED_ORIGINS/)
   })
@@ -56,6 +59,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY,
       ALLOWED_ORIGINS: ' , , ,',
     })).toThrow(/ALLOWED_ORIGINS/)
@@ -65,12 +69,23 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ PORT: '3000' })).toThrow(/DATABASE_URL_RW/)
   })
 
+  it('移行を当てる管理者の接続 DATABASE_URL_MIGRATE が無ければ throw する', () => {
+    expect(() => loadEnv({
+      AUTH_MODE: 'local',
+      DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
+      DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      ENCRYPTION_KEY: VALID_KEY,
+      ALLOWED_ORIGINS: 'http://localhost:5173',
+    })).toThrow(/DATABASE_URL_MIGRATE/)
+  })
+
   it('ENCRYPTION_KEY が無ければ throw する', () => {
     expect(() => loadEnv({
       AUTH_MODE: 'local',
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })).toThrow(/ENCRYPTION_KEY/)
   })
@@ -81,6 +96,7 @@ describe('loadEnv', () => {
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: 'abc',
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })).toThrow(/ENCRYPTION_KEY/)
@@ -92,6 +108,7 @@ describe('loadEnv', () => {
       PORT: '3000',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: 'z'.repeat(64),
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })).toThrow(/ENCRYPTION_KEY/)
@@ -102,6 +119,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })
@@ -118,6 +136,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'http://localhost:5173',
       AUTH_COOKIE_SECURE: 'false',
@@ -130,6 +149,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
       OIDC_ALLOWED_GROUPS: 'mado-users, mado-admins,mado-users',
@@ -146,6 +166,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
       OIDC_ROLE_MAPPING_JSON: '{"mado-users":"owner"}',
@@ -158,6 +179,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'disabled',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
     })).toThrow(/AUTH_MODE/)
@@ -166,6 +188,7 @@ describe('loadEnv', () => {
   it.each([undefined, '', 'required'])('認証方式が %s なら起動エラーになる', mode => {
     expect(() => loadEnv({
       AUTH_MODE: mode, DATABASE_URL_RW: 'postgres://x', DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: VALID_KEY, ALLOWED_ORIGINS: 'https://mado.example',
     })).toThrow(/AUTH_MODE/)
   })
@@ -176,6 +199,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'http://mado.internal',
     })
@@ -188,6 +212,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       DATABASE_URL_RW_TEST: '',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
@@ -214,6 +239,7 @@ describe('loadEnv', () => {
       AUTH_MODE: 'oidc',
       DATABASE_URL_RW: 'postgres://x',
       DATABASE_URL_RO: 'postgres://x',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'https://mado.example',
     })).toThrow(/OIDC_ALLOWED_GROUPS/)
@@ -229,10 +255,12 @@ describe('loadLineageEnv', () => {
       DATASET_REGISTRY_TOKEN: 'registry-token-at-least-16',
       OIDC_CLIENT_SECRET: 'must-not-be-parsed',
       ENCRYPTION_KEY: VALID_KEY,
+      DATABASE_URL_MIGRATE: 'postgres://postgres@postgres/dashboard',
     })
     expect(env.LINEAGE_API_PORT).toBe(3001)
     expect(env).not.toHaveProperty('OIDC_CLIENT_SECRET')
     expect(env).not.toHaveProperty('ENCRYPTION_KEY')
+    expect(env).not.toHaveProperty('DATABASE_URL_MIGRATE')
   })
 
   it('Registry URLとtokenを必須にする', () => {
@@ -250,11 +278,13 @@ describe('workerの環境設定', () => {
   }
 
   it('本番でもブラウザ認証の設定を要求せず、APIの秘密を設定に含めない', () => {
-    const env = loadWorkerEnv({ ...required, OIDC_CLIENT_SECRET: 'api-secret', DATASET_REGISTRY_TOKEN: 'api-token' })
+    const env = loadWorkerEnv({ ...required, OIDC_CLIENT_SECRET: 'api-secret', DATASET_REGISTRY_TOKEN: 'api-token',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@postgres/dashboard' })
     expect(env.MADO_ENV).toBe('production')
     expect(env.MEDIA_WORKER_PORT).toBe(3100)
     expect(env).not.toHaveProperty('OIDC_CLIENT_SECRET')
     expect(env).not.toHaveProperty('DATASET_REGISTRY_TOKEN')
+    expect(env).not.toHaveProperty('DATABASE_URL_MIGRATE')
     expect(env).not.toHaveProperty('AUTH_MODE')
   })
 

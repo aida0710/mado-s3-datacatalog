@@ -3,6 +3,7 @@ import { serve } from '@hono/node-server'
 import { Hono, type Context } from 'hono'
 import { loadEnv } from './env.js'
 import { createPools, closePools } from './db.js'
+import { migrateDatabase } from './lib/schema-migrations.js'
 import { createCrypto } from './crypto.js'
 import { createStorageFactory } from './storage.js'
 import { requireSafeOrigin } from './lib/originCheck.js'
@@ -66,12 +67,16 @@ import { mountServiceAccessTokenRoutes } from './routes/service-access-token.js'
 import { mountServiceLineageRoutes } from './routes/service-lineage.js'
 import { apiError } from './lib/api-error.js'
 
+const env = loadEnv()
+// 表を使う前に未適用の移行を当てる。api-lineage と media-worker は当て終わるのを待ってから起動する。
+await migrateDatabase(env.DATABASE_URL_MIGRATE)
+
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
+// 移行の確認より後に付ける。先に付けると、起動時の失敗でもプロセスが残り続ける。
 process.on('uncaughtException', err => console.error('UNCAUGHT EXCEPTION (kept alive)', err))
 process.on('unhandledRejection', err => console.error('UNHANDLED REJECTION (kept alive)', err))
 
-const env = loadEnv()
 const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
 const crypto = createCrypto(env.ENCRYPTION_KEY)
 const storageFactory = createStorageFactory({ pools, crypto })
@@ -121,8 +126,9 @@ const pricingStore = createPricingStore(pools)
 const capacityStore = createCapacityStore(pools)
 
 const app = new Hono()
-app.use('*', requestLogger())
+// ヘルスチェックは数秒ごとに来るので、要求のログより先に付けてログに出さない。
 mountHealthRoute(app, pools.ro)
+app.use('*', requestLogger())
 
 // Login/callbackはbrowser session確立前に到達するpublic route。write系には既存の
 // Origin検証を適用する。

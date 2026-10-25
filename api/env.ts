@@ -30,6 +30,9 @@ const baseSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL_RW: z.string().min(1),
   DATABASE_URL_RO: z.string().min(1),
+  // DB の管理者 (postgres) の接続。api-internal が起動時に未適用の移行を当てるときだけ使う。
+  // 移行はロールの作成や所有者の変更を含むので、dashboard_rw では当てられない。
+  DATABASE_URL_MIGRATE: z.string().min(1),
   DATABASE_URL_RW_TEST: optionalString,
   ENCRYPTION_KEY: hex32('ENCRYPTION_KEY'),
   // CSRF 防御: /api/internal/* の write 系で許容する Origin (カンマ区切り)。

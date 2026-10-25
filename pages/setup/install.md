@@ -63,7 +63,7 @@ docker compose -f compose.dev.yaml up -d --build postgres api-internal media-wor
 docker compose -f compose.dev.yaml ps
 ```
 
-まずStorageを使うサービスを起動します。PostgreSQLがhealthyになったら、初期Adminを作成します。OpenLineageの受け付けは、Registryへの接続設定を済ませてから `docker compose -f compose.dev.yaml up -d --build api-lineage` で起動できます。
+まずStorageを使うサービスを起動します。`api-internal`は起動時にDBの移行を当てて表を作ります。`api-internal`がhealthyになったら、初期Adminを作成します。OpenLineageの受け付けは、Registryへの接続設定を済ませてから `docker compose -f compose.dev.yaml up -d --build api-lineage` で起動できます。
 
 ## 初期Adminを作成する {#initial-admin}
 ```bash
@@ -93,16 +93,16 @@ docker compose -f compose.dev.yaml exec api-internal \
 | `ALLOWED_ORIGINS` | ブラウザが使うURLのorigin |
 | `DATASET_REGISTRY_URL` / `DATASET_REGISTRY_TOKEN` | 互換Registryへの接続設定。本番では必須 |
 
-新規環境では、Webの入口を起動する前にAdminを作成します。
+新規環境では、Webの入口を起動する前にAdminを作成します。`api-internal`だけを起動すると、PostgreSQLも起動し、DBの移行が当たります。
 
 ```bash
 docker compose -f compose.prod.yaml build
-docker compose -f compose.prod.yaml up -d postgres
-docker compose -f compose.prod.yaml run --rm api-internal \
+docker compose -f compose.prod.yaml up -d api-internal
+docker compose -f compose.prod.yaml exec api-internal \
   node dist/scripts/bootstrap-admin.js --username admin
-docker compose -f compose.prod.yaml up -d --build
+docker compose -f compose.prod.yaml up -d
 ```
 
 UIは `127.0.0.1:8080`、OpenLineage送信専用の入口は `127.0.0.1:8081` です。UIにはintranet内のTLS proxyを接続します。Pipelineの送信先を公開する場合は、別のTLS hostnameから8081へ接続します。
 
-既存DBの更新にはmigrationの適用順があります。[DBの更新手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/db/README.md)に従ってください。リリースbundleを使う場合は[bundleの導入手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/release/README.md)を参照します。
+既存DBの移行も`api-internal`が起動時に当てます。v0.4.0まで（移行を手で当ててきたDB）から更新するときだけ、最初の起動の前に一度、当ててある番号までを記録します。[DBの手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/db/README.md#databases-migrated-by-hand)を参照してください。リリースbundleを使う場合は[bundleの導入手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/release/README.md)を参照します。

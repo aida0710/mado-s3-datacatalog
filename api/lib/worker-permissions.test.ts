@@ -18,6 +18,16 @@ describe('workerのDB権限', () => {
     }
   })
 
+  it('起動時の確認のため、api-lineage と同じく移行の記録を読めるが書けない', async () => {
+    for (const role of ['mado_worker', 'mado_lineage']) {
+      const row = await pools.ro.query(
+        "SELECT has_table_privilege($1, 'schema_migrations', 'SELECT') AS readable, has_table_privilege($1, 'schema_migrations', 'INSERT,UPDATE,DELETE') AS writable",
+        [role],
+      )
+      expect(row.rows[0]).toEqual({ readable: true, writable: false })
+    }
+  })
+
   it('認証・権限・service keyを読めず、API roleの権限も引き継がない', async () => {
     for (const table of ['auth_sessions', 'auth_local_credentials', 'auth_users', 'auth_user_roles', 'service_account_keys', 'audit_events']) {
       const row = await pools.ro.query("SELECT has_table_privilege('mado_worker', $1, 'SELECT,INSERT,UPDATE,DELETE') AS allowed", [table])

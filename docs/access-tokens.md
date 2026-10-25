@@ -50,7 +50,7 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 
 ## 既存環境への適用
 
-v0.2.0への移行では`038_access_tokens.sql`、内部API対応への移行では追加で`039_internal_api_tokens.sql`と`040_explicit_token_grants.sql`を、この順に新APIより先に適用する。040は既存トークンを新しい形へ変換する: 連携scopeだけのトークンには対応する機能別の権限（`lineage:read`→`lineage:read`、`lineage:write`→`lineage:send`、`metrics:read`→`capacity:read`）を付け、接続を指定していなかった容量トークンには全接続（`["*"]`）を明示する。持ち主のアカウントが無効だったトークンは、トークン自身を無効にする。トークンの値・IDは変わらない。アプリはこの変換後の形だけを読む。
+トークンの表は`038_access_tokens.sql`、内部API対応は`039_internal_api_tokens.sql`と`040_explicit_token_grants.sql`の移行で作る。移行は`api-internal`が起動時に番号順に当てる。040は既存トークンを新しい形へ変換する: 連携scopeだけのトークンには対応する機能別の権限（`lineage:read`→`lineage:read`、`lineage:write`→`lineage:send`、`metrics:read`→`capacity:read`）を付け、接続を指定していなかった容量トークンには全接続（`["*"]`）を明示する。持ち主のアカウントが無効だったトークンは、トークン自身を無効にする。トークンの値・IDは変わらない。アプリはこの変換後の形だけを読む。
 
 `service_accounts`と`service_account_keys`は監査・Registryの主体IDとして保持し、新規作成では内部の持ち主を自動で用意する。再発行は権限・有効期限・無効状態を引き継ぐ。削除は`revoked_at`を保存し、監査・Registryの過去の参照を残す。
 

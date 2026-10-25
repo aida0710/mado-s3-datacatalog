@@ -236,7 +236,7 @@ docker compose -f compose.dev.yaml exec api-internal \
 # 5. ブラウザで http://localhost:5173
 ```
 
-dev の DB パスワードは未設定なら開発用の既定値で動きます。初回起動時のみ `db/init/00-init.sh` が `dashboard_rw` / `dashboard_ro` / `mado_lineage` / `mado_worker` ロールと `dashboard_test` DB を作成します。作り直したいときは `down -v` で volume を消してから上げ直してください。
+dev の DB パスワードは未設定なら開発用の既定値で動きます。初回起動時のみ `db/init/00-init.sh` が `dashboard_rw` / `dashboard_ro` / `mado_lineage` / `mado_worker` ロールと `dashboard_test` DB を作成します。表は `api-internal` が起動時に移行 (`api/migrations`) を当てて作ります。作り直したいときは `down -v` で volume を消してから上げ直してください。
 
 ### 環境変数
 
@@ -245,6 +245,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `PORT` | yes | api コンテナの listen ポート (compose 側で 3000 に上書き) |
 | `DATABASE_URL_RW` | yes | `dashboard_rw` 接続 URL。**compose 内なので host は `postgres`** |
 | `DATABASE_URL_RO` | yes | `dashboard_ro` 接続 URL |
+| `DATABASE_URL_MIGRATE` | yes (`api-internal`) | DB の管理者 (`postgres`) の接続 URL。`api-internal` が起動時に移行を当てるときだけ使う。compose が `POSTGRES_PASSWORD` から組み立てるので `.env` には書かない |
 | `DATABASE_URL_RW_TEST` | no | テスト用。host から接続するので `localhost`。未設定なら default に fallback |
 | `POSTGRES_PASSWORD` | prod:yes / dev:no | `postgres` スーパーユーザのパスワード。**prod は未設定だと起動失敗**、dev は既定 `postgres` |
 | `DASHBOARD_PASSWORD` | prod:yes / dev:no | `dashboard_rw` / `dashboard_ro` のパスワード。**`DATABASE_URL_*` のパスワードと一致必須**。dev 既定 `CHANGEME` |
@@ -285,11 +286,9 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 - 同梱カタログを新しくするには、外に出られるマシンで `cd api && npm run pricing:fetch` を回して結果をコミットします
 - いま何を使っているかは `GET /api/internal/pricing` でも確認できます (出所・取得日・直近の失敗理由)
 
-> ⚠ この機能は `db/migrations/020_pricing_cache.sql` を使います。**既存の DB には手で適用が必要**です ([`db/README.md`](db/README.md) の「Applying a migration to an existing database」)。
-
 ### 認証とLineageの初期化
 
-既存DBには`021_auth.sql`以降の未適用migrationを番号順に適用します。ただし`028`は旧APIが参照する列を削除するため、既存環境では**新APIを先に起動してから`028`を適用**してください（`021`〜`027`はコード起動前に適用できます）。`029`は未使用の既知bootstrap credentialを削除し、OpenLineage API専用DB roleを追加します。新規導入では既定passwordを持つAdminを残さないため、Webを公開する前に次のoffline bootstrapを必ず実行します。
+新規導入では既定passwordを持つAdminを残さないため、Webを公開する前に次のoffline bootstrapを必ず実行します。
 
 初期Adminの作成・再設定には、対話的なbootstrapコマンドを使います（パスワードを引数やshell historyへ残しません）。
 
@@ -304,9 +303,11 @@ Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセ�
 
 連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
-`038_access_tokens.sql`と、内部API対応の`039_internal_api_tokens.sql`・`040_explicit_token_grants.sql`は、この順に新APIの起動前に適用します。040は既存トークンを機能別の権限と明示した接続へ変換し、トークンの値・IDは変えません（[docs/access-tokens.md](docs/access-tokens.md)）。
+### DBの移行
 
-`041_explicit_connection_settings_media_cache.sql`も新API・workerの起動前に適用します。接続の操作権限・走査・容量取得の設定を保存し、メタ情報または所有接続のない音声キャッシュを削除します。必要な解析は次回取得時に再実行されます。既存のmigrationは書き換えません。
+DBの移行（`api/migrations/*.sql`）は`api-internal`が起動時に当てます。DBの管理者の接続（`DATABASE_URL_MIGRATE`。Composeが`POSTGRES_PASSWORD`から組み立てる）を使い、適用したファイルを名前とSHA-256で`schema_migrations`に記録します。`api-lineage`と`media-worker`は移行を当てる権限を持たず、全部が当たっていることを確かめてから起動します。当てた後のファイルの書き換えを見つけると、どのサービスも起動しません。
+
+v0.4.0まで（移行を手で当ててきたDB）からの更新では、新しい`api-internal`を起動する前に一度だけ、当ててある番号までを記録します。手順は[`db/README.md`](db/README.md#databases-migrated-by-hand)にあります。
 
 ### OSSリリース
 
@@ -318,7 +319,7 @@ mado S3 Data CatalogはSemVerを採用し、最初のリリースを`v0.1.0`と�
 - `ghcr.io/aida0710/mado-media-worker:<tag>`: ffmpeg worker
 - `ghcr.io/aida0710/mado-web:<tag>`: Web UIと用途別nginx入口
 
-GitHub Releaseには、image digestを固定したCompose、DB初期化・全migration、設定例、licenseをまとめたbundleとSHA-256を添付します。OCI imageにはSBOMとbuild provenanceを付与します。release本文は[`docs/releases/`](docs/releases/README.md)、公開手順と安全条件は[`docs/releasing.md`](docs/releasing.md)を正本とします。
+GitHub Releaseには、image digestを固定したCompose、DBのロールを作る初期化スクリプト、設定例、licenseをまとめたbundleとSHA-256を添付します。DBの移行は`mado-api`のimageに入っていて、`api-internal`が起動時に当てます。OCI imageにはSBOMとbuild provenanceを付与します。release本文は[`docs/releases/`](docs/releases/README.md)、公開手順と安全条件は[`docs/releasing.md`](docs/releasing.md)を正本とします。
 
 OSS releaseと社内環境へのdeployは独立しています。release workflowはdeployment hostへ接続しません。
 
@@ -420,6 +421,8 @@ host 上で直接実行 (postgres コンテナだけ立っていれば良い):
 
 ```bash
 docker compose -f compose.dev.yaml up -d postgres
+# テスト用 DB (dashboard_test) に移行を当てる。移行を足したときも当て直す
+(cd api && DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate)
 cd api   && npm test && npm run lint
 cd front && npm test && npm run lint
 ```

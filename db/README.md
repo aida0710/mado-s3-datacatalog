@@ -1,12 +1,38 @@
 # Database setup
 
-The dashboard uses Postgres with four distinct roles:
+The dashboard uses Postgres with four application roles:
 
 - `dashboard_rw` — owns and writes to the schema. Used by `/api/internal/*` write paths (connections, notes, readme, favorites).
 - `dashboard_ro` — read-only. Used by `/api/internal/*` read paths so a buggy front-end can never DROP TABLE.
-- `mado_lineage` — least-privilege login used only by the Internet-facing OpenLineage process. It can authenticate service-account keys, update their `last_used_at`, and append audit events, but cannot read browser or storage secrets.
+- `mado_lineage` — least-privilege login used only by the Internet-facing OpenLineage process. It can authenticate access tokens, update their `last_used_at`, append audit events, and read `schema_migrations`, but cannot read browser or storage secrets.
+- `mado_worker` — reads storage connection settings and `schema_migrations`, and writes media, job, pricing, and capacity tables. It cannot read or write browser sessions, credentials, roles, or access tokens.
 
-- `mado_worker` — reads storage connection settings and writes media, job, pricing, and capacity tables. It cannot read or write browser sessions, credentials, roles, or service-account keys.
+The PostgreSQL administrator (`postgres`) applies the schema migrations. Only `api-internal` receives its URL, as `DATABASE_URL_MIGRATE`; the Compose files build it from `POSTGRES_PASSWORD`.
+
+## Schema migrations
+
+`api/migrations/*.sql` is the schema, as an ordered set: `001_init.sql` is the base and each later file is an incremental change. The files are part of the `mado-api` image.
+
+`api-internal` applies them when it starts, before it serves requests:
+
+1. It takes a PostgreSQL advisory lock, so processes that start at the same time apply each file once.
+2. It creates `schema_migrations (name, sha256, applied_at)` on an empty database.
+3. It applies every file that has no row, in name order. Each file and its row commit in one transaction; a failing file leaves neither, and `api-internal` exits.
+4. It stops instead of starting when the SHA-256 of an applied file has changed, or when the database already has tables but no `schema_migrations` (see [Databases migrated by hand](#databases-migrated-by-hand)).
+
+`api-lineage` and `media-worker` cannot apply migrations. They take the same lock (waiting while `api-internal` applies), check that every bundled file is recorded with the same SHA-256, and exit otherwise. The Compose files start both only after `api-internal` reports healthy.
+
+### Writing a migration
+
+- Add a new file with the next number. Never edit an applied file: the changed digest stops every service.
+- Each file runs in a transaction as `postgres`. Do not use statements that cannot run in a transaction (`CREATE INDEX CONCURRENTLY`, `VACUUM`).
+- New tables belong to `dashboard_rw`, and `dashboard_ro` can read them. Set this in the file, and grant the worker or lineage role only what it needs:
+
+  ```sql
+  ALTER TABLE    my_new_table        OWNER TO dashboard_rw;
+  ALTER SEQUENCE my_new_table_id_seq OWNER TO dashboard_rw;  -- if it has a BIGSERIAL
+  GRANT SELECT ON my_new_table TO dashboard_ro;
+  ```
 
 ## Local development (Docker — recommended)
 
@@ -14,11 +40,13 @@ The dashboard uses Postgres with four distinct roles:
 docker compose -f compose.dev.yaml up -d
 ```
 
-This brings up Postgres 16 on `127.0.0.1:5432`. On first launch the init pipeline runs automatically:
+This brings up Postgres 16 on `127.0.0.1:5432`. On first launch `db/init/00-init.sh` creates the four roles and the `dashboard_test` database. `api-internal` then applies the migrations to `dashboard`.
 
-1. `db/init/00-init.sh` creates the four roles and the `dashboard_test` database.
-2. The same script applies every file in `db/migrations/` (mounted at `/migrations/` inside the container) to both DBs, in lexical order (`001_init.sql` → `002_...` → ...).
-3. It transfers ownership of the schema objects to `dashboard_rw` and grants `SELECT` to `dashboard_ro` (including `ALTER DEFAULT PRIVILEGES` so future tables created by `dashboard_rw` — e.g. via direct `psql` migrations — are also readable by ro).
+The tests use `dashboard_test`. Apply the migrations to it from `api/` before running them, and again after adding a migration:
+
+```sh
+DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate
+```
 
 To re-bootstrap from scratch:
 
@@ -31,10 +59,9 @@ docker compose -f compose.dev.yaml up -d
 
 DB passwords come from env vars, consumed **only when the `db_data` volume is first created**:
 
-- `POSTGRES_PASSWORD` — the `postgres` superuser.
+- `POSTGRES_PASSWORD` — the `postgres` superuser. `api-internal` also uses it in `DATABASE_URL_MIGRATE`, so use a URL-safe value (hex).
 - `DASHBOARD_PASSWORD` — the `dashboard_rw` / `dashboard_ro` roles. **Must match** the password embedded in `DATABASE_URL_RW` / `DATABASE_URL_RO`.
 - `LINEAGE_DB_PASSWORD` — the dedicated `mado_lineage` role. **Must match** both OpenLineage `DATABASE_URL_RW` and `DATABASE_URL_RO`.
-
 - `WORKER_DB_PASSWORD` — the dedicated `mado_worker` role. The worker Compose fragment uses it for both database URLs and does not inherit the API environment.
 
 `compose.prod.yaml` requires all four (startup fails if unset) — set strong values in `.env` before the first `up` (`openssl rand -hex 24`). `compose.dev.yaml` has development-only defaults for zero-config local use.
@@ -50,109 +77,24 @@ docker compose -f compose.prod.yaml exec postgres \
 # finally update the matching values in .env and recreate the affected services.
 ```
 
-## Schema source of truth
+Send passwords through protected stdin or a mode-600 file in production; do not leave them in shell history or logs.
 
-`db/migrations/*.sql` is the schema, as an ordered set: `001_init.sql` is the base and each later file is an incremental change. The Docker init script reads them via the `./db/migrations:/migrations:ro` bind mount in `compose.dev.yaml` / `compose.prod.yaml`, so there is nothing to keep in sync.
+## Databases migrated by hand
 
-New migration files should be written to be re-runnable (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, ...) and must set ownership / grants themselves, mirroring what the init script does for the base schema:
+Up to v0.4.0 the init script applied the migrations to a new volume and operators applied later files by hand, so those databases have tables but no `schema_migrations`. `api-internal` refuses to start on them rather than running old files again.
 
-```sql
-ALTER TABLE    my_new_table        OWNER TO dashboard_rw;
-ALTER SEQUENCE my_new_table_id_seq OWNER TO dashboard_rw;  -- if it has a BIGSERIAL
-GRANT SELECT ON my_new_table TO dashboard_ro;
-```
-
-## Applying a migration to an existing database
-
-**`db/init/00-init.sh` runs only when the `db_data` volume is first created.** Adding a file to `db/migrations/` therefore does *nothing* to a DB that already exists — a plain `up -d` (or `./deploy.sh`) will not pick it up, and the new code will fail at runtime against the old schema.
-
-For the authentication release, migration 028 is deliberately applied after
-the new `api-internal`: the old API still reads the removed lock columns. Use
-this order for an existing database:
+Once, before the first start of a release that applies migrations, record the files the database already has. For a database on v0.4.0 (through `041`), with PostgreSQL running and the new image pulled:
 
 ```sh
-# 1. back up first
-docker compose -f compose.prod.yaml exec -T postgres \
-  pg_dump -U postgres -d dashboard > dashboard-backup-$(date +%Y%m%d).sql
-
-# 2. check which tables already exist
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -U postgres -d dashboard -Atc \
-  "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY 1;"
-
-# 3. apply any missing files through 027, in lexical order
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -f /migrations/0NN_through_027.sql
-
-# 4a. source checkout: build and start only the new internal API
-docker compose -f compose.prod.yaml up -d --build --no-deps api-internal
-
-# 4b. release bundle instead: pull its digest-pinned image, then start only it
-# docker compose -f compose.yaml pull api-internal
-# docker compose -f compose.yaml up -d --no-deps api-internal
-# docker compose -f compose.yaml images api-internal  # verify the expected digest
-
-# 5. apply 028 and then 029 as the PostgreSQL administrator
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -f /migrations/028_drop_local_login_lock.sql
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -f /migrations/029_harden_lineage_and_bootstrap.sql
-
-# 030は旧APIとも互換なので、新APIを起動する前に適用してよい
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -f /migrations/030_connection_user_allowlist.sql
-
-# 6. enable the dedicated login with the generated LINEAGE_DB_PASSWORD
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -c \
-  "ALTER ROLE mado_lineage LOGIN PASSWORD '<generated LINEAGE_DB_PASSWORD>';"
-
-# 7. verify ownership + grants, then start api-lineage and the remaining services
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -U postgres -d dashboard -c "\dp service_account_keys" \
-  -c "\dp audit_events"
-
-docker compose -f compose.prod.yaml up -d
+docker compose -f compose.yaml run --rm --no-deps api-internal \
+  node dist/scripts/record-applied-migrations.js --through 041
 ```
 
-There is no migration-tracking table; which files have been applied is determined by inspecting the schema. Use `compose.dev.yaml` and `-d dashboard_test` for the dev / test databases.
-
-### Access tokens (v0.2.0)
-
-For a database already using the v0.1.0 schema, back up the database and apply
-`038_access_tokens.sql` before starting either new API:
-
-```sh
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -1 -U postgres -d dashboard \
-  -f /migrations/038_access_tokens.sql
-```
-
-Use `compose.yaml` for a release bundle or `compose.mdx.yaml` for an MDX
-deployment. The migration preserves credentials, permissions, and actor IDs.
-Update both `api-internal` and `api-lineage` to enforce per-token disabling
-on both listeners.
-
-### Internal API tokens (after v0.2.0)
-
-Apply `039_internal_api_tokens.sql` as the database administrator before starting
-the updated internal API. For older databases, apply `038_access_tokens.sql` first.
-
-```sh
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -1 -U postgres -d dashboard \
-  -f /migrations/039_internal_api_tokens.sql
-```
-
-Existing tokens receive no internal API permissions. Their hashes, scopes,
-namespaces and unrestricted integration metrics access are preserved. The new
-permission and connection tables are private to the dashboard roles; the public
-OpenLineage role and worker do not need access. See
-[the permission contract](../docs/internal-api-permissions.md).
+The command records `001` to `041` with their SHA-256 without running them, inside the same advisory lock. It refuses when `schema_migrations` already exists or when the database has no tables. Use `compose.mdx.yaml` for an MDX deployment. Then start the services; `api-internal` applies the files after `041`.
 
 ## Manual setup (non-Docker)
 
-If you don't use Docker, do the equivalent by hand against any local Postgres 14+:
+If you don't use Docker, create the roles and databases by hand against any local Postgres 14+, then let the migration command build the schema:
 
 ```sh
 psql -U postgres <<'SQL'
@@ -161,63 +103,15 @@ CREATE DATABASE dashboard_test;
 CREATE ROLE dashboard_rw LOGIN PASSWORD 'CHANGEME';
 CREATE ROLE dashboard_ro LOGIN PASSWORD 'CHANGEME';
 CREATE ROLE mado_lineage LOGIN PASSWORD 'CHANGEME_LINEAGE';
+CREATE ROLE mado_worker LOGIN PASSWORD 'CHANGEME_WORKER';
 GRANT ALL ON DATABASE dashboard       TO dashboard_rw;
 GRANT ALL ON DATABASE dashboard_test  TO dashboard_rw;
 GRANT CONNECT ON DATABASE dashboard      TO dashboard_ro;
 GRANT CONNECT ON DATABASE dashboard_test TO dashboard_ro;
 SQL
 
+cd api
 for db in dashboard dashboard_test; do
-  for sql in db/migrations/*.sql; do
-    psql -U postgres -d "$db" -f "$sql"
-  done
-  psql -U postgres -d "$db" <<'SQL'
-ALTER TABLE    storage_connections     OWNER TO dashboard_rw;
-ALTER FUNCTION storage_connections_touch_updated_at() OWNER TO dashboard_rw;
-ALTER TABLE    storage_readme_meta     OWNER TO dashboard_rw;
-ALTER TABLE    storage_favorite_buckets OWNER TO dashboard_rw;
-ALTER TABLE    notes                   OWNER TO dashboard_rw;
-
-GRANT USAGE  ON SCHEMA public                  TO dashboard_ro;
-GRANT SELECT ON ALL TABLES IN SCHEMA public    TO dashboard_ro;
-ALTER DEFAULT PRIVILEGES FOR ROLE dashboard_rw IN SCHEMA public
-  GRANT SELECT ON TABLES TO dashboard_ro;
-SQL
+  DATABASE_URL_MIGRATE="postgres://postgres:<password>@localhost:5432/$db" npm run db:migrate
 done
 ```
-
-## Updating media and SSO hardening on an existing volume
-
-Back up first. Migrations 035–037 add columns/grants and are compatible with the
-previous API, so apply them before recreating the app containers:
-
-```sh
-for migration in 035_media_cache_connection 036_worker_permissions 037_oidc_session_recheck; do
-  docker compose -f compose.prod.yaml exec -T postgres \
-    psql -v ON_ERROR_STOP=1 -U postgres -d dashboard -f /migrations/$migration.sql
-done
-```
-
-Set a new hex `WORKER_DB_PASSWORD` in the protected `.env`, then enable the
-`mado_worker` login with `ALTER ROLE mado_worker LOGIN PASSWORD '<generated value>'`.
-Send that SQL through protected stdin or a mode-600 file; do not include the
-password in shell history or logs. Recreate the media worker so its two database
-URLs switch from the API roles to `mado_worker`. Verify that the worker can access
-its job/capacity/media tables and cannot select `auth_sessions` or `service_account_keys`.
-Existing SSO sessions require one sign-in after migration 037; configure
-`offline_access` in both the provider and `OIDC_SCOPES` for token renewal.
-
-## Explicit connection settings and media cache (041)
-
-After migration 040, apply `041_explicit_connection_settings_media_cache.sql` before starting the API and workers. It writes all eight capability settings plus `scan_enabled` and `capacity_metrics_enabled` for every connection. Missing and non-boolean values become `true`, preserving their effective value; existing `true` and `false` values remain unchanged. A CHECK constraint restricts those keys to the two boolean strings. Optional settings such as scan page size and pricing keep their defaults.
-
-The same migration deletes media cache rows without `meta` (SQL NULL or JSON null) or `connection_id`, then requires both columns and an object for `meta`. Individual metadata fields may remain null. Removed cache entries are recomputed on demand. New connections write all ten boolean settings in the connection creation transaction.
-
-Apply the file once, in a transaction, as the database administrator:
-
-```bash
-docker compose -f compose.prod.yaml exec -T postgres \
-  psql --single-transaction -v ON_ERROR_STOP=1 -U postgres -d dashboard \
-  -f /migrations/041_explicit_connection_settings_media_cache.sql
-```
-The application treats missing or invalid boolean settings as an error and does not repair data while reading it. Do not edit previously applied migration files.
