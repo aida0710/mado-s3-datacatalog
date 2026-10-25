@@ -24,7 +24,7 @@ ML Tracking側ではmado S3 Data CatalogのAPI URLとアクセストークンを
 
 返すのはバージョンの識別情報と保存先URIであり、接続の鍵・endpoint設定・任意のmetadata・オブジェクト本文は含めない。
 Namespaceの許可には、そのNamespaceにある限定公開のStorage URIも含まれる。keyを渡す相手とNamespaceを管理者が選ぶ。
-未認証は401、scope不足は403、許可外の詳細IDは404、Registry未設定は503。
+未認証は401（`authentication_required`・`invalid_token`）、scope不足は403（`scope_required`）、許可外のNamespaceは403（`namespace_not_allowed`）、許可外の詳細IDは404（`not_found`）、Registry未設定は503（`registry_unavailable`）。括弧内はエラー応答の`code`。
 
 ML Trackingの内蔵mado S3 Data Catalog連携はこの検索APIでバージョンを選択する。取り込み時に指定IDを再取得し、実験が参照するバージョンを固定する。
 実験開始・完了・失敗・中止は、`lineage:write`を許可したトークンで既存のOpenLineage入口へ送る。mado S3 Data CatalogのAPI URLと公開OpenLineage送信先は別に設定できる。

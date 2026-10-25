@@ -4,6 +4,7 @@ import type { Pools } from '../db.js'
 import { getRequestPrincipal } from '../lib/rbac.js'
 import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface NotesDeps {
   pools: Pools
@@ -39,13 +40,13 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
   app.put('/notes/:slug', async c => {
     const slug = c.req.param('slug')
     if (slug.length < 1 || slug.length > 64) {
-      return c.json({ error: 'invalid slug' }, 400)
+      return c.json(apiError('invalid_request', 'invalid slug'), 400)
     }
     const parsed = PutBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const principal = getRequestPrincipal(c)
     const body = parsed.data.body
-    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    if (!principal) return c.json(apiError('authentication_required', 'unauthorized'), 401)
     const editor = principalEditor(principal)
     const actorUserId = principalUserId(principal)
     const sizeBytes = Buffer.byteLength(body, 'utf-8')
@@ -120,7 +121,7 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
   app.get('/notes/:slug/history/:id', async c => {
     const slug = c.req.param('slug')
     const id = c.req.param('id')
-    if (!/^\d+$/.test(id)) return c.json({ error: 'id must be integer' }, 400)
+    if (!/^\d+$/.test(id)) return c.json(apiError('invalid_request', 'id must be integer'), 400)
     const r = await deps.pools.ro.query<{
       body: string; editor: string; edited_at: Date; size_bytes: number
     }>(
@@ -129,7 +130,7 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
          WHERE id = $1 AND slug = $2`,
       [id, slug],
     )
-    if (!r.rows[0]) return c.json({ error: 'not found' }, 404)
+    if (!r.rows[0]) return c.json(apiError('not_found', 'not found'), 404)
     const row = r.rows[0]
     return c.json({
       id: Number(id),

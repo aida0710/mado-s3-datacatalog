@@ -73,7 +73,7 @@ describe('useAudioSrc', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       statusText: 'Not Found',
-      json: () => Promise.resolve({ error: 'entry not found' }),
+      json: () => Promise.resolve({ error: 'entry not found', code: 'not_found', entry: 'missing.wav' }),
     } as unknown as Response)
 
     const { result } = renderHook(() => useAudioSrc({ connectionId: 'c', bucket: 'b', key: 'shard.tar.gz', entryPath: 'u1.wav' }))

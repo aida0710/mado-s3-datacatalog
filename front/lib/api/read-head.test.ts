@@ -97,7 +97,7 @@ describe('api.readHead', () => {
     const fake = {
       ok: false,
       statusText: 'Payload Too Large',
-      json: async () => ({ error: 'entry exceeds preview limit' }),
+      json: async () => ({ error: 'entry exceeds preview limit', code: 'preview_limit_exceeded', limitBytes: 1024 }),
     } as unknown as Response
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(fake)
 

@@ -56,7 +56,7 @@ describe('PreviewVideo', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       statusText: 'Payload Too Large',
-      json: () => Promise.resolve({ error: 'entry exceeds preview limit' }),
+      json: () => Promise.resolve({ error: 'entry exceeds preview limit', code: 'preview_limit_exceeded', limitBytes: 1024 }),
     } as unknown as Response)
     render(<PreviewVideo connectionId="c" bucket="b" k="shard.tar.gz" entryPath="huge.mp4" />)
     expect(await screen.findByText(/entry exceeds preview limit/)).toBeInTheDocument()

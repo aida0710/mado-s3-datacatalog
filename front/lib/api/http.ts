@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import { notifyUnauthorized } from './unauthorized-events'
 import { translate } from '../../i18n/translate'
-import { localizeMessage } from '../../i18n/localizeMessage'
+import { apiErrorMessage } from '../../i18n/apiErrorMessage'
 
 export const API_BASE = '/api/internal'
 
@@ -24,19 +24,13 @@ export function getSessionExpiredMessage(): string {
 }
 
 /**
- * サーバーが `{ error }` を返していればその文言、無ければ statusText を Error にする。
- * 401は再ログインの案内にし、既知のエラーは選択中の言語で表示する。
+ * サーバーの `{ error, code }` から、code に合う選択中の言語の文を Error にする。
+ * 401は再ログインの案内にし、API のエラーの形でない本文 (JSON でない等) なら statusText にする。
  */
 export async function errorFromResponse(res: Response): Promise<Error> {
   if (res.status === 401) return new Error(getSessionExpiredMessage())
-  let message = res.statusText
-  try {
-    const body = (await res.json()) as { error?: string }
-    if (body.error) message = body.error
-  } catch {
-    /* JSON でないエラーボディ — statusText をそのまま使う */
-  }
-  return new Error(localizeMessage(message))
+  const body: unknown = await res.json().catch(() => null)
+  return new Error(apiErrorMessage(body) ?? res.statusText)
 }
 
 /**

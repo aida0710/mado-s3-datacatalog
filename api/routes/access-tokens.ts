@@ -13,6 +13,7 @@ import { UnknownTokenConnectionError } from '../lib/internal-token-grants.js'
 import { principalActor } from '../lib/principal-actor.js'
 import { canDelegateToken } from '../lib/access-token-authority.js'
 import type { RequestPrincipal } from '../lib/auth-types.js'
+import { apiError } from '../lib/api-error.js'
 
 // Preserve the metadata limits of the existing service-account contract.
 const TOKEN_NAME_MAX_LENGTH = 128
@@ -37,7 +38,7 @@ function futureExpiry(expiresAt: string | null | undefined): boolean {
 }
 
 const validateTokenId: MiddlewareHandler = async (context, next) => {
-  if (!z.uuid().safeParse(context.req.param('id')).success) return context.json({ error: 'invalid token id' }, 400)
+  if (!z.uuid().safeParse(context.req.param('id')).success) return context.json(apiError('invalid_request', 'invalid token id'), 400)
   await next()
 }
 
@@ -62,7 +63,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
   }) {
     try {
       const mutation = await input.execute()
-      if (!mutation) return c.json({ error: 'access token not found' }, 404)
+      if (!mutation) return c.json(apiError('not_found', 'access token not found'), 404)
       if (mutation.changed === false) {
         markAuditNoChange(c)
         return c.json({ accessToken: mutation.accessToken })
@@ -78,13 +79,11 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
       })
       return c.json({ accessToken: mutation.accessToken, ...(mutation.token ? { token: mutation.token } : {}) }, input.created ? 201 : 200)
     } catch (error) {
-      if (error instanceof AccessTokenAuthorityError) return c.json({ error: error.message }, 403)
-      if (error instanceof AccessTokenActorInactiveError) return c.json({ error: error.message }, 401)
-      if (error instanceof UnknownTokenConnectionError) return c.json({ error: error.message }, 400)
-      if (error instanceof AccessTokenConflictError)
-        return c.json({ error: error.message, code: 'token_conflict' }, 409)
-      if (error instanceof AccessTokenPermissionsError)
-        return c.json({ error: error.message, code: 'invalid_token_permissions' }, 400)
+      if (error instanceof AccessTokenAuthorityError) return c.json(apiError('token_authority_exceeded', error.message), 403)
+      if (error instanceof AccessTokenActorInactiveError) return c.json(apiError('token_actor_inactive', error.message), 401)
+      if (error instanceof UnknownTokenConnectionError) return c.json(apiError('unknown_connection', error.message), 400)
+      if (error instanceof AccessTokenConflictError) return c.json(apiError('token_conflict', error.message), 409)
+      if (error instanceof AccessTokenPermissionsError) return c.json(apiError('invalid_token_permissions', error.message), 400)
       throw error
     }
   }
@@ -103,7 +102,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
   })
   routes.post('/', async c => {
     const parsed = CreateToken.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json({ error: 'invalid body' }, 400)
+    if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json(apiError('invalid_request', 'invalid body'), 400)
     return mutate(c, {
       action: 'access_token.create', created: true,
       execute: () => management.createToken(getRequestPrincipal(c)!, { ...parsed.data,
@@ -115,7 +114,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
   routes.use('/:id/*', validateTokenId)
   routes.patch('/:id', async c => {
     const parsed = PatchToken.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json({ error: 'invalid body' }, 400)
+    if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json(apiError('invalid_request', 'invalid body'), 400)
     const { expectedRevision, expiresAt, ...fields } = parsed.data
     const action = fields.status === 'active' ? 'access_token.enable'
       : fields.status === 'disabled' ? 'access_token.disable' : 'access_token.update'
@@ -127,13 +126,13 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
   })
   routes.post('/:id/regenerate', async c => {
     const parsed = ExpectedRevision.strict().safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: 'invalid body' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     return mutate(c, { action: 'access_token.regenerate',
       execute: () => management.regenerateToken(getRequestPrincipal(c)!, { id: c.req.param('id'), ...parsed.data }) })
   })
   routes.delete('/:id', async c => {
     const parsed = z.coerce.number().int().positive().safeParse(c.req.query('expectedRevision'))
-    if (!parsed.success) return c.json({ error: 'invalid revision' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid revision'), 400)
     return mutate(c, { action: 'access_token.delete', execute: async () => {
       const accessToken = await management.deleteToken(getRequestPrincipal(c)!, { id: c.req.param('id'), expectedRevision: parsed.data })
       return accessToken ? { accessToken } : null

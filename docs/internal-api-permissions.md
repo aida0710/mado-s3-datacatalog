@@ -62,3 +62,7 @@ Authorizationヘッダーがある場合はBearer認証だけを使い、失敗�
 DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。発行・変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。
 
 内部APIは全環境で認証主体を必須にします。README・NotesのPUT本文は `editor` を受け付けず、含まれていれば400を返します。編集者名はユーザーの `signatureName` またはトークン名から決めます。DataLineageの論理グラフは `rootKind=dataset|job` を指定し、`kind` を含む要求は400になります。
+
+## エラー応答
+
+APIのエラー応答はすべて`{ "error": <英語の文>, "code": <snake_case> }`の形。`error`はログやcurlで人が読む説明で、文面は変わり得る。プログラムと画面は`code`で分岐し、訳す。文に入る値は横の項目に置く（権限不足の`permission`、接続で無効な操作の`capability`、scope不足の`scope`など）。`code`の一覧は`api/shared/api-error-codes.ts`。

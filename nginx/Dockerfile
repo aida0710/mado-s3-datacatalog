@@ -14,6 +14,7 @@ COPY front/package.json front/package-lock.json ./
 RUN npm ci
 COPY front .
 COPY api/shared/access-token-permissions.ts /api/shared/access-token-permissions.ts
+COPY api/shared/api-error-codes.ts /api/shared/api-error-codes.ts
 RUN npm run build
 
 # ステージ 2: nginx に静的成果物と設定を焼く

@@ -1,5 +1,6 @@
 import type { S3Client } from '@aws-sdk/client-s3'
 import type { Context } from 'hono'
+import { apiError } from '../lib/api-error.js'
 
 export type GetStorage = (connectionId: string) => Promise<S3Client>
 
@@ -16,12 +17,12 @@ export async function resolveStorageOrFail(
   getStorage: GetStorage,
 ): Promise<S3Client | Response> {
   const connectionId = c.req.param('connectionId')
-  if (!connectionId) return c.json({ error: 'connectionId required' }, 400)
+  if (!connectionId) return c.json(apiError('invalid_request', 'connectionId required'), 400)
   try {
     return await getStorage(connectionId)
   } catch (e) {
     if (e instanceof Error && (e as { code?: string }).code === 'NOT_FOUND') {
-      return c.json({ error: 'connection not found' }, 404)
+      return c.json(apiError('not_found', 'connection not found'), 404)
     }
     throw e
   }
@@ -47,7 +48,7 @@ export async function resolveObjectOrFail(
   const bucket = c.req.query('bucket')
   const key = c.req.query('key')
   if (!bucket || !key) {
-    return c.json({ error: 'bucket and key required' }, 400)
+    return c.json(apiError('invalid_request', 'bucket and key required'), 400)
   }
   return { storage, bucket, key }
 }

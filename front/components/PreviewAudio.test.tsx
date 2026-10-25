@@ -150,7 +150,7 @@ describe('PreviewAudio', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       statusText: 'Not Found',
-      json: () => Promise.resolve({ error: 'entry not found' }),
+      json: () => Promise.resolve({ error: 'entry not found', code: 'not_found', entry: 'missing.wav' }),
     } as unknown as Response)
     render(<PreviewAudio connectionId="c" bucket="b" k="shard.tar.gz" entryPath="u1.wav" />)
     await waitFor(() => expect(screen.getByText(/音声を取得できません/)).toBeInTheDocument())

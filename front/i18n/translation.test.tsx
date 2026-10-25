@@ -39,14 +39,11 @@ describe('localized application messages', () => {
     expect(screen.getByText('12:34').tagName).toBe('TIME')
   })
 
-  it('updates captured notices and known server errors while preserving unknown details', () => {
+  it('updates captured notices while preserving unknown details', () => {
     setLocale('ja')
     const previousMessage = translate('http.yourSessionHasExpiredSignInAgainAnd')
     setLocale('en')
     expect(localizeMessage(previousMessage)).toBe(translate('http.yourSessionHasExpiredSignInAgainAnd'))
-    expect(localizeMessage('このディレクトリはまだ走査されていません')).toBe('This directory has not been scanned yet.')
-    expect(localizeMessage('解析できませんでした: custom detail')).toBe('Analysis failed: custom detail')
-    expect(localizeMessage('この接続では「ファイルのプレビュー」が無効になっています')).toBe('“File previews” is disabled for this connection.')
     expect(localizeMessage('custom service detail')).toBe('custom service detail')
   })
 

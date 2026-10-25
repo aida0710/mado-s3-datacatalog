@@ -14,6 +14,7 @@ import type {
 import { RegistryClientError } from '../lib/registry-client.js'
 import { markAuditChangeCommitted, writeDedicatedAudit } from '../lib/audit-activity.js'
 import { datasetWithoutHiddenConnections } from '../lib/lineage-connection-visibility.js'
+import { apiError } from '../lib/api-error.js'
 
 const Text = z.string().trim().min(1).max(1024)
 const OptionalText = z.string().trim().max(8192).optional()
@@ -244,12 +245,12 @@ function processingInput(value: z.infer<typeof ProcessingFields>): Record<string
 }
 
 function mutationError(c: Context, error: unknown): Response {
-  if (error instanceof LineageNamespaceError) return c.json({ error: error.message }, error.status)
+  if (error instanceof LineageNamespaceError) return c.json(apiError(error.code, error.message), error.status)
   if (!(error instanceof RegistryClientError)) throw error
-  if (error.status === 404) return c.json({ error: '指定したDatasetまたはVersionが見つかりません。' }, 404)
-  if (error.status === 409) return c.json({ error: '同じ識別子または保存場所がすでに登録されています。' }, 409)
-  if (error.status === 422) return c.json({ error: '参照先または入力内容を確認してください。' }, 422)
-  return c.json({ error: 'Dataset Registryへ登録できませんでした。' }, 502)
+  if (error.status === 404) return c.json(apiError('dataset_not_found', 'dataset or version not found'), 404)
+  if (error.status === 409) return c.json(apiError('dataset_conflict', 'the identifier or storage location is already registered'), 409)
+  if (error.status === 422) return c.json(apiError('invalid_reference', 'Dataset Registry rejected a reference or a value'), 422)
+  return c.json(apiError('registry_write_failed', 'could not register with the Dataset Registry'), 502)
 }
 
 export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps): void {
@@ -265,9 +266,9 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   app.patch('/lineage/curation/datasets/:datasetId', async c => {
     const principal = getRequestPrincipal(c)!
     const datasetId = c.req.param('datasetId')
-    if (!Uuid.safeParse(datasetId).success) return c.json({ error: 'Dataset IDを確認してください。' }, 400)
+    if (!Uuid.safeParse(datasetId).success) return c.json(apiError('invalid_dataset_id', 'invalid dataset id'), 400)
     const parsed = DatasetUpdate.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     return withDatasetMutationLock(datasetId, async () => {
       try {
         const policy = deps.namespacePolicy?.(c)
@@ -301,11 +302,11 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   app.post('/lineage/curation/datasets', async c => {
     const principal = getRequestPrincipal(c)!
     const parsed = DatasetRegistration.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     const location = parsed.data.location
       ? await accessibleLocationInput(c, parsed.data.location) : undefined
     if (parsed.data.location && !location) {
-      return c.json({ error: 'この接続はDataset Registryへ紐付けられていません。' }, 422)
+      return c.json(apiError('registry_not_linked', 'this connection is not linked to a Dataset Registry'), 422)
     }
     try {
       const policy = deps.namespacePolicy?.(c)
@@ -367,9 +368,9 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   app.post('/lineage/curation/locations', async c => {
     const principal = getRequestPrincipal(c)!
     const parsed = LocationRegistration.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     const location = await accessibleLocationInput(c, parsed.data.location)
-    if (!location) return c.json({ error: 'この接続はDataset Registryへ紐付けられていません。' }, 422)
+    if (!location) return c.json(apiError('registry_not_linked', 'this connection is not linked to a Dataset Registry'), 422)
     try {
       const policy = deps.namespacePolicy?.(c)
       if (policy && !policy.unrestricted) await policy.version(parsed.data.versionId)
@@ -396,7 +397,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
   app.post('/lineage/curation/runs', async c => {
     const principal = getRequestPrincipal(c)!
     const parsed = LineageRegistration.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: '入力内容を確認してください。' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     try {
       const policy = deps.namespacePolicy?.(c)
       await policy?.authorizeRunRegistration(parsed.data)

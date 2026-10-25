@@ -5,6 +5,7 @@ import { parseByteRange } from '../lib/byte-range.js'
 import { entryContentType } from '../lib/preview-mime.js'
 import { resolveObjectOrFail, type GetStorage, type ObjectRequest } from './_storageRequest.js'
 import { openObject, storageError, streamObject } from './_storageResponse.js'
+import { apiError } from '../lib/api-error.js'
 
 interface TarEntryRouteDeps {
   getStorage: GetStorage
@@ -27,8 +28,8 @@ async function streamTarEntry(c: Context, object: ObjectRequest, options: {
   const archive = await options.tarIndexes.open({ ...object, signal })
   try {
     const entry = await archive.index.find(options.entryName, signal)
-    if (!entry) return c.json({ error: `entry not found: ${options.entryName}` }, 404)
-    if (entry.type !== 'file') return c.json({ error: 'entry is not a regular file' }, 400)
+    if (!entry) return c.json({ ...apiError('not_found', `entry not found: ${options.entryName}`), entry: options.entryName }, 404)
+    if (entry.type !== 'file') return c.json(apiError('entry_not_file', 'entry is not a regular file'), 400)
     if (entry.bodyOffset + entry.size > archive.size) throw new Error('incomplete tar entry')
 
     const rangeHeader = options.headBytes == null && c.req.method === 'GET' ? c.req.header('Range') : undefined
@@ -70,9 +71,9 @@ export function mountStorageTarEntryRoute(app: Hono, deps: TarEntryRouteDeps): v
     const object = await resolveObjectOrFail(c, deps.getStorage)
     if (object instanceof Response) return object
     const entryName = c.req.query('entry')
-    if (!entryName) return c.json({ error: 'bucket, key and entry are required' }, 400)
+    if (!entryName) return c.json(apiError('invalid_request', 'bucket, key and entry are required'), 400)
     const kind = detectArchive(object.key)
-    if (!kind) return c.json({ error: 'unsupported archive extension' }, 400)
+    if (!kind) return c.json(apiError('unsupported_archive', 'unsupported archive extension'), 400)
     const requestedHeadBytes = parsePositiveInteger(c.req.query('maxBytes'))
     const headBytes = requestedHeadBytes == null ? null : Math.min(requestedHeadBytes, deps.maxBytes)
 
@@ -82,9 +83,12 @@ export function mountStorageTarEntryRoute(app: Hono, deps: TarEntryRouteDeps): v
       const opened = await openObject(c, object)
       if (opened instanceof Response) return opened
       const extracted = await extractTarEntry({ source: opened.body, kind, entryName, byteLimit: headBytes ?? deps.maxBytes })
-      if (!extracted) return c.json({ error: `entry not found: ${entryName}` }, 404)
+      if (!extracted) return c.json({ ...apiError('not_found', `entry not found: ${entryName}`), entry: entryName }, 404)
       if (extracted.truncated && headBytes == null) {
-        return c.json({ error: `entry exceeds preview limit (${deps.maxBytes} bytes)` }, 413)
+        return c.json({
+          ...apiError('preview_limit_exceeded', `entry exceeds preview limit (${deps.maxBytes} bytes)`),
+          limitBytes: deps.maxBytes,
+        }, 413)
       }
       const body = new Uint8Array(extracted.buffer)
       return new Response(body, { headers: {

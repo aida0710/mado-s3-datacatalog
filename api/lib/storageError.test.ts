@@ -5,7 +5,7 @@ import { BlockedEndpointError } from './endpoint-policy.js'
 describe('explainStorageError', () => {
   it('NoSuchKeyを秘密を含まない404へ変換する', () => {
     const r = explainStorageError({ name: 'NoSuchKey', $metadata: { httpStatusCode: 404 } })
-    expect(r).toEqual({ status: 404, message: 'storage object not found' })
+    expect(r).toEqual({ status: 404, code: 'not_found', message: 'storage object not found' })
   })
 
   it('upstream 5xx → 502。HTTP status を頭に付ける', () => {
@@ -20,7 +20,7 @@ describe('explainStorageError', () => {
       message: 'Access Denied',
       $metadata: { httpStatusCode: 403 },
     })
-    expect(r).toEqual({ status: 502, message: 'storage service error' })
+    expect(r).toEqual({ status: 502, code: 'storage_unavailable', message: 'storage service error' })
   })
 
   // 実機 (R2 に不正な資格情報) で出た形。助言を足すと実態とずれるので出さない。
@@ -57,6 +57,7 @@ describe('explainStorageError', () => {
   it('拒否するアドレスを指す接続先は、内部エラーではなく直し方の分かる 409 にする', () => {
     const explained = explainStorageError(new BlockedEndpointError('conn000001'))
     expect(explained?.status).toBe(409)
-    expect(explained?.message).toContain('エンドポイント')
+    expect(explained?.code).toBe('blocked_endpoint')
+    expect(explained?.message).toContain('fix the endpoint')
   })
 })

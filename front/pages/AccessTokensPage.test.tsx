@@ -177,7 +177,7 @@ describe('Access Tokens', () => {
   it('保存に失敗したら入力を残し、再発行の値を表示しない', async () => {
     const user = userEvent.setup()
     mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
-      ? response({ error: 'changed' }, 409) : response({ tokens: [token] }))
+      ? response({ error: 'changed', code: 'token_conflict' }, 409) : response({ tokens: [token] }))
     render(<AccessTokensPage />)
     await user.click(within(await screen.findByRole('article', { name: token.name })).getByLabelText('ML Trackingの操作'))
     await user.click(screen.getByRole('button', { name: '編集' }))

@@ -29,7 +29,7 @@ describe('requireServiceKeyScope', () => {
   it('無効なkeyは401を返す', async () => {
     const response = await appWith(async () => null).request('/protected', { headers: bearer })
     expect(response.status).toBe(401)
-    expect(await response.json()).toEqual({ error: 'invalid service key' })
+    expect(await response.json()).toEqual({ error: 'invalid service key', code: 'invalid_token' })
   })
 
   it('認証の問い合わせが失敗したら503を返す', async () => {
@@ -42,7 +42,7 @@ describe('requireServiceKeyScope', () => {
     const response = await appWith(async () => ({ keyId: 'key-1', scopes: ['lineage:write'] }))
       .request('/protected', { headers: bearer })
     expect(response.status).toBe(403)
-    expect(await response.json()).toEqual({ error: 'metrics:read scope is required' })
+    expect(await response.json()).toEqual({ error: 'metrics:read scope is required', code: 'scope_required', scope: 'metrics:read' })
   })
 
   it('scopeを持つkeyはhandlerへ認証済みprincipalを渡す', async () => {

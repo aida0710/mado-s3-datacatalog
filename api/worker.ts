@@ -23,6 +23,7 @@ import { createCapacityStore } from './lib/capacity-store.js'
 import { createCapacityScheduler } from './lib/capacity-scheduler.js'
 import { RequestQueueFullError } from './lib/shared-requests.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
+import { apiError } from './lib/api-error.js'
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
@@ -73,7 +74,7 @@ const MAX_ARCHIVE_ENTRY_CHARS = 16384
 const MAX_ETAG_CHARS = 256
 app.use('/analyze', bodyLimit({
   maxSize: MAX_ANALYZE_BODY_BYTES,
-  onError: c => c.json({ error: 'request body is too large' }, 413),
+  onError: c => c.json(apiError('body_too_large', 'request body is too large'), 413),
 }))
 const analyzeRequest = z.object({
   connectionId: z.string().min(1).max(MAX_CONNECTION_ID_CHARS), bucket: z.string().min(1).max(MAX_BUCKET_CHARS),
@@ -84,7 +85,7 @@ const analyzeRequest = z.object({
 app.post('/analyze', async c => {
   const parsed = analyzeRequest.safeParse(await c.req.json())
   if (!parsed.success) {
-    return c.json({ error: 'connectionId, bucket, key, etag required' }, 400)
+    return c.json(apiError('invalid_request', 'connectionId, bucket, key, etag required'), 400)
   }
   try {
     // クライアント (api 経由でブラウザ) が切断したら解析を中断して ffmpeg を kill
@@ -92,16 +93,16 @@ app.post('/analyze', async c => {
     return c.json(result)
   } catch (e) {
     if (e instanceof MediaAnalyzeError) {
-      return c.json({ error: `解析できませんでした: ${e.message}` }, 422)
+      return c.json({ ...apiError('analysis_failed', `analysis failed: ${e.message}`), reason: e.message }, 422)
     }
     throw e
   }
 })
 
 app.onError((err, c) => {
-  if (err instanceof RequestQueueFullError) return c.json({ error: 'analysis queue is full' }, 503, { 'Retry-After': '1' })
+  if (err instanceof RequestQueueFullError) return c.json(apiError('request_queue_full', 'analysis queue is full'), 503, { 'Retry-After': '1' })
   console.error('worker unhandled error', err)
-  return c.json({ error: 'internal error' }, 500)
+  return c.json(apiError('internal_error', 'internal error'), 500)
 })
 
 const server = serve({ fetch: app.fetch, port: env.MEDIA_WORKER_PORT }, info => {

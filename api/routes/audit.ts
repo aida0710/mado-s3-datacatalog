@@ -2,6 +2,7 @@ import type { Hono } from 'hono'
 import type { Pool } from 'pg'
 import { z } from 'zod'
 import { requirePermission } from '../lib/rbac.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface AuditRoutesDeps {
   pool: Pool
@@ -37,7 +38,7 @@ export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
   app.use('/audit-events', requirePermission('audit:read'))
   app.get('/audit-events', async c => {
     const parsed = Query.safeParse(c.req.query())
-    if (!parsed.success) return c.json({ error: 'invalid query' }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', 'invalid query'), 400)
     const q = parsed.data
     const where: string[] = []
     const values: unknown[] = []

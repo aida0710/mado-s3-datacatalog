@@ -89,7 +89,9 @@ describe('容量メトリクス route', () => {
     })
     const response = await app.request('/storage/c1/capacity/scan', { method: 'POST' })
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({ error: 'この接続のバケット計測はすでに進行中です' })
+    expect(await response.json()).toEqual({
+      error: 'a bucket measurement is already running for this connection', code: 'capacity_scan_running',
+    })
     expect(listBuckets).not.toHaveBeenCalled()
     expect(enqueueWithResult).not.toHaveBeenCalled()
   })
