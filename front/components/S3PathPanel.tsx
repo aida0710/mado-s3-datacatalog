@@ -122,7 +122,7 @@ export function S3PathPanel({ connectionId }: Props) {
   const dirs = result?.data.directories ?? []
   const files = result?.data.files ?? []
   const isEmpty = result != null && dirs.length === 0 && files.length === 0
-  const hasMore = !!(result && (result.data.nextContinuation || result.data.nextStartAfter))
+  const hasMore = !!result?.data.nextCursor
 
   return (
     <section className="s3-path">

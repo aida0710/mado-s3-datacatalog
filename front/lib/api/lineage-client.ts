@@ -54,12 +54,13 @@ export const lineageClient = {
   lineageRun: (runId: string) =>
     getJson(`${API_BASE}/lineage/runs/${encodeURIComponent(runId)}`, LineageRunDetail),
 
-  lineageCatalog: (params: { q?: string; namespace?: string; limit?: number; offset?: number } = {}) =>
+  /** cursor は前のページの応答の nextCursor。最初のページは省く。 */
+  lineageCatalog: (params: { q?: string; namespace?: string; limit?: number; cursor?: string } = {}) =>
     getJson(buildUrl(`${API_BASE}/lineage/catalog`, {
       q: params.q,
       namespace: params.namespace,
       limit: params.limit == null ? undefined : String(params.limit),
-      offset: params.offset == null ? undefined : String(params.offset),
+      cursor: params.cursor,
     }), DatasetCatalogResponse),
 
   lineageResolveLocation: (connectionId: string, bucket: string, key: string) =>

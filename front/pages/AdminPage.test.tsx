@@ -217,7 +217,7 @@ describe('AdminPage', () => {
         action: 'user.update', resource_type: 'user', resource_id: 'user-1', outcome: 'success',
         details: { target: { displayName: 'Masaki' }, changes: [{ field: 'username', label: 'ユーザーID', before: 'aida', after: 'masaki' }] },
       }],
-      nextBeforeId: null,
+      nextCursor: null,
     }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     }))

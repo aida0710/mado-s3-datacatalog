@@ -44,6 +44,8 @@ curl --fail-with-body \
 
 この例には`permissions: ["connections:read"]`と接続の選択が必要です。参照・送信も同じ機能別の一覧で設定します。トークン管理も許可できますが、自分より強いトークンの発行・再発行はできません。ユーザーの変更には管理者プリセットの全権限・全対象が必要です。ログイン・SSO・自分のパスワード変更はブラウザ専用です。[権限の一覧と対象制限](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md)を参照してください。
 
+続きのある一覧（監査ログ、ディレクトリ一覧、DataLineageの登録一覧）は`limit`と`cursor`で読みます。応答の`nextCursor`を次の要求の`cursor`へそのまま渡し、`nextCursor`が`null`なら最後のページです。`cursor`の中身は決まった形ではないので、組み立てたり解釈したりしないでください。読めない値は400 `invalid_cursor`になります。
+
 ## OpenLineageイベントを送信する
 
 送信先のURLとkeyを、Pipelineの環境変数やシークレット管理から渡します。次はイベントJSONを `event.json` に用意した場合の例です。

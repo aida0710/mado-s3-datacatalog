@@ -861,6 +861,7 @@ export const japaneseMessages = {
   "apiErrors.dataset_conflict": "同じ識別子または保存場所がすでに登録されています。",
   "apiErrors.dataset_not_found": "指定したDatasetまたはVersionが見つかりません。",
   "apiErrors.directory_not_scanned": "このディレクトリはまだ走査されていません",
+  "apiErrors.invalid_cursor": "一覧の続きを読めませんでした。最初のページから開き直してください。",
   "apiErrors.invalid_dataset_id": "Dataset IDを確認してください。",
   "apiErrors.invalid_reference": "参照先または入力内容を確認してください。",
   "apiErrors.invalid_request": "入力内容を確認してください。",

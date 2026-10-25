@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mountStorageListRoutes } from './storage-list.js'
 import type { ConnectionConfig, ListObjectsVersion } from '../storage.js'
 import type { ResponseCache } from '../lib/storage-cache.js'
+import { encodePageCursor } from '../lib/page-cursor.js'
 
 const storageMock = mockClient(S3Client)
 const storage = new S3Client({})
@@ -56,8 +57,7 @@ mountStorageListRoutes(app, {
 interface ListResponse {
   directories: string[]
   files: { key: string; size: number; lastModified: string | null }[]
-  nextContinuation: string | null
-  nextStartAfter: string | null
+  nextCursor: string | null
   cache: { fetchedAt: string; expiresAt: string; hit: boolean }
 }
 
@@ -83,9 +83,48 @@ describe('同時の一覧取得', () => {
     await Promise.all([
       app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/`),
       app.request('/storage/other/list?bucket=b&prefix=folder/'),
-      app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&continuation=next`),
+      app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&cursor=${encodePageCursor({ continuationToken: 'next' })}`),
     ])
     expect(storageMock.commandCalls(ListObjectsV2Command)).toHaveLength(3)
+  })
+})
+
+describe('GET /storage/:connectionId/list — 続きの cursor', () => {
+  it('v2: 続きのトークンを cursor に入れて返し、その cursor で ContinuationToken を送る', async () => {
+    storageMock.on(ListObjectsV2Command).resolves({ Contents: [{ Key: 'folder/a', Size: 1 }], IsTruncated: true, NextContinuationToken: 'token-2' })
+    const first = (await (await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/`)).json()) as ListResponse
+    expect(first.nextCursor).toBe(encodePageCursor({ continuationToken: 'token-2' }))
+
+    await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&cursor=${first.nextCursor}`)
+    expect(storageMock.commandCalls(ListObjectsV2Command)[1]?.args[0].input).toMatchObject({ ContinuationToken: 'token-2', StartAfter: undefined })
+  })
+
+  it('続きのトークンを返さない互換実装では、最後のキーを cursor にして StartAfter で続ける', async () => {
+    storageMock.on(ListObjectsV2Command).resolves({ Contents: [{ Key: 'folder/a', Size: 1 }, { Key: 'folder/b', Size: 1 }], IsTruncated: true })
+    const first = (await (await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/`)).json()) as ListResponse
+    expect(first.nextCursor).toBe(encodePageCursor({ startAfter: 'folder/b' }))
+
+    await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&cursor=${first.nextCursor}`)
+    expect(storageMock.commandCalls(ListObjectsV2Command)[1]?.args[0].input).toMatchObject({ ContinuationToken: undefined, StartAfter: 'folder/b' })
+  })
+
+  it('v1: NextMarker を cursor に入れ、その cursor を Marker として送る。最後のページは null', async () => {
+    listObjectsVersion = 'v1'
+    storageMock.on(ListObjectsCommand).resolvesOnce({ Contents: [], CommonPrefixes: [{ Prefix: 'folder/x/' }], IsTruncated: true, NextMarker: 'folder/x/' })
+      .resolvesOnce({ Contents: [], IsTruncated: false })
+    const first = (await (await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/`)).json()) as ListResponse
+    expect(first.nextCursor).toBe(encodePageCursor({ startAfter: 'folder/x/' }))
+
+    const last = (await (await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&cursor=${first.nextCursor}`)).json()) as ListResponse
+    expect(storageMock.commandCalls(ListObjectsCommand)[1]?.args[0].input).toMatchObject({ Marker: 'folder/x/' })
+    expect(last.nextCursor).toBeNull()
+  })
+
+  it('読めない cursor は S3 を呼ばずに 400 invalid_cursor', async () => {
+    const response = await app.request(`/storage/${TEST_CONN_ID}/list?bucket=b&prefix=folder/&cursor=broken`)
+    expect(response.status).toBe(400)
+    expect(await response.json()).toMatchObject({ code: 'invalid_cursor' })
+    expect(storageMock.commandCalls(ListObjectsV2Command)).toHaveLength(0)
   })
 })
 
@@ -149,7 +188,7 @@ describe('GET /storage/:connectionId/list — directory prefix (末尾スラッ�
 
 describe('サーバー側キャッシュ', () => {
   it('hit したら S3 を呼ばずにキャッシュの中身を返す', async () => {
-    const cached = { directories: ['cached/'], files: [], nextContinuation: null, nextStartAfter: null }
+    const cached = { directories: ['cached/'], files: [], nextCursor: null }
     cache = {
       ...passthroughCache(),
       get: async () => ({
@@ -211,7 +250,7 @@ describe('サーバー側キャッシュ', () => {
       get: async () => {
         getCalled = true
         return {
-          payload: { directories: ['stale/'], files: [], nextContinuation: null, nextStartAfter: null },
+          payload: { directories: ['stale/'], files: [], nextCursor: null },
           fetchedAt: '2026-09-15T01:00:00.000Z',
           expiresAt: '2026-09-16T01:00:00.000Z',
         }
