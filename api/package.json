@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch --env-file=../.env internal.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp -R migrations dist/",
     "start": "node dist/internal.js",
     "start:lineage": "node dist/lineage.js",
     "dev:lineage": "tsx watch --env-file=../.env lineage.ts",
@@ -17,6 +17,7 @@
     "test": "node --env-file-if-exists=../.env ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node --env-file-if-exists=../.env ./node_modules/vitest/vitest.mjs",
     "pricing:fetch": "tsx scripts/fetch-pricing.ts",
+    "db:migrate": "tsx --env-file-if-exists=../.env scripts/migrate.ts",
     "auth:bootstrap-admin": "node dist/scripts/bootstrap-admin.js",
     "auth:bootstrap-admin:dev": "tsx scripts/bootstrap-admin.ts"
   },

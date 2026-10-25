@@ -7,6 +7,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import { loadWorkerEnv } from './env.js'
 import { createPools, closePools } from './db.js'
+import { assertMigrationsApplied } from './lib/schema-migrations.js'
 import { createCrypto } from './crypto.js'
 import { createStorageFactory } from './storage.js'
 import { MediaAnalyzeError } from './lib/media-analyze.js'
@@ -26,13 +27,17 @@ import { RequestQueueFullError } from './lib/shared-requests.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { apiError } from './lib/api-error.js'
 
+const env = loadWorkerEnv()
+const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
+// worker は移行を当てる権限を持たない。古い表のままジョブを処理しないよう、api-internal が当て終えるまで起動しない。
+await assertMigrationsApplied(pools.ro)
+
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
+// 移行の確認より後に付ける。先に付けると、起動時の失敗でもプロセスが残り続ける。
 process.on('uncaughtException', err => console.error('UNCAUGHT EXCEPTION (kept alive)', err))
 process.on('unhandledRejection', err => console.error('UNHANDLED REJECTION (kept alive)', err))
 
-const env = loadWorkerEnv()
-const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
 const crypto = createCrypto(env.ENCRYPTION_KEY)
 const storageFactory = createStorageFactory({ pools, crypto })
 const service = createMediaService({
@@ -62,8 +67,9 @@ const jobRunner = createJobRunner({
 })
 
 const app = new Hono()
-app.use('*', requestLogger())
+// ヘルスチェックは数秒ごとに来るので、要求のログより先に付けてログに出さない。
 mountHealthRoute(app, pools.ro)
+app.use('*', requestLogger())
 
 // 内部POSTでも無制限のJSONや異なる解析の待ち行列を作らせない。
 const MAX_ANALYZE_BODY_BYTES = 64 * 1024

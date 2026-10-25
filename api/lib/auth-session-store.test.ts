@@ -25,6 +25,7 @@ describe('SessionStore', () => {
       AUTH_MODE: 'local',
       DATABASE_URL_RW: 'postgres://rw@localhost/dashboard_test',
       DATABASE_URL_RO: 'postgres://ro@localhost/dashboard_test',
+      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
       ENCRYPTION_KEY: '0'.repeat(64),
       ALLOWED_ORIGINS: 'http://localhost:5173',
     })

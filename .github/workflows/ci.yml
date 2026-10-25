@@ -62,7 +62,7 @@ jobs:
           cache-dependency-path: api/package-lock.json
       - run: npm ci
         working-directory: api
-      - name: Start the schema-complete test database
+      - name: Start the test database
         run: |
           cp .env.example .env
           docker compose -f compose.dev.yaml up -d postgres
@@ -72,6 +72,12 @@ jobs:
           done
           docker compose -f compose.dev.yaml logs postgres
           exit 1
+      # db/init はロールとDBだけを作る。表はapi-internalの起動時と同じ移行で作る。
+      - name: Apply migrations to the test database
+        working-directory: api
+        env:
+          DATABASE_URL_MIGRATE: postgres://postgres:postgres@127.0.0.1:5432/dashboard_test
+        run: npm run db:migrate
       - name: Lint, test, and build
         working-directory: api
         run: |
@@ -137,36 +143,69 @@ jobs:
             --build-arg VITE_GIT_COMMIT="$commit" \
             --build-arg VITE_GIT_DATE="$build_date" \
             -f "${{ matrix.file }}" -t "mado-ci-${{ matrix.id }}:$commit" "${{ matrix.context }}"
+      # Composeと同じ db/init で、ロールだけがある空のDBを用意する。
+      - name: Start a database for the smoke test
+        if: matrix.id != 'web'
+        run: |
+          docker network create mado-ci-smoke
+          docker run -d --name mado-ci-postgres --network mado-ci-smoke \
+            -e POSTGRES_PASSWORD=ci-postgres -e POSTGRES_DB=dashboard \
+            -e DASHBOARD_PASSWORD=ci-dashboard -e LINEAGE_DB_PASSWORD=ci-lineage -e WORKER_DB_PASSWORD=ci-worker \
+            -v "$PWD/db/init:/docker-entrypoint-initdb.d:ro" \
+            postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+          for _ in $(seq 1 60); do
+            docker exec mado-ci-postgres pg_isready -h 127.0.0.1 -U postgres -d dashboard >/dev/null && exit 0
+            sleep 1
+          done
+          docker logs mado-ci-postgres
+          exit 1
       - name: Smoke compiled image
         run: |
           image="mado-ci-${{ matrix.id }}:$(git rev-parse HEAD)"
+          database=postgres://postgres:ci-postgres@mado-ci-postgres:5432/dashboard
+          # 起動したコンテナの /healthz が {"status":"ok"} を返すまで、Composeのhealthcheckと同じコマンドで待つ。
+          wait_healthy() {
+            for _ in $(seq 1 50); do
+              docker exec "$1" node dist/scripts/healthcheck.js "$2" >/dev/null 2>&1 && return 0
+              sleep 0.2
+            done
+            docker logs "$1"
+            return 1
+          }
           case "${{ matrix.id }}" in
             api)
               docker run --rm "$image" node -e \
                 'const p=require("./package.json"); if(p.version!==process.argv[1]) process.exit(1)' \
                 "$(cat VERSION)"
+              # 空のDBへ全部当たり、2回目は何も当てない。
+              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
+              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js \
+                | grep -Fx 'migrations are up to date'
+              # 公開側のプロセスは自分の最小権限のロールで、移行が済んでいることを確かめて起動する。
+              container=mado-ci-lineage-startup
+              lineage_database=postgres://mado_lineage:ci-lineage@mado-ci-postgres:5432/dashboard
+              docker run -d --name "$container" --network mado-ci-smoke \
+                -e DATABASE_URL_RW="$lineage_database" -e DATABASE_URL_RO="$lineage_database" \
+                -e DATASET_REGISTRY_URL=http://registry.invalid -e DATASET_REGISTRY_TOKEN=ci-registry-token-not-a-secret \
+                "$image" node dist/lineage.js
+              trap 'docker rm -f "$container" >/dev/null' EXIT
+              wait_healthy "$container" 3001
               ;;
             worker)
               docker run --rm "$image" ffmpeg -version >/dev/null
+              # workerのイメージも同じビルドなので移行のコマンドを持つ。ここではworkerの起動確認のためだけに当てる。
+              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
               container=mado-ci-worker-startup
-              docker run -d --name "$container" \
+              worker_database=postgres://mado_worker:ci-worker@mado-ci-postgres:5432/dashboard
+              docker run -d --name "$container" --network mado-ci-smoke \
                 -e MADO_ENV=production \
-                -e DATABASE_URL_RW=postgres://unavailable@127.0.0.1:1/dashboard \
-                -e DATABASE_URL_RO=postgres://unavailable@127.0.0.1:1/dashboard \
+                -e DATABASE_URL_RW="$worker_database" \
+                -e DATABASE_URL_RO="$worker_database" \
                 -e ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
                 "$image"
               trap 'docker rm -f "$container" >/dev/null' EXIT
+              wait_healthy "$container" 3100
               docker exec "$container" node --input-type=module -e '
-                const STARTUP_LIMIT_MS=10000, POLL_MS=200;
-                const deadline=Date.now()+STARTUP_LIMIT_MS;
-                // DBに届かない起動なので、/healthz は503とdatabase_unavailableを返すはず。
-                let health;
-                for (;;) {
-                  try { health=await fetch("http://127.0.0.1:3100/healthz"); break } catch {}
-                  if(Date.now()>=deadline) process.exit(1);
-                  await new Promise(resolve=>setTimeout(resolve,POLL_MS));
-                }
-                if(health.status!==503 || (await health.json()).code!=="database_unavailable") process.exit(1);
                 for(const [body,expected] of [[{},400],[{connectionId:"x".repeat(70000)},413]]) {
                   const response=await fetch("http://127.0.0.1:3100/analyze",{
                     method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),

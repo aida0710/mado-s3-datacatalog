@@ -47,6 +47,7 @@ const env = loadEnv({
   AUTH_MODE: 'local',
   DATABASE_URL_RW: RW,
   DATABASE_URL_RO: RW,
+  DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
   ENCRYPTION_KEY: '0'.repeat(64),
   ALLOWED_ORIGINS: 'http://localhost:5173',
 })

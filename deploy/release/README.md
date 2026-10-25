@@ -18,12 +18,13 @@ not build application source on the deployment host.
    service and obtain its Bearer token from that service's operator. Leave
    neither Registry value blank.
 5. Run `docker compose -f compose.yaml config` and review the resolved config.
-6. Start only PostgreSQL, then create the first administrator while no Web
-   listener exists:
+6. Start only `api-internal` (and PostgreSQL), which applies the database
+   migrations, then create the first administrator while no Web listener
+   exists:
 
    ```bash
-   docker compose -f compose.yaml up -d postgres
-   docker compose -f compose.yaml run --rm api-internal \
+   docker compose -f compose.yaml up -d api-internal
+   docker compose -f compose.yaml exec api-internal \
      node dist/scripts/bootstrap-admin.js --username admin
    ```
 
@@ -36,46 +37,24 @@ the same immutable references. Do not point a public proxy at port 8080.
 
 ## Existing database
 
-The PostgreSQL init directory runs only for a new volume. For an existing DB,
-follow the single ordered procedure in `db/README.md`: backup, apply missing
-files through 027, start only the new `api-internal`, apply 028 then 029, enable
-the `mado_lineage` login with `LINEAGE_DB_PASSWORD`, and only then start
-`api-lineage` and the remaining services. Do not bring up the entire new
-Compose project before completing those steps.
+`api-internal` applies the database migrations from its image when it starts,
+using the PostgreSQL administrator URL that `compose.yaml` builds from
+`POSTGRES_PASSWORD`. `api-lineage` and `media-worker` check that every
+migration is recorded and start after `api-internal` is healthy. Back up the
+database before every update.
 
-For a deployment already on the previous schema, apply 035–037 before the new
-services, then enable `mado_worker` with the generated `WORKER_DB_PASSWORD`.
-The worker receives only its dedicated environment from `deploy/worker-service.yaml`.
-Migration 037 requires existing SSO users to sign in once after the update.
+A database migrated by hand up to v0.4.0 has tables but no
+`schema_migrations`, and `api-internal` refuses to start on it. Once, before
+the first start of this release, record the files it already has:
 
-Upgrading to v0.3.0 applies `db/migrations/039_internal_api_tokens.sql` and
-`db/migrations/040_explicit_token_grants.sql`, in that order. 039 only adds
-tables and can run while the previous release serves requests. 040 converts
-existing tokens to feature permissions and explicit connections, then drops
-`service_accounts.status` and `service_account_keys.connections_restricted`,
-which the previous release still reads: stop `api-internal` and `api-lineage`,
-apply 040, and start both on this release. Token values stay valid. There is no
-way back to an earlier release after 040; see
-[access tokens](../../docs/access-tokens.md) and
-[the permission contract](../../docs/internal-api-permissions.md).
+```bash
+docker compose -f compose.yaml run --rm --no-deps api-internal \
+  node dist/scripts/record-applied-migrations.js --through 041
+```
 
-Upgrading to v0.4.0 applies
-`db/migrations/041_explicit_connection_settings_media_cache.sql` after 040.
-`AUTH_MODE` must be `local`, `oidc`, or `hybrid`; `disabled` no longer exists.
-041 stores the effective value of every missing boolean connection setting and
-removes media cache rows without metadata or a connection. The previous release
-can create connections without those settings, so stop `api-internal` and
-`api-lineage`, apply 041, and start both on this release; update `nginx` and
-`media-worker` as well. The bundled edge configuration no longer redirects a
-legacy hostname; keep your own edge configuration if you rely on that redirect.
-See [the database procedure](../../db/README.md).
-
-When upgrading from v0.1.0, apply `db/migrations/038_access_tokens.sql` before
-starting the new APIs. Update both `api-internal` and `api-lineage` to this
-release so token disabling is enforced on both listeners. Existing token
-values and permissions remain valid; regenerating or deleting a token revokes
-its previous value immediately.
-
+See [the database procedure](db/README.md#databases-migrated-by-hand) and the
+release notes of the version you install for changes that need operator
+action.
 
 Internal/private deployments are downstream operations. Publishing an OSS
 release never connects to or changes a deployment environment.

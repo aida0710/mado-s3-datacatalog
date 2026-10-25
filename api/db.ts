@@ -31,14 +31,21 @@ export type Queryable = Pool | PoolClient
 export async function withTransaction<T>(pool: Pool, fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect()
   try {
-    await client.query('BEGIN')
-    const result = await fn(client)
+    return await inTransaction(client, () => fn(client))
+  } finally {
+    client.release()
+  }
+}
+
+/** 既に借りている client の上で fn を 1 つの transaction にする。advisory lock のように接続に結び付いた状態を保ったまま使う。 */
+export async function inTransaction<T>(client: PoolClient, fn: () => Promise<T>): Promise<T> {
+  await client.query('BEGIN')
+  try {
+    const result = await fn()
     await client.query('COMMIT')
     return result
   } catch (error) {
     await client.query('ROLLBACK').catch(rollbackError => console.error('rollback failed', rollbackError))
     throw error
-  } finally {
-    client.release()
   }
 }

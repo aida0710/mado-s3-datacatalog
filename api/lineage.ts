@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { loadLineageEnv } from './env.js'
 import { closePools, createPools } from './db.js'
+import { assertMigrationsApplied } from './lib/schema-migrations.js'
 import { createAuditWriter } from './lib/audit.js'
 import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.js'
 import { createRegistryClient } from './lib/registry-client.js'
@@ -13,6 +14,8 @@ import { apiError } from './lib/api-error.js'
 const env = loadLineageEnv()
 
 const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
+// 公開側のプロセスは移行を当てる権限を持たない。api-internal が当て終えていなければ起動しない。
+await assertMigrationsApplied(pools.ro)
 const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
 const audit = createAuditWriter(pools.rw)
 const registry = createRegistryClient({
@@ -21,8 +24,9 @@ const registry = createRegistryClient({
 })
 
 const app = new Hono()
-app.use('*', requestLogger())
+// ヘルスチェックは数秒ごとに来るので、要求のログより先に付けてログに出さない。
 mountHealthRoute(app, pools.ro)
+app.use('*', requestLogger())
 
 const api = new Hono()
 mountOpenLineageRoutes(api, {
