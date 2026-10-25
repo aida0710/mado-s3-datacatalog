@@ -1,8 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize from 'rehype-sanitize'
 import { ChevronDown, ChevronUp, History, Pencil, Plus } from 'lucide-react'
 import { ErrorNotice } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
@@ -10,6 +7,7 @@ import type { z } from 'zod'
 import { Readme } from '../lib/api/types'
 import { encPath } from '../lib/route'
 import { CacheBanner } from './storage/CacheBanner'
+import { MarkdownView } from './MarkdownView'
 import { useCapabilities } from '../lib/useCapabilities'
 import { createRevalidationReceiver } from '../lib/revalidationReceiver'
 import { loadFailedMessage } from '../i18n/loadFailedMessage'
@@ -126,6 +124,9 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
   const editHref = `/storage/${encodeURIComponent(connectionId)}/edit-readme/${encodeURIComponent(bucket)}/${encPath(prefix)}`
 
   const editLabel = data?.exists ? translate('common.edit') : translate('common.create')
+  // is-collapsed: max-height でクリップ (高さ判定に必須なので未展開なら常時付与)。
+  // is-faded: 下端のもや。実際にあふれている時だけ — 短い README には出さない。
+  const collapseClass = expanded ? undefined : needsExpand ? 'is-collapsed is-faded' : 'is-collapsed'
 
   return (
     <section className="readme-panel" aria-labelledby={headingId}>
@@ -175,19 +176,7 @@ export function ReadmeView({ connectionId, bucket, prefix }: Props) {
           />
         ) : data?.exists ? (
           <>
-            <div
-              ref={bodyRef}
-              // is-collapsed: max-height でクリップ (高さ判定に必須なので未展開なら常時付与)。
-              // is-faded: 下端のもや。実際にあふれている時だけ — 短い README には出さない。
-              className={`markdown-body${expanded ? '' : ' is-collapsed'}${needsExpand && !expanded ? ' is-faded' : ''}`}
-            >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize]}
-              >
-                {data.body}
-              </ReactMarkdown>
-            </div>
+            <MarkdownView ref={bodyRef} source={data.body} className={collapseClass} />
             {(needsExpand || expanded) && (
               <button
                 type="button"

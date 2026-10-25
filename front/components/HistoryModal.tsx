@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize from 'rehype-sanitize'
 import { Check } from 'lucide-react'
 import { Dialog } from '@mado/design-system/react'
+import { MarkdownView } from './MarkdownView'
 import { fmtDateTime, fmtSize } from '../lib/format'
 import { useHistoryVersions, type HistorySource } from '../lib/useHistoryVersions'
 import { localizeMessage } from '../i18n/localizeMessage'
@@ -79,14 +77,7 @@ export function HistoryModal({
                       <span>{translate('historyModal.thisVersionMatchesTheCurrentContent')}</span>
                     </p>
                   )}
-                  <div className="markdown-body">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeSanitize]}
-                    >
-                      {selectedBody.body}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownView source={selectedBody.body} />
                 </>
               )}
             </div>

@@ -1,11 +1,9 @@
 import { lazy, Suspense, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize from 'rehype-sanitize'
 import { History, Pencil } from 'lucide-react'
 import { ErrorNotice, useQuery } from '@mado/design-system/react'
 import { api } from '../lib/api/client'
+import { MarkdownView } from '../components/MarkdownView'
 import { getIntlLocale } from '../i18n/locale'
 import { loadFailedMessage } from '../i18n/loadFailedMessage'
 import { useLocale } from '../i18n/useLocale'
@@ -97,14 +95,7 @@ export default function HomePage() {
       </header>
 
       {isPresent ? (
-        <div className="markdown-body home-note">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSanitize]}
-          >
-            {data.body}
-          </ReactMarkdown>
-        </div>
+        <MarkdownView source={data.body} className="home-note" />
       ) : (
         <div className="empty-state">
           <h2>{translate('homePage.noContentYet')}</h2>

@@ -1,23 +1,13 @@
 import { render } from '@testing-library/react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize from 'rehype-sanitize'
 import { describe, expect, it } from 'vitest'
+import { MarkdownView } from './MarkdownView'
 
-// rehype-sanitize を passing したときに、危険な HTML 要素 (XSS 経路) が
-// 描画 DOM に残らないことを確認する。ReadmeView.tsx と HomePage.tsx で
-// 実際に使っているのと同じ呼び出し形 (rehypePlugins=[rehypeSanitize])。
+// Team note・README・編集履歴が使う MarkdownView で、危険な HTML 要素 (XSS 経路) が
+// 描画 DOM に残らないことを確認する。
 
-describe('react-markdown + rehype-sanitize はストアド XSS 要素を剥がす', () => {
+describe('MarkdownView はストアド XSS 要素を剥がす', () => {
   function renderSanitized(source: string) {
-    return render(
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
-      >
-        {source}
-      </ReactMarkdown>,
-    )
+    return render(<MarkdownView source={source} />)
   }
 
   // 危険要素タグそのものが DOM に出ないこと。default schema が許可してない。
