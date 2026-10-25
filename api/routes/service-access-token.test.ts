@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import { mountServiceAccessTokenRoutes, type ServiceAccessTokenPrincipal } from './service-access-token.js'
 
-const bearer = { Authorization: 'Bearer mado_lin_0123456789abcdef.unit-test-secret' }
+const bearer = { Authorization: 'Bearer mado_dc_0123456789abcdef.unit-test-secret' }
 const principal: ServiceAccessTokenPrincipal & { serviceAccountId: string } = {
   serviceAccountId: 'internal-owner',
   keyId: '00000000-0000-4000-8000-000000000001',
@@ -32,7 +32,7 @@ describe('アクセストークン自身の許可範囲', () => {
       namespaces: ['mado-model-tracking', 'speech'],
       expiresAt: '2027-01-01T00:00:00.000Z',
     })
-    expect(authenticate).toHaveBeenCalledWith('mado_lin_0123456789abcdef.unit-test-secret')
+    expect(authenticate).toHaveBeenCalledWith('mado_dc_0123456789abcdef.unit-test-secret')
   })
 
   it('scopeを問わず答え、無期限・全Namespaceのトークンはその値のまま返す', async () => {

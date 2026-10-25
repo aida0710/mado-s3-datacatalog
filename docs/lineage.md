@@ -87,7 +87,7 @@ API keyをGit、Dockerfile、ログ、README、OpenLineage event本体へ入れ�
 
 ```http
 POST https://mado.example/api/openlineage/v1/lineage
-Authorization: Bearer mado_lin_...
+Authorization: Bearer mado_dc_...
 Content-Type: application/json
 ```
 

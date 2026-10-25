@@ -1,8 +1,8 @@
 import type { Queryable } from '../db.js'
 import { newId, randomToken, sha256 } from './auth-crypto.js'
 
-// Existing producers and the database constraint depend on this public prefix.
-const SERVICE_KEY_TOKEN_PREFIX = 'mado_lin_'
+// トークンの値の前置き。DB の制約 (migration 043) と同じ。mado ML Tracking は mado_mt_ を使う。
+export const SERVICE_KEY_TOKEN_PREFIX = 'mado_dc_'
 const PUBLIC_ID_LENGTH = 16
 // Keep 256 bits of entropy for both first issuance and regeneration.
 export const SERVICE_KEY_SECRET_BYTES = 32

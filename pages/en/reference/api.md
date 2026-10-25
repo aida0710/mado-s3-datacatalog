@@ -16,7 +16,7 @@ Select **Read** and **Send** in the DataLineage row of the feature permission li
 
 <Screenshot src="/screenshots/en/access-token-create.png" alt="Token creation with a searchable namespace checklist" caption="Filter the list and check the namespaces to allow. Selected names are retained across searches." />
 
-The value is shown only once, when issued. Save it in the integration’s secret manager. **Expires at** defaults to 90 days. You can choose 7, 30, 90, or 365 days, no expiry, a **Custom duration** in minutes, hours, or days, or **Choose from calendar**.
+The value is shown only once, when issued. Save it in the integration’s secret manager. **Expires at** defaults to 90 days. You can choose 7, 30, 90, or 365 days, no expiry, a **Custom duration** in minutes, hours, or days, or **Choose from calendar**. Values start with `mado_dc_` (mado ML Tracking tokens start with `mado_mt_`).
 
 | Feature / action | Purpose | Endpoint |
 | --- | --- | --- |
@@ -93,6 +93,6 @@ Open the **…** menu beside a token.
 - **Disable / Enable** pauses or resumes use of the same value.
 - **Delete** permanently ends access and removes the token from the list. Audit history is retained.
 
-Existing Service Account keys appear in the same list, with their values and permissions preserved. Renaming or regenerating a token does not add internal API permissions. Changing and saving its selected operations moves it to the feature permission model.
+Values issued up to v0.4.0 start with `mado_lin_` and stop working when you update to v0.5.0. The name, permissions, and expiration date remain, so **regenerate** each token and distribute the new value to its integration.
 
 Internal APIs require a browser session or an access token. Notes and README edits use the account signature or token name as the editor. An `editor` field in the PUT body produces a 400 validation error. Logical DataLineage graphs use `rootKind=dataset|job`; queries containing `kind` produce a 400 response.
