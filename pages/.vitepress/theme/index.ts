@@ -6,10 +6,11 @@ import '@fontsource/noto-sans-jp/japanese-500.css'
 import '@fontsource/noto-sans-jp/japanese-700.css'
 import '@mado/design-system/fonts.css'
 import '@mado/design-system/tokens.css'
+// ドキュメントサイトの見た目 (上部バーとサイドバーの暗い枠、本文、トップページ) はデザインシステムの docs.css。
+import '@mado/design-system/docs.css'
 import Screenshot from './Screenshot.vue'
 import Home from './Home.vue'
 import ProductLogo from './ProductLogo.vue'
-import './style.css'
 
 export default {
   extends: DefaultTheme,

@@ -10,7 +10,7 @@ const content = computed(() => homeContent(lang.value))
 </script>
 
 <template>
-  <div class="mado-home">
+  <div class="docs-home">
     <section class="home-hero">
       <div class="home-hero-copy">
         <p class="home-eyebrow">{{ content.eyebrow }}</p>
