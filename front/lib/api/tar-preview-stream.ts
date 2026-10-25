@@ -1,6 +1,8 @@
 import type { z } from 'zod'
 import { TarPreview } from './types'
 import { fetchOk } from './http'
+import { apiErrorMessage } from '../../i18n/apiErrorMessage'
+import { translate } from '../../i18n/translate'
 import { MAX_TAR_PREPARATION_MS, waitForTarPreparationRetry } from '../prepareTarEntry'
 import { mediaMessages } from '../mediaMessages'
 
@@ -47,7 +49,7 @@ async function readTarPreviewStream(res: Response, callbacks: TarPreviewCallback
     } else if (record.pending === true) {
       preparing = true
     } else if ('error' in record) {
-      throw new Error(String(record.error))
+      throw new Error(apiErrorMessage(record) ?? translate('apiErrors.archive_preview_failed'))
     }
   }
 

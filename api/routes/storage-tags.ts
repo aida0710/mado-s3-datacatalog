@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 // 認証と操作権限は internal.ts の共通ガードで検証する。
 
@@ -54,7 +55,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
 
   app.post('/tags', async c => {
     const parsed = CreateTagBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { name, color } = parsed.data
     const id = nanoid(10)
     try {
@@ -67,7 +68,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
     } catch (e) {
       const msg = (e as Error).message
       if (msg.includes('storage_tags_name_key') || msg.includes('duplicate key')) {
-        return c.json({ error: 'name already exists' }, 409)
+        return c.json(apiError('already_exists', 'name already exists'), 409)
       }
       throw e
     }
@@ -76,7 +77,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.put('/tags/:id', async c => {
     const id = c.req.param('id')
     const parsed = UpdateTagBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const u = parsed.data
 
     const sets: string[] = []
@@ -88,7 +89,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
       const r = await deps.pools.ro.query<TagRow>(
         `SELECT id, name, color FROM storage_tags WHERE id = $1`, [id],
       )
-      if (!r.rows[0]) return c.json({ error: 'not found' }, 404)
+      if (!r.rows[0]) return c.json(apiError('not_found', 'not found'), 404)
       markAuditNoChange(c)
       return c.json(r.rows[0])
     }
@@ -105,7 +106,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
         const current = await deps.pools.ro.query<TagRow>(
           `SELECT id, name, color FROM storage_tags WHERE id = $1`, [id],
         )
-        if (!current.rows[0]) return c.json({ error: 'not found' }, 404)
+        if (!current.rows[0]) return c.json(apiError('not_found', 'not found'), 404)
         markAuditNoChange(c)
         return c.json(current.rows[0])
       }
@@ -113,7 +114,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
     } catch (e) {
       const msg = (e as Error).message
       if (msg.includes('storage_tags_name_key') || msg.includes('duplicate key')) {
-        return c.json({ error: 'name already exists' }, 409)
+        return c.json(apiError('already_exists', 'name already exists'), 409)
       }
       throw e
     }
@@ -122,17 +123,17 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.delete('/tags/:id', async c => {
     const id = c.req.param('id')
     const r = await deps.pools.rw.query(`DELETE FROM storage_tags WHERE id = $1`, [id])
-    if (r.rowCount === 0) return c.json({ error: 'not found' }, 404)
+    if (r.rowCount === 0) return c.json(apiError('not_found', 'not found'), 404)
     return c.json({ ok: true })
   })
 
   app.get('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const kindRaw = c.req.query('kind')
     const kindParsed = TargetKindSchema.safeParse(kindRaw)
-    if (!kindParsed.success) return c.json({ error: 'kind must be bucket|prefix|file' }, 400)
+    if (!kindParsed.success) return c.json(apiError('invalid_request', 'kind must be bucket|prefix|file'), 400)
     const kind = kindParsed.data
     const paths = c.req.queries('paths') ?? []
     if (paths.length === 0) return c.json({})
@@ -153,7 +154,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.put('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
     const parsed = AssignmentBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(
       `INSERT INTO storage_tag_assignments (tag_id, connection_id, bucket, target_kind, target_path)
@@ -168,7 +169,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.delete('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
     const parsed = AssignmentBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(
       `DELETE FROM storage_tag_assignments

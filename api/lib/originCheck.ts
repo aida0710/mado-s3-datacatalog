@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono'
+import { apiError } from './api-error.js'
 
 // CSRF 防御: 書き込み系メソッドに対して Origin/Referer を許可リストと突き合わせる。
 // 悪意ある別サイトがブラウザのセッションを使って変更要求を送るのを防ぐため、
@@ -16,7 +17,7 @@ export function requireSafeOrigin(allowed: readonly string[]): MiddlewareHandler
     if (SAFE_METHODS.has(c.req.method)) return next()
     const got = c.req.header('Origin') ?? c.req.header('Referer') ?? ''
     const ok = allowed.some(o => got === o || got.startsWith(o + '/'))
-    if (!ok) return c.json({ error: 'invalid origin' }, 403)
+    if (!ok) return c.json(apiError('invalid_origin', 'invalid origin'), 403)
     return next()
   }
 }

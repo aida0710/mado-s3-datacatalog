@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from 'hono'
 import type { Pool } from 'pg'
 import { hasPermission, type RequestPrincipal } from './auth-types.js'
 import { getRequestPrincipal } from './rbac.js'
+import { apiError } from './api-error.js'
 
 /** 接続管理者は全接続へアクセスできる。 */
 export function managesConnections(c: Context): boolean {
@@ -66,9 +67,9 @@ export function visibleConnectionIds(pool: Pool, c: Context): Promise<Set<string
 export function requireConnectionAccess(pool: Pool): MiddlewareHandler {
   return async (c, next) => {
     const connectionId = c.req.param('connectionId')
-    if (!connectionId) return c.json({ error: 'connectionId required' }, 400)
+    if (!connectionId) return c.json(apiError('invalid_request', 'connectionId required'), 400)
     if (!await canAccessConnection(pool, c, connectionId)) {
-      return c.json({ error: 'connection not found' }, 404)
+      return c.json(apiError('not_found', 'connection not found'), 404)
     }
     await next()
   }
@@ -77,9 +78,9 @@ export function requireConnectionAccess(pool: Pool): MiddlewareHandler {
 export function requireConnectionQueryAccess(pool: Pool): MiddlewareHandler {
   return async (c, next) => {
     const connectionId = c.req.query('connectionId')
-    if (!connectionId) return c.json({ error: 'connectionId required' }, 400)
+    if (!connectionId) return c.json(apiError('invalid_request', 'connectionId required'), 400)
     if (!await canAccessConnection(pool, c, connectionId)) {
-      return c.json({ error: 'connection not found' }, 404)
+      return c.json(apiError('not_found', 'connection not found'), 404)
     }
     await next()
   }

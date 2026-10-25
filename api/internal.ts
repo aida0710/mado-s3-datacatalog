@@ -63,6 +63,7 @@ import { createCapacityMetricsCollector } from './lib/capacity-metrics.js'
 import { mountMetricsRoutes } from './routes/metrics.js'
 import { mountServiceAccessTokenRoutes } from './routes/service-access-token.js'
 import { mountServiceLineageRoutes } from './routes/service-lineage.js'
+import { apiError } from './lib/api-error.js'
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
@@ -274,7 +275,7 @@ if (env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN && env.MARQUEZ_URL) {
     visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
   })
 } else {
-  api.all('/lineage/*', c => c.json({ error: 'lineage integration is not configured' }, 503))
+  api.all('/lineage/*', c => c.json(apiError('lineage_not_configured', 'lineage integration is not configured'), 503))
 }
 
 mountAdminUsersRoutes(api, {
@@ -311,8 +312,11 @@ app.route('/api/mado', madoApi)
 // それ以外は内部 error をログに出して 500 + "internal error" だけ返す
 // (raw error.message を漏らさない)。
 app.onError((err, c) => {
-  if (err instanceof OidcSessionCheckUnavailableError || err instanceof RequestQueueFullError) {
-    return c.json({ error: err.message }, 503, { 'Retry-After': '1' })
+  if (err instanceof OidcSessionCheckUnavailableError) {
+    return c.json(apiError('oidc_unavailable', err.message), 503, { 'Retry-After': '1' })
+  }
+  if (err instanceof RequestQueueFullError) {
+    return c.json(apiError('request_queue_full', err.message), 503, { 'Retry-After': '1' })
   }
   const explained = explainStorageError(err)
   if (explained) {
@@ -322,10 +326,10 @@ app.onError((err, c) => {
       upstreamStatus: storageError.$metadata?.httpStatusCode ?? null,
       upstreamRequestId: storageError.$metadata?.requestId ?? null,
     })
-    return c.json({ error: explained.message }, explained.status)
+    return c.json(apiError(explained.code, explained.message), explained.status)
   }
   console.error('unhandled error', err)
-  return c.json({ error: 'internal error' }, 500)
+  return c.json(apiError('internal_error', 'internal error'), 500)
 })
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, info => {

@@ -3,7 +3,7 @@ import { api } from './client'
 import { getSessionExpiredMessage, fetchOk } from './http'
 import { subscribeUnauthorized } from './unauthorized-events'
 
-function respondWith(status: number, body: unknown = { error: 'unauthorized' }) {
+function respondWith(status: number, body: unknown = { error: 'unauthorized', code: 'authentication_required' }) {
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
@@ -35,9 +35,9 @@ describe('API の 401 の通知', () => {
   it('401 以外の失敗では知らせない', async () => {
     const listener = listenUnauthorized()
 
-    respondWith(403, { error: 'forbidden' })
+    respondWith(403, { error: 'forbidden', code: 'forbidden', permission: 'storage:read' })
     await expect(fetchOk('/api/internal/notes/home')).rejects.toThrow('forbidden')
-    respondWith(500, { error: 'boom' })
+    respondWith(500, { error: 'boom', code: 'internal_error' })
     await expect(fetchOk('/api/internal/notes/home')).rejects.toThrow('boom')
 
     expect(listener).not.toHaveBeenCalled()

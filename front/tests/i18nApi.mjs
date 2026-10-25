@@ -33,7 +33,7 @@ export function createI18nApi() {
     const reply = (payload, status = 200) => route.fulfill({ status,
       contentType: 'application/json', body: JSON.stringify(payload) })
     if (path === '/api/auth/config') return reply({ localEnabled: true, oidc: { enabled: false } })
-    if (path === '/api/auth/me') return state.loggedIn ? reply({ user }) : reply({ error: 'unauthorized' }, 401)
+    if (path === '/api/auth/me') return state.loggedIn ? reply({ user }) : reply({ error: 'unauthorized', code: 'authentication_required' }, 401)
     if (path === '/api/internal/connections') return reply([connection])
     if (path === '/api/internal/connections/default') return reply(connection)
     if (path === '/api/internal/settings') return reply({ tags_enabled: 'false' })
@@ -47,7 +47,7 @@ export function createI18nApi() {
     if (path.endsWith('/readme')) return reply({ exists: false })
     if (path.endsWith('/tags')) return reply(path === '/api/internal/tags' ? [] : {})
     if (path.endsWith('/registry-status')) return reply({ linked: false })
-    return reply({ error: `Unexpected browser-test API: ${path}` }, 404)
+    return reply({ error: `Unexpected browser-test API: ${path}`, code: 'not_found' }, 404)
   }
   return { route, state, connection }
 }

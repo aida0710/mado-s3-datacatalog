@@ -3,6 +3,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { PinnedPreviewsProvider } from '../../lib/pinnedPreviews'
 import { EntryTable } from './EntryTable'
+import { itemAt } from '../../tests/itemAt'
 
 function LocationSpy() {
   return <output data-testid="location">{useLocation().pathname}</output>
@@ -38,7 +39,7 @@ describe('EntryTable 行を押したとき', () => {
   it('ディレクトリの行は、名前以外の場所を押しても開く', () => {
     setup({ dirs: ['audio/'] })
     const row = rowOf('audio/')
-    fireEvent.click(row.querySelectorAll('td')[1])
+    fireEvent.click(itemAt(row.querySelectorAll('td'), 1))
     expect(screen.getByTestId('location').textContent).toBe('/storage/c/b/audio/')
   })
 
@@ -50,7 +51,7 @@ describe('EntryTable 行を押したとき', () => {
 
   it('ファイルの行は、名前以外の場所を押してもプレビューを開く', () => {
     const { onSelectFile } = setup({ files: ['notes.txt'] })
-    fireEvent.click(rowOf('notes.txt').querySelectorAll('td')[1])
+    fireEvent.click(itemAt(rowOf('notes.txt').querySelectorAll('td'), 1))
     expect(onSelectFile).toHaveBeenCalledWith('notes.txt')
   })
 

@@ -7,6 +7,7 @@ import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.j
 import { createRegistryClient } from './lib/registry-client.js'
 import { mountOpenLineageRoutes } from './routes/openlineage.js'
 import { requestLogger } from './lib/request-logger.js'
+import { apiError } from './lib/api-error.js'
 
 const env = loadLineageEnv()
 
@@ -52,7 +53,7 @@ app.route('/api', api)
 
 app.onError((error, c) => {
   console.error('unhandled lineage API error', error)
-  return c.json({ error: 'internal error' }, 500)
+  return c.json(apiError('internal_error', 'internal error'), 500)
 })
 
 const server = serve({ fetch: app.fetch, port: env.LINEAGE_API_PORT }, info => {

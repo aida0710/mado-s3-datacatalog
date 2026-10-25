@@ -2,6 +2,7 @@ import type { Hono } from 'hono'
 import type { JobStore } from '../lib/jobs.js'
 import type { ConnectionConfig } from '../storage.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
+import { apiError } from '../lib/api-error.js'
 
 // 走査ジョブの投入 (spec: 2026-08-18-directory-scan-design.md)。
 // 汎用の POST /jobs は作らない。任意の kind と payload を外から投げられる口は
@@ -26,13 +27,13 @@ export function mountStorageScanRoutes(app: Hono, deps: StorageScanDeps): void {
   app.post('/storage/:connectionId/scan', async c => {
     const connectionId = c.req.param('connectionId')
     const bucket = c.req.query('bucket')
-    if (!bucket) return c.json({ error: 'bucket is required' }, 400)
+    if (!bucket) return c.json(apiError('invalid_request', 'bucket is required'), 400)
     const prefix = c.req.query('prefix') ?? ''
 
     // UI がボタンを隠していても共有 URL を直に叩けるので API 側でも止める。
     const config = await deps.getConnectionConfig(connectionId)
     if (!config.scanEnabled) {
-      return c.json({ error: 'この接続では走査が無効になっています' }, 403)
+      return c.json(apiError('scan_disabled', 'scanning is disabled for this connection'), 403)
     }
 
     const result = await deps.store.enqueueWithResult(

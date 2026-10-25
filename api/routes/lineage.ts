@@ -6,6 +6,7 @@ import { createNamespaceLineageService } from '../lib/namespace-lineage-service.
 import { graphWithoutHiddenConnections } from '../lib/lineage-connection-visibility.js'
 import { MarquezClientError } from '../lib/marquez-client.js'
 import { RegistryClientError } from '../lib/registry-client.js'
+import { apiError } from '../lib/api-error.js'
 
 const Identity = z.string().trim().min(1).max(1024)
 const Uuid = z.string().uuid()
@@ -23,13 +24,13 @@ function boundedInt(value: string | undefined, { fallback, min, max }: { fallbac
 }
 
 function backendError(c: Context, error: unknown): Response {
-  if (error instanceof LineageNamespaceError) return c.json({ error: error.message }, error.status)
+  if (error instanceof LineageNamespaceError) return c.json(apiError(error.code, error.message), error.status)
   if (error instanceof RegistryClientError) {
-    if (error.status === 404) return c.json({ error: 'not found' }, 404)
-    return c.json({ error: 'Dataset Registry is unavailable' }, 502)
+    if (error.status === 404) return c.json(apiError('not_found', 'not found'), 404)
+    return c.json(apiError('registry_unavailable', 'Dataset Registry is unavailable'), 502)
   }
   if (error instanceof MarquezClientError) {
-    return c.json({ error: 'Marquez is unavailable' }, 502)
+    return c.json(apiError('marquez_unavailable', 'Marquez is unavailable'), 502)
   }
   throw error
 }
@@ -40,16 +41,16 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
     return policy ? createNamespaceLineageService(deps.service, policy) : deps.service
   }
   app.get('/lineage/graph', async c => {
-    if (c.req.query('kind') !== undefined) return c.json({ error: 'kind is not supported; use rootKind' }, 400)
+    if (c.req.query('kind') !== undefined) return c.json(apiError('invalid_request', 'kind is not supported; use rootKind'), 400)
     const mode = c.req.query('mode') ?? 'logical'
     const depth = boundedInt(c.req.query('depth'), { fallback: 3, min: 1, max: 10 })
     try {
       if (mode === 'versions') {
         const versionId = Uuid.safeParse(c.req.query('versionId'))
-        if (!versionId.success) return c.json({ error: 'valid versionId is required' }, 400)
+        if (!versionId.success) return c.json(apiError('invalid_request', 'valid versionId is required'), 400)
         const rawDirection = c.req.query('direction') ?? 'both'
         if (!['upstream', 'downstream', 'both'].includes(rawDirection)) {
-          return c.json({ error: 'invalid direction' }, 400)
+          return c.json(apiError('invalid_request', 'invalid direction'), 400)
         }
         const graph = await serviceFor(c).versionGraph({
           versionId: versionId.data,
@@ -58,16 +59,16 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
         })
         return c.json(graphWithoutHiddenConnections(graph, await deps.visibleConnectionIds(c)))
       }
-      if (mode !== 'logical') return c.json({ error: 'invalid graph mode' }, 400)
+      if (mode !== 'logical') return c.json(apiError('invalid_request', 'invalid graph mode'), 400)
 
       const kind = c.req.query('rootKind')
       const namespace = Identity.safeParse(c.req.query('namespace'))
       const name = Identity.safeParse(c.req.query('name'))
       if (kind !== 'dataset' && kind !== 'job') {
-        return c.json({ error: 'rootKind must be dataset or job' }, 400)
+        return c.json(apiError('invalid_request', 'rootKind must be dataset or job'), 400)
       }
       if (!namespace.success || !name.success) {
-        return c.json({ error: 'namespace and name are required' }, 400)
+        return c.json(apiError('invalid_request', 'namespace and name are required'), 400)
       }
       return c.json(await serviceFor(c).logicalGraph({
         kind,
@@ -109,7 +110,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
     const key = z.string().max(8192).safeParse(c.req.query('key') ?? '')
     const limit = boundedInt(c.req.query('limit'), { fallback: 20, min: 1, max: 100 })
     if (!connectionId.success || !bucket.success || !key.success) {
-      return c.json({ error: 'connectionId, bucket and a valid key are required' }, 400)
+      return c.json(apiError('invalid_request', 'connectionId, bucket and a valid key are required'), 400)
     }
     try {
       return c.json(await serviceFor(c).resolveLocation({
@@ -129,7 +130,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
 
   app.get('/lineage/datasets/:id', async c => {
     const id = Uuid.safeParse(c.req.param('id'))
-    if (!id.success) return c.json({ error: 'invalid dataset id' }, 400)
+    if (!id.success) return c.json(apiError('invalid_request', 'invalid dataset id'), 400)
     try {
       return c.json(await serviceFor(c).dataset(id.data, await deps.visibleConnectionIds(c)))
     } catch (error) {
@@ -139,7 +140,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
 
   app.get('/lineage/versions/:id', async c => {
     const id = Uuid.safeParse(c.req.param('id'))
-    if (!id.success) return c.json({ error: 'invalid version id' }, 400)
+    if (!id.success) return c.json(apiError('invalid_request', 'invalid version id'), 400)
     try {
       return c.json(await serviceFor(c).version(id.data, await deps.visibleConnectionIds(c)))
     } catch (error) {
@@ -149,7 +150,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
 
   app.get('/lineage/runs/:id', async c => {
     const id = Uuid.safeParse(c.req.param('id'))
-    if (!id.success) return c.json({ error: 'invalid run id' }, 400)
+    if (!id.success) return c.json(apiError('invalid_request', 'invalid run id'), 400)
     try {
       return c.json(await serviceFor(c).run(id.data))
     } catch (error) {
@@ -161,7 +162,7 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
     const namespace = Identity.safeParse(c.req.query('namespace'))
     const name = Identity.safeParse(c.req.query('name'))
     if (!namespace.success || !name.success) {
-      return c.json({ error: 'namespace and name are required' }, 400)
+      return c.json(apiError('invalid_request', 'namespace and name are required'), 400)
     }
     const limit = boundedInt(c.req.query('limit'), { fallback: 50, min: 1, max: 100 })
     try {

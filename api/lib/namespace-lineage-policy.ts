@@ -1,9 +1,14 @@
 import type { RegistryClient } from './registry-client.js'
 import type { DatasetDetail, DatasetVersionDetail, LineageRunDetail } from '../shared/lineage-types.js'
 import { namespaceAllowed } from './namespace-allowlist.js'
+import type { ApiErrorCode } from '../shared/api-error-codes.js'
 
 export class LineageNamespaceError extends Error {
-  constructor(readonly status: 403 | 404 = 403) { super(status === 404 ? 'not found' : 'namespace is not allowed') }
+  readonly code: ApiErrorCode
+  constructor(readonly status: 403 | 404 = 403) {
+    super(status === 404 ? 'not found' : 'namespace is not allowed')
+    this.code = status === 404 ? 'not_found' : 'namespace_not_allowed'
+  }
 }
 
 export function createNamespaceLineagePolicy(registry: RegistryClient, namespaces: readonly string[]) {

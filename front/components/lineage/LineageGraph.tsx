@@ -28,7 +28,7 @@ const PATH_MARKER_COLOR = 'var(--link)'
 const minimapNodeClass = (node: LineageFlowNode) => `lineage-minimap-node--${node.data.kind}`
 
 // 最初に全体を収める表示。狭い画面では全体が入らなくても項目の文字が読める大きさ (0.5 倍、
-// Mado Model Tracking の Lineage と同じ) で開き、残りは動かして見る。
+// mado ML Tracking の Lineage と同じ) で開き、残りは動かして見る。
 const WIDE_FIT_VIEW = { padding: 0.2, maxZoom: 1.15 }
 const NARROW_FIT_VIEW = { ...WIDE_FIT_VIEW, minZoom: 0.5 }
 

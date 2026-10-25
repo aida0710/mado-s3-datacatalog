@@ -28,6 +28,7 @@ import {
 import { PricingPatch, splitPricingPatch } from '../lib/connection-pricing-patch.js'
 import { CAPACITY_INTERVALS } from '../lib/capacity-store.js'
 import { isAllowedEndpoint } from '../lib/endpoint-policy.js'
+import { apiError } from '../lib/api-error.js'
 
 // ルート単位のRBACは internal.ts で適用する。接続一覧はさらにここでユーザー別に
 // 絞り込み、非許可の接続は存在自体を返さない。
@@ -281,13 +282,13 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
 
   app.post('/connections', async c => {
     const parsed = CreateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const {
       name, endpoint, region, accessKeyId, secretAccessKey, forcePathStyle,
       listObjectsVersion, capabilities, visibility,
     } = parsed.data
     if (capabilities.readmeWrite && !capabilities.readmeRead) {
-      return c.json({ error: 'README の編集には読み込みが必要です' }, 400)
+      return c.json(apiError('readme_read_required', 'README editing requires README reading'), 400)
     }
     const id = nanoid(10)
     // 設定だけ欠けた接続が見えないよう、接続行と設定をまとめて確定する。
@@ -311,7 +312,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       )
       if (!await allowedUsersExist(client, visibility.allowedUserIds)) {
         await client.query('ROLLBACK')
-        return c.json({ error: 'ホワイトリストに存在しないユーザーが含まれています' }, 400)
+        return c.json(apiError('unknown_allowlist_users', 'the allowlist contains users that do not exist'), 400)
       }
       await upsertCapabilities(client, id, capabilities)
       await upsertSettings(client, id, [
@@ -326,7 +327,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       return c.json(toMasked(r.rows[0]))
     } catch (e) {
       await client.query('ROLLBACK')
-      if (isDuplicateNameError(e)) return c.json({ error: 'name already exists' }, 409)
+      if (isDuplicateNameError(e)) return c.json(apiError('already_exists', 'name already exists'), 409)
       throw e
     } finally {
       client.release()
@@ -349,7 +350,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       )
       if (!current.rows[0]) {
         await client.query('ROLLBACK')
-        return c.json({ error: 'connection not found' }, 404)
+        return c.json(apiError('not_found', 'connection not found'), 404)
       }
       if (current.rows[0].is_default) {
         await client.query('COMMIT')
@@ -371,7 +372,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
   app.put('/connections/:id', async c => {
     const id = c.req.param('id')
     const parsed = UpdateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
+    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const u = parsed.data
 
     // 指定されたフィールドのみで動的な SET 句を構築する。
@@ -433,7 +434,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       const r = await deps.pools.ro.query<ConnectionRow>(
         `${SELECT_CONN} WHERE c.id = $1`, [id],
       )
-      if (!r.rows[0]) return c.json({ error: 'not found' }, 404)
+      if (!r.rows[0]) return c.json(apiError('not_found', 'not found'), 404)
       markAuditNoChange(c)
       return c.json(toMasked(r.rows[0]))
     }
@@ -450,7 +451,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       )
       if (!cur.rows[0]) {
         await client.query('ROLLBACK')
-        return c.json({ error: 'not found' }, 404)
+        return c.json(apiError('not_found', 'not found'), 404)
       }
       const current = cur.rows[0]
       if (capKeys.length > 0) {
@@ -459,7 +460,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
         const write = caps.readmeWrite ?? now.readmeWrite
         if (write && !read) {
           await client.query('ROLLBACK')
-          return c.json({ error: 'README の編集には読み込みが必要です' }, 400)
+          return c.json(apiError('readme_read_required', 'README editing requires README reading'), 400)
         }
       }
       const currentCaps = settingsToCapabilities(current.settings)
@@ -469,11 +470,11 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       const effectiveCapacityEnabled = u.capacityTracking?.enabled ?? current.capacity_tracking.enabled
       if (effectiveCapacityEnabled && !effectiveScanEnabled) {
         await client.query('ROLLBACK')
-        return c.json({ error: '容量の定期計測には配下の走査を許可する必要があります' }, 400)
+        return c.json(apiError('scheduled_capacity_requires_scan', 'scheduled capacity measurements require directory scanning'), 400)
       }
       if (effectiveCapacityEnabled && !effectiveCapacityMetricsEnabled) {
         await client.query('ROLLBACK')
-        return c.json({ error: '容量の定期計測にはバケットのメトリクス集計を許可する必要があります' }, 400)
+        return c.json(apiError('scheduled_capacity_requires_metrics', 'scheduled capacity measurements require bucket metrics'), 400)
       }
       const currentAllowedUserIds = current.allowed_users.map(user => user.id).sort()
       const allowedUsersChanged = allowedUserIds !== undefined
@@ -481,7 +482,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
           || allowedUserIds.some((userId, index) => userId !== currentAllowedUserIds[index]))
       if (allowedUsersChanged && !await allowedUsersExist(client, allowedUserIds!)) {
         await client.query('ROLLBACK')
-        return c.json({ error: 'ホワイトリストに存在しないユーザーが含まれています' }, 400)
+        return c.json(apiError('unknown_allowlist_users', 'the allowlist contains users that do not exist'), 400)
       }
       const credentialsChanged = (u.accessKeyId !== undefined
           && u.accessKeyId !== deps.crypto.decrypt(current.access_key_id_enc))
@@ -514,7 +515,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
         )
         if (r.rowCount === 0) {
           await client.query('ROLLBACK')
-          return c.json({ error: 'not found' }, 404)
+          return c.json(apiError('not_found', 'not found'), 404)
         }
       }
       await upsertCapabilities(client, id, caps)
@@ -546,7 +547,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
       return c.json(toMasked(r.rows[0]))
     } catch (e) {
       await client.query('ROLLBACK')
-      if (isDuplicateNameError(e)) return c.json({ error: 'name already exists' }, 409)
+      if (isDuplicateNameError(e)) return c.json(apiError('already_exists', 'name already exists'), 409)
       throw e
     } finally {
       client.release()
@@ -558,7 +559,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
     const r = await deps.pools.rw.query(
       `DELETE FROM storage_connections WHERE id = $1`, [id],
     )
-    if (r.rowCount === 0) return c.json({ error: 'not found' }, 404)
+    if (r.rowCount === 0) return c.json(apiError('not_found', 'not found'), 404)
     deps.invalidate(id)
     return c.json({ ok: true })
   })

@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 import { SecretNotice } from '../components/SecretNotice'
 import AccessTokensPage from './AccessTokensPage'
-import { fetchApi } from '../lib/api/http'
+import { errorFromResponse, fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
 import { narrowerThan } from '../lib/breakpoints'
 import { useMediaQuery } from '../lib/useMediaQuery'
@@ -140,10 +140,7 @@ function formatAuditValue(value: unknown): string {
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetchApi(url, init)
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { error?: string } | null
-    throw new Error(body?.error ?? response.statusText)
-  }
+  if (!response.ok) throw await errorFromResponse(response)
   return response.json() as Promise<T>
 }
 

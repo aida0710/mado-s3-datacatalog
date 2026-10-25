@@ -5,24 +5,25 @@ import type { ObjectRequest } from './_storageRequest.js'
 import { TarScanPendingError } from '../lib/tar-scan-budget.js'
 import { RequestQueueFullError } from '../lib/shared-requests.js'
 import { TarIndexLimitError } from '../lib/tar-index-store.js'
+import { apiError } from '../lib/api-error.js'
 
 export function storageError(c: Context, error: unknown): Response {
-  if (error instanceof TarIndexLimitError) return c.json({ error: error.message }, 413)
+  if (error instanceof TarIndexLimitError) return c.json(apiError('archive_index_too_large', error.message), 413)
   if (error instanceof TarScanPendingError) {
-    return c.json({ error: error.message }, 202, { 'Retry-After': '1', 'X-Tar-Index-Pending': '1', 'Cache-Control': 'private, no-store' })
+    return c.json(apiError('archive_index_pending', error.message), 202, { 'Retry-After': '1', 'X-Tar-Index-Pending': '1', 'Cache-Control': 'private, no-store' })
   }
-  if (error instanceof RequestQueueFullError) return c.json({ error: error.message }, 503, { 'Retry-After': '1' })
+  if (error instanceof RequestQueueFullError) return c.json(apiError('request_queue_full', error.message), 503, { 'Retry-After': '1' })
   if (error instanceof NoSuchKey || (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404) {
-    return c.json({ error: 'not found' }, 404)
+    return c.json(apiError('not_found', 'not found'), 404)
   }
   const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode
-  if (status === 412) return c.json({ error: 'object changed; retry the request' }, 412)
-  if (status === 416) return c.json({ error: 'range not satisfiable' }, 416)
+  if (status === 412) return c.json(apiError('object_changed', 'object changed; retry the request'), 412)
+  if (status === 416) return c.json(apiError('range_not_satisfiable', 'range not satisfiable'), 416)
   console.error('storage preview failed', {
     name: error instanceof Error ? error.name : 'unknown',
     status,
   })
-  return c.json({ error: 'storage request failed' }, 500)
+  return c.json(apiError('storage_request_failed', 'storage request failed'), 500)
 }
 
 interface OpenedObject {

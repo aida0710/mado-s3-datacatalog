@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api/client'
 import { PlayerDeckProvider, usePlayerDeck } from '../lib/playerDeck'
 import { PlayerDeck } from './PlayerDeck'
+import { itemAt } from '../tests/itemAt'
 
 // jsdom の HTMLMediaElement は play/pause 未実装
 beforeEach(() => {
@@ -88,13 +89,13 @@ describe('PlayerDeck', () => {
     const { container } = setup()
     fireEvent.click(screen.getByText('add1'))
     fireEvent.click(screen.getByText('add2'))
-    fireEvent.click(screen.getAllByRole('button', { name: 'ソロ' })[0])
+    fireEvent.click(itemAt(screen.getAllByRole('button', { name: 'ソロ' }), 0))
     const audios = [...container.querySelectorAll('audio')]
-    expect(audios[0].muted).toBe(false)
-    expect(audios[1].muted).toBe(true)
+    expect(itemAt(audios, 0).muted).toBe(false)
+    expect(itemAt(audios, 1).muted).toBe(true)
     // 押下状態は aria-pressed で明示される (反転チップ表示の判定と同じソース)
-    expect(screen.getAllByRole('button', { name: 'ソロ' })[0]).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getAllByRole('button', { name: 'ソロ' })[1]).toHaveAttribute('aria-pressed', 'false')
+    expect(itemAt(screen.getAllByRole('button', { name: 'ソロ' }), 0)).toHaveAttribute('aria-pressed', 'true')
+    expect(itemAt(screen.getAllByRole('button', { name: 'ソロ' }), 1)).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('折りたたんでも <audio> はアンマウントされない (再生継続)', () => {
@@ -110,12 +111,12 @@ describe('PlayerDeck', () => {
     const { container } = setup()
     fireEvent.click(screen.getByText('add1'))
     fireEvent.click(screen.getByText('add2'))
-    fireEvent.click(screen.getAllByRole('button', { name: 'ソロ' })[0])
-    expect([...container.querySelectorAll('audio')][1].muted).toBe(true)
-    fireEvent.click(screen.getAllByRole('button', { name: '削除' })[0])
+    fireEvent.click(itemAt(screen.getAllByRole('button', { name: 'ソロ' }), 0))
+    expect(itemAt(container.querySelectorAll('audio'), 1).muted).toBe(true)
+    fireEvent.click(itemAt(screen.getAllByRole('button', { name: '削除' }), 0))
     const audios = [...container.querySelectorAll('audio')]
     expect(audios).toHaveLength(1)
-    expect(audios[0].muted).toBe(false)
+    expect(itemAt(audios, 0).muted).toBe(false)
   })
 
   it('圧縮tar内のトラックは取得後にBlobで再生できる', async () => {
@@ -231,7 +232,7 @@ describe('PlayerDeck', () => {
     fireEvent.click(screen.getByText('addTar'))
 
     // tar の <audio> がまだ無いうちに ch1 をソロにする
-    fireEvent.click(screen.getAllByRole('button', { name: 'ソロ' })[0])
+    fireEvent.click(itemAt(screen.getAllByRole('button', { name: 'ソロ' }), 0))
     expect(container.querySelectorAll('audio')).toHaveLength(1)
 
     await act(async () => {
@@ -251,7 +252,9 @@ describe('PlayerDeck', () => {
       const { container } = setup()
       fireEvent.click(screen.getByText('add1'))
       fireEvent.click(screen.getByText('add2'))
-      const [a, b] = [...container.querySelectorAll('audio')]
+      const audios = container.querySelectorAll('audio')
+      const a = itemAt(audios, 0)
+      const b = itemAt(audios, 1)
 
       // a: 長さ1 (先に終わる), b: 長さ3。onLoadedMetadata 経由で durations を埋める。
       Object.defineProperty(a, 'duration', { value: 1, configurable: true })
@@ -287,7 +290,9 @@ describe('PlayerDeck', () => {
     const { container } = setup()
     fireEvent.click(screen.getByText('add1'))
     fireEvent.click(screen.getByText('add2'))
-    const [a, b] = [...container.querySelectorAll('audio')]
+    const audios = container.querySelectorAll('audio')
+    const a = itemAt(audios, 0)
+    const b = itemAt(audios, 1)
 
     // a: 長さ1, b: 長さ3 → maxDuration=3。onLoadedMetadata 経由で durations を埋める。
     Object.defineProperty(a, 'duration', { value: 1, configurable: true })
@@ -307,7 +312,9 @@ describe('PlayerDeck', () => {
     const { container } = setup()
     fireEvent.click(screen.getByText('add1'))
     fireEvent.click(screen.getByText('add2'))
-    const [a, b] = [...container.querySelectorAll('audio')]
+    const audios = container.querySelectorAll('audio')
+    const a = itemAt(audios, 0)
+    const b = itemAt(audios, 1)
 
     // a: 長さ1, b: 長さ3 → maxDuration=3。onLoadedMetadata 経由で durations を埋める。
     Object.defineProperty(a, 'duration', { value: 1, configurable: true })
@@ -318,10 +325,10 @@ describe('PlayerDeck', () => {
     // 1 本目のトラック波形 (canvas role="slider", aria-label で master seek の
     // range と区別) を全幅 100px の中央 (clientX=50) でクリック → ratio=0.5。
     const waveforms = screen.getAllByRole('slider', { name: '再生位置' })
-    vi.spyOn(waveforms[0], 'getBoundingClientRect').mockReturnValue(
+    vi.spyOn(itemAt(waveforms, 0), 'getBoundingClientRect').mockReturnValue(
       { left: 0, width: 100, top: 0, height: 28, right: 100, bottom: 28, x: 0, y: 0, toJSON: () => ({}) } as DOMRect,
     )
-    fireEvent.click(waveforms[0], { clientX: 50 })
+    fireEvent.click(itemAt(waveforms, 0), { clientX: 50 })
 
     // seekAll(0.5 * 3 = 1.5): a は自分の長さ (1) でクランプ、b は 1.5 秒へ。
     // どのトラックの波形をクリックしても全トラックが同じマスター時刻へ揃う。
@@ -357,7 +364,9 @@ describe('PlayerDeck', () => {
       const { container } = setup()
       fireEvent.click(screen.getByText('add1'))
       fireEvent.click(screen.getByText('add2'))
-      const [a, b] = [...container.querySelectorAll('audio')]
+      const audios = container.querySelectorAll('audio')
+      const a = itemAt(audios, 0)
+      const b = itemAt(audios, 1)
 
       Object.defineProperty(a, 'duration', { value: 1, configurable: true })
       Object.defineProperty(b, 'duration', { value: 3, configurable: true })
@@ -597,7 +606,7 @@ describe('PlayerDeck - L/R チャンネル', () => {
     fireEvent.click(leftBtn())
     gainSetTarget.mockClear()
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'ミュート' })[0])
+    fireEvent.click(itemAt(screen.getAllByRole('button', { name: 'ミュート' }), 0))
     // gain を 0 へ (10ms の時定数)。<audio>.muted は触らない —
     // MediaElementAudioSourceNode 経由で効くかがブラウザ実装依存なため。
     expect(gainSetTarget).toHaveBeenCalledWith(0, 0, 0.01)

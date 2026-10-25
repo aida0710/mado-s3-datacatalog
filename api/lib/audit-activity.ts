@@ -3,6 +3,7 @@ import type { AuditEventInput, AuditWriter } from './audit.js'
 import { getRequestPrincipal } from './rbac.js'
 import { principalActor } from './principal-actor.js'
 import { requestMetadata } from './request-metadata.js'
+import { apiError } from './api-error.js'
 
 interface Activity {
   action: string
@@ -129,7 +130,7 @@ export function auditActivity(audit: AuditWriter): MiddlewareHandler {
     const activity = classifyActivity(c.req.method, c.req.path)
     if (!activity) return next()
     const principal = getRequestPrincipal(c)
-    if (!principal) return c.json({ error: 'unauthorized' }, 401)
+    if (!principal) return c.json(apiError('authentication_required', 'unauthorized'), 401)
 
     const metadata = requestMetadata(c)
     const intentId = await audit.start({

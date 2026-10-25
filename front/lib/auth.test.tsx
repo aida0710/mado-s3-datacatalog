@@ -44,9 +44,9 @@ function json(status: number, body: unknown): Response {
 // URL の path ごとに応答を決める fetch。routes に無い path は 404 にする。
 function stubServer(routes: Record<string, Route>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input).split('?')[0]
+    const path = new URL(String(input), 'http://mado.invalid').pathname
     const route = routes[path]
-    return route ? route(init) : json(404, { error: 'not found' })
+    return route ? route(init) : json(404, { error: 'not found', code: 'not_found' })
   })
   vi.stubGlobal('fetch', fetchMock)
   return {
@@ -77,7 +77,7 @@ function renderNoteEditorInGate() {
 function noteRoute(hasSession: () => boolean, savedBodies: string[] = []): Route {
   return init => {
     if (init?.method !== 'PUT') return json(200, HOME_NOTE)
-    if (!hasSession()) return json(401, { error: 'unauthorized' })
+    if (!hasSession()) return json(401, { error: 'unauthorized', code: 'authentication_required' })
     savedBodies.push((JSON.parse(String(init.body)) as { body: string }).body)
     return json(200, { ok: true })
   }
@@ -135,8 +135,8 @@ describe('AuthGate — API の 401', () => {
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/internal/notes/home': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
     await screen.findByText('ログイン後の画面')
@@ -153,8 +153,8 @@ describe('AuthGate — API の 401', () => {
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/internal/notes/home': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
     await waitUntilInDocument(() => screen.queryByText('ログイン後の画面'), 'ログイン後の画面')
@@ -169,8 +169,8 @@ describe('AuthGate — API の 401', () => {
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/internal/notes/home': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
     await screen.findByText('ログイン後の画面')
@@ -187,7 +187,7 @@ describe('AuthGate — API の 401', () => {
     const server = stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
+      '/api/internal/notes/home': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
     await screen.findByText('ログイン後の画面')
@@ -203,8 +203,8 @@ describe('AuthGate — API の 401', () => {
     let sessionAlive = true
     const server = stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/internal/notes/home': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/internal/notes/home': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
     await screen.findByText('ログイン後の画面')
@@ -229,8 +229,8 @@ describe('AuthGate — API の 401', () => {
   it('ログイン画面でパスワードを誤って 401 が返っても、session の確認を繰り返さない', async () => {
     const server = stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => json(401, { error: 'unauthorized' }),
-      '/api/auth/local/login': () => json(401, { error: 'invalid identifier or password' }),
+      '/api/auth/me': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/auth/local/login': () => json(401, { error: 'invalid identifier or password', code: 'invalid_credentials' }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -258,7 +258,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     const savedBodies: string[] = []
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
       '/api/auth/local/login': () => { sessionAlive = true; return json(200, { ok: true }) },
       '/api/internal/notes/home': noteRoute(() => sessionAlive, savedBodies),
     })
@@ -282,7 +282,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
       '/api/internal/notes/home': noteRoute(() => sessionAlive),
     })
     const user = userEvent.setup()
@@ -305,7 +305,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     let currentUser: AuthUser | null = signedInUser
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => currentUser ? json(200, { user: currentUser }) : json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => currentUser ? json(200, { user: currentUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
       '/api/auth/local/login': () => { currentUser = otherUser; return json(200, { ok: true }) },
       '/api/internal/notes/home': noteRoute(() => currentUser !== null),
     })
@@ -327,7 +327,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, SSO_ONLY_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
       '/api/internal/notes/home': noteRoute(() => sessionAlive),
     })
     const user = userEvent.setup()
@@ -349,7 +349,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
   it('起動時にまだログインしていなければ、重ねずにログイン画面だけを出す', async () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     renderGate()
 
@@ -364,8 +364,8 @@ describe('AuthGate — 設定画面と初回のパスワード変更での 401',
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/auth/profile': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/auth/profile': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -381,8 +381,8 @@ describe('AuthGate — 設定画面と初回のパスワード変更での 401',
     let sessionAlive = true
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
-      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized' }),
-      '/api/auth/change-password': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/auth/change-password': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -404,8 +404,8 @@ describe('AuthGate — 設定画面と初回のパスワード変更での 401',
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => sessionAlive
         ? json(200, { user: { ...signedInUser, mustChangePassword: true } })
-        : json(401, { error: 'unauthorized' }),
-      '/api/auth/change-password': () => json(401, { error: 'unauthorized' }),
+        : json(401, { error: 'unauthorized', code: 'authentication_required' }),
+      '/api/auth/change-password': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -440,7 +440,7 @@ describe('AuthGate — サインアウト', () => {
     expect(screen.queryByText('ログイン後の画面')).not.toBeInTheDocument()
   })
 
-  it('Mado からはサインアウトできたが SSO 側のサインアウトができなかったときは、ログイン画面でそれを伝える', async () => {
+  it('mado S3 Data Catalog からはサインアウトできたが SSO 側のサインアウトができなかったときは、ログイン画面でそれを伝える', async () => {
     stubServer({
       '/api/auth/config': () => json(200, SSO_ONLY_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
@@ -462,7 +462,7 @@ describe('AuthGate — サインアウト', () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
-      '/api/auth/logout': () => json(500, { error: 'internal error' }),
+      '/api/auth/logout': () => json(500, { error: 'internal error', code: 'internal_error' }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -501,7 +501,7 @@ describe('AuthGate — サインアウト', () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
-      '/api/auth/logout': () => json(401, { error: 'unauthorized' }),
+      '/api/auth/logout': () => json(401, { error: 'unauthorized', code: 'authentication_required' }),
     })
     const user = userEvent.setup()
     renderGate()

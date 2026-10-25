@@ -1,7 +1,7 @@
 import { englishMessages, singularEnglishMessages } from './en'
 import { japaneseMessages } from './ja'
 import { getLocale } from './locale'
-import { rememberTranslationSource } from './translationSources'
+import { rememberTranslationSource, type TranslationSource } from './translationSources'
 
 export type MessageKey = keyof typeof japaneseMessages
 
@@ -28,6 +28,12 @@ export function fillMessage(key: MessageKey, values: Record<string, string | num
   return getMessageTemplate(key, values).replace(/\{(value\d+)\}/g, (placeholder, name: string) =>
     values[name] === undefined ? placeholder : String(values[name]),
   )
+}
+
+/** 覚えておいた項目と値から、今の言語の文を作る。値が辞書の項目なら、その値も今の言語にする。 */
+export function fillTranslationSource(source: TranslationSource): string {
+  const messageKeyValues = Object.entries(source.messageKeyValues ?? {}).map(([name, key]) => [name, fillMessage(key, {})])
+  return fillMessage(source.key, { ...source.values, ...Object.fromEntries(messageKeyValues) })
 }
 
 export function translate<Key extends MessageKey>(key: Key, ...args: TranslationArguments<Key>): string {

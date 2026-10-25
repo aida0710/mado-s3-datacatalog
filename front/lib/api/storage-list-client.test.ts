@@ -50,7 +50,8 @@ describe('バケット一覧cacheの取得時刻', () => {
     vi.resetModules()
     const { storageListClient } = await import('./storage-list-client')
 
-    expect((await storageListClient.buckets('buckets-legacy-test')).buckets[0].name).toBe('new-bucket')
+    const { buckets } = await storageListClient.buckets('buckets-legacy-test')
+    expect(buckets.map(bucket => bucket.name)).toEqual(['new-bucket'])
     expect(fetchBuckets).toHaveBeenCalledTimes(1)
     expect(localStorage.getItem('mado.cache.buckets:buckets|buckets-legacy-test')).not.toBeNull()
   })

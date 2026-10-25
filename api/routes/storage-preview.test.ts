@@ -65,7 +65,7 @@ describe('GET /storage/:connectionId/preview/text', () => {
     )
     const res = await app.request(`/storage/${TEST_CONN_ID}/preview/text?bucket=b&key=missing.txt`)
     expect(res.status).toBe(404)
-    expect(await res.json()).toEqual({ error: 'not found' })
+    expect(await res.json()).toEqual({ error: 'not found', code: 'not_found' })
   })
 })
 
@@ -290,7 +290,7 @@ interface NdjsonEntryLine { entry: { name: string; size: number; type: string } 
 interface NdjsonDoneLine {
   done: { truncated: boolean; hasMore: boolean; offset: number; limit: number }
 }
-interface NdjsonErrorLine { error: string }
+interface NdjsonErrorLine { error: string; code: string }
 type NdjsonLine = NdjsonEntryLine | NdjsonDoneLine | NdjsonErrorLine
 
 async function readNdjson(res: Response): Promise<NdjsonLine[]> {
@@ -431,8 +431,8 @@ describe('GET /storage/:connectionId/preview/tar', () => {
     // 表面化する。フロントエンドはストリーム消費中のスロー済みエラーとして扱う。
     expect(res.status).toBe(200)
     const lines = await readNdjson(res)
-    const errLine = lines.find((l): l is { error: string } => 'error' in l)
-    expect(errLine?.error).toMatch(/not found|NoSuchKey|no/i)
+    const errLine = lines.find((l): l is NdjsonErrorLine => 'error' in l)
+    expect(errLine).toEqual({ error: 'not found', code: 'not_found' })
   })
 
   it('クライアントが reader.cancel() した後も S3 ストリームにデータが流れてプロセスが落ちない (stream mode)', async () => {
@@ -562,7 +562,7 @@ describe('GET /storage/:connectionId/preview/tar-entry', () => {
     serveTar(gzipSync(await packOneEntryTar('huge.bin', ENTRY_MAX + 1)))
     const res = await entryApp.request(entryUrl('huge.bin').replace('key=a.tar', 'key=a.tar.gz'))
     expect(res.status).toBe(413)
-    expect((await res.json() as { error: string }).error).toContain('exceeds preview limit')
+    expect(await res.json()).toMatchObject({ code: 'preview_limit_exceeded', limitBytes: expect.any(Number) })
   })
 
   it('maxBytes を付けると先頭だけを 200 で返し、切り詰めをヘッダで知らせる', async () => {

@@ -1,6 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import { bearerToken } from './service-key-authenticator.js'
 import type { ServiceKeyScope } from './auth-types.js'
+import { apiError } from './api-error.js'
 
 /** scope判定に要る部分だけを要求する。呼び出し側はより詳しいprincipal型を渡してよい。 */
 export interface ScopedServicePrincipal {
@@ -26,18 +27,18 @@ async function authenticateServiceKey<P extends ScopedServicePrincipal>(
   const token = bearerToken(c.req.header('Authorization'))
   if (!token) {
     c.header('WWW-Authenticate', 'Bearer')
-    return c.json({ error: 'Bearer service key is required' }, 401)
+    return c.json(apiError('authentication_required', 'Bearer service key is required'), 401)
   }
 
   let principal: P | null
   try {
     principal = await authenticate(token)
   } catch {
-    return c.json({ error: 'authentication service unavailable' }, 503)
+    return c.json(apiError('authentication_unavailable', 'authentication service unavailable'), 503)
   }
   if (!principal) {
     c.header('WWW-Authenticate', 'Bearer')
-    return c.json({ error: 'invalid service key' }, 401)
+    return c.json(apiError('invalid_token', 'invalid service key'), 401)
   }
   return principal
 }
@@ -62,7 +63,7 @@ export function requireServiceKeyScope<P extends ScopedServicePrincipal>(
     const principal = await authenticateServiceKey(c, options.authenticate)
     if (principal instanceof Response) return principal
     if (!principal.scopes.includes(options.scope)) {
-      return c.json({ error: `${options.scope} scope is required` }, 403)
+      return c.json({ ...apiError('scope_required', `${options.scope} scope is required`), scope: options.scope }, 403)
     }
     c.set(SERVICE_PRINCIPAL_KEY, principal)
     await next()

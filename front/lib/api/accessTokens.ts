@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { API_BASE, fetchApi, errorFromResponse } from './http'
-import { translate } from '../../i18n/translate'
 import type { AccessToken, AccessTokenInput } from '../../types/accessTokens'
 import { INTERNAL_API_PERMISSIONS, SERVICE_KEY_SCOPES } from '../../../api/shared/access-token-permissions'
 
@@ -26,7 +25,6 @@ async function requestToken<T extends z.ZodType>(input: {
     method: input.method ?? 'GET', headers: { 'Content-Type': 'application/json' },
     ...(input.body === undefined ? {} : { body: JSON.stringify(input.body) }),
   })
-  if (response.status === 409) throw new Error(translate('accessTokens.conflict'))
   if (!response.ok) throw await errorFromResponse(response)
   return input.schema.parse(await response.json())
 }

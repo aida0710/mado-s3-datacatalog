@@ -45,11 +45,11 @@ describe('useSniffedText', () => {
 
   it('言語を切り替えると取得済みのエラーを再取得せずに翻訳する', async () => {
     setLocale('ja')
-    vi.mocked(api.readHead).mockRejectedValue(new Error('この接続では「ファイルのプレビュー」が無効になっています'))
+    vi.mocked(api.readHead).mockRejectedValue(new Error('この接続では走査が無効になっています'))
     const { result } = renderHook(() => useSniffedText('/x'))
     await waitFor(() => expect(result.current.status).toBe('error'))
     act(() => setLocale('en'))
-    expect(result.current).toEqual({ status: 'error', message: '“File previews” is disabled for this connection.' })
+    expect(result.current).toEqual({ status: 'error', message: 'Scanning is disabled for this connection.' })
     expect(api.readHead).toHaveBeenCalledTimes(1)
   })
 

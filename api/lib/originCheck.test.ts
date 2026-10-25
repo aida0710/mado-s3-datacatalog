@@ -47,7 +47,7 @@ describe('requireSafeOrigin', () => {
       headers: { Origin: 'http://attacker.example.com' },
     })
     expect(res.status).toBe(403)
-    expect(await res.json()).toEqual({ error: 'invalid origin' })
+    expect(await res.json()).toEqual({ error: 'invalid origin', code: 'invalid_origin' })
   })
 
   it('Origin が無くても Referer が一致すれば通す', async () => {

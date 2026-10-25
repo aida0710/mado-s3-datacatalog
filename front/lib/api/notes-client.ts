@@ -4,7 +4,7 @@ import { API_BASE, buildUrl, getJson, mutateJson } from './http'
 
 const notePath = (slug: string) => `${API_BASE}/notes/${encodeURIComponent(slug)}`
 
-// Team note (postgres notes テーブル)。Mado 全体で 1 つの共有 Markdown。
+// Team note (postgres notes テーブル)。mado S3 Data Catalog 全体で 1 つの共有 Markdown。
 export const notesClient = {
   note: (slug: string) => getJson(notePath(slug), Note),
 

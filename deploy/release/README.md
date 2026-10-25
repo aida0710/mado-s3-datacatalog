@@ -1,6 +1,6 @@
-# Mado release bundle
+# mado S3 Data Catalog release bundle
 
-This archive installs a tagged Mado release from pre-built OCI images. It does
+This archive installs a tagged mado S3 Data Catalog release from pre-built OCI images. It does
 not build application source on the deployment host.
 
 ## New installation
@@ -31,7 +31,7 @@ not build application source on the deployment host.
 8. Put an intranet TLS proxy in front of `127.0.0.1:8080`. If Pipeline ingest
    is public, use a separate TLS hostname pointing only to `127.0.0.1:8081`.
 
-The generated `compose.yaml` pins Mado images by digest. `images.txt` records
+The generated `compose.yaml` pins mado S3 Data Catalog images by digest. `images.txt` records
 the same immutable references. Do not point a public proxy at port 8080.
 
 ## Existing database

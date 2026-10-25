@@ -13,6 +13,7 @@ import { AUDIO_MIME, VIDEO_MIME, IMAGE_MIME, ext } from '../lib/preview-mime.js'
 import { openObject, streamObject } from './_storageResponse.js'
 import { mountStorageTarEntryRoute } from './storage-tar-entry.js'
 import { resolveObjectOrFail, type GetStorage } from './_storageRequest.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface PreviewEnv {
   PREVIEW_TEXT_LIMIT: number
@@ -125,7 +126,7 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
     const { storage, bucket, key } = object
     const kind = detectArchive(key)
     if (!kind) {
-      return c.json({ error: 'unsupported archive extension' }, 400)
+      return c.json(apiError('unsupported_archive', 'unsupported archive extension'), 400)
     }
     // 1ページの上限。UI は 10 / 25 / 50 / 100 を提供している;
     // 100 を超えると tar.gz/.xz デコードのメモリも爆発する。
@@ -216,13 +217,13 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
               }
             } catch (e) {
               if (e instanceof NoSuchKey) {
-                write({ error: 'not found' })
+                write(apiError('not_found', 'not found'))
               } else {
                 console.error('storage archive read failed', {
                   name: e instanceof Error ? e.name : 'unknown',
                   status: (e as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode,
                 })
-                write({ error: 'storage request failed' })
+                write(apiError('storage_request_failed', 'storage request failed'))
               }
               return
             }
@@ -261,7 +262,7 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
           console.error('storage archive preview failed', {
             name: e instanceof Error ? e.name : 'unknown',
           })
-          write({ error: 'archive preview failed' })
+          write(apiError('archive_preview_failed', 'archive preview failed'))
         } finally {
           // cancel() で既に closed 済みなら二重 close しない。
           if (!closed) {

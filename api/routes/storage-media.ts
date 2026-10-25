@@ -8,6 +8,7 @@ import {
   mediaCacheKey,
 } from '../lib/media-cache.js'
 import { resolveObjectOrFail, type GetStorage } from './_storageRequest.js'
+import { apiError } from '../lib/api-error.js'
 
 export interface StorageMediaDeps {
   getStorage: GetStorage
@@ -43,7 +44,7 @@ export function mountStorageMediaRoutes(app: Hono, deps: StorageMediaDeps): void
         err.name === 'NoSuchKey' ||
         err.$metadata?.httpStatusCode === 404
       ) {
-        return c.json({ error: 'not found' }, 404)
+        return c.json(apiError('not_found', 'not found'), 404)
       }
       throw e
     }
@@ -62,7 +63,7 @@ export function mountStorageMediaRoutes(app: Hono, deps: StorageMediaDeps): void
         signal: c.req.raw.signal,
       })
     } catch {
-      return c.json({ error: 'media-worker に接続できません' }, 503)
+      return c.json(apiError('media_worker_unavailable', 'cannot connect to the media worker'), 503)
     }
     return new Response(workerRes.body, {
       status: workerRes.status,
@@ -72,9 +73,9 @@ export function mountStorageMediaRoutes(app: Hono, deps: StorageMediaDeps): void
 
   app.get('/storage/:connectionId/media/spectrogram', async c => {
     const cacheKey = c.req.query('cacheKey')
-    if (!cacheKey) return c.json({ error: 'cacheKey required' }, 400)
+    if (!cacheKey) return c.json(apiError('invalid_request', 'cacheKey required'), 400)
     const png = await getCachedSpectrogram(deps.pools.ro, { cacheKey, connectionId: c.req.param('connectionId') })
-    if (!png) return c.json({ error: 'not found' }, 404)
+    if (!png) return c.json(apiError('not_found', 'not found'), 404)
     const body = new Uint8Array(png.byteLength)
     body.set(png)
     return new Response(body, {

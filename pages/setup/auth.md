@@ -22,7 +22,7 @@ SSOではissuer、client ID、client secret、redirect URIを設定します。A
 
 sessionの未使用期限`AUTH_SESSION_IDLE_SECONDS`と、ログインからの期限`AUTH_SESSION_ABSOLUTE_SECONDS`は、どちらも既定604800秒（7日）です。操作しない期間を含め、ログインから7日保持します。既存の`.env`で短い期限を設定している場合は、両方を`604800`にしてAPIを再起動してください。
 
-SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authentikの［Applications］→［Providers］でMadoのProviderを編集し、［Advanced protocol settings］の［Scopes］に標準の`offline_access` mappingを追加してください。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。反映後、一度ログインし直してrefresh tokenを取得します。
+SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authentikの［Applications］→［Providers］でmado S3 Data CatalogのProviderを編集し、［Advanced protocol settings］の［Scopes］に標準の`offline_access` mappingを追加してください。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。反映後、一度ログインし直してrefresh tokenを取得します。
 
 ## ロールを割り当てる
 

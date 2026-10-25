@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { LogOut } from 'lucide-react'
-import { fetchApi } from '../lib/api/http'
+import { errorFromResponse, fetchApi } from '../lib/api/http'
 import { useAuth } from '../lib/auth-context'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
 import { localizeMessage } from '../i18n/localizeMessage'
@@ -38,8 +38,7 @@ export function SignatureSettings() {
           signatureName: nextSignatureName,
         }),
       })
-      const body = await response.json().catch(() => null) as { error?: string } | null
-      if (!response.ok) throw new Error(body?.error ?? translate('signatureSettings.couldNotSaveAccount'))
+      if (!response.ok) throw await errorFromResponse(response)
       await auth.reload()
       setDisplayName(nextDisplayName)
       setUsername(nextUsername)

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import LineagePage from './LineagePage'
 import { api } from '../lib/api/client'
 import type { LineageGraph } from '../lib/api/types'
+import { itemAt } from '../tests/itemAt'
 
 vi.mock('../components/lineage/LineageGraph', () => ({
   LineageGraph: ({ graph, selectedId, onSelect }: {
@@ -156,7 +157,7 @@ describe('LineagePage', () => {
 
   it('バージョンURLの起点を選択し詳細を開く', async () => {
     vi.mocked(api.lineageGraph).mockResolvedValue(versionGraph)
-    vi.mocked(api.lineageVersion).mockResolvedValue(dataset.versions[0])
+    vi.mocked(api.lineageVersion).mockResolvedValue(itemAt(dataset.versions, 0))
     renderPage('/lineage?mode=versions&versionId=version-1')
 
     await waitFor(() => expect(screen.getByTestId('selected-node')).toHaveTextContent('version-1'))

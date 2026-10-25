@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
-// ── 書体と色の変数 (Mado Model Tracking と共通) ─────────────────────
+// ── 書体と色の変数 (mado ML Tracking と共通) ─────────────────────
 // LAN/VPN 内ツールなので CDN には依存させず、Vite のバンドルに同梱する。
 // ・英字: IBM Plex Sans / IBM Plex Mono (@mado/design-system に同梱)。
 // ・日本語: Noto Sans JP。

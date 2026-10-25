@@ -1,6 +1,6 @@
 # OSS release手順
 
-MadoのOSS releaseと社内・private環境へのdeployは別工程である。release workflowはGitHubとGHCRだけを操作し、本番を含むdeployment hostへ接続しない。
+mado S3 Data CatalogのOSS releaseと社内・private環境へのdeployは別工程である。release workflowはGitHubとGHCRだけを操作し、本番を含むdeployment hostへ接続しない。
 
 ## 成果物
 

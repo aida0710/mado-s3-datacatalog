@@ -1,5 +1,5 @@
 // 左のサイドバーの幅 (px)。ドラッグと矢印キーで min〜max の間を変えられる。
-// Mado Model Tracking と同じ値。
+// mado ML Tracking と同じ値。
 export const NAVIGATION_WIDTH = { default: 192, min: 160, max: 360, keyboardStep: 16 } as const
 
 export function clampNavigationWidth(width: number): number {
