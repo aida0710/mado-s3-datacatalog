@@ -862,6 +862,7 @@ export const englishMessages = {
   "apiErrors.dataset_conflict": "This identifier or storage location is already registered.",
   "apiErrors.dataset_not_found": "The specified Dataset or Version was not found.",
   "apiErrors.directory_not_scanned": "This directory has not been scanned yet.",
+  "apiErrors.invalid_cursor": "Could not load the next page. Open the list again from the first page.",
   "apiErrors.invalid_dataset_id": "Check the Dataset ID.",
   "apiErrors.invalid_reference": "Check the referenced data and your input.",
   "apiErrors.invalid_request": "Check your input.",

@@ -82,15 +82,12 @@ export const StorageFile = z.object({
   lastModified: z.string().nullable(),
 })
 export type StorageFileEntry = z.infer<typeof StorageFile>
-// nextContinuation: AWS 公式 S3 等で次ページ取得用の opaque トークン。
-// nextStartAfter:   一部の S3 互換実装が NextContinuationToken を返さない
-//                   ときのフォールバック。最終キーを次ページの StartAfter に使う。
-// 同時に両方 set されることはない (server 側で前者を優先)。
+// nextCursor: 次のページを指す中身の見えない文字列。続きが無ければ null。
+// 同じ位置からは同じ文字列が返るので、前のページと同じなら S3 が続きを進めていない。
 export const StorageList = z.object({
   directories: z.array(z.string()),
   files: z.array(StorageFile),
-  nextContinuation: z.string().nullable(),
-  nextStartAfter: z.string().nullable(),
+  nextCursor: z.string().nullable(),
   // ブラウザがAPI応答を受け取った時刻ではなく、一覧を実際にS3から取得した時刻。
   // 二層cacheでも古いserver cacheを「たった今」と誤表示しないために保持する。
   cache: StorageResponseCache,
@@ -559,6 +556,7 @@ export type RegistryDatasetSummary = z.infer<typeof RegistryDatasetSummary>
 export const DatasetCatalogResponse = z.object({
   results: z.array(RegistryDatasetSummary),
   totalCount: z.number().int().nonnegative(),
+  nextCursor: z.string().nullable(),
 })
 
 export const StorageLineageMatch = RegistryDatasetSummary.extend({

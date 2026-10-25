@@ -27,14 +27,8 @@ interface Props {
 }
 
 type ListResp = z.infer<typeof StorageList>
-type Cursor = { continuation?: string; startAfter?: string }
-
-const nextCursor = (p: ListResp): Cursor | null =>
-  p.nextContinuation
-    ? { continuation: p.nextContinuation }
-    : p.nextStartAfter
-    ? { startAfter: p.nextStartAfter }
-    : null
+// 各ページを読むときに渡した cursor。最初のページは undefined。
+type Cursor = string | undefined
 
 // 検索 input の debounce 時間。ReadmeSearchPanel と揃える。
 const SEARCH_DEBOUNCE_MS = 250
@@ -70,7 +64,7 @@ const initial: State = {
   submittedQ: '',
   recursive: false,
   page: null,
-  history: [{}],
+  history: [undefined],
   pageIdx: 0,
   loading: true,
   error: null,
@@ -88,7 +82,7 @@ function reducer(s: State, a: Action): State {
     case 'setRecursive':
       return { ...s, recursive: a.r }
     case 'identityReset':
-      return { ...s, page: null, history: [{}], pageIdx: 0, loading: true, error: null, revalidating: false }
+      return { ...s, page: null, history: [undefined], pageIdx: 0, loading: true, error: null, revalidating: false }
     case 'startGoto':
       return { ...s, page: null, pageIdx: a.idx, loading: true, error: null, revalidating: false }
     case 'startNext':
@@ -165,7 +159,7 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   // (load の deps が変わると ref 再生成 → ここが再 trigger される。)
   useEffect(() => {
     dispatch({ type: 'identityReset' })
-    load({})
+    load(undefined)
   }, [load])
 
   // unmount 時に debounce タイマーを掃除する。
@@ -193,8 +187,8 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   // 訪問済みページへのジャンプ。S3 は前方向 cursor のみなので、
   // history に積まれていないページにはこの API では飛べない。
   const goto = (idx: number): void => {
+    if (idx < 0 || idx >= history.length || idx === pageIdx || loading) return
     const cursor = history[idx]
-    if (!cursor || idx === pageIdx || loading) return
     dispatch({ type: 'startGoto', idx })
     load(cursor)
   }
@@ -204,7 +198,7 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   // 未訪問ページへ進むときは force:true でキャッシュをバイパスする。
   const next = (): void => {
     if (!page || loading || !hasNext) return
-    const c = nextCursor(page)
+    const c = page.nextCursor
     if (!c) return
     if (pageIdx + 1 < history.length) {
       goto(pageIdx + 1)
@@ -223,7 +217,7 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   const forceRefresh = (): void => {
     api.invalidateList(connectionId, bucket, prefix)
     dispatch({ type: 'identityReset' })
-    load({}, { refresh: true })
+    load(undefined, { refresh: true })
   }
 
   // page 未取得時も依存配列へ毎回新しい [] を渡さない。
@@ -321,14 +315,8 @@ export function StorageBrowser({ connectionId, bucket, prefix, onSelectFile, sel
   // 一部の S3 互換実装は IsTruncated=true でも ContinuationToken / 最終キーが
   // 進まないことがあり、その状態で「次」を押しても同じデータしか返らないため
   // 末尾扱いにして disable する。
-  const hasNext = (() => {
-    if (!page) return false
-    const c = nextCursor(page)
-    if (!c) return false
-    const used = history[pageIdx] ?? {}
-    return c.continuation !== used.continuation || c.startAfter !== used.startAfter
-  })()
-  const cursorStuck = !!(page && nextCursor(page) && !hasNext)
+  const hasNext = !!page?.nextCursor && page.nextCursor !== history[pageIdx]
+  const cursorStuck = !!page?.nextCursor && !hasNext
   const isEmpty = !loading && visibleDirs.length === 0 && visibleFiles.length === 0
   const isSearching = submittedQ.length > 0
   const isTrailingPage = pageIdx === history.length - 1

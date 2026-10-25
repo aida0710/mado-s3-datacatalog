@@ -3,6 +3,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search } from 'lucid
 import { api } from '../../lib/api/client'
 import type { RegistryDatasetSummary } from '../../lib/api/types'
 import { isFromRowControl } from '../../lib/rowClick'
+import { useCursorPages } from '../../lib/useCursorPages'
 import { localizeMessage } from '../../i18n/localizeMessage'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
@@ -28,49 +29,53 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
   const [open, setOpen] = useState(!hasSelection)
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState('')
-  const [offset, setOffset] = useState(0)
+  const { cursor, pageIndex, goNext, goPrevious, reset: resetPages } = useCursorPages()
   const [openRows, setOpenRows] = useState<ReadonlySet<string>>(new Set())
   const detailIdPrefix = useId()
   const [response, setResponse] = useState<{
     key: string
     results: RegistryDatasetSummary[]
     total: number
+    nextCursor: string | null
     error: string | null
   } | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setOffset(0)
+      resetPages()
       setSubmitted(query.trim())
     }, SEARCH_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [query])
+  }, [query, resetPages])
 
   const expanded = open
-  const requestKey = `${submitted}\u0000${offset}`
+  const requestKey = `${submitted}\u0000${cursor ?? ''}`
 
   useEffect(() => {
     if (!expanded) return
     let current = true
-    api.lineageCatalog({ q: submitted, limit: PAGE_SIZE, offset }).then(
+    api.lineageCatalog({ q: submitted, limit: PAGE_SIZE, cursor }).then(
       response => {
         if (!current) return
-        setResponse({ key: requestKey, results: response.results, total: response.totalCount, error: null })
+        setResponse({ key: requestKey, results: response.results, total: response.totalCount, nextCursor: response.nextCursor, error: null })
       },
       (reason: Error) => {
         if (!current) return
-        setResponse({ key: requestKey, results: [], total: 0, error: reason.message })
+        setResponse({ key: requestKey, results: [], total: 0, nextCursor: null, error: reason.message })
       },
     )
     return () => { current = false }
-  }, [expanded, submitted, offset, requestKey])
+  }, [expanded, submitted, cursor, requestKey])
 
   const currentResponse = response?.key === requestKey ? response : null
   const results = currentResponse?.results ?? []
   const total = currentResponse?.total ?? 0
+  const nextCursor = currentResponse?.nextCursor ?? null
   const error = currentResponse?.error ?? null
   const loading = expanded && currentResponse === null
 
+  // 前のページはどれも PAGE_SIZE 件ずつなので、何ページ目かから表示中の範囲が決まる。
+  const offset = pageIndex * PAGE_SIZE
   const start = total === 0 ? 0 : offset + 1
   const end = Math.min(offset + results.length, total)
 
@@ -199,16 +204,16 @@ export function LineageCatalog({ hasSelection, onSelect }: Props) {
                     className="icon-button"
                     aria-label={translate('lineageCatalog.previous')}
                     title={translate('lineageCatalog.previous')}
-                    disabled={offset === 0 || loading}
-                    onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))}
+                    disabled={pageIndex === 0 || loading}
+                    onClick={goPrevious}
                   ><ChevronLeft size={16} aria-hidden="true" /></button>
                   <button
                     type="button"
                     className="icon-button"
                     aria-label={translate('lineageCatalog.next')}
                     title={translate('lineageCatalog.next')}
-                    disabled={offset + results.length >= total || loading}
-                    onClick={() => setOffset(value => value + PAGE_SIZE)}
+                    disabled={nextCursor === null || loading}
+                    onClick={() => { if (nextCursor) goNext(nextCursor) }}
                   ><ChevronRight size={16} aria-hidden="true" /></button>
                 </span>
               )}

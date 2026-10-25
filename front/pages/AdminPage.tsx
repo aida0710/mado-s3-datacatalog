@@ -42,7 +42,8 @@ interface AuditEventRow {
 
 interface AuditPage {
   events: AuditEventRow[]
-  nextBeforeId: number | null
+  /** 続きを読むときに渡す値。中身は見ずにそのまま返す。 */
+  nextCursor: string | null
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -517,7 +518,7 @@ function AuditTarget({ event }: { event: AuditEventRow }) {
 function AuditPageView() {
   useLocale()
   const [auditEvents, setAuditEvents] = useState<AuditEventRow[]>([])
-  const [nextBeforeId, setNextBeforeId] = useState<number | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openIds, toggleRow] = useOpenRows<number>()
@@ -529,7 +530,7 @@ function AuditPageView() {
     try {
       const body = await jsonRequest<AuditPage>('/api/internal/audit-events?limit=30')
       setAuditEvents(body.events)
-      setNextBeforeId(body.nextBeforeId)
+      setNextCursor(body.nextCursor)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
     }
@@ -541,7 +542,7 @@ function AuditPageView() {
       .then(body => {
         if (!current) return
         setAuditEvents(body.events)
-        setNextBeforeId(body.nextBeforeId)
+        setNextCursor(body.nextCursor)
       })
       .catch(cause => {
         if (current) setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
@@ -550,12 +551,12 @@ function AuditPageView() {
   }, [])
 
   const loadMore = async () => {
-    if (!nextBeforeId || loading) return
+    if (!nextCursor || loading) return
     setLoading(true)
     try {
-      const body = await jsonRequest<AuditPage>(`/api/internal/audit-events?limit=30&beforeId=${nextBeforeId}`)
+      const body = await jsonRequest<AuditPage>(`/api/internal/audit-events?limit=30&cursor=${encodeURIComponent(nextCursor)}`)
       setAuditEvents(current => [...current, ...body.events])
-      setNextBeforeId(body.nextBeforeId)
+      setNextCursor(body.nextCursor)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotLoadAuditLogs'))
     } finally {
@@ -648,7 +649,7 @@ function AuditPageView() {
           </table>
         </div>
       )}
-      {nextBeforeId && (
+      {nextCursor && (
         <div className="admin-more">
           <button type="button" className="button small" disabled={loading} onClick={() => void loadMore()}>
             {loading ? translate('common.loading') : translate('adminPage.showMore')}

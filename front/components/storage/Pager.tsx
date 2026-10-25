@@ -2,11 +2,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useLocale } from '../../i18n/useLocale'
 import { translate } from '../../i18n/translate'
 
-type Cursor = { continuation?: string; startAfter?: string }
-
 interface Props {
   pageIdx: number
-  history: Cursor[]
+  /** 訪問したページを読むときに渡した cursor。1 ページ目は undefined。 */
+  history: readonly (string | undefined)[]
   hasNext: boolean
   cursorStuck: boolean
   loading: boolean
@@ -46,14 +45,12 @@ export function Pager({
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
 
-          {history.map((cursor, i) => {
+          {history.map((_cursor, i) => {
             const current = i === pageIdx
-            // append-only history では continuation / startAfter のいずれかが
-            // ページごとにユニーク。1 ページ目は cursor が空 ({}) なので sentinel。
-            const key = cursor.continuation ?? cursor.startAfter ?? '__first'
+            // history は後ろに足すだけで並べ替えないので、位置をそのままキーにできる。
             return (
               <button
-                key={key}
+                key={i}
                 type="button"
                 className="storage-pager-page"
                 onClick={() => onGoto(i)}

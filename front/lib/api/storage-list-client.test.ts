@@ -63,8 +63,7 @@ describe('一覧 cache の取得時刻', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       directories: ['old/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
       cache: {
         fetchedAt,
         expiresAt: '2099-09-16T01:23:45.000Z',

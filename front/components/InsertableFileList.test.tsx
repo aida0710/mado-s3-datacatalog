@@ -22,8 +22,7 @@ describe('InsertableFileList', () => {
         { key: 'docs/spec.md',   size: 100, lastModified: null },
         { key: 'docs/notes.txt', size:  50, lastModified: null },
       ],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     render(
@@ -47,8 +46,7 @@ describe('InsertableFileList', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: ['docs/images/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const onInsert = vi.fn()
@@ -78,8 +76,7 @@ describe('InsertableFileList', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'docs/spec.md', size: 100, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const onInsert = vi.fn()
@@ -106,14 +103,12 @@ describe('InsertableFileList', () => {
     listMock.mockResolvedValueOnce({
       directories: ['docs/sub/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'docs/sub/inside.md', size: 10, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const onInsert = vi.fn()
@@ -145,15 +140,13 @@ describe('InsertableFileList', () => {
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'docs/sub/inside.md', size: 1, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     // 2 回目: prefix='docs/' (パン屑から戻る)
     listMock.mockResolvedValueOnce({
       directories: ['docs/sub/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -179,14 +172,12 @@ describe('InsertableFileList', () => {
     listMock.mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'docs/sub/x.md', size: 1, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
     listMock.mockResolvedValueOnce({
       directories: ['docs/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -210,8 +201,7 @@ describe('InsertableFileList', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: [],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     render(
@@ -229,8 +219,7 @@ describe('InsertableFileList', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       directories: [],
       files: [{ key: 'docs/a.md', size: 1, lastModified: null }],
-      nextContinuation: 'tok',
-      nextStartAfter: null,
+      nextCursor: 'tok',
     })
 
     render(

@@ -3,6 +3,7 @@ import type { Pool } from 'pg'
 import { z } from 'zod'
 import { requirePermission } from '../lib/rbac.js'
 import { apiError } from '../lib/api-error.js'
+import { decodePageCursor, encodePageCursor } from '../lib/page-cursor.js'
 
 export interface AuditRoutesDeps {
   pool: Pool
@@ -10,12 +11,15 @@ export interface AuditRoutesDeps {
 
 const Query = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
-  beforeId: z.coerce.number().int().positive().optional(),
+  cursor: z.string().min(1).optional(),
   action: z.string().min(1).max(128).optional(),
   outcome: z.literal('success').optional(),
   actorUserId: z.string().uuid().optional(),
   actorServiceAccountId: z.string().uuid().optional(),
 })
+
+// 新しい順に読むので、続きは「この ID より古いもの」。
+const AuditPagePosition = z.strictObject({ beforeId: z.number().int().positive() })
 
 export const ROUTINE_AUDIT_ACTIONS = [
   'auth.local.login',
@@ -40,6 +44,8 @@ export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
     const parsed = Query.safeParse(c.req.query())
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid query'), 400)
     const q = parsed.data
+    const position = q.cursor === undefined ? null : decodePageCursor(q.cursor, AuditPagePosition)
+    if (q.cursor !== undefined && !position) return c.json(apiError('invalid_cursor', 'invalid cursor'), 400)
     const where: string[] = []
     const values: unknown[] = []
     const add = (sql: string, value: unknown) => {
@@ -49,7 +55,7 @@ export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
     values.push([...ROUTINE_AUDIT_ACTIONS])
     where.push(`NOT (e.action = ANY($${values.length}::text[]))`)
     where.push(`e.outcome = 'success'`)
-    if (q.beforeId !== undefined) add('e.id < ?', q.beforeId)
+    if (position) add('e.id < ?', position.beforeId)
     if (q.action !== undefined) add('e.action = ?', q.action)
     if (q.outcome !== undefined) add('e.outcome = ?', q.outcome)
     if (q.actorUserId !== undefined) add('e.actor_user_id = ?', q.actorUserId)
@@ -71,6 +77,7 @@ export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
     )
     const hasMore = r.rows.length > q.limit
     const events = hasMore ? r.rows.slice(0, q.limit) : r.rows
-    return c.json({ events, nextBeforeId: hasMore ? events.at(-1)?.id ?? null : null })
+    const last = events.at(-1)
+    return c.json({ events, nextCursor: hasMore && last ? encodePageCursor({ beforeId: Number(last.id) }) : null })
   })
 }

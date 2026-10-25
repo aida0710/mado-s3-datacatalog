@@ -164,7 +164,7 @@ export function InsertableFileList({ connectionId, bucket, prefix: initialPrefix
         </ul>
       )}
 
-      {data && (data.nextContinuation || data.nextStartAfter) && (
+      {data?.nextCursor && (
         <p className="filelist__hint muted">
           {translate('insertableFileList.moreEntriesAreAvailableNavigateFurtherIntoThe')}</p>
       )}

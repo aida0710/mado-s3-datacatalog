@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import type { LineageService } from '../lib/lineage-service.js'
+import { encodePageCursor } from '../lib/page-cursor.js'
 import { mountLineageRoutes } from './lineage.js'
 
 function service(overrides: Partial<LineageService> = {}): LineageService {
@@ -84,7 +85,7 @@ describe('lineage 読み取り route', () => {
     const app = new Hono()
     mountLineageRoutes(app, { service: svc, visibleConnectionIds: async () => null })
 
-    expect((await app.request('/lineage/catalog?q=podcast&limit=20&offset=40')).status).toBe(200)
+    expect((await app.request(`/lineage/catalog?q=podcast&limit=20&cursor=${encodePageCursor({ offset: 40 })}`)).status).toBe(200)
     expect(svc.catalog).toHaveBeenCalledWith({
       q: 'podcast', namespace: undefined, limit: 20, offset: 40,
     })
@@ -95,6 +96,25 @@ describe('lineage 読み取り route', () => {
     expect(svc.resolveLocation).toHaveBeenCalledWith({
       connectionId: 'conn1', bucket: 'dataset', key: 'podcast/a.tar', limit: 20,
     })
+  })
+
+  it('登録一覧は最初のページから読み、残りがあれば次の位置を cursor で返す', async () => {
+    const results = Array.from({ length: 20 }, (_, index) => ({ datasetId: null, namespace: 'speech', name: `raw-${index}` }))
+    const svc = service({ catalog: vi.fn().mockResolvedValue({ results, totalCount: 45 }) })
+    const app = new Hono()
+    mountLineageRoutes(app, { service: svc, visibleConnectionIds: async () => null })
+
+    const first = await (await app.request('/lineage/catalog?limit=20')).json() as { nextCursor: string | null; totalCount: number }
+    expect(svc.catalog).toHaveBeenCalledWith({ q: '', namespace: undefined, limit: 20, offset: 0 })
+    expect(first).toMatchObject({ totalCount: 45, nextCursor: encodePageCursor({ offset: 20 }) })
+
+    vi.mocked(svc.catalog).mockResolvedValueOnce({ results: results.slice(0, 5), totalCount: 45 })
+    const last = await (await app.request(`/lineage/catalog?limit=20&cursor=${encodePageCursor({ offset: 40 })}`)).json() as { nextCursor: string | null }
+    expect(last.nextCursor).toBeNull()
+
+    const invalid = await app.request('/lineage/catalog?cursor=broken')
+    expect(invalid.status).toBe(400)
+    expect(await invalid.json()).toMatchObject({ code: 'invalid_cursor' })
   })
 
   it('Version詳細は、利用者に見える接続の一覧を渡して引く', async () => {

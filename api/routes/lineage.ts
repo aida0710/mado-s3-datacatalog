@@ -7,9 +7,13 @@ import { graphWithoutHiddenConnections } from '../lib/lineage-connection-visibil
 import { MarquezClientError } from '../lib/marquez-client.js'
 import { RegistryClientError } from '../lib/registry-client.js'
 import { apiError } from '../lib/api-error.js'
+import { decodePageCursor, encodePageCursor } from '../lib/page-cursor.js'
 
 const Identity = z.string().trim().min(1).max(1024)
 const Uuid = z.string().uuid()
+// Registry の一覧は件数の位置で続きを読むので、cursor の中身はその位置。上限は Registry へ渡す値の範囲を抑えるため。
+const MAX_CATALOG_OFFSET = 1_000_000
+const CatalogPagePosition = z.strictObject({ offset: z.number().int().min(1).max(MAX_CATALOG_OFFSET) })
 
 export interface LineageRoutesDeps {
   service: LineageService
@@ -96,9 +100,14 @@ export function mountLineageRoutes(app: Hono, deps: LineageRoutesDeps): void {
     const q = (c.req.query('q') ?? '').trim()
     const namespace = c.req.query('namespace')?.trim() || undefined
     const limit = boundedInt(c.req.query('limit'), { fallback: 20, min: 1, max: 100 })
-    const offset = boundedInt(c.req.query('offset'), { fallback: 0, min: 0, max: 1_000_000 })
+    const cursor = c.req.query('cursor')
+    const position = cursor === undefined ? { offset: 0 } : decodePageCursor(cursor, CatalogPagePosition)
+    if (!position) return c.json(apiError('invalid_cursor', 'invalid cursor'), 400)
     try {
-      return c.json(await serviceFor(c).catalog({ q, namespace, limit, offset }))
+      const catalog = await serviceFor(c).catalog({ q, namespace, limit, offset: position.offset })
+      const nextOffset = position.offset + catalog.results.length
+      const hasMore = catalog.results.length > 0 && nextOffset < catalog.totalCount && nextOffset <= MAX_CATALOG_OFFSET
+      return c.json({ ...catalog, nextCursor: hasMore ? encodePageCursor({ offset: nextOffset }) : null })
     } catch (error) {
       return backendError(c, error)
     }

@@ -28,8 +28,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: ['debug/x/sub/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -50,8 +49,7 @@ describe('S3PathPanel', () => {
         'debug/dialogue-sidon-parakeet-v1/partition-test-2gpu-6h/',
       ],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -76,8 +74,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: ['debug/x/sub/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -92,8 +89,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: [],
       files: [{ key: 'debug/x/result.tar.xz', size: 1, lastModified: null }],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -110,8 +106,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: [],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -126,8 +121,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: ['debug/x/partition-1/'],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
@@ -142,8 +136,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: ['debug/a/'],
       files: [],
-      nextContinuation: 'tok',
-      nextStartAfter: null,
+      nextCursor: 'tok',
     })
 
     const user = userEvent.setup()
@@ -159,8 +152,7 @@ describe('S3PathPanel', () => {
     ;(api.list as ReturnType<typeof vi.fn>).mockResolvedValue({
       directories: [],
       files: [],
-      nextContinuation: null,
-      nextStartAfter: null,
+      nextCursor: null,
     })
 
     const user = userEvent.setup()
