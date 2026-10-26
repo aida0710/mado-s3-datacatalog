@@ -10,9 +10,9 @@ third-party Registry can be built from this document alone.
 
 ## Transport and authentication
 
-- `DATASET_REGISTRY_URL` is the base URL. Production deployments must use a
+- `MDC_DATASET_REGISTRY_URL` is the base URL. Production deployments must use a
   trusted private network or HTTPS.
-- Every request sends `Authorization: Bearer <DATASET_REGISTRY_TOKEN>` and
+- Every request sends `Authorization: Bearer <MDC_DATASET_REGISTRY_TOKEN>` and
   `Accept: application/json`. The token must be at least 16 characters and
   should be dedicated to mado S3 Data Catalog with only ingest, read, and manual-registration
   permissions.

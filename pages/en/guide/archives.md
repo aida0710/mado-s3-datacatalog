@@ -23,6 +23,6 @@ For an uncompressed `.tar`, mado fetches from S3 only the ranges needed for play
 | `.tar` | Fetches headers and the needed file data partially. Keeps fetching the rest until the index is complete |
 | `.tar.gz` / `.tar.xz` | Decompresses sequentially from the start. A preview limit applies to file data |
 
-File data inside compressed tar files is limited by `PREVIEW_TAR_ENTRY_MAX_BYTES`. Waveform and spectrogram analysis of audio has its own input limit, which is different from the limit for direct playback.
+File data inside compressed tar files is limited by `MDC_PREVIEW_TAR_ENTRY_MAX_BYTES`. Waveform and spectrogram analysis of audio has its own input limit, which is different from the limit for direct playback.
 
 While `range request…` with an entry count and the amount read is shown above the list, mado is still fetching the rest of the index. When the object is updated, the index is rebuilt.

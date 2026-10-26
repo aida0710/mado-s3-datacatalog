@@ -8,7 +8,7 @@ madoはLocal UserとOIDC SSOに対応しています。ユーザーの役割を�
 
 ## Local UserとSSOを選ぶ
 
-| `AUTH_MODE` | ログイン方法 |
+| `MDC_AUTH_MODE` | ログイン方法 |
 | --- | --- |
 | `local` | 管理者が作成したLocal User |
 | `oidc` | OIDC SSO |
@@ -20,9 +20,9 @@ SSOではissuer、client ID、client secret、redirect URIを設定します。A
 
 ## ログインを7日保持する
 
-sessionの未使用期限`AUTH_SESSION_IDLE_SECONDS`と、ログインからの期限`AUTH_SESSION_ABSOLUTE_SECONDS`は、どちらも既定604800秒（7日）です。操作しない期間を含め、ログインから7日保持します。既存の`.env`で短い期限を設定している場合は、両方を`604800`にしてAPIを再起動してください。
+sessionの未使用期限`MDC_AUTH_SESSION_IDLE_SECONDS`と、ログインからの期限`MDC_AUTH_SESSION_ABSOLUTE_SECONDS`は、どちらも既定604800秒（7日）です。操作しない期間を含め、ログインから7日保持します。既存の`.env`で短い期限を設定している場合は、両方を`604800`にしてAPIを再起動してください。
 
-SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authentikの［Applications］→［Providers］でmado S3 Data CatalogのProviderを編集し、［Advanced protocol settings］の［Scopes］に標準の`offline_access` mappingを追加してください。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。反映後、一度ログインし直してrefresh tokenを取得します。
+SSOでは`MDC_OIDC_SCOPES=openid email profile offline_access`にします。Authentikの［Applications］→［Providers］でmado S3 Data CatalogのProviderを編集し、［Advanced protocol settings］の［Scopes］に標準の`offline_access` mappingを追加してください。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。反映後、一度ログインし直してrefresh tokenを取得します。
 
 ## ロールを割り当てる
 
@@ -43,7 +43,7 @@ SSOでは`OIDC_SCOPES=openid email profile offline_access`にします。Authent
 
 SSOのgroupから外しても、既存のmadoセッションが直ちに失効するとは限りません。すぐに利用を止める場合は、mado側のUserを無効化してください。
 
-運用環境ではHTTPSを使い、`AUTH_COOKIE_SECURE=true` にします。開発・テスト環境も `AUTH_MODE` に `local`・`oidc`・`hybrid` のいずれかを指定します。未設定やその他の値では起動できません。
+運用環境ではHTTPSを使い、`MDC_AUTH_COOKIE_SECURE=true` にします。開発・テスト環境も `MDC_AUTH_MODE` に `local`・`oidc`・`hybrid` のいずれかを指定します。未設定やその他の値では起動できません。
 
 ## Pipelineにはアクセストークンを使う
 
