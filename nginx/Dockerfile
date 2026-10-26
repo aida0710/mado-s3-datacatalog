@@ -13,8 +13,7 @@ ENV VITE_GIT_DATE=$VITE_GIT_DATE
 COPY front/package.json front/package-lock.json ./
 RUN npm ci
 COPY front .
-COPY api/shared/access-token-permissions.ts /api/shared/access-token-permissions.ts
-COPY api/shared/api-error-codes.ts /api/shared/api-error-codes.ts
+COPY api/shared /api/shared
 RUN npm run build
 
 # ステージ 2: nginx に静的成果物と設定を焼く

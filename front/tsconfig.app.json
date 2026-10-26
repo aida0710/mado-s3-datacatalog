@@ -15,6 +15,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* api/shared のスキーマも front の zod で読む (Docker の build では api/ に node_modules が無い) */
+    "paths": { "zod": ["./node_modules/zod"] },
+
     /* Linting */
     "strict": true,
     "noUncheckedIndexedAccess": true,

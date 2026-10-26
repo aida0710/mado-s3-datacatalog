@@ -13,19 +13,19 @@ export interface StorageTagsDeps {
 
 const ColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'color must be #RRGGBB')
 
-const CreateTagBody = z.object({
+export const TagCreateBody = z.object({
   name: z.string().min(1).max(32),
   color: ColorSchema,
 })
 
-const UpdateTagBody = z.object({
+export const TagUpdateBody = z.object({
   name: z.string().min(1).max(32).optional(),
   color: ColorSchema.optional(),
 })
 
 const TargetKindSchema = z.enum(['bucket', 'prefix', 'file'])
 
-const AssignmentBody = z.object({
+export const TagAssignmentBody = z.object({
   bucket: z.string().min(1),
   kind: TargetKindSchema,
   path: z.string(),
@@ -54,7 +54,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   })
 
   app.post('/tags', async c => {
-    const parsed = CreateTagBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = TagCreateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { name, color } = parsed.data
     const id = nanoid(10)
@@ -76,7 +76,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
 
   app.put('/tags/:id', async c => {
     const id = c.req.param('id')
-    const parsed = UpdateTagBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = TagUpdateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const u = parsed.data
 
@@ -153,7 +153,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
 
   app.put('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
-    const parsed = AssignmentBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = TagAssignmentBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(
@@ -168,7 +168,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
 
   app.delete('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
-    const parsed = AssignmentBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = TagAssignmentBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(

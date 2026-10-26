@@ -72,17 +72,17 @@ function oidcFailureReason(error: unknown): string {
 // 入力されたパスワードも、保存できる長さと同じ UTF-8 の byte 数で上限を見る。
 const EnteredPassword = z.string().min(1).refine(password => Buffer.byteLength(password, 'utf8') <= PASSWORD_MAX_BYTES)
 
-const LoginBody = z.object({
+export const LocalLoginBody = z.object({
   identifier: z.string().trim().min(1).max(320).optional(),
   email: z.string().email().max(320).optional(),
   password: EnteredPassword,
 }).refine(value => Boolean(value.identifier || value.email))
 
-const ChangePasswordBody = z.object({
+export const ChangePasswordBody = z.object({
   currentPassword: EnteredPassword,
   newPassword: z.string().refine(password => isAcceptablePasswordLength(password)),
 })
-const ProfileBody = z.object({
+export const ProfileBody = z.object({
   signatureName: z.string().trim().min(1).max(128),
   displayName: z.string().trim().min(1).max(128).optional(),
   username: z.string().trim().regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/).optional(),
@@ -148,7 +148,7 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
 
   app.post('/local/login', async c => {
     if (!deps.config.localEnabled) return c.json(apiError('local_login_disabled', 'local login disabled'), 404)
-    const parsed = LoginBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = LocalLoginBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_credentials', 'invalid identifier or password'), 401)
     const identifier = parsed.data.identifier ?? parsed.data.email!
     const metadata = requestMetadata(c)

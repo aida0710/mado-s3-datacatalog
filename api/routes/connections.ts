@@ -84,7 +84,7 @@ const CapacityTrackingPatch = z.object({
     .refine(value => CAPACITY_INTERVALS.includes(value as typeof CAPACITY_INTERVALS[number])),
 }).strict()
 
-const CreateBody = z.object({
+export const ConnectionCreateBody = z.object({
   name: z.string().min(1).max(64),
   endpoint: endpointSchema,
   region: z.string().min(1).max(64).default('auto'),
@@ -98,7 +98,7 @@ const CreateBody = z.object({
   visibility: VisibilityCreate,
 })
 
-const UpdateBody = z.object({
+export const ConnectionUpdateBody = z.object({
   name: z.string().min(1).max(64).optional(),
   endpoint: endpointSchema.optional(),
   region: z.string().min(1).max(64).optional(),
@@ -281,7 +281,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
   })
 
   app.post('/connections', async c => {
-    const parsed = CreateBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = ConnectionCreateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const {
       name, endpoint, region, accessKeyId, secretAccessKey, forcePathStyle,
@@ -371,7 +371,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
 
   app.put('/connections/:id', async c => {
     const id = c.req.param('id')
-    const parsed = UpdateBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = ConnectionUpdateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const u = parsed.data
 

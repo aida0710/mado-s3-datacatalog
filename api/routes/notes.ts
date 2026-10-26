@@ -10,7 +10,7 @@ export interface NotesDeps {
   pools: Pools
 }
 
-const PutBody = z.object({
+export const NotePutBody = z.object({
   body: z.string(),
 }).strict()
 
@@ -42,7 +42,7 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
     if (slug.length < 1 || slug.length > 64) {
       return c.json(apiError('invalid_request', 'invalid slug'), 400)
     }
-    const parsed = PutBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = NotePutBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
     const principal = getRequestPrincipal(c)
     const body = parsed.data.body
