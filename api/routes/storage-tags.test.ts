@@ -74,6 +74,10 @@ describe('タグレジストリ', () => {
       body: JSON.stringify({ name: 'x', color: 'red' }),
     })
     expect(res.status).toBe(400)
+    // 画面に出す文なので、zodのissueのJSONではなく「項目: 理由」にする。
+    const body = await res.json() as { error: string; code: string }
+    expect(body.code).toBe('invalid_request')
+    expect(body.error).toMatch(/^color: /)
   })
 
   it('PUT /tags/:id で name/color を部分更新できる', async () => {

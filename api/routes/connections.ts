@@ -28,7 +28,7 @@ import {
 import { PricingPatch, splitPricingPatch } from '../lib/connection-pricing-patch.js'
 import { CAPACITY_INTERVALS } from '../lib/capacity-store.js'
 import { isAllowedEndpoint } from '../lib/endpoint-policy.js'
-import { apiError } from '../lib/api-error.js'
+import { apiError, invalidRequest } from '../lib/api-error.js'
 
 // ルート単位のRBACは internal-app.ts で適用する。接続一覧はさらにここでユーザー別に
 // 絞り込み、非許可の接続は存在自体を返さない。
@@ -282,7 +282,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
 
   app.post('/connections', async c => {
     const parsed = ConnectionCreateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const {
       name, endpoint, region, accessKeyId, secretAccessKey, forcePathStyle,
       listObjectsVersion, capabilities, visibility,
@@ -372,7 +372,7 @@ export function mountConnectionsRoutes(app: Hono, deps: ConnectionsDeps): void {
   app.put('/connections/:id', async c => {
     const id = c.req.param('id')
     const parsed = ConnectionUpdateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const u = parsed.data
 
     // 指定されたフィールドのみで動的な SET 句を構築する。
