@@ -27,7 +27,7 @@ docker compose -f compose.dev.yaml up -d --build
 docker compose -f compose.dev.yaml logs -f api-internal front
 ```
 
-Development also requires login. Before startup, copy `.env.example` to `.env` and configure the encryption key and database connections. Start with `AUTH_MODE=local`, then create the initial Admin with this interactive command.
+Development also requires login. Before startup, copy `.env.example` to `.env` and configure the encryption key and database connections. Start with `MDC_AUTH_MODE=local`, then create the initial Admin with this interactive command.
 
 ```bash
 docker compose -f compose.dev.yaml exec api-internal npm run auth:bootstrap-admin:dev
@@ -52,7 +52,7 @@ npm run lint --prefix front
 npm run build --prefix front
 ```
 
-The API's DB tests use the `DATABASE_URL_RW_TEST` setting. If the DB password does not match, check the connection settings and the existing role's values before you recreate the volume.
+The API's DB tests use the `MDC_TEST_DATABASE_URL` setting. If the DB password does not match, check the connection settings and the existing role's values before you recreate the volume.
 
 ## Update the GitHub Pages content
 

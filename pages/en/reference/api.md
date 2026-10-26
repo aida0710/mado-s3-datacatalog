@@ -38,8 +38,8 @@ Tokens can use the same internal APIs as the UI for Storage, READMEs, Notes, Dat
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $MADO_API_TOKEN" \
-  "$MADO_URL/api/internal/connections"
+  -H "Authorization: Bearer $MDC_API_TOKEN" \
+  "$MDC_URL/api/internal/connections"
 ```
 
 This example needs `permissions: ["connections:read"]` and selected connections. Reads and sending are configured in the same feature permission list. Token management can be granted, but callers cannot issue or regenerate stronger tokens. User administration requires the Administrator preset's full permissions and targets. Login, SSO and self-service password changes remain browser-only. See the [permission and target reference](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md).
@@ -52,13 +52,13 @@ Pass the destination URL and the key from the pipeline's environment variables o
 
 ```bash
 curl --fail-with-body \
-  -X POST "$MADO_LINEAGE_URL/api/openlineage/v1/lineage" \
-  -H "Authorization: Bearer $MADO_LINEAGE_KEY" \
+  -X POST "$MDC_LINEAGE_URL/api/openlineage/v1/lineage" \
+  -H "Authorization: Bearer $MDC_LINEAGE_KEY" \
   -H 'Content-Type: application/json' \
   --data-binary @event.json
 ```
 
-`MADO_LINEAGE_URL` is the origin of the public API hostname, and `MADO_LINEAGE_KEY` is a token with DataLineage **Send** permission. Send events for the allowed namespaces. The event format and how events are registered are described in the [Lineage specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md).
+`MDC_LINEAGE_URL` is the origin of the public API hostname, and `MDC_LINEAGE_KEY` is a token with DataLineage **Send** permission. Send events for the allowed namespaces. The event format and how events are registered are described in the [Lineage specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md).
 
 ## Collect capacity metrics with Prometheus
 
@@ -66,8 +66,8 @@ Metrics are served on the UI's intranet entry point. They are not available on t
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $MADO_METRICS_KEY" \
-  "$MADO_URL/api/mado/metrics/capacity"
+  -H "Authorization: Bearer $MDC_METRICS_KEY" \
+  "$MDC_URL/api/mado/metrics/capacity"
 ```
 
 Here is an example Prometheus configuration. The Bearer token is read from a file.

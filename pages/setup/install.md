@@ -52,9 +52,9 @@ cp .env.example .env
 openssl rand -hex 32
 ```
 
-最後のコマンドで生成した値を、`.env` の `ENCRYPTION_KEY` に設定します。このキーは保存したS3の認証情報の暗号化に使うため、運用開始後も保管してください。
+最後のコマンドで生成した値を、`.env` の `MDC_STORAGE_SECRET_KEY` に設定します。このキーは保存したS3の認証情報の暗号化に使うため、運用開始後も保管してください。
 
-`.env.example` の `AUTH_MODE=local` は、Local Userで試す設定です。DataLineageを使う場合は、互換Dataset RegistryとそのBearer token、必要に応じてMarquezを別途用意します。Registryの仕様は[API契約](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/registry-api-contract.md)を参照してください。
+`.env.example` の `MDC_AUTH_MODE=local` は、Local Userで試す設定です。DataLineageを使う場合は、互換Dataset RegistryとそのBearer token、必要に応じてMarquezを別途用意します。Registryの仕様は[API契約](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/registry-api-contract.md)を参照してください。
 
 ## 開発環境を起動する
 
@@ -84,14 +84,14 @@ docker compose -f compose.dev.yaml exec api-internal \
 | 設定 | 内容 |
 | --- | --- |
 | `POSTGRES_PASSWORD` | PostgreSQL管理用のパスワード |
-| `DASHBOARD_PASSWORD` | `DATABASE_URL_RW` / `DATABASE_URL_RO` と一致するパスワード |
-| `LINEAGE_DB_PASSWORD` | OpenLineage用DBロールのパスワード |
-| `WORKER_DB_PASSWORD` | 音声解析worker専用DBロールのパスワード |
-| `ENCRYPTION_KEY` | 32バイトのhex形式の暗号化キー |
-| `AUTH_MODE` | `local`、`oidc`、`hybrid` のいずれか |
-| `AUTH_COOKIE_SECURE` | HTTPSで使う場合は `true` |
-| `ALLOWED_ORIGINS` | ブラウザが使うURLのorigin |
-| `DATASET_REGISTRY_URL` / `DATASET_REGISTRY_TOKEN` | 互換Registryへの接続設定。本番では必須 |
+| `MDC_DASHBOARD_DB_PASSWORD` | `MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO` と一致するパスワード |
+| `MDC_LINEAGE_DB_PASSWORD` | OpenLineage用DBロールのパスワード |
+| `MDC_WORKER_DB_PASSWORD` | 音声解析worker専用DBロールのパスワード |
+| `MDC_STORAGE_SECRET_KEY` | 32バイトのhex形式の暗号化キー |
+| `MDC_AUTH_MODE` | `local`、`oidc`、`hybrid` のいずれか |
+| `MDC_AUTH_COOKIE_SECURE` | HTTPSで使う場合は `true` |
+| `MDC_WEB_ORIGIN` | ブラウザが使うURLのorigin |
+| `MDC_DATASET_REGISTRY_URL` / `MDC_DATASET_REGISTRY_TOKEN` | 互換Registryへの接続設定。本番では必須 |
 
 新規環境では、Webの入口を起動する前にAdminを作成します。`api-internal`だけを起動すると、PostgreSQLも起動し、DBの移行が当たります。
 

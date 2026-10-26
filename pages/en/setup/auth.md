@@ -8,7 +8,7 @@ mado supports Local Users and OIDC SSO. You combine RBAC, which sets each user's
 
 ## Choose between Local Users and SSO
 
-| `AUTH_MODE` | Login method |
+| `MDC_AUTH_MODE` | Login method |
 | --- | --- |
 | `local` | Local Users created by an administrator |
 | `oidc` | OIDC SSO |
@@ -20,9 +20,9 @@ For SSO, configure the issuer, client ID, client secret, and redirect URI. For t
 
 ## Keep users logged in for 7 days
 
-The session idle timeout `AUTH_SESSION_IDLE_SECONDS` and the timeout from login `AUTH_SESSION_ABSOLUTE_SECONDS` both default to 604800 seconds (7 days). A login lasts 7 days, including periods of inactivity. If your existing `.env` sets shorter timeouts, set both to `604800` and restart the API.
+The session idle timeout `MDC_AUTH_SESSION_IDLE_SECONDS` and the timeout from login `MDC_AUTH_SESSION_ABSOLUTE_SECONDS` both default to 604800 seconds (7 days). A login lasts 7 days, including periods of inactivity. If your existing `.env` sets shorter timeouts, set both to `604800` and restart the API.
 
-For SSO, set `OIDC_SCOPES=openid email profile offline_access`. In Authentik, go to **Applications** → **Providers**, edit the mado provider, and add the standard `offline_access` mapping to **Scopes** under **Advanced protocol settings**. Set **Refresh Token Validity** to `days=7` or longer. If it is already `days=30`, no change is needed. **Access Token Validity** can stay at `minutes=5`, and tokens are still renewed. After the changes take effect, log in again once to get a refresh token.
+For SSO, set `MDC_OIDC_SCOPES=openid email profile offline_access`. In Authentik, go to **Applications** → **Providers**, edit the mado provider, and add the standard `offline_access` mapping to **Scopes** under **Advanced protocol settings**. Set **Refresh Token Validity** to `days=7` or longer. If it is already `days=30`, no change is needed. **Access Token Validity** can stay at `minutes=5`, and tokens are still renewed. After the changes take effect, log in again once to get a refresh token.
 
 ## Assign roles
 
@@ -43,7 +43,7 @@ If a user has multiple roles, they get the combined permissions of those roles. 
 
 Removing a user from an SSO group does not necessarily end their existing mado sessions right away. To stop access immediately, disable the User in mado.
 
-In production, use HTTPS and set `AUTH_COOKIE_SECURE=true`. Every environment, including development and tests, must set `AUTH_MODE` to `local`, `oidc`, or `hybrid`. Missing or unsupported values prevent startup.
+In production, use HTTPS and set `MDC_AUTH_COOKIE_SECURE=true`. Every environment, including development and tests, must set `MDC_AUTH_MODE` to `local`, `oidc`, or `hybrid`. Missing or unsupported values prevent startup.
 
 ## Use access tokens for pipelines
 

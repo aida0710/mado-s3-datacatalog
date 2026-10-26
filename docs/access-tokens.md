@@ -60,8 +60,8 @@ PATCHは省略した項目を保持し、`status`は`active`または`disabled`�
 
 `api/scripts/serve-access-token-fixture.ts`は、スキーマを適用した空の専用DB`dashboard_access_tokens_verify`だけを使う。接続先はloopback限定。架空の管理者とトークンを作り、実際の管理APIとBearer認証を検証する。本番サーバーにはこのfixtureを組み込まない。
 
-1. 専用DBの接続文字列を`MADO_ACCESS_TOKEN_DATABASE_URL`へ設定し、リポジトリ直下で`api/node_modules/.bin/tsx api/scripts/serve-access-token-fixture.ts`を起動する。
+1. 専用DBの接続文字列を`MDC_ACCESS_TOKEN_DATABASE_URL`へ設定し、リポジトリ直下で`api/node_modules/.bin/tsx api/scripts/serve-access-token-fixture.ts`を起動する。
 2. 別の端末で`node front/scripts/serve-access-token-verification.mjs`を起動する。
-3. `MADO_PLAYWRIGHT_MODULE`にインストール済みPlaywrightの`index.mjs`の絶対パスを設定し、`node front/scripts/verify-access-tokens.mjs`を実行する。必要なら`MADO_CHROMIUM_PATH`を指定する。
+3. `MDC_PLAYWRIGHT_MODULE`にインストール済みPlaywrightの`index.mjs`の絶対パスを設定し、`node front/scripts/verify-access-tokens.mjs`を実行する。必要なら`MDC_CHROMIUM_PATH`を指定する。
 
-`MADO_SCREENSHOT_DIR`を指定すると確認画像を保存する。秘密の値が表示されていれば撮影せずに失敗する。検証スクリプトは専用fixtureの応答を確認してから操作する。
+`MDC_SCREENSHOT_DIR`を指定すると確認画像を保存する。秘密の値が表示されていれば撮影せずに失敗する。検証スクリプトは専用fixtureの応答を確認してから操作する。

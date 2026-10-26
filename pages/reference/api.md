@@ -38,8 +38,8 @@ Storage・README・Notes・DataLineage・ジョブ・接続・設定など、画
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $MADO_API_TOKEN" \
-  "$MADO_URL/api/internal/connections"
+  -H "Authorization: Bearer $MDC_API_TOKEN" \
+  "$MDC_URL/api/internal/connections"
 ```
 
 この例には`permissions: ["connections:read"]`と接続の選択が必要です。参照・送信も同じ機能別の一覧で設定します。トークン管理も許可できますが、自分より強いトークンの発行・再発行はできません。ユーザーの変更には管理者プリセットの全権限・全対象が必要です。ログイン・SSO・自分のパスワード変更はブラウザ専用です。[権限の一覧と対象制限](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/internal-api-permissions.md)を参照してください。
@@ -52,13 +52,13 @@ curl --fail-with-body \
 
 ```bash
 curl --fail-with-body \
-  -X POST "$MADO_LINEAGE_URL/api/openlineage/v1/lineage" \
-  -H "Authorization: Bearer $MADO_LINEAGE_KEY" \
+  -X POST "$MDC_LINEAGE_URL/api/openlineage/v1/lineage" \
+  -H "Authorization: Bearer $MDC_LINEAGE_KEY" \
   -H 'Content-Type: application/json' \
   --data-binary @event.json
 ```
 
-`MADO_LINEAGE_URL` は公開API用hostnameのorigin、`MADO_LINEAGE_KEY` はDataLineageの「送信」を許可したトークンです。許可されたnamespaceのイベントを送信します。イベント形式と登録の扱いは[Lineageの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md)に記載しています。
+`MDC_LINEAGE_URL` は公開API用hostnameのorigin、`MDC_LINEAGE_KEY` はDataLineageの「送信」を許可したトークンです。許可されたnamespaceのイベントを送信します。イベント形式と登録の扱いは[Lineageの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/lineage.md)に記載しています。
 
 ## Prometheusで容量メトリクスを取得する
 
@@ -66,8 +66,8 @@ curl --fail-with-body \
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $MADO_METRICS_KEY" \
-  "$MADO_URL/api/mado/metrics/capacity"
+  -H "Authorization: Bearer $MDC_METRICS_KEY" \
+  "$MDC_URL/api/mado/metrics/capacity"
 ```
 
 Prometheusの設定例です。Bearer tokenはファイルから読みます。

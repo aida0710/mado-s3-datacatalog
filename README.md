@@ -113,7 +113,7 @@ Settings の接続一覧には、制限のかかっている接続に「制限: 
 
 音声解析は単体ファイルを一度だけ一時ファイルへ取得し、probe・波形・スペクトログラムで再利用します。非圧縮tarも対象の音声の範囲だけ取得します。解析用入力の上限は単体2GiB・tar内100MiBで、直接再生には適用しません。一時ファイルは解析完了・失敗・中断時に削除します。
 
-`.tar.gz`・`.tar.xz`内の本文は順次解凍して取得するため、引き続き`PREVIEW_TAR_ENTRY_MAX_BYTES`の上限が適用されます。ブラウザで再生できる動画・音声形式が対象です。
+`.tar.gz`・`.tar.xz`内の本文は順次解凍して取得するため、引き続き`MDC_PREVIEW_TAR_ENTRY_MAX_BYTES`の上限が適用されます。ブラウザで再生できる動画・音声形式が対象です。
 
 <img width="720" height="302" alt="mosaic_20260524163953" src="https://github.com/user-attachments/assets/e5a41326-34b9-45a2-adaf-94b0e4ef4066" />
 
@@ -223,7 +223,7 @@ Adminは**Access → Access Tokens**で、アカウントを別に作らずア�
 # 1. .env を用意
 cp .env.example .env
 
-# 2. ENCRYPTION_KEY を生成して .env に書く (32 byte hex)
+# 2. MDC_STORAGE_SECRET_KEY を生成して .env に書く (32 byte hex)
 openssl rand -hex 32
 
 # 3. 起動 (--build はコミット情報を About に焼くため初回 / 更新時に推奨)
@@ -240,41 +240,43 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 
 ### 環境変数
 
+このアプリが読む設定の名前は`MDC_`で始まります（v0.5.0で付けました）。旧名だけが残っていると、`api-internal`・`api-lineage`・`media-worker`は起動時に止まり、替える名前を表示します。旧名と新名の対応は[v0.5.0のリリースノート](docs/releases/v0.5.0.md)にあります。
+
 | 変数 | 必須 | 説明 |
 |---|---|---|
-| `PORT` | yes | api コンテナの listen ポート (compose 側で 3000 に上書き) |
-| `DATABASE_URL_RW` | yes | `dashboard_rw` 接続 URL。**compose 内なので host は `postgres`** |
-| `DATABASE_URL_RO` | yes | `dashboard_ro` 接続 URL |
-| `DATABASE_URL_MIGRATE` | yes (`api-internal`) | DB の管理者 (`postgres`) の接続 URL。`api-internal` が起動時に移行を当てるときだけ使う。compose が `POSTGRES_PASSWORD` から組み立てるので `.env` には書かない |
-| `DATABASE_URL_RW_TEST` | no | テスト用。host から接続するので `localhost`。未設定なら default に fallback |
+| `MDC_PORT` | yes | api コンテナの listen ポート (compose 側で 3000 に上書き) |
+| `MDC_DATABASE_URL_RW` | yes | `dashboard_rw` 接続 URL。**compose 内なので host は `postgres`** |
+| `MDC_DATABASE_URL_RO` | yes | `dashboard_ro` 接続 URL |
+| `MDC_DATABASE_URL_MIGRATE` | yes (`api-internal`) | DB の管理者 (`postgres`) の接続 URL。`api-internal` が起動時に移行を当てるときだけ使う。compose が `POSTGRES_PASSWORD` から組み立てるので `.env` には書かない |
+| `MDC_TEST_DATABASE_URL` | no | テスト用。host から接続するので `localhost`。未設定なら default に fallback |
 | `POSTGRES_PASSWORD` | prod:yes / dev:no | `postgres` スーパーユーザのパスワード。**prod は未設定だと起動失敗**、dev は既定 `postgres` |
-| `DASHBOARD_PASSWORD` | prod:yes / dev:no | `dashboard_rw` / `dashboard_ro` のパスワード。**`DATABASE_URL_*` のパスワードと一致必須**。dev 既定 `CHANGEME` |
-| `LINEAGE_DB_PASSWORD` | prod:yes / dev:no | Internet向け`api-lineage`専用の最小権限DB role。英数字hexの生成値を推奨 |
-| `WORKER_DB_PASSWORD` | prod:yes / dev:no | `media-worker`専用の`mado_worker` DB role。解析・走査の表だけを読み書きし、認証表は読めない |
-| `ENCRYPTION_KEY` | yes | `storage_connections` の S3 認証情報を AES-256-GCM で暗号化するキー (32 byte hex) |
-| `ALLOWED_ORIGINS` | yes | CSRF 防御。write 系で許容する Origin (カンマ区切り)。dev: `http://localhost:5173` / prod: ダッシュボードを開く URL |
-| `MADO_ENV` | no | `development` / `test` / `production`。本番composeは`production`を固定し、安全でない認証設定を起動時に拒否 |
-| `AUTH_MODE` | yes | `local` / `oidc` / `hybrid` のいずれか。未設定・その他の値は全環境で起動時に拒否 |
-| `AUTH_COOKIE_SECURE` | no | HTTPS本番は`true`必須。`__Host-` session cookieを使う |
-| `OIDC_ISSUER_URL` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` / `OIDC_REDIRECT_URI` | oidc/hybrid | OIDC discovery issuer、client、callback URL |
-| `OIDC_SCOPES` | no | `openid email profile offline_access`を推奨。`offline_access`はIdP側のscope mappingも必要。設定手順は[Authentik連携](docs/authentik.md) |
-| `OIDC_ALLOWED_GROUPS` | oidc/hybrid | ログインを許可するAuthentik group（カンマ区切り）。空は起動時に拒否 |
-| `OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認 |
-| `OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
-| `OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
-| `DATASET_REGISTRY_URL` | lineage | Dataset Registry API URL |
-| `DATASET_REGISTRY_TOKEN` | lineage | mado S3 Data Catalog→Registry内部Bearer token。Pipeline keyとは別物 |
-| `MARQUEZ_URL` | lineage | read-onlyで参照するMarquez URL |
-| `PREVIEW_TEXT_LIMIT` | no | テキストプレビュー最大バイト (default 65536) |
-| `PREVIEW_TAR_ENTRY_LIMIT` | no | tar 内 1 ページのエントリ最大数 (default 200) |
-| `PREVIEW_TARXZ_BYTE_LIMIT` | no | tar.xz の解凍バイト上限 (default 256MiB) |
-| `PREVIEW_TAR_ENTRY_MAX_BYTES` | no | 圧縮tarの本文取得とテキストの先頭取得の上限 (default 100MiB)。非圧縮tarの本文配信には適用しない |
-| `MEDIA_CONCURRENCY` | no | media-worker が同時実行する ffmpeg 解析数の上限 (default 3) |
-| `MEDIA_ANALYZE_TIMEOUT_SEC` | no | 音声 1 ファイルあたりの解析タイムアウト秒 (default 300) |
-| `MEDIA_CACHE_MAX_AGE_DAYS` | no | 解析結果キャッシュ (`media_cache`) の保持日数 (default 30) |
-| `MEDIA_SPECTROGRAM_MAX_WIDTH` | no | スペクトログラム画像の最大幅 (px) (default 4096) |
+| `MDC_DASHBOARD_DB_PASSWORD` | prod:yes / dev:no | `dashboard_rw` / `dashboard_ro` のパスワード。**`MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO` のパスワードと一致必須**。dev 既定 `CHANGEME` |
+| `MDC_LINEAGE_DB_PASSWORD` | prod:yes / dev:no | Internet向け`api-lineage`専用の最小権限DB role。英数字hexの生成値を推奨 |
+| `MDC_WORKER_DB_PASSWORD` | prod:yes / dev:no | `media-worker`専用の`mado_worker` DB role。解析・走査の表だけを読み書きし、認証表は読めない |
+| `MDC_STORAGE_SECRET_KEY` | yes | `storage_connections` の S3 認証情報を AES-256-GCM で暗号化するキー (32 byte hex) |
+| `MDC_WEB_ORIGIN` | yes | CSRF 防御。write 系で許容する Origin (カンマ区切り)。dev: `http://localhost:5173` / prod: ダッシュボードを開く URL |
+| `MDC_ENV` | no | `development` / `test` / `production`。本番composeは`production`を固定し、安全でない認証設定を起動時に拒否 |
+| `MDC_AUTH_MODE` | yes | `local` / `oidc` / `hybrid` のいずれか。未設定・その他の値は全環境で起動時に拒否 |
+| `MDC_AUTH_COOKIE_SECURE` | no | HTTPS本番は`true`必須。`__Host-` session cookieを使う |
+| `MDC_OIDC_ISSUER_URL` / `MDC_OIDC_CLIENT_ID` / `MDC_OIDC_CLIENT_SECRET` / `MDC_OIDC_REDIRECT_URI` | oidc/hybrid | OIDC discovery issuer、client、callback URL |
+| `MDC_OIDC_SCOPES` | no | `openid email profile offline_access`を推奨。`offline_access`はIdP側のscope mappingも必要。設定手順は[Authentik連携](docs/authentik.md) |
+| `MDC_OIDC_ALLOWED_GROUPS` | oidc/hybrid | ログインを許可するAuthentik group（カンマ区切り）。空は起動時に拒否 |
+| `MDC_OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認 |
+| `MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
+| `MDC_OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
+| `MDC_DATASET_REGISTRY_URL` | lineage | Dataset Registry API URL |
+| `MDC_DATASET_REGISTRY_TOKEN` | lineage | mado S3 Data Catalog→Registry内部Bearer token。Pipeline keyとは別物 |
+| `MDC_MARQUEZ_URL` | lineage | read-onlyで参照するMarquez URL |
+| `MDC_PREVIEW_TEXT_LIMIT` | no | テキストプレビュー最大バイト (default 65536) |
+| `MDC_PREVIEW_TAR_ENTRY_LIMIT` | no | tar 内 1 ページのエントリ最大数 (default 200) |
+| `MDC_PREVIEW_TARXZ_BYTE_LIMIT` | no | tar.xz の解凍バイト上限 (default 256MiB) |
+| `MDC_PREVIEW_TAR_ENTRY_MAX_BYTES` | no | 圧縮tarの本文取得とテキストの先頭取得の上限 (default 100MiB)。非圧縮tarの本文配信には適用しない |
+| `MDC_MEDIA_CONCURRENCY` | no | media-worker が同時実行する ffmpeg 解析数の上限 (default 3) |
+| `MDC_MEDIA_ANALYZE_TIMEOUT_SEC` | no | 音声 1 ファイルあたりの解析タイムアウト秒 (default 300) |
+| `MDC_MEDIA_CACHE_MAX_AGE_DAYS` | no | 解析結果キャッシュ (`media_cache`) の保持日数 (default 30) |
+| `MDC_MEDIA_SPECTROGRAM_MAX_WIDTH` | no | スペクトログラム画像の最大幅 (px) (default 4096) |
 
-> ⚠️ `POSTGRES_PASSWORD` / `DASHBOARD_PASSWORD` / `LINEAGE_DB_PASSWORD` / `WORKER_DB_PASSWORD` は **DB ボリュームの初回作成時のみ** 反映されます。既存 DB のパスワード変更は env ではなく `psql` の `ALTER ROLE` が必要です (詳細は [`db/README.md`](db/README.md))。生成例: `openssl rand -hex 24`
+> ⚠️ `POSTGRES_PASSWORD` / `MDC_DASHBOARD_DB_PASSWORD` / `MDC_LINEAGE_DB_PASSWORD` / `MDC_WORKER_DB_PASSWORD` は **DB ボリュームの初回作成時のみ** 反映されます。既存 DB のパスワード変更は env ではなく `psql` の `ALTER ROLE` が必要です (詳細は [`db/README.md`](db/README.md))。生成例: `openssl rand -hex 24`
 
 ### 料金カタログの運用
 
@@ -299,13 +301,13 @@ docker compose -f compose.prod.yaml exec api-internal \
 
 passwordはTTYからのみ読み、引数・環境変数・ログには渡しません。初回bootstrap時も入力した一時passwordは初回ログインで変更必須です。平常時はOIDC Adminを使う構成でも、IdP障害用に独立したLocal Adminを1つ維持してください。
 
-Pipelineは`MADO_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。mado S3 Data Catalogがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MADO_HOSTNAME`と公開API用`MADO_API_HOSTNAME`を別TLS vhostとして終端します。
+Pipelineは`MDC_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。mado S3 Data Catalogがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、MDX edgeではbrowser用`MDC_HOSTNAME`と公開API用`MDC_API_HOSTNAME`を別TLS vhostとして終端します。
 
-連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MADO_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
+連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MDC_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/mdx/README.md`](deploy/mdx/README.md#prometheus-metrics)を参照してください。
 
 ### DBの移行
 
-DBの移行（`api/migrations/*.sql`）は`api-internal`が起動時に当てます。DBの管理者の接続（`DATABASE_URL_MIGRATE`。Composeが`POSTGRES_PASSWORD`から組み立てる）を使い、適用したファイルを名前とSHA-256で`schema_migrations`に記録します。`api-lineage`と`media-worker`は移行を当てる権限を持たず、全部が当たっていることを確かめてから起動します。当てた後のファイルの書き換えを見つけると、どのサービスも起動しません。
+DBの移行（`api/migrations/*.sql`）は`api-internal`が起動時に当てます。DBの管理者の接続（`MDC_DATABASE_URL_MIGRATE`。Composeが`POSTGRES_PASSWORD`から組み立てる）を使い、適用したファイルを名前とSHA-256で`schema_migrations`に記録します。`api-lineage`と`media-worker`は移行を当てる権限を持たず、全部が当たっていることを確かめてから起動します。当てた後のファイルの書き換えを見つけると、どのサービスも起動しません。
 
 v0.4.0まで（移行を手で当ててきたDB）からの更新では、新しい`api-internal`を起動する前に一度だけ、当ててある番号までを記録します。手順は[`db/README.md`](db/README.md#databases-migrated-by-hand)にあります。
 
@@ -335,7 +337,7 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 - api は image build 時の `tsc` 成果物 (`dist/`) を `node` で実行
 - nginx と api は **non-root user** で動作
 - 全コンテナが `restart: unless-stopped`
-- **prod は `POSTGRES_PASSWORD` / `DASHBOARD_PASSWORD` が `.env` に無いと起動しません** (弱い既定値の埋め込み防止)
+- **prod は `POSTGRES_PASSWORD` / `MDC_DASHBOARD_DB_PASSWORD` が `.env` に無いと起動しません** (弱い既定値の埋め込み防止)
 
 ---
 
@@ -343,15 +345,15 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 
 このダッシュボードは認証を備えていますが、公開入口のTLSとネットワーク制御は引き続き必要です:
 
-- **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へ用途別TLS proxyを接続します。Browser側TLS終端後に`AUTH_COOKIE_SECURE=true`と`AUTH_MODE=local|oidc|hybrid`を設定します。
+- **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へ用途別TLS proxyを接続します。Browser側TLS終端後に`MDC_AUTH_COOKIE_SECURE=true`と`MDC_AUTH_MODE=local|oidc|hybrid`を設定します。
 - MDXでは`compose.mdx.yaml`の`edge` nginxがbrowser用TLSを終端します。証明書取得・UFW・自動更新は[`docs/mdx-tls.md`](docs/mdx-tls.md)を参照してください。
 - Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。外部公開するhost TLS proxyは`127.0.0.1:8081`だけへ接続し、OpenLineage ingest以外を公開しません。公開入口には送信元IP 10 req/s（burst 50）・全体50 req/s（burst 200）のrate limit、送信元20・全体200のconnection limit、2 MiB body上限、timeout、`Cache-Control: no-store`を設定済みです。
 - 開発・テスト環境も認証方式の指定が必須です。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
 - Browser sessionとアクセストークンを別の主体として扱い、API keyはhashだけを保存します。内部APIは機能別の権限と対象を毎回検証し、連携APIのscopeは互換性を維持します。
 - RBACと接続capabilityを重ね、監査ログには成功して実際に状態が変わった操作だけを残します。閲覧、認証拒否、失敗した操作、同じ値の再保存、既存ジョブへの合流は記録しません。変更操作は開始時にdurableなintentを置き、失敗・変更なしなら破棄します。password/token/OIDC code/OpenLineage event本体は保存しません。
 - sessionの利用時刻、login attempt、response cache、API keyの最終利用時刻など、認証・cache維持のための内部更新は操作監査の対象外です。
-- **`ENCRYPTION_KEY`** で `storage_connections` の S3 認証情報を保存時暗号化 (AES-256-GCM)。DB ダンプだけ漏れても解読不能。
-- **CSRF 防御**: write 系 (POST/PUT/DELETE) は `ALLOWED_ORIGINS` と Origin/Referer を照合し、不一致なら 403。
+- **`MDC_STORAGE_SECRET_KEY`** で `storage_connections` の S3 認証情報を保存時暗号化 (AES-256-GCM)。DB ダンプだけ漏れても解読不能。
+- **CSRF 防御**: write 系 (POST/PUT/DELETE) は `MDC_WEB_ORIGIN` と Origin/Referer を照合し、不一致なら 403。
 - **PG ロール分離**: ブラウザ由来の経路は `dashboard_rw` / `dashboard_ro` を使い分け、Postgres レベルで `DROP TABLE` 等を防ぐ。
 - **接続ごとのcapability**はRBACとは別層です。Adminであっても接続側で無効なdownload等は実行できません。
 - **接続先の制限（SSRF対策）**: 接続のエンドポイントに、loopback・link-local（cloud metadataを含む）・IPv4-mapped IPv6でそれらを表したアドレスは使えません。RFC1918とIPv6 ULAは使えます。DNS名は接続のたびに名前解決の結果を確かめ、拒否するアドレスだけを指していれば接続しません。検査が今より緩かった頃に保存した接続も、使う時点で`409`になります。アップデートの前に、既存の接続のエンドポイントがloopbackなどを指していないかを確かめてください。
@@ -426,7 +428,7 @@ host 上で直接実行 (postgres コンテナだけ立っていれば良い):
 ```bash
 docker compose -f compose.dev.yaml up -d postgres
 # テスト用 DB (dashboard_test) に移行を当てる。移行を足したときも当て直す
-(cd api && DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate)
+(cd api && MDC_DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate)
 cd api   && npm test && npm run lint
 cd front && npm test && npm run lint
 ```

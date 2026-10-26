@@ -6,9 +6,9 @@ TLSを終端します。Browser hostnameはapplication nginxの`127.0.0.1:8080`�
 
 ## 前提
 
-- `MADO_HOSTNAME`がMDX private IPv4へ到達すること
-- `MADO_API_HOSTNAME`のpublic A recordがMDX global IPv4へ到達すること
-- hostの`/etc/letsencrypt/live/$MADO_HOSTNAME/`と`/etc/letsencrypt/live/$MADO_API_HOSTNAME/`に証明書があること
+- `MDC_HOSTNAME`がMDX private IPv4へ到達すること
+- `MDC_API_HOSTNAME`のpublic A recordがMDX global IPv4へ到達すること
+- hostの`/etc/letsencrypt/live/$MDC_HOSTNAME/`と`/etc/letsencrypt/live/$MDC_API_HOSTNAME/`に証明書があること
 - ACME webrootがhostの`/var/www/letsencrypt`であること
 - UFWは外部から`80/tcp`（ACMEとredirect）、`443/tcp`（公開OpenLineage API）、鍵認証SSHを許可すること
 - Browser hostnameはUFWではなくTLS edgeのCIDR ACLでintranetだけに限定すること。UFWはSNI/Hostを判別できない
@@ -41,7 +41,7 @@ HTTP-01 challengeを一時的なweb serverまたは既存edgeで公開してか�
 ```bash
 sudo certbot certonly \
   --webroot --webroot-path /var/www/letsencrypt \
-  --domain "$MADO_API_HOSTNAME"
+  --domain "$MDC_API_HOSTNAME"
 ```
 
 Browser hostnameをpublic DNSでprivate IPv4へ向ける場合、Let's EncryptのHTTP-01 validatorは
@@ -51,10 +51,10 @@ Browser hostnameをpublic DNSでprivate IPv4へ向ける場合、Let's Encrypt�
 `.env`はHTTPS originとSecure cookieへ切り替えます。
 
 ```dotenv
-MADO_HOSTNAME=mado.internal.example
-MADO_API_HOSTNAME=mado-api.internal.example
-ALLOWED_ORIGINS=https://mado.internal.example
-AUTH_COOKIE_SECURE=true
+MDC_HOSTNAME=mado.internal.example
+MDC_API_HOSTNAME=mado-api.internal.example
+MDC_WEB_ORIGIN=https://mado.internal.example
+MDC_AUTH_COOKIE_SECURE=true
 ```
 
 ## 起動と更新hook
@@ -74,10 +74,10 @@ deploy hookは更新後にedgeの設定を検証し、成功時だけnginxをrel
 ```bash
 docker compose -f compose.mdx.yaml ps edge
 docker compose -f compose.mdx.yaml exec -T edge nginx -t
-curl -I "https://$MADO_HOSTNAME/"
-curl -I "http://$MADO_HOSTNAME/"
-curl -I "https://$MADO_API_HOSTNAME/"
-curl -X POST "https://$MADO_API_HOSTNAME/api/openlineage/v1/lineage"
+curl -I "https://$MDC_HOSTNAME/"
+curl -I "http://$MDC_HOSTNAME/"
+curl -I "https://$MDC_API_HOSTNAME/"
+curl -X POST "https://$MDC_API_HOSTNAME/api/openlineage/v1/lineage"
 sudo ufw status verbose
 systemctl status certbot.timer
 ```

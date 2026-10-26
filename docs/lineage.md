@@ -92,16 +92,16 @@ Content-Type: application/json
 ```
 
 本番ではkeyを環境変数またはsecret fileから読みます。以下では名前を
-`MADO_LINEAGE_KEY`、mado S3 Data Catalogのoriginを`MADO_URL`とします。
+`MDC_LINEAGE_KEY`、mado S3 Data Catalogのoriginを`MDC_URL`とします。
 
 作成したevent fileは次のように送れます。`--data-binary`を使い、再送時にも同じJSONを送ってください。
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer ${MADO_LINEAGE_KEY}" \
+  -H "Authorization: Bearer ${MDC_LINEAGE_KEY}" \
   -H 'Content-Type: application/json' \
   --data-binary @openlineage-event.json \
-  "${MADO_URL}/api/openlineage/v1/lineage"
+  "${MDC_URL}/api/openlineage/v1/lineage"
 ```
 
 ### 2.3 最小イベント

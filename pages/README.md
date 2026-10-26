@@ -34,12 +34,12 @@ npm run dev --prefix front -- --host 127.0.0.1 --port 15378 --strictPort
 
 ```bash
 npm run screenshots --prefix pages
-MADO_SCREENSHOT_LANGUAGE=en npm run screenshots --prefix pages
+MDC_SCREENSHOT_LANGUAGE=en npm run screenshots --prefix pages
 ```
 
 撮影は現行の`front/`を使用し、APIの応答を`scripts/screenshot-fixtures.mjs`の架空データへ置き換える。実際のAPI・DB・S3へは接続しない。READMEやTeam noteなどの見本の文は、同じファイルの`SAMPLE_TEXT`で言語ごとに持つ。撮影中に押すボタンの名前は`scripts/capture-screenshots.mjs`の`LABELS`にあり、画面の文言を変えたらここも合わせる。撮影用の音声・動画はローカルで生成し、`artifacts/docs/<JST日付>/`へ置く。公開するPNGは日本語が`pages/public/screenshots/`、英語が`pages/public/screenshots/en/`、撮影の記録はartifactsの`screenshot-manifest-<言語>.json`へ保存する。
 
-別のURLで起動した場合は`MADO_SCREENSHOT_URL`を指定する。画面ごとの撮影は`scripts/capture-screenshots.mjs`で定義している。一部だけ撮り直す場合は、`MADO_SCREENSHOT_FILTER=capacity,audio-deck`のように画像名をカンマで区切る。
+別のURLで起動した場合は`MDC_SCREENSHOT_URL`を指定する。画面ごとの撮影は`scripts/capture-screenshots.mjs`で定義している。一部だけ撮り直す場合は、`MDC_SCREENSHOT_FILTER=capacity,audio-deck`のように画像名をカンマで区切る。
 
 ## 画像と文章の確認
 
