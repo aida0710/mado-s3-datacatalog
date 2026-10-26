@@ -210,6 +210,37 @@ describe('AdminPage', () => {
     )
   })
 
+  it('対応表が空ならSSOユーザーの権限もMadoで変更できる', async () => {
+    // 保存でPATCHの応答を読んでからPUTへ進むので、呼び出しごとに読める応答を返す。
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
+      users: [{
+        id: 'sso-user-1', username: 'sso-user', email: 'sso@example.jp', displayName: 'SSO User',
+        status: 'active', roles: ['viewer'], authMethods: ['sso'],
+      }],
+      ssoRoleMapping: {},
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    render(
+      <AuthContext.Provider value={auth}>
+        <MemoryRouter initialEntries={['/settings/access/users']}>
+          <Routes><Route path="/settings/access/*" element={<AdminPage />} /></Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    )
+
+    await userEvent.click(await screen.findByText('SSO User'))
+    const details = screen.getByRole('form', { name: 'SSO Userを編集' })
+    expect(within(details).getByLabelText(/^権限/)).toBeEnabled()
+    expect(within(details).queryByText('SSO側で管理されるため、Madoからは変更できません。')).not.toBeInTheDocument()
+    expect(screen.getByText('SSOユーザーの権限もMadoで管理します。Authentikはログインできるかどうかだけを決めます。')).toBeInTheDocument()
+
+    await userEvent.selectOptions(within(details).getByLabelText(/^権限/), 'admin')
+    await userEvent.click(within(details).getByRole('button', { name: '保存' }))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      '/api/internal/users/sso-user-1/roles',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ roles: ['admin'] }) }),
+    ))
+  })
+
   it('Auditタブ直下で監査ログ見出しを重複させない', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
       events: [{

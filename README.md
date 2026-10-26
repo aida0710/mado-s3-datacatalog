@@ -261,7 +261,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_OIDC_ISSUER_URL` / `MDC_OIDC_CLIENT_ID` / `MDC_OIDC_CLIENT_SECRET` / `MDC_OIDC_REDIRECT_URI` | oidc/hybrid | OIDC discovery issuer、client、callback URL |
 | `MDC_OIDC_SCOPES` | no | `openid email profile offline_access`を推奨。`offline_access`はIdP側のscope mappingも必要。設定手順は[Authentik連携](docs/authentik.md) |
 | `MDC_OIDC_ALLOWED_GROUPS` | oidc/hybrid | ログインを許可するAuthentik group（カンマ区切り）。空は起動時に拒否 |
-| `MDC_OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認 |
+| `MDC_OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認。空（`{}`）ならRoleはmado S3 Data Catalogの画面で管理する |
 | `MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
 | `MDC_OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
 | `MDC_DATASET_REGISTRY_URL` | lineage | Dataset Registry API URL |
