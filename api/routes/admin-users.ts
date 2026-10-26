@@ -24,20 +24,20 @@ export interface AdminUsersDeps {
 const Password = z.string().refine(password => isAcceptablePasswordLength(password))
 
 const Role = z.string().regex(/^[a-z][a-z0-9_.:-]{0,63}$/)
-const CreateBody = z.object({
+export const UserCreateBody = z.object({
   username: z.string().trim().regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/),
   email: z.string().email().max(320).nullable().optional(),
   displayName: z.string().trim().min(1).max(128),
   roles: z.array(Role).max(16).default(['viewer']),
   password: Password.optional(),
 })
-const PatchBody = z.object({
+export const UserPatchBody = z.object({
   username: z.string().trim().regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/).nullable().optional(),
   displayName: z.string().trim().min(1).max(128).optional(),
   status: z.enum(['active', 'disabled']).optional(),
 }).strict()
-const RolesBody = z.object({ roles: z.array(Role).max(16) })
-const ResetBody = z.object({ password: Password.optional() })
+export const UserRolesBody = z.object({ roles: z.array(Role).max(16) })
+export const PasswordResetBody = z.object({ password: Password.optional() })
 
 export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
   const authorize: MiddlewareHandler = async (c, next) => {
@@ -57,7 +57,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
 
   app.post('/users', async c => {
     const principal = getRequestPrincipal(c)!
-    const parsed = CreateBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = UserCreateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     if (!await deps.users.rolesExist(parsed.data.roles)) return c.json(apiError('unknown_role', 'unknown role'), 400)
     const initialPassword = parsed.data.password
@@ -95,7 +95,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
-    const parsed = PatchBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = UserPatchBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     let result
     try {
@@ -135,7 +135,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
-    const parsed = RolesBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = UserRolesBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     if (!await deps.users.rolesExist(parsed.data.roles)) return c.json(apiError('unknown_role', 'unknown role'), 400)
     let result
@@ -166,7 +166,7 @@ export function mountAdminUsersRoutes(app: Hono, deps: AdminUsersDeps): void {
     const principal = getRequestPrincipal(c)!
     const id = c.req.param('id')
     if (!z.string().uuid().safeParse(id).success) return c.json(apiError('invalid_request', 'invalid user id'), 400)
-    const parsed = ResetBody.safeParse(await c.req.json().catch(() => ({})))
+    const parsed = PasswordResetBody.safeParse(await c.req.json().catch(() => ({})))
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid body'), 400)
     const current = await deps.users.getUser(id)
     if (!current) return c.json(apiError('not_found', 'user not found'), 404)

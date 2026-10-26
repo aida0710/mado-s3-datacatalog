@@ -84,7 +84,7 @@ const ProcessingFields = z.object({
   }
 })
 
-const DatasetRegistration = z.object({
+export const DatasetRegistrationBody = z.object({
   datasetId: Uuid.optional(),
   dataset: DatasetFields.optional(),
   version: VersionFields,
@@ -98,13 +98,13 @@ const DatasetRegistration = z.object({
   }
 })
 
-const LocationRegistration = z.object({
+export const LocationRegistrationBody = z.object({
   versionId: Uuid,
   location: StorageLocation,
   evidenceRefs: EvidenceRefs,
 }).strict()
 
-const LineageRegistration = z.object({
+export const LineageRegistrationBody = z.object({
   transformation: TransformationFields,
   inputVersionIds: z.array(Uuid).min(1).max(1000),
   outputVersionIds: z.array(Uuid).min(1).max(1000),
@@ -126,7 +126,7 @@ const LineageRegistration = z.object({
   }
 })
 
-const DatasetUpdate = z.object({
+export const DatasetUpdateBody = z.object({
   displayName: z.string().trim().min(1).max(512).nullable().optional(),
   aliases: z.array(z.string().trim().min(1).max(1024)).max(100).optional(),
   description: z.string().trim().max(8192).nullable().optional(),
@@ -267,7 +267,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
     const principal = getRequestPrincipal(c)!
     const datasetId = c.req.param('datasetId')
     if (!Uuid.safeParse(datasetId).success) return c.json(apiError('invalid_dataset_id', 'invalid dataset id'), 400)
-    const parsed = DatasetUpdate.safeParse(await c.req.json().catch(() => null))
+    const parsed = DatasetUpdateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     return withDatasetMutationLock(datasetId, async () => {
       try {
@@ -301,7 +301,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
 
   app.post('/lineage/curation/datasets', async c => {
     const principal = getRequestPrincipal(c)!
-    const parsed = DatasetRegistration.safeParse(await c.req.json().catch(() => null))
+    const parsed = DatasetRegistrationBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     const location = parsed.data.location
       ? await accessibleLocationInput(c, parsed.data.location) : undefined
@@ -367,7 +367,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
 
   app.post('/lineage/curation/locations', async c => {
     const principal = getRequestPrincipal(c)!
-    const parsed = LocationRegistration.safeParse(await c.req.json().catch(() => null))
+    const parsed = LocationRegistrationBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     const location = await accessibleLocationInput(c, parsed.data.location)
     if (!location) return c.json(apiError('registry_not_linked', 'this connection is not linked to a Dataset Registry'), 422)
@@ -396,7 +396,7 @@ export function mountLineageCurationRoutes(app: Hono, deps: LineageCurationDeps)
 
   app.post('/lineage/curation/runs', async c => {
     const principal = getRequestPrincipal(c)!
-    const parsed = LineageRegistration.safeParse(await c.req.json().catch(() => null))
+    const parsed = LineageRegistrationBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) return c.json(apiError('invalid_request', 'check the request body'), 400)
     try {
       const policy = deps.namespacePolicy?.(c)

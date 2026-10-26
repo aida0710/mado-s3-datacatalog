@@ -9,7 +9,7 @@ export interface AuditRoutesDeps {
   pool: Pool
 }
 
-const Query = z.object({
+export const AuditEventQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   cursor: z.string().min(1).optional(),
   action: z.string().min(1).max(128).optional(),
@@ -41,7 +41,7 @@ export const ROUTINE_AUDIT_ACTIONS = [
 export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
   app.use('/audit-events', requirePermission('audit:read'))
   app.get('/audit-events', async c => {
-    const parsed = Query.safeParse(c.req.query())
+    const parsed = AuditEventQuery.safeParse(c.req.query())
     if (!parsed.success) return c.json(apiError('invalid_request', 'invalid query'), 400)
     const q = parsed.data
     const position = q.cursor === undefined ? null : decodePageCursor(q.cursor, AuditPagePosition)

@@ -17,6 +17,7 @@ workflowは各imageへSBOMとprovenanceを付け、digest固定の`compose.yaml`
 1. tag作成helperの実行時点で`main`がcleanかつ`origin/main`と同じcommitである。workflow再実行時は、そのtag commitが`main`の履歴上に残っていることを確認する。
 2. そのcommitに対するCI全体が成功している。
 3. `VERSION`、API/Frontのpackage・lock version、tagが一致する。
+   `docs/openapi.json`の版も同じにする。版を上げたら`cd api && npm run openapi:generate`で作り直す（ずれはAPIのテストが見つける）。
 4. `docs/releases/<tag>.md`が存在する。
 5. release contract、全test、production build、OCI image buildが成功する。
 

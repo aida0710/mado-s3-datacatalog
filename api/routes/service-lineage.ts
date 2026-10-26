@@ -20,7 +20,7 @@ const MAX_CATALOG_PAGE_SIZE = 100
 const DEFAULT_CATALOG_PAGE_SIZE = 50
 const MAX_CATALOG_OFFSET = 1_000_000
 
-const CatalogQuery = z.object({
+export const IntegrationCatalogQuery = z.object({
   q: z.string().trim().max(MAX_CATALOG_QUERY_LENGTH).default(''),
   namespace: z.string().trim().min(1).max(MAX_CATALOG_QUERY_LENGTH).optional(),
   limit: z.coerce.number().int().min(1).max(MAX_CATALOG_PAGE_SIZE).default(DEFAULT_CATALOG_PAGE_SIZE),
@@ -37,7 +37,7 @@ export function mountServiceLineageRoutes(app: Hono, deps: ServiceLineageRoutesD
   })
 
   app.get('/lineage/catalog', async c => {
-    const query = CatalogQuery.safeParse(c.req.query())
+    const query = IntegrationCatalogQuery.safeParse(c.req.query())
     if (!query.success) return c.json(apiError('invalid_request', 'invalid catalog query'), 400)
     const principal = getServiceKeyPrincipal<ServiceLineagePrincipal>(c)
     try {

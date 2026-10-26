@@ -1,6 +1,6 @@
 # nginx/Dockerfileだけがrepository rootをbuild contextに使う。
-# Frontend・共有の権限カタログとエラーのcode・nginx設定だけを送り、ローカルの.env・git履歴・成果物を
-# 誤ってBuildKit/GitHub Actionsのcontextへ含めない。
+# Frontend・APIと共有するコード (api/shared: 権限カタログ・エラーのcode・応答のスキーマ)・nginx設定だけを送り、
+# ローカルの.env・git履歴・成果物を誤ってBuildKit/GitHub Actionsのcontextへ含めない。
 *
 !front/
 !front/**
@@ -9,9 +9,7 @@
 !api/
 api/**
 !api/shared/
-api/shared/**
-!api/shared/access-token-permissions.ts
-!api/shared/api-error-codes.ts
+!api/shared/**
 front/node_modules/
 front/dist/
 front/*.log
