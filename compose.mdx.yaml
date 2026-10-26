@@ -5,6 +5,13 @@
 # APIのホスト名だけ。
 name: mado-mdx
 
+# api-internal・api-lineage・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
+x-app-healthcheck: &app-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 3
+  start_period: 60s
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -124,11 +131,8 @@ services:
         BUILD_DATE: "${MDC_GIT_DATE:-}"
     command: ["node", "dist/internal.js"]
     healthcheck:
+      <<: *app-healthcheck
       test: ["CMD", "node", "dist/scripts/healthcheck.js", "3000"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 60s
     env_file:
       - .env
     environment:
@@ -158,11 +162,8 @@ services:
         BUILD_DATE: "${MDC_GIT_DATE:-}"
     command: ["node", "dist/lineage.js"]
     healthcheck:
+      <<: *app-healthcheck
       test: ["CMD", "node", "dist/scripts/healthcheck.js", "3001"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 60s
     environment:
       MDC_LINEAGE_PORT: "3001"
       MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
