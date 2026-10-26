@@ -76,7 +76,7 @@ export default function HomePage() {
       <header className="page-header">
         <div>
           <h1>{translate('section.teamNote')}</h1>
-          {summary && <p className="page-description">{summary}</p>}
+          {summary && <div className="page-description">{summary}</div>}
         </div>
         <div className="page-actions">
           <Link className="button" to="/edit-note">

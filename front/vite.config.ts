@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
@@ -32,7 +31,7 @@ export default defineConfig({
     __GIT_COMMIT__: JSON.stringify(commit),
     __GIT_DATE__: JSON.stringify(commitDate),
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   // api/shared のスキーマが import する zod も front の 1 つに寄せる (2 つあると別物として扱われる)。
   resolve: { dedupe: ['zod'] },
   server: {
