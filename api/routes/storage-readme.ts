@@ -21,7 +21,7 @@ export interface StorageReadmeDeps {
   cache: ResponseCache
 }
 
-const PutBody = z.object({
+export const ReadmePutBody = z.object({
   bucket: z.string().min(1),
   prefix: z.string(),       // '' (ルート) または '/' で終わる
   body: z.string().max(1_000_000),
@@ -101,7 +101,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
     if (r instanceof Response) return r
     const storage = r
     const connectionId = c.req.param('connectionId')
-    const parsed = PutBody.safeParse(await c.req.json().catch(() => null))
+    const parsed = ReadmePutBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) {
       return c.json(apiError('invalid_request', parsed.error.message), 400)
     }

@@ -3,22 +3,8 @@ export type { InternalApiPermission } from '../../api/shared/access-token-permis
 
 export type AccessTokenScope = ServiceKeyScope
 
-export interface AccessToken {
-  id: string
-  name: string
-  description: string
-  tokenPrefix: string
-  scopes: AccessTokenScope[]
-  permissions: InternalApiPermission[]
-  connections: string[]
-  namespaces: string[]
-  status: 'active' | 'disabled' | 'expired'
-  createdAt: string
-  expiresAt: string | null
-  regeneratedAt: string | null
-  lastUsedAt: string | null
-  revision: number
-}
+import type { AccessToken } from '../../api/shared/schemas/access-tokens'
+export type { AccessToken }
 
 export interface AccessTokenInput {
   name: string

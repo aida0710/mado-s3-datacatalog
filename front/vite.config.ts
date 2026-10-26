@@ -33,6 +33,8 @@ export default defineConfig({
     __GIT_DATE__: JSON.stringify(commitDate),
   },
   plugins: [react(), tailwindcss()],
+  // api/shared のスキーマが import する zod も front の 1 つに寄せる (2 つあると別物として扱われる)。
+  resolve: { dedupe: ['zod'] },
   server: {
     host: true,
     proxy: {

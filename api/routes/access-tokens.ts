@@ -23,9 +23,9 @@ const Metadata = z.object({
   description: z.string().trim().max(TOKEN_DESCRIPTION_MAX_LENGTH),
   expiresAt: z.iso.datetime().nullable().optional(),
 })
-const CreateToken = accessTokenGrants.safeExtend({ ...Metadata.shape, description: Metadata.shape.description.default('') }).strict()
-const ExpectedRevision = z.object({ expectedRevision: z.number().int().positive() })
-const PatchToken = Metadata.partial().extend({
+export const AccessTokenCreateBody = accessTokenGrants.safeExtend({ ...Metadata.shape, description: Metadata.shape.description.default('') }).strict()
+export const ExpectedRevision = z.object({ expectedRevision: z.number().int().positive() })
+export const AccessTokenPatchBody = Metadata.partial().extend({
   namespaces: tokenNamespaces.optional(),
   permissions: internalPermissions.optional(),
   connections: tokenConnections.optional(),
@@ -101,7 +101,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
     return c.json({ ...catalog, namespaces: catalog.namespaces.filter(namespace => principal.namespaces.includes(namespace)) })
   })
   routes.post('/', async c => {
-    const parsed = CreateToken.safeParse(await c.req.json().catch(() => null))
+    const parsed = AccessTokenCreateBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json(apiError('invalid_request', 'invalid body'), 400)
     return mutate(c, {
       action: 'access_token.create', created: true,
@@ -113,7 +113,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
   routes.use('/:id', validateTokenId)
   routes.use('/:id/*', validateTokenId)
   routes.patch('/:id', async c => {
-    const parsed = PatchToken.safeParse(await c.req.json().catch(() => null))
+    const parsed = AccessTokenPatchBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success || !futureExpiry(parsed.data.expiresAt)) return c.json(apiError('invalid_request', 'invalid body'), 400)
     const { expectedRevision, expiresAt, ...fields } = parsed.data
     const action = fields.status === 'active' ? 'access_token.enable'

@@ -397,6 +397,10 @@ Pipeline ─TLS proxy─► nginx :8081 (POST ingest only)              │
 
 `api-internal`・`api-lineage`・`media-worker`は、どれも`GET /healthz`で稼働を返します。DBに届けば200と`{"status":"ok"}`、届かなければ503と`{"error":"database is unavailable","code":"database_unavailable"}`です。Composeのhealthcheckは配布イメージに入っている`node dist/scripts/healthcheck.js <ポート>`でこれを確かめ、Webの`nginx`は両APIがhealthyになってから起動します。
 
+### APIの仕様 (OpenAPI)
+
+APIの仕様は[`docs/openapi.json`](docs/openapi.json)（OpenAPI 3.1）にあります。ルートの一覧と入出力のスキーマ（`api/openapi/route-catalog.ts`、応答のスキーマは画面と共有する`api/shared/schemas/`）から作ります。ルートを足したり変えたりしたら、一覧を直して`cd api && npm run openapi:generate`で作り直します。一覧と実際のルート、版（`VERSION`）とのずれは`api/openapi/openapi.test.ts`が見つけます。
+
 ### よく使うコマンド
 
 ```bash
