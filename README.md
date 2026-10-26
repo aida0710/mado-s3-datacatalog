@@ -247,7 +247,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_PORT` | yes | api コンテナの listen ポート (compose 側で 3000 に上書き) |
 | `MDC_DATABASE_URL_RW` | yes | `dashboard_rw` 接続 URL。**compose 内なので host は `postgres`** |
 | `MDC_DATABASE_URL_RO` | yes | `dashboard_ro` 接続 URL |
-| `MDC_DATABASE_URL_MIGRATE` | yes (`api-internal`) | DB の管理者 (`postgres`) の接続 URL。`api-internal` が起動時に移行を当てるときだけ使う。compose が `POSTGRES_PASSWORD` から組み立てるので `.env` には書かない |
+| `MDC_DATABASE_URL_MIGRATE` | yes (`api-internal`) | DB の管理者 (`postgres`) の接続 URL。`api-internal` が起動時に移行を当てるときに使い、無いと起動しない。compose の `api-internal` は `POSTGRES_PASSWORD` から組み立てた値で上書きする。compose を使わずに起動する (`api/` の `npm run dev`) ときのために `.env` にも書く |
 | `MDC_TEST_DATABASE_URL` | no | テスト用。host から接続するので `localhost`。未設定なら default に fallback |
 | `POSTGRES_PASSWORD` | prod:yes / dev:no | `postgres` スーパーユーザのパスワード。**prod は未設定だと起動失敗**、dev は既定 `postgres` |
 | `MDC_DASHBOARD_DB_PASSWORD` | prod:yes / dev:no | `dashboard_rw` / `dashboard_ro` のパスワード。**`MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO` のパスワードと一致必須**。dev 既定 `CHANGEME` |
