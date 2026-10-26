@@ -25,13 +25,6 @@
 .lineage-toolbar .toolbar-item:has(> .lineage-segmented) {
   padding-right: 0;
 }
-.lineage-toolbar .toolbar-item > select {
-  max-width: 148px;
-  padding: 5px 4px;
-  border: 0;
-  background: transparent;
-  font-size: var(--font-size-sm);
-}
 .lineage-toolbar__status {
   display: flex;
   align-items: center;
