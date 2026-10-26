@@ -203,7 +203,7 @@ describe('AdminPage', () => {
     await userEvent.click(await screen.findByText('SSO User'))
     const details = screen.getByRole('form', { name: 'SSO Userを編集' })
     expect(within(details).getByLabelText(/^権限/)).toBeDisabled()
-    expect(within(details).getByText('SSO側で管理されるため、Madoからは変更できません。')).toBeInTheDocument()
+    expect(within(details).getByText('SSO側で管理されるため、mado S3 Data Catalogからは変更できません。')).toBeInTheDocument()
 
     const guidance = screen.getByText(/以下のAuthentikグループ/).closest('blockquote')!
     expect(guidance).toHaveTextContent('mado-users→Viewer — 閲覧のみ')
@@ -240,8 +240,8 @@ describe('AdminPage', () => {
     await userEvent.click(await screen.findByText('SSO User'))
     const details = screen.getByRole('form', { name: 'SSO Userを編集' })
     expect(within(details).getByLabelText(/^権限/)).toBeEnabled()
-    expect(within(details).queryByText('SSO側で管理されるため、Madoからは変更できません。')).not.toBeInTheDocument()
-    expect(screen.getByText('SSOユーザーの権限もMadoで管理します。Authentikはログインできるかどうかだけを決めます。')).toBeInTheDocument()
+    expect(within(details).queryByText('SSO側で管理されるため、mado S3 Data Catalogからは変更できません。')).not.toBeInTheDocument()
+    expect(screen.getByText('SSOユーザーの権限もmado S3 Data Catalogで管理します。Authentikはログインできるかどうかだけを決めます。')).toBeInTheDocument()
 
     await userEvent.selectOptions(within(details).getByLabelText(/^権限/), 'admin')
     await userEvent.click(within(details).getByRole('button', { name: '保存' }))
