@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "mado S3 Data Catalog API",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "mado S3 Data Catalog の API。api-internal (画面と連携用) と api-lineage (Pipeline の OpenLineage の受け付け) のルートを載せる。\n\nこの文書は api/openapi/route-catalog.ts から作る (cd api && npm run openapi:generate)。ルートの一覧とのずれは api/openapi/openapi.test.ts が見つける。\n\nエラーは ApiErrorBody {error, code}。error は英語の文、code は理由の名前で、各 operation の x-mado-error-codes に挙げる。\n\n続きのある一覧は cursor / nextCursor で読む。cursor の中身は決まった形ではないので、応答の nextCursor をそのまま渡す。\n\n/api/internal は session cookie か、機能別の権限を持つアクセストークン (mado_dc_…) で呼ぶ。必要な権限は x-mado-permission に書く。"
   },
   "servers": [
