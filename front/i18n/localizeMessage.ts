@@ -5,7 +5,7 @@ import { fillTranslationSource, type MessageKey } from './translate'
 import { findTranslationSource } from './translationSources'
 
 // 値を含まない文は、全文が一致したときだけ訳す。値を含む文は、作ったときに覚えた項目と値から作り直す。
-// API のエラーは API の文のまま出し、お知らせは code で訳す (noticeMessages.ts) ので、ここで文の形を照合しない。
+// APIのエラーはAPIの文のまま出し、お知らせはcodeで訳す（noticeMessages.ts）ので、ここで文の形を照合しない。
 const fixedMessages = new Map<string, MessageKey>()
 
 for (const key of Object.keys(japaneseMessages) as MessageKey[]) {

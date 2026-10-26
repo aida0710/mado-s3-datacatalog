@@ -40,7 +40,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<z.infer<typeof AuthConfig> | null>(null)
   const [session, dispatchSession] = useReducer(nextAuthSession, SIGNED_OUT)
   const [loading, setLoading] = useState(true)
-  // 起動時に認証の設定や session を確かめられなかった理由。表示言語を切り替えても出し直せるよう、投げられたものを持つ。
+  // 起動時に認証の設定やsessionを確かめられなかった理由。表示言語を切り替えても出し直せるよう、投げられたものを持つ。
   const [startupFailure, setStartupFailure] = useState<{ cause: unknown } | null>(null)
   const confirmingSessionRef = useRef(false)
 
@@ -124,7 +124,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     try {
       result = await authClient.logout()
     } catch (failure) {
-      // /logout は sessionGuard の後ろにあるので、401 は session がもう無いことを表す。
+      // /logoutはsessionGuardの後ろにあるので、401はsessionがもう無いことを表す。
       if (isUnauthorizedError(failure)) {
         logoutLocally()
         return
@@ -134,8 +134,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
       if (isApiError(failure) && failure.code === NETWORK_ERROR_CODE) {
         throw new Error(translate('auth.couldNotConnectToTheServerToConfirm'), { cause: failure })
       }
-      // /logout は session を失効させられれば、IdP の logout URL を作れなくても 200 を返す。
-      // したがってそれ以外の失敗は、session が残っていることを表す。
+      // /logoutはsessionを失効させられれば、IdPのlogout URLを作れなくても200を返す。
+      // したがってそれ以外の失敗は、sessionが残っていることを表す。
       throw new Error(translate('auth.couldNotSignOutYouAreStillSignedIn', { value0: errorReason(failure) }), { cause: failure })
     }
     logoutLocally({ idpLogoutUnavailable: result.idpLogoutUnavailable })

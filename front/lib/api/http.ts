@@ -31,7 +31,7 @@ export function buildUrl(path: string, params: Record<string, string | undefined
   return qs ? `${path}?${qs}` : path
 }
 
-/** `/storage/:connectionId` 配下の API パス。 */
+/** `/storage/:connectionId`配下のAPIパス。 */
 export function storagePath(connectionId: string, suffix: string): string {
   return `${API_BASE}/storage/${encodeURIComponent(connectionId)}${suffix}`
 }
@@ -40,26 +40,26 @@ function withMessage(failure: ApiError, message: string): ApiError {
   return new ApiError({ status: failure.status, code: failure.code, details: failure.details, message })
 }
 
-/** session が無い・切れている、またはパスワードが違う (401)。 */
+/** sessionが無い・切れている、またはパスワードが違う（401）。 */
 export function isUnauthorizedError(failure: unknown): failure is ApiError {
   return isApiError(failure) && failure.status === HTTP_UNAUTHORIZED
 }
 
-// session の後ろにある API の 401 は、session が切れたこと。API の文 (`unauthorized`) では利用者に
-// 何が起きたか伝わらないので、ログインし直す案内にする (AuthGate がログイン画面を重ねる)。
+// sessionの後ろにあるAPIの401は、sessionが切れたこと。APIの文（`unauthorized`）では利用者に
+// 何が起きたか伝わらないので、ログインし直す案内にする（AuthGateがログイン画面を重ねる）。
 function withSessionExpiredMessage(failure: unknown): unknown {
   return isUnauthorizedError(failure)
     ? withMessage(failure, translate('http.yourSessionHasExpiredSignInAgainAnd'))
     : failure
 }
 
-// 画面側で起きた失敗には API の文が無いので、画面の言語の文にする。どれも辞書の文なので、
-// エラーを状態に持ったまま表示言語を切り替えても localizeMessage が出し直せる。
+// 画面側で起きた失敗にはAPIの文が無いので、画面の言語の文にする。どれも辞書の文なので、
+// エラーを状態に持ったまま表示言語を切り替えてもlocalizeMessageが出し直せる。
 function withScreenSideMessage(failure: unknown, url: string): unknown {
   if (!isApiError(failure)) return failure
   if (failure.code === NETWORK_ERROR_CODE) return withMessage(failure, translate('http.couldNotReachTheServer'))
   if (failure.code === INVALID_RESPONSE_CODE) {
-    // 応答の形の違いは API と画面の食い違いで、利用者には直せない。どの項目が違うかは開発者向けに残す。
+    // 応答の形の違いはAPIと画面の食い違いで、利用者には直せない。どの項目が違うかは開発者向けに残す。
     console.error(failure.message)
     const path = new URL(url, window.location.origin).pathname
     return withMessage(failure, translate('http.theServerReturnedAnUnexpectedResponse', { value0: path }))
@@ -68,8 +68,8 @@ function withScreenSideMessage(failure: unknown, url: string): unknown {
 }
 
 /**
- * session の後ろにある API を呼び、本文を `schema` で確かめて返す。失敗は DS の ApiError で、
- * message は API の文 (画面にそのまま出す)。401 は AuthGate へ知らせ、ログインし直す案内にする。
+ * sessionの後ろにあるAPIを呼び、本文を`schema`で確かめて返す。失敗はDSのApiErrorで、
+ * messageはAPIの文（画面にそのまま出す）。401はAuthGateへ知らせ、ログインし直す案内にする。
  */
 export async function requestApi<Schema extends z.ZodType>(
   url: string,
@@ -84,12 +84,12 @@ export async function requestApi<Schema extends z.ZodType>(
 }
 
 /**
- * 401 を呼び出し側が自分で扱う /api/auth の API。requestApi と違い、401 を AuthGate へ知らせず、
- * message も API の文のまま返す。呼び出し側は ApiError の status で分ける。
+ * 401を呼び出し側が自分で扱う/api/authのAPI。requestApiと違い、401をAuthGateへ知らせず、
+ * messageもAPIの文のまま返す。呼び出し側はApiErrorのstatusで分ける。
  * - /api/auth/config: ログインより前に呼ぶ
- * - /api/auth/me: AuthGate が session の有無を確かめる本体。401 は「ログインしていない」
- * - /api/auth/local/login: 401 はパスワードの誤り
- * - /api/auth/logout: 401 は「session はもう無い」
+ * - /api/auth/me: AuthGateがsessionの有無を確かめる本体。401は「ログインしていない」
+ * - /api/auth/local/login: 401はパスワードの誤り
+ * - /api/auth/logout: 401は「sessionはもう無い」
  */
 export async function requestAuthApi<Schema extends z.ZodType>(
   url: string,
@@ -104,8 +104,8 @@ export async function requestAuthApi<Schema extends z.ZodType>(
 }
 
 /**
- * 本文を自分で読む取得 (ストリーム・Blob・HEAD) に使う。失敗の応答だけを ApiError にして投げ、
- * 成功の応答はそのまま返す。401 の扱いは requestApi と同じ。
+ * 本文を自分で読む取得（ストリーム・Blob・HEAD）に使う。失敗の応答だけをApiErrorにして投げ、
+ * 成功の応答はそのまま返す。401の扱いはrequestApiと同じ。
  */
 export async function fetchApiResponse(url: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(url, init)

@@ -14,12 +14,12 @@ export interface PasswordChangeInput {
   newPassword: string
 }
 
-// ログインと自分のアカウント (/api/auth)。ログイン・session の確認・ログアウトは 401 を自分で扱うので
-// requestAuthApi、ログインした後の変更は session の後ろにあるので requestApi を使う。
+// ログインと自分のアカウント（/api/auth）。ログイン・sessionの確認・ログアウトは401を自分で扱うので
+// requestAuthApi、ログインした後の変更はsessionの後ろにあるのでrequestApiを使う。
 export const authClient = {
   config: () => requestAuthApi('/api/auth/config', AuthConfig),
 
-  /** 今の session の User。session が無い・切れていれば null。 */
+  /** 今のsessionのUser。sessionが無い・切れていればnull。 */
   currentUser: async () => {
     try {
       return (await requestAuthApi('/api/auth/me', AuthUserResponse)).user

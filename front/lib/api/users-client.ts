@@ -20,7 +20,7 @@ export interface UserUpdateInput {
   status: 'active' | 'disabled'
 }
 
-// ユーザー管理 (Settings > Access > Users)。管理者だけが開くので、キャッシュは持たない。
+// ユーザー管理（Settings > Access > Users）。管理者だけが開くので、キャッシュは持たない。
 export const usersClient = {
   users: () => requestApi(USERS_PATH, UserList),
 

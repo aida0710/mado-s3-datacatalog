@@ -23,13 +23,13 @@ const SSO_USER_ID = '3d8a5b2c-7e4f-4a0b-9c9d-5e6f7a8b9ca3'
 
 type ManagedUserFixture = { id: string; username: string; email: string | null; displayName: string; status: 'active' | 'disabled'; roles: string[]; authMethods: Array<'local' | 'sso'> }
 
-// GET /api/internal/users の応答。API の応答の形 (署名・権限・パスワード変更の要否、SSO の対応表) を補う。
+// GET /api/internal/usersの応答。APIの応答の形（署名・権限・パスワード変更の要否、SSOの対応表）を補う。
 function usersResponse(users: ManagedUserFixture[], ssoRoleMapping: Record<string, string> = {}) {
   const fullUsers = users.map(user => ({ signatureName: user.displayName, permissions: [], mustChangePassword: false, ...user }))
   return new Response(JSON.stringify({ users: fullUsers, ssoRoleMapping }), { status: 200, headers: { 'Content-Type': 'application/json' } })
 }
 
-// ユーザーを変える要求 (PATCH・PUT) の応答。変えたユーザーを返す。
+// ユーザーを変える要求（PATCH・PUT）の応答。変えたユーザーを返す。
 function userResponse(user: ManagedUserFixture) {
   return new Response(JSON.stringify({ user: { signatureName: user.displayName, permissions: [], mustChangePassword: false, ...user } }), {
     status: 200, headers: { 'Content-Type': 'application/json' },

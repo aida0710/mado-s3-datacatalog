@@ -114,8 +114,8 @@ describe('StorageIndex バケット行の ⋯ メニュー', () => {
     mountWithOneBucket()
     await waitFor(() => expect(screen.getByText('bkt-1')).toBeInTheDocument())
 
-    // 広げる指定は styles/storage.css (.bucket-name > a::after を名前の列 .bucket-col-name いっぱいにする)。
-    // jsdom は CSS を当てないので、その指定が前提にしている組み立てを確かめる。
+    // 広げる指定はstyles/storage.cssにある（.bucket-name > a::afterを名前の列.bucket-col-nameいっぱいにする）。
+    // jsdomはCSSを当てないので、その指定が前提にしている組み立てを確かめる。
     const link = screen.getByRole('link', { name: 'bkt-1' })
     expect(link.parentElement).toHaveClass('bucket-name')
     expect(link.closest('td')).toHaveClass('bucket-col-name')

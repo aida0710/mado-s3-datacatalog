@@ -3,8 +3,8 @@ import type { ApiErrorCode } from '../../../api/shared/api-error-codes'
 import { StartJobOk, TransferEstimate } from './types'
 import { API_BASE, buildUrl, requestApi, storagePath } from './http'
 
-// 走査していないディレクトリの見積もりは、409 でこの code が返る。同じ 409 でも走査結果を
-// 読めなかったとき (scan_result_unreadable) は、再走査を促すエラーとしてそのまま出す。
+// 走査していないディレクトリの見積もりは、409でこのcodeが返る。同じ409でも走査結果を
+// 読めなかったとき（scan_result_unreadable）は、再走査を促すエラーとしてそのまま出す。
 const DIRECTORY_NOT_SCANNED: ApiErrorCode = 'directory_not_scanned'
 
 // 転送見積もり (spec: 2026-08-22-transfer-estimate-design.md)。
