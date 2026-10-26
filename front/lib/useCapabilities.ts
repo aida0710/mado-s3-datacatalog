@@ -53,7 +53,7 @@ export function useCapabilities(connectionId?: string): Capabilities {
         if (!cancelled && found) dispatch(found.capabilities)
       })
       // 失敗時は全許可のまま。API 側が 403 で止めるので実害はない。
-      .catch(() => { /* noop */ })
+      .catch(() => { /* 何もしない */ })
     return () => { cancelled = true }
   }, [connectionId, fromContext])
 

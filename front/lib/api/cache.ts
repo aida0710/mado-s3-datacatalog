@@ -69,8 +69,8 @@ export interface TTLCacheOptions<V = unknown> {
    * (未指定なら従来通り in-memory のみ — テストや短 TTL 用)
    */
   persistKey?: string
-  /** Value supplied by the server may have an earlier authoritative expiry.
-   *  The local cache never lives beyond either this timestamp or ttlMs. */
+  /** サーバーから受け取った値は、正式な期限がもっと早いことがある。
+   *  手元のキャッシュは、この時刻もttlMsも超えて残さない。 */
   expiresAt?: (value: V) => number | null
 }
 
@@ -231,7 +231,7 @@ export class TTLCache<V> {
       return JSON.parse(raw) as PersistedEntry<V>
     } catch {
       // 壊れたエントリは破棄
-      try { localStorage.removeItem(sk) } catch { /* ignore */ }
+      try { localStorage.removeItem(sk) } catch { /* 無視する */ }
       return null
     }
   }
@@ -250,7 +250,7 @@ export class TTLCache<V> {
   private deletePersisted(key: string): void {
     const sk = this.storageKeyFor(key)
     if (!sk || typeof localStorage === 'undefined') return
-    try { localStorage.removeItem(sk) } catch { /* silent */ }
+    try { localStorage.removeItem(sk) } catch { /* 何もしない */ }
   }
 
   // 単体テストから内部状態を覗くため。本番コードでは使わない。

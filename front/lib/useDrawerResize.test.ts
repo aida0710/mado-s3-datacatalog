@@ -11,9 +11,9 @@ import {
 
 describe('computeDrawerVars - 画面幅に応じた既定 (effW = null)', () => {
   it('既定幅はコンテナ幅に比例する', () => {
-    // 36% of 1280 = 460.8 → 461
+    // 1280の36% = 460.8 → 461
     expect(computeDrawerVars(1280, null).width).toBe(461)
-    // 36% of 1920 = 691.2 → 691
+    // 1920の36% = 691.2 → 691
     expect(computeDrawerVars(1920, null).width).toBe(691)
   })
 
@@ -22,7 +22,7 @@ describe('computeDrawerVars - 画面幅に応じた既定 (effW = null)', () => 
   })
 
   it('狭い 2 カラム画面では既定幅を下限で止める', () => {
-    // 36% of 800 = 288 → floored to MIN_W
+    // 800の36% = 288 → 下限のMIN_Wで止める
     expect(computeDrawerVars(800, null).width).toBe(DRAWER_MIN_W)
   })
 
@@ -39,7 +39,7 @@ describe('computeDrawerVars - 広げると一覧を縮めずに重なる', () =>
     const v = computeDrawerVars(1280, base + 300) // 658
     expect(v.track).toBe(base) // リスト幅 (= 1fr) は既定のまま据え置き
     expect(v.width).toBe(base + 300)
-    expect(v.marginLeft).toBe(base - (base + 300)) // = -300 (overlay)
+    expect(v.marginLeft).toBe(base - (base + 300)) // = -300（一覧に重なる）
   })
 
   it('一覧の最小幅が残るところで広げるのを止める', () => {

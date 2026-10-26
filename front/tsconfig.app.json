@@ -7,7 +7,7 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /* バンドラー向けの設定 */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -18,7 +18,7 @@
     /* api/shared のスキーマも front の zod で読む (Docker の build では api/ に node_modules が無い) */
     "paths": { "zod": ["./node_modules/zod"] },
 
-    /* Linting */
+    /* 静的検査の設定 */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,

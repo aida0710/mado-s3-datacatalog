@@ -97,9 +97,9 @@ describe('pinnedPreviews context', () => {
 })
 
 describe('pinnedPreviews はルーティングによる再マウントをまたぐ (結合)', () => {
-  // StoragePageWithKey (App.tsx) remounts the whole page tree via key={connectionId}
-  // when navigating between directories/connections. PinnedPreviewsProvider must
-  // sit above that remount point (like PlayerDeckProvider) so pins survive it.
+  // StoragePageWithKey（App.tsx）は、接続を移るとkey={connectionId}でページ全体を
+  // 再マウントする。ピンが消えないよう、PinnedPreviewsProviderはPlayerDeckProviderと
+  // 同じく、その再マウントより上に置く。
   function DirLevel({ n }: { n: number }) {
     const { addPin } = usePinnedPreviews()
     return (

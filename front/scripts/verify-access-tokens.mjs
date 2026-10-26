@@ -27,7 +27,7 @@ const tokenName = '学習パイプライン'
 const row = () => page.getByRole('article', { name: tokenName, exact: true })
 async function screenshot(name, target = page) {
   if (!directory) return
-  // Never capture a one-time credential, even in this disposable fixture.
+  // 使い捨てのフィクスチャでも、一度だけ表示する認証情報は決して撮らない。
   assert.equal(await page.locator('.secret-notice').count(), 0)
   await mkdir(directory, { recursive: true })
   await target.screenshot({ path: `${directory}/${name}.png`, ...(target === page ? { fullPage: false } : {}) })
