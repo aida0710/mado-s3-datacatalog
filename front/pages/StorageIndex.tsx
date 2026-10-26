@@ -320,9 +320,9 @@ function BucketTableRow({
                         />
                     </label>
                 </td>
-                <td className="relative">
+                <td className="bucket-col-name">
                     <div className="bucket-name">
-                        <Link className="after:absolute after:inset-0" to={bucketHref}>
+                        <Link to={bucketHref}>
                             {bucket.name}
                         </Link>
                         {tags.length > 0 && (

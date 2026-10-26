@@ -6,7 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 // LAN/VPN 内ツールなので CDN には依存させず、Vite のバンドルに同梱する。
 // ・英字: IBM Plex Sans / IBM Plex Mono (@mado/design-system に同梱)。
 // ・日本語: Noto Sans JP。
-// 色・角丸・書体の変数も @mado/design-system から読み、App.css の @theme がそれを参照する。
+// 色・角丸・書体の変数も @mado/design-system から読む。部品の CSS は App.css が続けて読み込む。
 import '@fontsource/noto-sans-jp/japanese-400.css'
 import '@fontsource/noto-sans-jp/japanese-500.css'
 import '@fontsource/noto-sans-jp/japanese-700.css'

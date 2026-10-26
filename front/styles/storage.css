@@ -98,6 +98,10 @@ tr.selected .storage-meter {
 .page-header .breadcrumbs > a {
   overflow-wrap: anywhere;
 }
+/* 区切りの印は文字でなくアイコン。行の中の文字と同じ下端に揃わないよう、ブロックにして上下の中央に置く。 */
+.page-header .breadcrumb-separator > svg {
+  display: block;
+}
 .storage-header-link {
   display: inline-flex;
   align-items: center;
@@ -803,6 +807,7 @@ tr.est-detail:hover > td {
 .est-manual ul {
   margin: 6px 0 0;
   padding-left: 1.2em;
+  list-style: none;
 }
 .est-manual-sources {
   display: flex;
@@ -880,6 +885,15 @@ tr.est-detail:hover > td {
 .bucket-name > a {
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+/* 名前の欄のどこを押してもバケットを開けるよう、リンクの押せる範囲を欄いっぱいに広げる。 */
+.bucket-table .bucket-col-name {
+  position: relative;
+}
+.bucket-name > a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
 }
 
 /* S3 パスで移動 (S3PathPanel)。 */

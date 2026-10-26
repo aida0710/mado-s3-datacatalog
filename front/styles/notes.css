@@ -4,7 +4,7 @@
 
 /* ── Markdown の本文 (.markdown-body) ───────────────────────────────
    MarkdownView の出力を包む。Team note・README・編集履歴で同じ文字組みにする (本文 13px、行間 1.7)。
-   Tailwind の preflight が余白とリストの印を消すので、ここで付け直す。 */
+   見出しの大きさ・余白・リストの印はブラウザの既定に任せず、ここで決める。 */
 .markdown-body {
   min-width: 0;
   max-width: 100%;

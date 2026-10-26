@@ -114,11 +114,11 @@ describe('StorageIndex バケット行の ⋯ メニュー', () => {
     mountWithOneBucket()
     await waitFor(() => expect(screen.getByText('bkt-1')).toBeInTheDocument())
 
+    // 広げる指定は styles/storage.css (.bucket-name > a::after を名前の列 .bucket-col-name いっぱいにする)。
+    // jsdom は CSS を当てないので、その指定が前提にしている組み立てを確かめる。
     const link = screen.getByRole('link', { name: 'bkt-1' })
-    expect(link.className).toContain('after:absolute')
-    expect(link.className).toContain('after:inset-0')
-    // 名前の列は positioning context を持つ (でないと after:inset-0 が列に届かない)。
-    expect((link.closest('td') as HTMLElement).className).toContain('relative')
+    expect(link.parentElement).toHaveClass('bucket-name')
+    expect(link.closest('td')).toHaveClass('bucket-col-name')
   })
 
   it('独立した 🏷 ボタンは廃止して ⋯ に統合されている', async () => {

@@ -440,15 +440,15 @@ cd front && npm test && npm run lint
 | 読み込む物 | 中身 |
 |---|---|
 | `main.tsx` の `fonts.css` と `tokens.css` | 書体と、ライト・ダークの色・角丸・書体の変数 |
-| `App.css` の Tailwind | preflight とユーティリティ class |
-| `App.css` の `base.css`・`components.css`・`shell.css`・`code.css`・`lineage.css` (どれも `@layer components`。React Flow の既定の CSS もこの layer の先に入れます) | 要素の既定 (本文 13px、入力欄、リンク、見出し)、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ・メニュー・一覧の上の帯・パンくず、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け、DataLineage のグラフ |
-| `front/styles/*.css` (layer の外) | 画面ごとの指定 (保存先の一覧、プレビュー、メモ・README、設定、DataLineage) |
+| `App.css` の `base.css`・`components.css`・`shell.css`・`code.css`・`lineage.css` (React Flow の既定の CSS は `lineage.css` の前に読み込みます) | 要素の既定 (本文 13px、入力欄、リンク、見出し)、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ・メニュー・一覧の上の帯・パンくず、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け、DataLineage のグラフ |
+| `App.css` の `front/styles/*.css` | 画面ごとの指定 (保存先の一覧、プレビュー、メモ・README、設定、DataLineage) |
 
-- 共通の CSS は Tailwind の preflight より強く、ユーティリティ class より弱い層に入ります。共通の CSS どうしの優先順位は mado ML Tracking と同じです。
+- mado ML Tracking と同じく CSS の layer は使わず、読み込む順で優先順位が決まります。同じ詳細度なら後に読む `front/styles/` が勝ちます。共通の部品の指定を画面に合わせて変えるときは、共通の指定と同じかそれより高い詳細度で書きます (例: 開いた行の中の `dl` は `.responsive-table-details .admin-user-meta`)。
+- CSS のフレームワーク (Tailwind など) は使いません。要素の既定はデザインシステムの `base.css` にあるものだけで、余白やリストの印は部品ごとの class で決めます。
 - 部品は共通の class 名 (`.button`、`.page-header`、`.tabs`、`.field`、`.dialog`、`.toolbar`、`.popover.menu`、`.status-success` など) で使い、領域のファイルにはその画面に固有の指定だけを書きます。文字の大きさは `--font-size-2xs`〜`--font-size-xl` の変数で書きます。
 - 画面の枠 (サイドバー・ドロワー・ユーザーメニュー・表示言語の選択・ロゴ)、ダイアログ (ブラウザの `<dialog>`)、読み込み中・失敗の表示とデータの読み込み (`useQuery`)、コピー、サイズと経過時間の書式、アクセストークンの期限の選び方は、デザインシステムの `@mado/design-system/react` などを使います。保存キーは `mado.` で始めます (`mado.theme`・`mado.locale`・`mado.navigation.*`・`mado.codeLanguage`)。
 - 色は `tokens.css` の変数で書き、値を直接書きません。ダークテーマは上部バーのボタンで切り替え (`localStorage` の `mado.theme`。切り替えるまでは OS の設定に合わせます)、`<html data-theme="dark">` で効きます。
-- 画面幅の切り替え点は 640px・900px・1200px の 3 つです (Tailwind の `sm`・`md`・`lg` も同じ値)。左のサイドバーは 1200px 以上で名前つき (下のボタンでアイコンだけに畳め、右の境目のドラッグで幅を変えられます)、900px 以上でアイコンだけ、それ未満は上部バーのメニューボタンから開くドロワーです。
+- 画面幅の切り替え点は 640px・900px・1200px の 3 つです。左のサイドバーは 1200px 以上で名前つき (下のボタンでアイコンだけに畳め、右の境目のドラッグで幅を変えられます)、900px 以上でアイコンだけ、それ未満は上部バーのメニューボタンから開くドロワーです。
 - アイコンは [Lucide](https://lucide.dev/) (`lucide-react`) を使います。
 - テキストのプレビューの形式の推測と色付けは、デザインシステムの `@mado/design-system/code` ([highlight.js](https://highlightjs.org/) と、CSV・TSV・ログの色付け) を mado ML Tracking と共有します。画面の部品は `components/CodeView.tsx`、形式の記憶はデザインシステムの `useCodeLanguage` (保存キーと形式の名前は `lib/codeLanguage.ts`) です。本文はどちらのテーマでも暗い面に置き、色はどれも面に対して 4.5:1 以上です。
 
