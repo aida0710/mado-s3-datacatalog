@@ -6,7 +6,7 @@ import { loadUser, loadUserIncludingDeleted, normalizeLoginName } from './auth-u
 import { ADMIN_ROLE, assertAdminRemovalAllowed, LastActiveAdminError } from './auth-admin-invariant.js'
 import { insertUserRow, replaceRoleRows, sameRoleSet } from './auth-user-store.js'
 
-// SSO (OIDC) で入ってきた人を Mado の User に結び付ける: 既存 identity の検索、検証済み email での
+// SSO (OIDC) で入ってきた人をこのアプリの User に結び付ける: 既存 identity の検索、検証済み email での
 // 既存 User への連携、JIT 作成、表示名などの同期、IdP の group からの Role 同期。
 
 /** 特権を持たない Role。email の自動連携は、この Role だけを持つ User に限る。 */
@@ -38,7 +38,7 @@ export class OidcLoginDeniedError extends Error {
 
 /**
  * IdP の group から、login を許すかと、同期する Role を決める。
- * roleMapping が空なら Role は Mado 側で管理する (managedRoles を返さない)。
+ * roleMapping が空なら Role はこのアプリ側で管理する (managedRoles を返さない)。
  */
 export function resolveOidcRoles(
   policy: OidcRolePolicy,

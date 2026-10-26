@@ -23,7 +23,7 @@ export const STORAGE_CLASS_KEYS: readonly StorageClassKey[] = [
  *
  *  - `api`      … AWS の料金 API から取得した値。「単価を更新」で新しくなる
  *  - `proxy`    … 料金 API に無いので、同額の別クラスの API 値で代用 (Deep Archive)
- *  - `manual`   … 料金 API が無く、Mado が公表値を焼いている (Wasabi)。
+ *  - `manual`   … 料金 API が無く、このアプリが公表値を焼いている (Wasabi)。
  *                 **更新しても変わらない** ので、UI で区別して注記する
  *  - `override` … その接続の設定で人が入れた値。本人が入れたので注記は要らない
  *  - `none`     … 費用の概念が無い接続 (社内ストレージ) */
