@@ -94,8 +94,8 @@ Required layout:
 
 Required `.env` keys include the normal mado S3 Data Catalog production values plus
 `REGISTRY_DB_PASSWORD`, `MARQUEZ_DB_PASSWORD`, `REGISTRY_INGEST_TOKEN`,
-`LINEAGE_DB_PASSWORD`, `AUTH_MODE`, `AUTH_COOKIE_SECURE`, and
-`ALLOWED_ORIGINS`. Do not commit `.env`.
+`MDC_LINEAGE_DB_PASSWORD`, `MDC_AUTH_MODE`, `MDC_AUTH_COOKIE_SECURE`, and
+`MDC_WEB_ORIGIN`. Do not commit `.env`.
 
 Start databases first when restoring existing data:
 
@@ -106,7 +106,7 @@ docker compose -f compose.mdx.yaml up -d --build
 ```
 
 `api-internal` applies the mado S3 Data Catalog migrations when it starts, as
-the PostgreSQL administrator (`DATABASE_URL_MIGRATE`, built from
+the PostgreSQL administrator (`MDC_DATABASE_URL_MIGRATE`, built from
 `POSTGRES_PASSWORD`); `api-lineage` and `media-worker` start after it is
 healthy. A database migrated by hand up to v0.4.0 has no `schema_migrations`:
 record the applied files once before the first start, as described in

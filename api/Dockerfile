@@ -28,14 +28,14 @@ RUN npm run build \
 
 # OCIとして配布するproduction target。compilerとsourceは持ち込まない。
 FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS release
-ARG MADO_VERSION=dev
+ARG MDC_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
 LABEL org.opencontainers.image.title="mado S3 Data Catalog API" \
       org.opencontainers.image.description="mado S3 Data Catalog internal and OpenLineage APIs" \
       org.opencontainers.image.source="https://github.com/aida0710/mado-s3-datacatalog" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.version="$MADO_VERSION" \
+      org.opencontainers.image.version="$MDC_VERSION" \
       org.opencontainers.image.revision="$VCS_REF" \
       org.opencontainers.image.created="$BUILD_DATE"
 WORKDIR /app

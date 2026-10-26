@@ -20,7 +20,7 @@ server {
 server {
     listen 80;
     listen [::]:80;
-    server_name ${MADO_HOSTNAME};
+    server_name ${MDC_HOSTNAME};
     server_tokens off;
 
     location ^~ /.well-known/acme-challenge/ {
@@ -30,14 +30,14 @@ server {
     }
 
     location / {
-        return 308 https://${MADO_HOSTNAME}$request_uri;
+        return 308 https://${MDC_HOSTNAME}$request_uri;
     }
 }
 
 server {
     listen 80;
     listen [::]:80;
-    server_name ${MADO_API_HOSTNAME};
+    server_name ${MDC_API_HOSTNAME};
     server_tokens off;
 
     location ^~ /.well-known/acme-challenge/ {
@@ -47,7 +47,7 @@ server {
     }
 
     location / {
-        return 308 https://${MADO_API_HOSTNAME}$request_uri;
+        return 308 https://${MDC_API_HOSTNAME}$request_uri;
     }
 }
 
@@ -58,8 +58,8 @@ server {
     server_name _;
     server_tokens off;
 
-    ssl_certificate /etc/letsencrypt/live/${MADO_HOSTNAME}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${MADO_HOSTNAME}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${MDC_HOSTNAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${MDC_HOSTNAME}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_session_cache shared:MadoTLS:10m;
     ssl_session_timeout 1d;
@@ -73,11 +73,11 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name ${MADO_HOSTNAME};
+    server_name ${MDC_HOSTNAME};
     server_tokens off;
 
-    ssl_certificate /etc/letsencrypt/live/${MADO_HOSTNAME}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${MADO_HOSTNAME}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${MDC_HOSTNAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${MDC_HOSTNAME}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_session_cache shared:MadoTLS:10m;
     ssl_session_timeout 1d;
@@ -121,11 +121,11 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name ${MADO_API_HOSTNAME};
+    server_name ${MDC_API_HOSTNAME};
     server_tokens off;
 
-    ssl_certificate /etc/letsencrypt/live/${MADO_API_HOSTNAME}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${MADO_API_HOSTNAME}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${MDC_API_HOSTNAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${MDC_API_HOSTNAME}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_session_cache shared:MadoTLS:10m;
     ssl_session_timeout 1d;

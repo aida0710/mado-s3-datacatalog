@@ -133,11 +133,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           build-args: |
-            MADO_VERSION=${{ needs.verify-source.outputs.version }}
+            MDC_VERSION=${{ needs.verify-source.outputs.version }}
             VCS_REF=${{ needs.verify-source.outputs.release-sha }}
             BUILD_DATE=${{ needs.verify-source.outputs.build-date }}
-            VITE_GIT_COMMIT=${{ needs.verify-source.outputs.release-sha }}
-            VITE_GIT_DATE=${{ needs.verify-source.outputs.build-date }}
+            MDC_GIT_COMMIT=${{ needs.verify-source.outputs.release-sha }}
+            MDC_GIT_DATE=${{ needs.verify-source.outputs.build-date }}
           provenance: mode=max
           sbom: true
       - name: Resolve staged digest
@@ -248,13 +248,13 @@ jobs:
       - name: Validate and upload release bundle
         env:
           POSTGRES_PASSWORD: release-validation-postgres
-          DASHBOARD_PASSWORD: release-validation-dashboard
-          LINEAGE_DB_PASSWORD: release-validation-lineage
-          WORKER_DB_PASSWORD: release-validation-worker
-          ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-          ALLOWED_ORIGINS: https://mado.invalid
-          DATASET_REGISTRY_URL: http://registry.invalid
-          DATASET_REGISTRY_TOKEN: release-validation-token
+          MDC_DASHBOARD_DB_PASSWORD: release-validation-dashboard
+          MDC_LINEAGE_DB_PASSWORD: release-validation-lineage
+          MDC_WORKER_DB_PASSWORD: release-validation-worker
+          MDC_STORAGE_SECRET_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+          MDC_WEB_ORIGIN: https://mado.invalid
+          MDC_DATASET_REGISTRY_URL: http://registry.invalid
+          MDC_DATASET_REGISTRY_TOKEN: release-validation-token
           GH_TOKEN: ${{ github.token }}
         run: |
           archive="dist/release/mado-$RELEASE_TAG.tar.gz"

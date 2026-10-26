@@ -18,9 +18,9 @@ services:
       # 注意: いずれも DB ボリュームの初回 init 時のみ反映。既存DBは ALTER ROLE で変更する。
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}"
       POSTGRES_DB: dashboard
-      DASHBOARD_PASSWORD: "${DASHBOARD_PASSWORD:?.env に DASHBOARD_PASSWORD を設定してください (DATABASE_URL のパスワードと一致させること)}"
-      LINEAGE_DB_PASSWORD: "${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}"
-      WORKER_DB_PASSWORD: "${WORKER_DB_PASSWORD:?.env に WORKER_DB_PASSWORD を設定してください}"
+      MDC_DASHBOARD_DB_PASSWORD: "${MDC_DASHBOARD_DB_PASSWORD:?.env に MDC_DASHBOARD_DB_PASSWORD を設定してください (DATABASE_URL のパスワードと一致させること)}"
+      MDC_LINEAGE_DB_PASSWORD: "${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}"
+      MDC_WORKER_DB_PASSWORD: "${MDC_WORKER_DB_PASSWORD:?.env に MDC_WORKER_DB_PASSWORD を設定してください}"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
@@ -37,9 +37,9 @@ services:
       context: ./api
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     container_name: mado-prod-api-internal
     command: ["node", "dist/internal.js"]
     healthcheck:
@@ -52,9 +52,9 @@ services:
       - .env
     environment:
       # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
-      DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
-      MADO_ENV: production
-      PORT: 3000
+      MDC_DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_ENV: production
+      MDC_PORT: 3000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -67,9 +67,9 @@ services:
       context: ./api
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     container_name: mado-prod-api-lineage
     command: ["node", "dist/lineage.js"]
     healthcheck:
@@ -79,12 +79,12 @@ services:
       retries: 3
       start_period: 60s
     environment:
-      LINEAGE_API_PORT: 3001
-      DATABASE_URL_RW: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      DATABASE_URL_RO: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      DATASET_REGISTRY_URL: "${DATASET_REGISTRY_URL:?.env に DATASET_REGISTRY_URL を設定してください}"
-      DATASET_REGISTRY_TOKEN: "${DATASET_REGISTRY_TOKEN:?.env に DATASET_REGISTRY_TOKEN を設定してください}"
-      OPENLINEAGE_BODY_LIMIT_BYTES: "${OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
+      MDC_LINEAGE_PORT: 3001
+      MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_DATABASE_URL_RO: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_DATASET_REGISTRY_URL: "${MDC_DATASET_REGISTRY_URL:?.env に MDC_DATASET_REGISTRY_URL を設定してください}"
+      MDC_DATASET_REGISTRY_TOKEN: "${MDC_DATASET_REGISTRY_TOKEN:?.env に MDC_DATASET_REGISTRY_TOKEN を設定してください}"
+      MDC_OPENLINEAGE_BODY_LIMIT_BYTES: "${MDC_OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -104,9 +104,9 @@ services:
       dockerfile: Dockerfile.worker
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     container_name: mado-prod-media-worker
     command: ["node", "dist/worker.js"]
     depends_on:
@@ -123,11 +123,11 @@ services:
       dockerfile: nginx/Dockerfile
       # About 表示用のコミット情報を front ビルドへ渡す (deploy.sh が export する)。
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VITE_GIT_COMMIT: "${VITE_GIT_COMMIT:-}"
-        VITE_GIT_DATE: "${VITE_GIT_DATE:-}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        MDC_GIT_COMMIT: "${MDC_GIT_COMMIT:-}"
+        MDC_GIT_DATE: "${MDC_GIT_DATE:-}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     container_name: mado-prod-nginx
     # nginx は非 root user (uid 101) で動くため container 内では :8080 を listen する。
     # UIもloopbackだけにbindし、host側intranet proxyからのみ公開する。

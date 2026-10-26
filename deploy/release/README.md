@@ -7,10 +7,10 @@ not build application source on the deployment host.
 
 1. Copy `.env.example` to `.env`.
 2. Replace every placeholder or empty secret in `.env`. Keep
-   `DATABASE_URL_RW`, `DATABASE_URL_RO`, and `DASHBOARD_PASSWORD` consistent.
-   Generate a separate hex `WORKER_DB_PASSWORD` for the restricted media worker.
-3. Choose `AUTH_MODE=local`, `oidc`, or `hybrid`. Keep `MADO_ENV=production`;
-   keep `AUTH_COOKIE_SECURE=true` whenever browser access uses TLS.
+   `MDC_DATABASE_URL_RW`, `MDC_DATABASE_URL_RO`, and `MDC_DASHBOARD_DB_PASSWORD` consistent.
+   Generate a separate hex `MDC_WORKER_DB_PASSWORD` for the restricted media worker.
+3. Choose `MDC_AUTH_MODE=local`, `oidc`, or `hybrid`. Keep `MDC_ENV=production`;
+   keep `MDC_AUTH_COOKIE_SECURE=true` whenever browser access uses TLS.
 4. Provide a compatible Dataset Registry API and token. It is an external
    prerequisite and is not contained in this archive; Marquez is optional for
    the browser graph. No official Registry distribution is included in this

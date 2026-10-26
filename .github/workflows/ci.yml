@@ -32,13 +32,13 @@ jobs:
       - name: Validate generated release Compose
         env:
           POSTGRES_PASSWORD: ci-postgres-password
-          DASHBOARD_PASSWORD: ci-dashboard-password
-          LINEAGE_DB_PASSWORD: ci-lineage-password
-          WORKER_DB_PASSWORD: ci-worker-password
-          ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-          ALLOWED_ORIGINS: https://mado.invalid
-          DATASET_REGISTRY_URL: http://registry.invalid
-          DATASET_REGISTRY_TOKEN: ci-registry-token-not-a-secret
+          MDC_DASHBOARD_DB_PASSWORD: ci-dashboard-password
+          MDC_LINEAGE_DB_PASSWORD: ci-lineage-password
+          MDC_WORKER_DB_PASSWORD: ci-worker-password
+          MDC_STORAGE_SECRET_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+          MDC_WEB_ORIGIN: https://mado.invalid
+          MDC_DATASET_REGISTRY_URL: http://registry.invalid
+          MDC_DATASET_REGISTRY_TOKEN: ci-registry-token-not-a-secret
         run: |
           archive="dist/release/mado-v$(cat VERSION).tar.gz"
           mkdir -p /tmp/mado-release-contract
@@ -76,7 +76,7 @@ jobs:
       - name: Apply migrations to the test database
         working-directory: api
         env:
-          DATABASE_URL_MIGRATE: postgres://postgres:postgres@127.0.0.1:5432/dashboard_test
+          MDC_DATABASE_URL_MIGRATE: postgres://postgres:postgres@127.0.0.1:5432/dashboard_test
         run: npm run db:migrate
       - name: Lint, test, and build
         working-directory: api
@@ -137,11 +137,11 @@ jobs:
           commit=$(git rev-parse HEAD)
           build_date=$(git log -1 --format=%cI)
           docker build --target release \
-            --build-arg MADO_VERSION="$version" \
+            --build-arg MDC_VERSION="$version" \
             --build-arg VCS_REF="$commit" \
             --build-arg BUILD_DATE="$build_date" \
-            --build-arg VITE_GIT_COMMIT="$commit" \
-            --build-arg VITE_GIT_DATE="$build_date" \
+            --build-arg MDC_GIT_COMMIT="$commit" \
+            --build-arg MDC_GIT_DATE="$build_date" \
             -f "${{ matrix.file }}" -t "mado-ci-${{ matrix.id }}:$commit" "${{ matrix.context }}"
       # Composeと同じ db/init で、ロールだけがある空のDBを用意する。
       - name: Start a database for the smoke test
@@ -150,7 +150,7 @@ jobs:
           docker network create mado-ci-smoke
           docker run -d --name mado-ci-postgres --network mado-ci-smoke \
             -e POSTGRES_PASSWORD=ci-postgres -e POSTGRES_DB=dashboard \
-            -e DASHBOARD_PASSWORD=ci-dashboard -e LINEAGE_DB_PASSWORD=ci-lineage -e WORKER_DB_PASSWORD=ci-worker \
+            -e MDC_DASHBOARD_DB_PASSWORD=ci-dashboard -e MDC_LINEAGE_DB_PASSWORD=ci-lineage -e MDC_WORKER_DB_PASSWORD=ci-worker \
             -v "$PWD/db/init:/docker-entrypoint-initdb.d:ro" \
             postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
           for _ in $(seq 1 60); do
@@ -178,15 +178,15 @@ jobs:
                 'const p=require("./package.json"); if(p.version!==process.argv[1]) process.exit(1)' \
                 "$(cat VERSION)"
               # 空のDBへ全部当たり、2回目は何も当てない。
-              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
-              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js \
+              docker run --rm --network mado-ci-smoke -e MDC_DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
+              docker run --rm --network mado-ci-smoke -e MDC_DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js \
                 | grep -Fx 'migrations are up to date'
               # 公開側のプロセスは自分の最小権限のロールで、移行が済んでいることを確かめて起動する。
               container=mado-ci-lineage-startup
               lineage_database=postgres://mado_lineage:ci-lineage@mado-ci-postgres:5432/dashboard
               docker run -d --name "$container" --network mado-ci-smoke \
-                -e DATABASE_URL_RW="$lineage_database" -e DATABASE_URL_RO="$lineage_database" \
-                -e DATASET_REGISTRY_URL=http://registry.invalid -e DATASET_REGISTRY_TOKEN=ci-registry-token-not-a-secret \
+                -e MDC_DATABASE_URL_RW="$lineage_database" -e MDC_DATABASE_URL_RO="$lineage_database" \
+                -e MDC_DATASET_REGISTRY_URL=http://registry.invalid -e MDC_DATASET_REGISTRY_TOKEN=ci-registry-token-not-a-secret \
                 "$image" node dist/lineage.js
               trap 'docker rm -f "$container" >/dev/null' EXIT
               wait_healthy "$container" 3001
@@ -194,14 +194,14 @@ jobs:
             worker)
               docker run --rm "$image" ffmpeg -version >/dev/null
               # workerのイメージも同じビルドなので移行のコマンドを持つ。ここではworkerの起動確認のためだけに当てる。
-              docker run --rm --network mado-ci-smoke -e DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
+              docker run --rm --network mado-ci-smoke -e MDC_DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
               container=mado-ci-worker-startup
               worker_database=postgres://mado_worker:ci-worker@mado-ci-postgres:5432/dashboard
               docker run -d --name "$container" --network mado-ci-smoke \
-                -e MADO_ENV=production \
-                -e DATABASE_URL_RW="$worker_database" \
-                -e DATABASE_URL_RO="$worker_database" \
-                -e ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+                -e MDC_ENV=production \
+                -e MDC_DATABASE_URL_RW="$worker_database" \
+                -e MDC_DATABASE_URL_RO="$worker_database" \
+                -e MDC_STORAGE_SECRET_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
                 "$image"
               trap 'docker rm -f "$container" >/dev/null' EXIT
               wait_healthy "$container" 3100

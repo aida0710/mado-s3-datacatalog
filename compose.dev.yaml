@@ -15,9 +15,9 @@ services:
       # 注意: いずれも DB ボリュームの初回 init 時のみ反映 (既存DBは ALTER ROLE)。
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_DB: dashboard
-      DASHBOARD_PASSWORD: "${DASHBOARD_PASSWORD:-CHANGEME}"
-      LINEAGE_DB_PASSWORD: "${LINEAGE_DB_PASSWORD:-lineage-dev-only}"
-      WORKER_DB_PASSWORD: "${WORKER_DB_PASSWORD:-worker-dev-only}"
+      MDC_DASHBOARD_DB_PASSWORD: "${MDC_DASHBOARD_DB_PASSWORD:-CHANGEME}"
+      MDC_LINEAGE_DB_PASSWORD: "${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}"
+      MDC_WORKER_DB_PASSWORD: "${MDC_WORKER_DB_PASSWORD:-worker-dev-only}"
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -47,9 +47,9 @@ services:
       - .env
     environment:
       # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
-      DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/dashboard"
-      PORT: 3000
-      AUTH_MODE: "${AUTH_MODE:?Set AUTH_MODE to local, oidc, or hybrid}"
+      MDC_DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/dashboard"
+      MDC_PORT: 3000
+      MDC_AUTH_MODE: "${MDC_AUTH_MODE:?Set MDC_AUTH_MODE to local, oidc, or hybrid}"
     volumes:
       - ./api:/app
       - /app/node_modules
@@ -72,12 +72,12 @@ services:
       retries: 3
       start_period: 60s
     environment:
-      LINEAGE_API_PORT: 3001
-      DATABASE_URL_RW: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
-      DATABASE_URL_RO: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
-      DATASET_REGISTRY_URL: "${DATASET_REGISTRY_URL:-http://host.docker.internal:8088}"
-      DATASET_REGISTRY_TOKEN: "${DATASET_REGISTRY_TOKEN:-development-token-change-me}"
-      OPENLINEAGE_BODY_LIMIT_BYTES: "${OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
+      MDC_LINEAGE_PORT: 3001
+      MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
+      MDC_DATABASE_URL_RO: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
+      MDC_DATASET_REGISTRY_URL: "${MDC_DATASET_REGISTRY_URL:-http://host.docker.internal:8088}"
+      MDC_DATASET_REGISTRY_TOKEN: "${MDC_DATASET_REGISTRY_TOKEN:-development-token-change-me}"
+      MDC_OPENLINEAGE_BODY_LIMIT_BYTES: "${MDC_OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
     volumes:
       - ./api:/app
       - /app/node_modules
@@ -102,7 +102,7 @@ services:
     command: ["npx", "tsx", "watch", "worker.ts"]
     # 開発用のイメージには dist が無いので、deploy/worker-service.yaml の確認をソースで置き換える。
     healthcheck:
-      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "${MEDIA_WORKER_PORT:-3100}"]
+      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "${MDC_MEDIA_WORKER_PORT:-3100}"]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -123,8 +123,8 @@ services:
     # About のコミット表示。通常は下の .git マウント + コンテナ内 git で解決される。
     # env が設定されていれば (例: ./dev.sh) そちらを優先 (vite.config が env→git→'dev')。
     environment:
-      VITE_GIT_COMMIT: "${VITE_GIT_COMMIT:-}"
-      VITE_GIT_DATE: "${VITE_GIT_DATE:-}"
+      MDC_GIT_COMMIT: "${MDC_GIT_COMMIT:-}"
+      MDC_GIT_DATE: "${MDC_GIT_DATE:-}"
     ports:
       - "5173:5173"
     volumes:

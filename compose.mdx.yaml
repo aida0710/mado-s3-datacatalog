@@ -13,9 +13,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}"
       POSTGRES_DB: dashboard
-      DASHBOARD_PASSWORD: "${DASHBOARD_PASSWORD:?.env に DASHBOARD_PASSWORD を設定してください}"
-      LINEAGE_DB_PASSWORD: "${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}"
-      WORKER_DB_PASSWORD: "${WORKER_DB_PASSWORD:?.env に WORKER_DB_PASSWORD を設定してください}"
+      MDC_DASHBOARD_DB_PASSWORD: "${MDC_DASHBOARD_DB_PASSWORD:?.env に MDC_DASHBOARD_DB_PASSWORD を設定してください}"
+      MDC_LINEAGE_DB_PASSWORD: "${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}"
+      MDC_WORKER_DB_PASSWORD: "${MDC_WORKER_DB_PASSWORD:?.env に MDC_WORKER_DB_PASSWORD を設定してください}"
     volumes:
       - mado-db-data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
@@ -119,9 +119,9 @@ services:
       context: ./api
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     command: ["node", "dist/internal.js"]
     healthcheck:
       test: ["CMD", "node", "dist/scripts/healthcheck.js", "3000"]
@@ -133,12 +133,12 @@ services:
       - .env
     environment:
       # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
-      DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
-      MADO_ENV: production
-      PORT: "3000"
-      DATASET_REGISTRY_URL: http://registry-api:8080
-      DATASET_REGISTRY_TOKEN: "${REGISTRY_INGEST_TOKEN:?REGISTRY_INGEST_TOKEN is required}"
-      MARQUEZ_URL: http://marquez-api:5000
+      MDC_DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_ENV: production
+      MDC_PORT: "3000"
+      MDC_DATASET_REGISTRY_URL: http://registry-api:8080
+      MDC_DATASET_REGISTRY_TOKEN: "${REGISTRY_INGEST_TOKEN:?REGISTRY_INGEST_TOKEN is required}"
+      MDC_MARQUEZ_URL: http://marquez-api:5000
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,9 +153,9 @@ services:
       context: ./api
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     command: ["node", "dist/lineage.js"]
     healthcheck:
       test: ["CMD", "node", "dist/scripts/healthcheck.js", "3001"]
@@ -164,12 +164,12 @@ services:
       retries: 3
       start_period: 60s
     environment:
-      LINEAGE_API_PORT: "3001"
-      DATABASE_URL_RW: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      DATABASE_URL_RO: "postgres://mado_lineage:${LINEAGE_DB_PASSWORD:?.env に LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      DATASET_REGISTRY_URL: http://registry-api:8080
-      DATASET_REGISTRY_TOKEN: "${REGISTRY_INGEST_TOKEN:?REGISTRY_INGEST_TOKEN is required}"
-      OPENLINEAGE_BODY_LIMIT_BYTES: "${OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
+      MDC_LINEAGE_PORT: "3001"
+      MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_DATABASE_URL_RO: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
+      MDC_DATASET_REGISTRY_URL: http://registry-api:8080
+      MDC_DATASET_REGISTRY_TOKEN: "${REGISTRY_INGEST_TOKEN:?REGISTRY_INGEST_TOKEN is required}"
+      MDC_OPENLINEAGE_BODY_LIMIT_BYTES: "${MDC_OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
     depends_on:
       # api-internal が移行を当て終えて healthy になってから起動する。
       api-internal:
@@ -189,9 +189,9 @@ services:
       dockerfile: Dockerfile.worker
       target: release
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     command: ["node", "dist/worker.js"]
     depends_on:
       # api-internal が移行を当て終えて healthy になってから起動する。
@@ -206,11 +206,11 @@ services:
       context: .
       dockerfile: nginx/Dockerfile
       args:
-        MADO_VERSION: "${MADO_VERSION:-dev}"
-        VITE_GIT_COMMIT: "${VITE_GIT_COMMIT:-}"
-        VITE_GIT_DATE: "${VITE_GIT_DATE:-}"
-        VCS_REF: "${VITE_GIT_COMMIT:-}"
-        BUILD_DATE: "${VITE_GIT_DATE:-}"
+        MDC_VERSION: "${MDC_VERSION:-dev}"
+        MDC_GIT_COMMIT: "${MDC_GIT_COMMIT:-}"
+        MDC_GIT_DATE: "${MDC_GIT_DATE:-}"
+        VCS_REF: "${MDC_GIT_COMMIT:-}"
+        BUILD_DATE: "${MDC_GIT_DATE:-}"
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:8081:8081"
@@ -226,9 +226,9 @@ services:
     user: "0:0"
     network_mode: host
     environment:
-      MADO_HOSTNAME: "${MADO_HOSTNAME:-mado.internal.dubguild.com}"
-      MADO_API_HOSTNAME: "${MADO_API_HOSTNAME:-mado-api.internal.dubguild.com}"
-      NGINX_ENVSUBST_FILTER: "^MADO_"
+      MDC_HOSTNAME: "${MDC_HOSTNAME:-mado.internal.dubguild.com}"
+      MDC_API_HOSTNAME: "${MDC_API_HOSTNAME:-mado-api.internal.dubguild.com}"
+      NGINX_ENVSUBST_FILTER: "^MDC_"
     volumes:
       - ./nginx/edge-nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/edge.conf.template:/etc/nginx/templates/default.conf.template:ro
