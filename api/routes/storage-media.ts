@@ -36,7 +36,7 @@ export function mountStorageMediaRoutes(app: Hono, deps: StorageMediaDeps): void
       etag = (head.ETag ?? '').replaceAll('"', '')
     } catch (e) {
       // 「存在しない」だけを 404 に翻訳する。AccessDenied や 5xx を 404 に
-      // 潰さない — それ以外は rethrow して internal.ts の onError
+      // 潰さない — それ以外は rethrow して internal-app.ts の onError
       // (explainStorageError) に翻訳させる。
       const err = e as { name?: string; $metadata?: { httpStatusCode?: number } }
       if (

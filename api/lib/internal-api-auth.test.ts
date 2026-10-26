@@ -21,7 +21,7 @@ function application(principal = tokenPrincipal) {
   const app = new Hono()
   const sessions = { authenticateSession: vi.fn().mockResolvedValue(session) }
   const authenticateToken = vi.fn().mockResolvedValue(principal)
-  // Same order as internal.ts: a browser request is checked for Origin before its session is touched.
+  // Same order as internal-app.ts: a browser request is checked for Origin before its session is touched.
   const safeOrigin = requireSafeOrigin(['https://mado.example.test'])
   app.use('*', (c, next) => c.req.header('Authorization') !== undefined ? next() : safeOrigin(c, next))
   app.use('*', requireInternalApiAuthentication({ sessions, authenticateToken, cookieName: 'session', idleSeconds: 300 }))
