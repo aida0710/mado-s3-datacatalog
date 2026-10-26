@@ -30,7 +30,7 @@ import { CAPACITY_INTERVALS } from '../lib/capacity-store.js'
 import { isAllowedEndpoint } from '../lib/endpoint-policy.js'
 import { apiError } from '../lib/api-error.js'
 
-// ルート単位のRBACは internal.ts で適用する。接続一覧はさらにここでユーザー別に
+// ルート単位のRBACは internal-app.ts で適用する。接続一覧はさらにここでユーザー別に
 // 絞り込み、非許可の接続は存在自体を返さない。
 // 認証情報は ENCRYPTION_KEY で保存時に暗号化されるため、
 // 不正な作成/更新が既存のキーを漏洩させることはない。

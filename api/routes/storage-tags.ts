@@ -5,7 +5,7 @@ import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import { apiError } from '../lib/api-error.js'
 
-// 認証と操作権限は internal.ts の共通ガードで検証する。
+// 認証と操作権限は internal-app.ts の共通ガードで検証する。
 
 export interface StorageTagsDeps {
   pools: Pools

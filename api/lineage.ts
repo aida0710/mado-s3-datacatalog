@@ -1,65 +1,14 @@
+// api-lineage の起動: 移行が済んでいることを確かめ、アプリを組み立てて待ち受ける。
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
 import { loadLineageEnv } from './env.js'
-import { closePools, createPools } from './db.js'
+import { closePools } from './db.js'
 import { assertMigrationsApplied } from './lib/schema-migrations.js'
-import { createAuditWriter } from './lib/audit.js'
-import { createServiceKeyAuthenticator } from './lib/service-key-authenticator.js'
-import { createRegistryClient } from './lib/registry-client.js'
-import { mountOpenLineageRoutes } from './routes/openlineage.js'
-import { requestLogger } from './lib/request-logger.js'
-import { mountHealthRoute } from './lib/health-route.js'
-import { apiError } from './lib/api-error.js'
+import { createLineageApplication } from './lineage-app.js'
 
 const env = loadLineageEnv()
-
-const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
+const { app, pools } = createLineageApplication(env)
 // 公開側のプロセスは移行を当てる権限を持たない。api-internal が当て終えていなければ起動しない。
 await assertMigrationsApplied(pools.ro)
-const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
-const audit = createAuditWriter(pools.rw)
-const registry = createRegistryClient({
-  baseUrl: env.DATASET_REGISTRY_URL,
-  token: env.DATASET_REGISTRY_TOKEN,
-})
-
-const app = new Hono()
-// ヘルスチェックは数秒ごとに来るので、要求のログより先に付けてログに出さない。
-mountHealthRoute(app, pools.ro)
-app.use('*', requestLogger())
-
-const api = new Hono()
-mountOpenLineageRoutes(api, {
-  auth: {
-    authenticate: authenticateServiceKey,
-    async recordUse(event) {
-      await audit.write({
-        actor: {
-          type: 'service_account',
-          serviceAccountId: event.principal.serviceAccountId,
-        },
-        action: 'lineage.ingest',
-        outcome: 'success',
-        resourceType: 'openlineage_run',
-        resourceId: event.runId,
-        details: {
-          keyId: event.principal.keyId,
-          jobNamespace: event.jobNamespace,
-          jobName: event.jobName,
-          ingestOutcome: event.outcome,
-        },
-      })
-    },
-  },
-  registry,
-  bodyLimitBytes: env.OPENLINEAGE_BODY_LIMIT_BYTES,
-})
-app.route('/api', api)
-
-app.onError((error, c) => {
-  console.error('unhandled lineage API error', error)
-  return c.json(apiError('internal_error', 'internal error'), 500)
-})
 
 const server = serve({ fetch: app.fetch, port: env.LINEAGE_API_PORT }, info => {
   console.log(`lineage API listening on http://localhost:${info.port}`)
@@ -76,5 +25,3 @@ const shutdown = async () => {
 }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
-
-export { app }

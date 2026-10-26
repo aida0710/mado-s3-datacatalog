@@ -22,7 +22,7 @@ import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { mountAuditRoutes } from './routes/audit.js'
 
-// Every function internal.ts uses to add routes to /api/internal. Mounting them on an empty app
+// Every function internal-app.ts uses to add routes to /api/internal. Mounting them on an empty app
 // lists the routes without a database; the dependencies are never called while mounting.
 const INTERNAL_ROUTE_MOUNTS = {
   mountConnectionsRoutes, mountStorageListRoutes, mountStorageReadmeRoutes, mountStoragePreviewRoutes,
@@ -52,8 +52,8 @@ function internalRoutes(): Array<{ method: string; path: string }> {
 }
 
 describe('内部APIのルートとトークンの権限表', () => {
-  it('internal.tsが内部APIへ載せるルート群をすべて確かめている', () => {
-    const source = readFileSync(new URL('./internal.ts', import.meta.url), 'utf8')
+  it('internal-app.tsが内部APIへ載せるルート群をすべて確かめている', () => {
+    const source = readFileSync(new URL('./internal-app.ts', import.meta.url), 'utf8')
     const mounted = [...source.matchAll(/\b(mount\w+Routes)\(api\b/g)].map(match => match[1])
     expect(new Set(mounted)).toEqual(new Set(Object.keys(INTERNAL_ROUTE_MOUNTS)))
   })

@@ -128,7 +128,7 @@ describe('GET /media/analyze', () => {
     })
     const res = await app.request('/storage/c1/media/analyze?bucket=b&key=a.wav')
     // onError 未搭載のテスト app では rethrow は Hono 既定の 500 になる。
-    // 重要なのは「404 ではない」こと (internal.ts では explainStorageError が翻訳する)。
+    // 重要なのは「404 ではない」こと (internal-app.ts では explainStorageError が翻訳する)。
     expect(res.status).not.toBe(404)
     expect(res.status).toBe(500)
     expect(workerFetch).not.toHaveBeenCalled()
