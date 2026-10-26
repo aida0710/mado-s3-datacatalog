@@ -6,17 +6,17 @@ import { loadEnv } from '../env.js'
 import { mediaCacheKey, upsertMediaCache } from '../lib/media-cache.js'
 import { mountStorageMediaRoutes } from './storage-media.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 
 const env = loadEnv({
-  AUTH_MODE: 'local',
-  DATABASE_URL_RW: RW,
-  DATABASE_URL_RO: RW,
-  DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
-  ENCRYPTION_KEY: '0'.repeat(64),
-  ALLOWED_ORIGINS: 'http://localhost:5173',
+  MDC_AUTH_MODE: 'local',
+  MDC_DATABASE_URL_RW: RW,
+  MDC_DATABASE_URL_RO: RW,
+  MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+  MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+  MDC_WEB_ORIGIN: 'http://localhost:5173',
 })
 
 // HeadObject だけ返せばよい (Get は worker 側の仕事)
@@ -97,7 +97,7 @@ describe('GET /media/analyze', () => {
     expect(body.meta).toEqual(META)
     // worker へは etag 込みで POST される
     const [url, init] = workerFetch.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe(`${env.MEDIA_WORKER_URL}/analyze`)
+    expect(url).toBe(`${env.MDC_MEDIA_WORKER_URL}/analyze`)
     expect(JSON.parse(init.body as string)).toEqual(REF)
   })
 

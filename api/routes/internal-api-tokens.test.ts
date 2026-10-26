@@ -17,7 +17,7 @@ import { mountNotesRoutes } from './notes.js'
 import { mountAdminUsersRoutes } from './admin-users.js'
 import { mountAuditRoutes } from './audit.js'
 
-const database = process.env.DATABASE_URL_RW_TEST
+const database = process.env.MDC_TEST_DATABASE_URL
 if (!database || !new URL(database).pathname.endsWith('_test')) throw new Error('An explicit isolated test database is required')
 const pools = createPools({ rw: database, ro: database.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)

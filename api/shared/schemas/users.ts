@@ -6,7 +6,7 @@ export const ManagedUser = AuthUser.extend({ status: z.enum(['active', 'disabled
 
 export const UserList = z.object({
   users: z.array(ManagedUser),
-  /** SSO の group から role への対応 (OIDC_ROLE_MAPPING_JSON)。ログインごとに同期する。 */
+  /** SSO の group から role への対応 (MDC_OIDC_ROLE_MAPPING_JSON)。ログインごとに同期する。 */
   ssoRoleMapping: z.record(z.string(), z.enum(['viewer', 'curator', 'operator', 'admin'])),
 })
 

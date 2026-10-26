@@ -7,7 +7,7 @@ import { createInternalApplication } from './internal-app.js'
 
 const env = loadEnv()
 // 表を使う前に未適用の移行を当てる。api-lineage と media-worker は当て終わるのを待ってから起動する。
-await migrateDatabase(env.DATABASE_URL_MIGRATE)
+await migrateDatabase(env.MDC_DATABASE_URL_MIGRATE)
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの
 // リクエストを巻き添えにしない。root cause は都度直す前提の最後の砦 (ログは大声で)。
@@ -24,10 +24,10 @@ const authCleanupTimer = setInterval(() => {
 }, AUTH_CLEANUP_INTERVAL_MS)
 authCleanupTimer.unref()
 
-const server = serve({ fetch: app.fetch, port: env.PORT }, info => {
+const server = serve({ fetch: app.fetch, port: env.MDC_PORT }, info => {
   console.log(
     `internal listening on http://localhost:${info.port}; ` +
-    `allowed origins: ${env.ALLOWED_ORIGINS.join(', ')}`,
+    `allowed origins: ${env.MDC_WEB_ORIGIN.join(', ')}`,
   )
 })
 

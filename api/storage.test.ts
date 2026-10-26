@@ -24,7 +24,7 @@ function reachableTestHost(): string {
   throw new Error('no non-loopback IPv4 address to run the local S3 stand-in on')
 }
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const RO = RW.replace('dashboard_rw', 'dashboard_ro')
 const pools = createPools({ rw: RW, ro: RO })

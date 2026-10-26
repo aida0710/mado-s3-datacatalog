@@ -11,14 +11,14 @@ const HEX_KEY_RE = /^[0-9a-fA-F]{64}$/
 export function createCrypto(rawKey: string): CryptoModule {
   if (!HEX_KEY_RE.test(rawKey)) {
     throw new Error(
-      `ENCRYPTION_KEY must be 64 hex chars (32 bytes); got ${rawKey.length} chars`,
+      `MDC_STORAGE_SECRET_KEY must be 64 hex chars (32 bytes); got ${rawKey.length} chars`,
     )
   }
   const key = Buffer.from(rawKey, 'hex')
   if (key.length !== 32) {
     // 多重防御 — 上のregexでも検証済みだが念のため。
     throw new Error(
-      `ENCRYPTION_KEY must be 64 hex chars (32 bytes); got ${rawKey.length} chars`,
+      `MDC_STORAGE_SECRET_KEY must be 64 hex chars (32 bytes); got ${rawKey.length} chars`,
     )
   }
 

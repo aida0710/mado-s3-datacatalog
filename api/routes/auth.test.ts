@@ -11,7 +11,7 @@ import { AuthRateLimiter } from '../lib/auth-rate-limit.js'
 import { hashPassword } from '../lib/password.js'
 import { mountAuthRoutes } from './auth.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)
