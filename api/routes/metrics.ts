@@ -4,7 +4,7 @@ import { PROMETHEUS_TEXT_CONTENT_TYPE, renderPrometheusText } from '../lib/prome
 import { getServiceKeyPrincipal, requireServiceKeyScope, type ScopedServicePrincipal } from '../lib/service-key-auth.js'
 import { apiError } from '../lib/api-error.js'
 
-/** A metrics token reads only the connections it lists; ['*'] is every connection. */
+/** メトリクス用のトークンは、挙げた接続だけを読む。['*']は全接続。 */
 export interface MetricsPrincipal extends ScopedServicePrincipal {
   connections: readonly string[]
 }

@@ -1,4 +1,4 @@
-/** Service keys grant named namespaces, or all namespaces with the explicit wildcard. */
+/** Service keyは、名前を挙げたNamespaceか、明示したワイルドカードで全Namespaceを許可する。 */
 export function namespaceAllowed(namespace: string, allowed: readonly string[]): boolean {
   return allowed.includes('*') || allowed.includes(namespace)
 }

@@ -122,7 +122,7 @@ export function createMarquezClient(options: MarquezClientOptions): MarquezClien
       const url = new URL('namespaces', root)
       url.searchParams.set('limit', String(query.limit))
       url.searchParams.set('offset', String(query.offset))
-      // Marquez 0.50 returns { namespaces: [{ name, ... }] }; do not treat a broken response as an empty list.
+      // Marquez 0.50は{ namespaces: [{ name, ... }] }を返す。壊れた応答を空の一覧として扱わない。
       const body = await get<{ namespaces?: Array<{ name?: unknown }> }>(url)
       if (!Array.isArray(body?.namespaces) || body.namespaces.some(namespace => typeof namespace?.name !== 'string' || !namespace.name)) {
         throw new MarquezClientError('Marquez returned invalid namespaces', 'invalid_response')

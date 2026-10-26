@@ -1,11 +1,11 @@
 import { z } from 'zod'
 import { CONNECTION_PERMISSIONS, INTERNAL_API_PERMISSIONS } from '../shared/access-token-permissions.js'
 
-// Bound each grant list's stored size; 128 entries is far beyond any real token.
+// 許可の一覧ごとに、保存する量を抑える。128件は実際のどのトークンよりもはるかに多い。
 const RESOURCE_GRANT_LIMIT = 128
-// Allow external connection identifiers while bounding each grant's stored size.
+// 外部の接続IDも受け付けつつ、許可1件ごとに保存する量を抑える。
 const CONNECTION_ID_MAX_LENGTH = 128
-// DataLineage namespaces are URIs; bound them like the namespace catalog does.
+// DataLineageのNamespaceはURIなので、Namespaceの一覧と同じ上限で抑える。
 export const NAMESPACE_MAX_LENGTH = 512
 
 export const internalPermissions = z.array(z.enum(INTERNAL_API_PERMISSIONS)).min(1).max(INTERNAL_API_PERMISSIONS.length)
@@ -16,7 +16,7 @@ export const tokenConnections = z.array(z.string().trim().min(1).max(CONNECTION_
 export const tokenNamespaces = z.array(z.string().trim().min(1).max(NAMESPACE_MAX_LENGTH)).max(RESOURCE_GRANT_LIMIT)
   .transform(values => [...new Set(values)])
 
-/** What a token may do and on which namespaces and connections; integration scopes derive from it. */
+/** トークンができる操作と、その対象のNamespace・接続。連携scopeはここから決まる。 */
 export const accessTokenGrants = z.object({
   permissions: internalPermissions,
   namespaces: tokenNamespaces.default([]),

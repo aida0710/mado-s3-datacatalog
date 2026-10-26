@@ -13,7 +13,7 @@ export function requireInternalApiAuthentication(deps: {
   idleSeconds: number
 }): MiddlewareHandler {
   return async (context, next) => {
-    // An explicit Authorization header must never fall back to browser cookies.
+    // Authorizationヘッダーを明示した要求は、決してブラウザのcookieでの認証に回さない。
     const authorization = context.req.header('Authorization')
     if (authorization !== undefined) {
       const token = bearerToken(authorization)

@@ -37,7 +37,7 @@ export interface ServicePrincipal {
 
 export interface AccessTokenPrincipal extends ServicePrincipal {
   permissions: InternalApiPermission[]
-  /** Connection IDs the token may use; ['*'] is every connection. */
+  /** トークンが使える接続ID。['*']は全接続。 */
   connections: string[]
   tokenName: string
 }

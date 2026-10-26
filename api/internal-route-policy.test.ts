@@ -22,8 +22,8 @@ import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { mountAuditRoutes } from './routes/audit.js'
 
-// Every function internal-app.ts uses to add routes to /api/internal. Mounting them on an empty app
-// lists the routes without a database; the dependencies are never called while mounting.
+// internal-app.tsが/api/internalにルートを足すのに使う関数すべて。空のappに載せると、DB無しで
+// ルートの一覧が取れる。載せている間に依存先が呼ばれることはない。
 const INTERNAL_ROUTE_MOUNTS = {
   mountConnectionsRoutes, mountStorageListRoutes, mountStorageReadmeRoutes, mountStoragePreviewRoutes,
   mountStorageMediaRoutes, mountJobRoutes, mountStorageScanRoutes, mountStorageCapacityRoutes,
@@ -32,7 +32,7 @@ const INTERNAL_ROUTE_MOUNTS = {
   mountAdminUsersRoutes, mountAccessTokenRoutes, mountAuditRoutes,
 } as const
 
-/** Stands in for any dependency: property reads and calls return another stand-in. */
+/** どの依存先の代わりにもなる。プロパティを読んでも呼び出しても、別の代わりを返す。 */
 function placeholderDependency(): unknown {
   return new Proxy(function placeholder() {}, {
     get: (_target, key) => key === 'then' ? undefined : placeholderDependency(),

@@ -42,7 +42,7 @@ export interface StorageLineageResolution {
 }
 
 export interface LogicalLineageNode {
-  /** Marquez node ID. It is opaque: callers must not split it on `:`. */
+  /** MarquezのノードID。中身を解釈しない値なので、呼び出し側は`:`で分割してはならない。 */
   id: string
   kind: LineageNodeKind
   namespace: string

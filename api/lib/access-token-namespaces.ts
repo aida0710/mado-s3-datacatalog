@@ -3,9 +3,9 @@ import type { MarquezNamespaceClient } from './marquez-client.js'
 import type { AccessTokenNamespaces } from './access-token-types.js'
 import { NAMESPACE_MAX_LENGTH } from './access-token-grants.js'
 
-// Fetch namespaces directly rather than scanning every dataset in the catalog.
+// カタログのデータセットを全部走査せず、Namespaceを直接取得する。
 const NAMESPACE_PAGE_SIZE = 1000
-// Bound work against a misbehaving upstream; a partial list remains usable with manual additions.
+// 上流がおかしな応答を返しても処理量を抑える。一覧が途中まででも、手で名前を足せば使える。
 const NAMESPACE_MAX_PAGES = 10
 export interface AccessTokenNamespaceCatalog {
   listNamespaces(): Promise<AccessTokenNamespaces>

@@ -9,7 +9,7 @@ interface PermissionRoute {
   methods: readonly string[]
   path: RegExp
   permission: InternalApiPermission
-  /** The route changes what every connection shares, so a token limited to some connections cannot use it. */
+  /** 全接続が共有するものを変えるルートなので、一部の接続に限ったトークンは使えない。 */
   requiresAllConnections?: true
 }
 
@@ -26,7 +26,7 @@ const permissionRoutes: readonly PermissionRoute[] = [
   { methods: ['GET'], path: /^\/notes\/[^/]+(?:\/history(?:\/[^/]+)?)?$/, permission: 'notes:read' },
   { methods: ['PUT'], path: /^\/notes\/[^/]+$/, permission: 'notes:write' },
   { methods: ['GET'], path: /^\/(?:tags|storage\/[^/]+\/tags(?:\/search)?)$/, permission: 'tags:read' },
-  // Tag definitions are shared by every connection.
+  // タグの定義は全接続で共有する。
   { methods: ['POST'], path: /^\/tags$/, permission: 'tags:write', requiresAllConnections: true },
   { methods: ['PUT'], path: /^\/tags\/[^/]+$/, permission: 'tags:write', requiresAllConnections: true },
   { methods: ['DELETE'], path: /^\/tags\/[^/]+$/, permission: 'tags:delete', requiresAllConnections: true },
@@ -55,7 +55,7 @@ const permissionRoutes: readonly PermissionRoute[] = [
   { methods: ['POST'], path: /^\/access-tokens$/, permission: 'service_accounts:manage' },
   { methods: ['PATCH', 'DELETE'], path: /^\/access-tokens\/[^/]+$/, permission: 'service_accounts:manage' },
   { methods: ['POST'], path: /^\/access-tokens\/[^/]+\/regenerate$/, permission: 'service_accounts:manage' },
-  // As for users, audit:read reads the whole log; connection and namespace limits do not narrow it.
+  // ユーザーと同じく、audit:readはログ全体を読む。接続とNamespaceの制限では絞られない。
   { methods: ['GET'], path: /^\/audit-events$/, permission: 'audit:read' },
 ]
 
@@ -88,7 +88,7 @@ export function requireInternalApiPermission(): MiddlewareHandler {
       return context.json({ ...apiError('forbidden', 'forbidden'), permission: 'lineage:read' }, 403)
     }
     if (principal.kind === 'service_account') {
-      // New endpoints stay closed to tokens until they have an explicit policy.
+      // 新しいエンドポイントは、方針を明示するまでトークンには閉じておく。
       if (!route) return context.json(apiError('token_endpoint_forbidden', 'endpoint is not available to access tokens'), 403)
       if (route.requiresAllConnections && !coversAllConnections(principal)) {
         return context.json(apiError('all_connections_token_required', 'this operation requires a token for all connections'), 403)

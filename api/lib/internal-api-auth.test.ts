@@ -21,7 +21,7 @@ function application(principal = tokenPrincipal) {
   const app = new Hono()
   const sessions = { authenticateSession: vi.fn().mockResolvedValue(session) }
   const authenticateToken = vi.fn().mockResolvedValue(principal)
-  // Same order as internal-app.ts: a browser request is checked for Origin before its session is touched.
+  // internal-app.tsと同じ順。ブラウザからの要求は、sessionに触れる前にOriginを確かめる。
   const safeOrigin = requireSafeOrigin(['https://mado.example.test'])
   app.use('*', (c, next) => c.req.header('Authorization') !== undefined ? next() : safeOrigin(c, next))
   app.use('*', requireInternalApiAuthentication({ sessions, authenticateToken, cookieName: 'session', idleSeconds: 300 }))
@@ -97,7 +97,7 @@ describe('トークンの接続制限', () => {
     const pool = { query: vi.fn() } as unknown as Pool
     app.use('*', async (c, next) => { setRequestPrincipal(c, { ...tokenPrincipal, permissions: ['connections:manage'] }); await next() })
     app.use('/connections/:connectionId', requireConnectionAccess(pool))
-    // Match the production handlers' parameter name as well as the middleware's.
+    // middlewareのパラメータ名だけでなく、本番のハンドラのパラメータ名にも合わせる。
     app.put('/connections/:id', async c => c.json({ visible: [...(await visibleConnectionIds(pool, c))!] }))
     expect((await app.request('/connections/outside', { method: 'PUT' })).status).toBe(404)
     expect(await (await app.request('/connections/selected', { method: 'PUT' })).json()).toEqual({ visible: ['selected'] })

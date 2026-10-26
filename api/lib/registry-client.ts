@@ -320,8 +320,8 @@ export function createRegistryClient(options: RegistryClientOptions): RegistryCl
     }
 
     if (!response.ok) {
-      // Do not copy arbitrary upstream details into a response: Registry
-      // metadata can contain contract and storage references.
+      // 上流の詳細を応答にそのまま写さない。Registryのメタデータには、
+      // 契約や保存場所への参照が入っていることがある。
       throw new RegistryClientError(`Registry returned HTTP ${response.status}`, response.status, 'upstream')
     }
     try {
