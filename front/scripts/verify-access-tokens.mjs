@@ -2,18 +2,18 @@ import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 
-const base = process.env.MADO_VERIFICATION_WEB_URL ?? 'http://127.0.0.1:6329'
-const api = process.env.MADO_VERIFICATION_API_URL ?? 'http://127.0.0.1:4329'
+const base = process.env.MDC_VERIFICATION_WEB_URL ?? 'http://127.0.0.1:6329'
+const api = process.env.MDC_VERIFICATION_API_URL ?? 'http://127.0.0.1:4329'
 for (const url of [base, api]) {
   if (!['127.0.0.1', 'localhost'].includes(new URL(url).hostname)) throw new Error('Verification requires loopback URLs')
 }
 const marker = await (await fetch(`${api}/verification`)).json()
 assert.deepEqual(marker, { kind: 'mado-access-tokens', database: 'dashboard_access_tokens_verify' })
-const modulePath = process.env.MADO_PLAYWRIGHT_MODULE
-if (!modulePath) throw new Error('Set MADO_PLAYWRIGHT_MODULE to an installed Playwright index.mjs')
+const modulePath = process.env.MDC_PLAYWRIGHT_MODULE
+if (!modulePath) throw new Error('Set MDC_PLAYWRIGHT_MODULE to an installed Playwright index.mjs')
 const { chromium } = await import(pathToFileURL(modulePath).href)
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
-  ...(process.env.MADO_CHROMIUM_PATH ? { executablePath: process.env.MADO_CHROMIUM_PATH } : {}) })
+  ...(process.env.MDC_CHROMIUM_PATH ? { executablePath: process.env.MDC_CHROMIUM_PATH } : {}) })
 const context = await browser.newContext({ locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: { width: 1440, height: 1000 } })
 await context.addInitScript(() => localStorage.setItem('mado.theme', 'light'))
 const page = await context.newPage()
@@ -22,7 +22,7 @@ page.on('pageerror', error => pageErrors.push(error.message))
 page.on('console', message => {
   if (message.type() === 'error' && /TypeError:|ReferenceError:/.test(message.text())) pageErrors.push(message.text())
 })
-const directory = process.env.MADO_SCREENSHOT_DIR
+const directory = process.env.MDC_SCREENSHOT_DIR
 const tokenName = '学習パイプライン'
 const row = () => page.getByRole('article', { name: tokenName, exact: true })
 async function screenshot(name, target = page) {
