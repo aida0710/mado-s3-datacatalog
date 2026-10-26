@@ -113,6 +113,21 @@ describe('エラーの文', () => {
     await expect(requestApi('/api/internal/notes/home', Note)).rejects.toThrow('Could not reach the server.')
   })
 
+  it('本文を自分で読む取得（tar・Blob・HEAD）の通信の失敗も、画面の言語の文にする', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+
+    await expect(fetchApiResponse('/api/internal/storage/c/preview/tar')).rejects.toThrow('サーバーに接続できませんでした。')
+  })
+
+  it('画面を閉じて取得を止めたときは、通信の失敗にせず止めた理由をそのまま返す', async () => {
+    const controller = new AbortController()
+    const reason = new Error('閉じた')
+    vi.stubGlobal('fetch', vi.fn(async () => { throw reason }))
+    controller.abort(reason)
+
+    await expect(fetchApiResponse('/api/internal/storage/c/preview/raw', { signal: controller.signal })).rejects.toBe(reason)
+  })
+
   it('形の合わない応答は、どの API かを添えた画面の言語の文にし、違いの詳細は console に残す', async () => {
     respondWith(200, { exists: 'yes' })
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -21,11 +21,12 @@ function streamOf(chunks: number[][]) {
   }
 }
 
-function res(chunks: number[][], init: { ok?: boolean; statusText?: string } = {}) {
+function res(chunks: number[][], init: { ok?: boolean; status?: number; statusText?: string } = {}) {
   const s = streamOf(chunks)
   return {
     fake: {
       ok: init.ok ?? true,
+      status: init.status ?? 200,
       statusText: init.statusText ?? 'OK',
       body: s.body,
       json: async () => ({}),
@@ -87,15 +88,16 @@ describe('api.readHead', () => {
   })
 
   it('4xx / 5xx は statusText で throw する', async () => {
-    const { fake } = res([], { ok: false, statusText: 'Not Found' })
+    const { fake } = res([], { ok: false, status: 404, statusText: 'Not Found' })
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(fake)
 
-    await expect(api.readHead('/x', 1024)).rejects.toThrow('Not Found')
+    await expect(api.readHead('/x', 1024)).rejects.toThrow('HTTP 404 Not Found')
   })
 
   it('エラー body に error があればそれを使う', async () => {
     const fake = {
       ok: false,
+      status: 413,
       statusText: 'Payload Too Large',
       json: async () => ({ error: 'entry exceeds preview limit', code: 'preview_limit_exceeded', limitBytes: 1024 }),
     } as unknown as Response
