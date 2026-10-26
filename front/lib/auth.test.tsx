@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SignatureSettings } from '../components/SignatureSettings'
 import NoteEditPage from '../pages/NoteEditPage'
-import { fetchOk } from './api/http'
+import { api } from './api/client'
 import { AuthGate } from './auth'
 import type { AuthUser } from './auth-context'
 
@@ -16,16 +16,16 @@ vi.mock('../components/MonacoMarkdownEditor', () => ({
 }))
 
 const signedInUser: AuthUser = {
-  id: 'user-1', username: 'aida', email: null, displayName: '相田',
+  id: '6f0f7b52-3c1e-4a0e-9d5b-2b7c1f0e8a11', username: 'aida', email: null, displayName: '相田',
   signatureName: '相田', roles: ['admin'], permissions: [], mustChangePassword: false, authMethods: ['local'],
 }
 
 const otherUser: AuthUser = {
-  ...signedInUser, id: 'user-2', username: 'sato', displayName: '佐藤', signatureName: '佐藤',
+  ...signedInUser, id: 'a3d9c6e4-8b2f-4f1a-b7c3-5e6d7f8a9b02', username: 'sato', displayName: '佐藤', signatureName: '佐藤',
 }
 
 const LOCAL_LOGIN_CONFIG = { localEnabled: true, oidc: { enabled: false } }
-const SSO_ONLY_CONFIG = { localEnabled: false, oidc: { enabled: true, label: 'Authentik' } }
+const SSO_ONLY_CONFIG = { localEnabled: false, oidc: { enabled: true, id: 'authentik', label: 'Authentik' } }
 const HOME_NOTE = { exists: true, body: '保存済みの本文', last_editor: '相田', last_edited_at: '2026-09-29T01:00:00Z' }
 const NOTE_BODY_LABEL = 'ノート本文 (Markdown)'
 const DRAFT = '書きかけの下書き'
@@ -142,7 +142,7 @@ describe('AuthGate — API の 401', () => {
     await screen.findByText('ログイン後の画面')
 
     sessionAlive = false
-    await act(async () => { await fetchOk('/api/internal/notes/home').catch(() => {}) })
+    await act(async () => { await api.note('home').catch(() => {}) })
 
     expect(await screen.findByRole('heading', { name: 'ログイン' }, { timeout: SESSION_CHECK_TIMEOUT_MS })).toBeInTheDocument()
     expect(screen.getByText('セッションが切れました。もう一度ログインしてください。')).toBeInTheDocument()
@@ -160,7 +160,7 @@ describe('AuthGate — API の 401', () => {
     await waitUntilInDocument(() => screen.queryByText('ログイン後の画面'), 'ログイン後の画面')
 
     sessionAlive = false
-    await act(async () => { await fetchOk('/api/internal/notes/home').catch(() => {}) })
+    await act(async () => { await api.note('home').catch(() => {}) })
 
     expect(await screen.findByRole('dialog', { name: 'ログイン' }, { timeout: SESSION_CHECK_TIMEOUT_MS })).toBeInTheDocument()
   })
@@ -177,7 +177,7 @@ describe('AuthGate — API の 401', () => {
     expect(localStorage.getItem(CACHED_LIST_KEY)).not.toBeNull()
 
     sessionAlive = false
-    await act(async () => { await fetchOk('/api/internal/notes/home').catch(() => {}) })
+    await act(async () => { await api.note('home').catch(() => {}) })
 
     await screen.findByRole('heading', { name: 'ログイン' }, { timeout: SESSION_CHECK_TIMEOUT_MS })
     expect(localStorage.getItem(CACHED_LIST_KEY)).toBeNull()
@@ -192,7 +192,7 @@ describe('AuthGate — API の 401', () => {
     renderGate()
     await screen.findByText('ログイン後の画面')
 
-    await act(async () => { await fetchOk('/api/internal/notes/home').catch(() => {}) })
+    await act(async () => { await api.note('home').catch(() => {}) })
 
     await waitFor(() => expect(server.callsTo('/api/auth/me')).toBe(2))
     expect(screen.getByText('ログイン後の画面')).toBeInTheDocument()
@@ -211,17 +211,17 @@ describe('AuthGate — API の 401', () => {
 
     sessionAlive = false
     await act(async () => {
-      await Promise.all([1, 2, 3].map(() => fetchOk('/api/internal/notes/home').catch(() => {})))
+      await Promise.all([1, 2, 3].map(() => api.note('home').catch(() => {})))
     })
 
     await screen.findByRole('heading', { name: 'ログイン' }, { timeout: SESSION_CHECK_TIMEOUT_MS })
     expect(server.callsTo('/api/auth/me')).toBe(2) // 起動時の 1 回 + 401 の確認 1 回
   })
 
-  it('認証設定が404ならエラーを表示しアプリを開かない', async () => {
+  it('認証設定が404ならエラーを、APIの文を添えて表示しアプリを開かない', async () => {
     const server = stubServer({})
     renderGate()
-    expect(await screen.findByRole('alert')).toHaveTextContent('認証設定')
+    expect(await screen.findByRole('alert')).toHaveTextContent('認証の初期化に失敗しました（not found）')
     expect(screen.queryByText('ログイン後の画面')).not.toBeInTheDocument()
     expect(server.callsTo('/api/auth/me')).toBe(0)
   })
@@ -240,7 +240,7 @@ describe('AuthGate — API の 401', () => {
     await user.type(screen.getByLabelText('パスワード'), 'wrong-password')
     await user.click(screen.getByRole('button', { name: 'ログイン' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('パスワードが違います')
+    expect(await screen.findByRole('alert')).toHaveTextContent('invalid identifier or password')
     expect(server.callsTo('/api/auth/me')).toBe(1)
     // 起動時の未ログインは「切れた」のではないので、理由は出さない。
     expect(screen.queryByText('セッションが切れました。もう一度ログインしてください。')).not.toBeInTheDocument()
@@ -259,7 +259,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => sessionAlive ? json(200, { user: signedInUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
-      '/api/auth/local/login': () => { sessionAlive = true; return json(200, { ok: true }) },
+      '/api/auth/local/login': () => { sessionAlive = true; return json(200, { user: signedInUser }) },
       '/api/internal/notes/home': noteRoute(() => sessionAlive, savedBodies),
     })
     const user = userEvent.setup()
@@ -306,7 +306,7 @@ describe('AuthGate — 編集中に session が切れたとき', () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => currentUser ? json(200, { user: currentUser }) : json(401, { error: 'unauthorized', code: 'authentication_required' }),
-      '/api/auth/local/login': () => { currentUser = otherUser; return json(200, { ok: true }) },
+      '/api/auth/local/login': () => { currentUser = otherUser; return json(200, { user: otherUser }) },
       '/api/internal/notes/home': noteRoute(() => currentUser !== null),
     })
     const user = userEvent.setup()
@@ -427,7 +427,7 @@ describe('AuthGate — サインアウト', () => {
     stubServer({
       '/api/auth/config': () => json(200, LOCAL_LOGIN_CONFIG),
       '/api/auth/me': () => json(200, { user: signedInUser }),
-      '/api/auth/logout': () => json(200, { ok: true, logoutUrl: null }),
+      '/api/auth/logout': () => json(200, { ok: true, logoutUrl: null, idpLogoutUnavailable: false }),
     })
     const user = userEvent.setup()
     renderGate()
@@ -471,7 +471,7 @@ describe('AuthGate — サインアウト', () => {
     await user.click(screen.getByRole('button', { name: 'サインアウト' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'サインアウトできませんでした（HTTP 500）。ログイン状態のままです。時間をおいてもう一度お試しください。',
+      'サインアウトできませんでした（internal error）。ログイン状態のままです。時間をおいてもう一度お試しください。',
     )
     expect(screen.getByText('ログイン後の画面')).toBeInTheDocument()
     expect(localStorage.getItem(CACHED_LIST_KEY)).not.toBeNull()

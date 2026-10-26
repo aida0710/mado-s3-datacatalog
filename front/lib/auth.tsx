@@ -1,31 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react'
+import type { z } from 'zod'
+import { isApiError, NETWORK_ERROR_CODE } from '@mado/design-system/http'
 import { AuthOverlay } from '../components/AuthOverlay'
 import { AUTH_TITLE_ID, ChangePasswordPage, LoginPage } from '../pages/LoginPage'
+import type { AuthConfig, LogoutResult } from '../../api/shared/schemas/auth'
+import { authClient } from './api/auth-client'
 import { clearAllCaches } from './api/cache'
+import { isUnauthorizedError } from './api/http'
 import { subscribeUnauthorized } from './api/unauthorized-events'
 import { AuthContext, type AuthUser } from './auth-context'
 import { nextAuthSession, SIGNED_OUT, type AuthSessionState } from './auth-session-state'
-import { localizeMessage } from '../i18n/localizeMessage'
+import { errorReason } from '../i18n/loadFailedMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
-interface AuthConfig {
-  localEnabled: boolean
-  oidc: { enabled: boolean; id?: string; label?: string }
-}
-
-/** 今の session の User。session が無い・切れていれば null。 */
-async function fetchCurrentUser(): Promise<AuthUser | null> {
-  const response = await fetch('/api/auth/me', { headers: { Accept: 'application/json' } })
-  if (response.status === 401) return null
-  if (!response.ok) throw new Error(translate('auth.couldNotCheckAuthenticationStatus'))
-  const body = await response.json() as { user: AuthUser }
-  return body.user
-}
-
 /** session が無ければログイン画面、パスワードを変える必要があれば変更画面。どちらも要らなければ null。 */
 function authPageFor({ config, session, onSessionChanged }: {
-  config: AuthConfig
+  config: z.infer<typeof AuthConfig>
   session: AuthSessionState
   onSessionChanged(): Promise<void>
 }): ReactNode {
@@ -46,10 +37,11 @@ function authPageFor({ config, session, onSessionChanged }: {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   useLocale()
-  const [config, setConfig] = useState<AuthConfig | null>(null)
+  const [config, setConfig] = useState<z.infer<typeof AuthConfig> | null>(null)
   const [session, dispatchSession] = useReducer(nextAuthSession, SIGNED_OUT)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // 起動時に認証の設定や session を確かめられなかった理由。表示言語を切り替えても出し直せるよう、投げられたものを持つ。
+  const [startupFailure, setStartupFailure] = useState<{ cause: unknown } | null>(null)
   const confirmingSessionRef = useRef(false)
 
   // /api/auth/me で確かめた User を反映する。session が無ければ、同じブラウザを次に使う人へ
@@ -66,7 +58,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [])
 
   const reload = useCallback(async () => {
-    applyCurrentUser(await fetchCurrentUser())
+    applyCurrentUser(await authClient.currentUser())
   }, [applyCurrentUser])
 
   // API が 401 を返したときに、session が本当に切れたかを確かめる。
@@ -77,7 +69,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     try {
       // session が有効なら画面はそのまま残す。User を入れ直すと画面全体が描き直され、
       // 同じ API を呼び直して 401 を繰り返すおそれがある。
-      if (await fetchCurrentUser()) return
+      if (await authClient.currentUser()) return
       applyCurrentUser(null)
     } catch {
       // /api/auth/me にも届かないときは session の状態が分からないので、画面を残す。
@@ -112,15 +104,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     let current = true
     ;(async () => {
       try {
-        const response = await fetch('/api/auth/config', { headers: { Accept: 'application/json' } })
-        if (!current) return
-        if (!response.ok) throw new Error(translate('auth.couldNotLoadAuthenticationSettings'))
-        const next = await response.json() as AuthConfig
+        const next = await authClient.config()
         if (!current) return
         setConfig(next)
         await reload()
       } catch (cause) {
-        if (current) setError(cause instanceof Error ? cause.message : translate('auth.couldNotInitializeAuthentication'))
+        if (current) setStartupFailure({ cause })
       } finally {
         if (current) setLoading(false)
       }
@@ -131,30 +120,26 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // サーバーが session を消せたときだけ画面をログアウト状態にする。失敗したら
   // ログイン状態を保ったまま、利用者に見せる文言の Error で reject する。
   const logout = useCallback(async () => {
-    let response: Response
+    let result: z.infer<typeof LogoutResult>
     try {
-      response = await fetch('/api/auth/logout', { method: 'POST' })
-    } catch {
+      result = await authClient.logout()
+    } catch (failure) {
+      // /logout は sessionGuard の後ろにあるので、401 は session がもう無いことを表す。
+      if (isUnauthorizedError(failure)) {
+        logoutLocally()
+        return
+      }
       // 要求がサーバーに届いて session を失効させたあとで通信が切れた可能性もあるので、
       // 「ログイン状態のまま」とは言い切らない。
-      throw new Error(translate('auth.couldNotConnectToTheServerToConfirm'))
+      if (isApiError(failure) && failure.code === NETWORK_ERROR_CODE) {
+        throw new Error(translate('auth.couldNotConnectToTheServerToConfirm'), { cause: failure })
+      }
+      // /logout は session を失効させられれば、IdP の logout URL を作れなくても 200 を返す。
+      // したがってそれ以外の失敗は、session が残っていることを表す。
+      throw new Error(translate('auth.couldNotSignOutYouAreStillSignedIn', { value0: errorReason(failure) }), { cause: failure })
     }
-    // /logout は sessionGuard の後ろにあるので、401 は session がもう無いことを表す。
-    if (response.status === 401) {
-      logoutLocally()
-      return
-    }
-    // /logout は session を失効させられれば、IdP の logout URL を作れなくても 200 を返す。
-    // したがってそれ以外の失敗は、session が残っていることを表す。
-    if (!response.ok) {
-      throw new Error(translate('auth.couldNotSignOutHttpYouAreStill', { value0: response.status }))
-    }
-    const body = await response.json().catch(() => null) as {
-      logoutUrl?: string | null
-      idpLogoutUnavailable?: boolean
-    } | null
-    logoutLocally({ idpLogoutUnavailable: body?.idpLogoutUnavailable === true })
-    if (body?.logoutUrl) window.location.assign(body.logoutUrl)
+    logoutLocally({ idpLogoutUnavailable: result.idpLogoutUnavailable })
+    if (result.logoutUrl) window.location.assign(result.logoutUrl)
   }, [logoutLocally])
   // 画面には、描いている User を渡す。session が切れてログイン画面を重ねている間も、
   // 残した画面は同じ User のまま描く。
@@ -162,7 +147,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ user: screenUser, logout, reload }), [screenUser, logout, reload])
 
   if (loading) return <div className="auth-splash" role="status">{translate('common.loading')}</div>
-  if (error) return <div className="auth-splash error" role="alert">{localizeMessage(error)}</div>
+  if (startupFailure) {
+    return (
+      <div className="auth-splash error" role="alert">
+        {translate('auth.couldNotInitializeAuthentication')}
+        {translate('common.parenthetical', { value0: errorReason(startupFailure.cause) })}
+      </div>
+    )
+  }
   const authPage = config ? authPageFor({ config, session, onSessionChanged: reload }) : null
   // 残す画面が無ければ（起動時やサインアウトのあと）、ログイン画面だけを出す。
   if (authPage && !screenUser) return authPage

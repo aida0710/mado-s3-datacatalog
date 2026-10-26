@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import { TarPreview } from './types'
 import { SHORT_CACHE_TTL_MS, TTLCache } from './cache'
-import { buildUrl, cacheKey, fetchOk, storagePath } from './http'
+import { buildUrl, cacheKey, fetchApiResponse, storagePath } from './http'
 import { loadTarPreviewStream, type TarPreviewCallbacks } from './tar-preview-stream'
 export type { TarEntry, TarPreviewCallbacks } from './tar-preview-stream'
 
@@ -46,7 +46,7 @@ export const previewClient = {
   // テキストかどうか見るときはtarEntryUrlのmaxBytesも指定し、
   // サーバーで先頭取得、ブラウザで読み取り打ち切りの両方を行う。
   readHead: async (url: string, maxBytes: number): Promise<Uint8Array> => {
-    const res = await fetchOk(url)
+    const res = await fetchApiResponse(url)
     // body が無い環境 (TS の型上 nullable) では stream を刻めない。せめて maxBytes で切る。
     if (!res.body) return new Uint8Array(await res.arrayBuffer()).slice(0, maxBytes)
 

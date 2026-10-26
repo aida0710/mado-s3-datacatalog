@@ -23,7 +23,7 @@ afterEach(() => vi.clearAllMocks())
 const curator: AuthUser = {
   id: '00000000-0000-4000-8000-000000000001', username: 'curator', email: null,
   displayName: 'Curator', signatureName: 'Curator', roles: ['curator'],
-  permissions: ['storage:read', 'lineage:read', 'lineage:curate'], mustChangePassword: false,
+  permissions: ['storage:read', 'lineage:read', 'lineage:curate'], mustChangePassword: false, authMethods: ['local'],
 }
 
 function renderPage(user: AuthUser = curator) {

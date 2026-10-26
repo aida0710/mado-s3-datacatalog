@@ -41,6 +41,6 @@ describe('useMediaSrc — 書庫内のエントリ', () => {
     const { result } = renderHook(() => useMediaSrc({ directUrl: null, archiveEntryUrl: ARCHIVE_ENTRY_URL, archiveKey: 'a.tar.gz' }))
 
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.error).toBe('Bad Gateway')
+    expect(result.current.error).toBe('HTTP 502 Bad Gateway')
   })
 })

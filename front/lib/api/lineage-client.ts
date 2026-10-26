@@ -14,7 +14,8 @@ import type {
   ManualLineageRegistrationInput,
   ManualStorageLocationInput,
 } from './types'
-import { API_BASE, buildUrl, getJson, mutateJson } from './http'
+import { jsonRequestInit } from '@mado/design-system/http'
+import { API_BASE, buildUrl, requestApi } from './http'
 
 // Dataset lineage。Marquez / Registry の違いは API 側で吸収し、ブラウザは統一した
 // domain graph だけを受け取る。React Flow 用の座標はここでは持たない。
@@ -26,7 +27,7 @@ export const lineageClient = {
     name?: string
     versionId?: string
     depth?: number
-  }) => getJson(
+  }) => requestApi(
     buildUrl(`${API_BASE}/lineage/graph`, {
       mode: params.mode,
       rootKind: params.rootKind,
@@ -39,24 +40,24 @@ export const lineageClient = {
   ),
 
   lineageDataset: (datasetId: string) =>
-    getJson(`${API_BASE}/lineage/datasets/${encodeURIComponent(datasetId)}`, DatasetDetail),
+    requestApi(`${API_BASE}/lineage/datasets/${encodeURIComponent(datasetId)}`, DatasetDetail),
 
   updateLineageDataset: (datasetId: string, input: LineageDatasetUpdateInput) =>
-    mutateJson(
+    requestApi(
       `${API_BASE}/lineage/curation/datasets/${encodeURIComponent(datasetId)}`,
-      { method: 'PATCH', body: input },
       DatasetDetail,
+      jsonRequestInit('PATCH', input),
     ),
 
   lineageVersion: (versionId: string) =>
-    getJson(`${API_BASE}/lineage/versions/${encodeURIComponent(versionId)}`, DatasetVersionDetail),
+    requestApi(`${API_BASE}/lineage/versions/${encodeURIComponent(versionId)}`, DatasetVersionDetail),
 
   lineageRun: (runId: string) =>
-    getJson(`${API_BASE}/lineage/runs/${encodeURIComponent(runId)}`, LineageRunDetail),
+    requestApi(`${API_BASE}/lineage/runs/${encodeURIComponent(runId)}`, LineageRunDetail),
 
   /** cursor は前のページの応答の nextCursor。最初のページは省く。 */
   lineageCatalog: (params: { q?: string; namespace?: string; limit?: number; cursor?: string } = {}) =>
-    getJson(buildUrl(`${API_BASE}/lineage/catalog`, {
+    requestApi(buildUrl(`${API_BASE}/lineage/catalog`, {
       q: params.q,
       namespace: params.namespace,
       limit: params.limit == null ? undefined : String(params.limit),
@@ -64,17 +65,17 @@ export const lineageClient = {
     }), DatasetCatalogResponse),
 
   lineageResolveLocation: (connectionId: string, bucket: string, key: string) =>
-    getJson(buildUrl(`${API_BASE}/lineage/resolve-location`, { connectionId, bucket, key }), StorageLineageResolution),
+    requestApi(buildUrl(`${API_BASE}/lineage/resolve-location`, { connectionId, bucket, key }), StorageLineageResolution),
 
   registerManualDataset: (input: ManualDatasetRegistrationInput) =>
-    mutateJson(`${API_BASE}/lineage/curation/datasets`, { method: 'POST', body: input }, ManualLineageMutationResult),
+    requestApi(`${API_BASE}/lineage/curation/datasets`, ManualLineageMutationResult, jsonRequestInit('POST', input)),
 
   registerManualLocation: (input: {
     versionId: string
     location: ManualStorageLocationInput
     evidenceRefs: string[]
-  }) => mutateJson(`${API_BASE}/lineage/curation/locations`, { method: 'POST', body: input }, ManualLineageMutationResult),
+  }) => requestApi(`${API_BASE}/lineage/curation/locations`, ManualLineageMutationResult, jsonRequestInit('POST', input)),
 
   registerManualLineage: (input: ManualLineageRegistrationInput) =>
-    mutateJson(`${API_BASE}/lineage/curation/runs`, { method: 'POST', body: input }, ManualLineageMutationResult),
+    requestApi(`${API_BASE}/lineage/curation/runs`, ManualLineageMutationResult, jsonRequestInit('POST', input)),
 }

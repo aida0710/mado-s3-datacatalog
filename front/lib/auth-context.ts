@@ -1,16 +1,8 @@
 import { createContext, useContext } from 'react'
+import type { z } from 'zod'
+import type { AuthUser as AuthUserSchema } from '../../api/shared/schemas/auth'
 
-export interface AuthUser {
-  id: string
-  username: string | null
-  email: string | null
-  displayName: string
-  signatureName: string
-  roles: string[]
-  permissions: string[]
-  mustChangePassword: boolean
-  authMethods?: Array<'local' | 'sso'>
-}
+export type AuthUser = z.infer<typeof AuthUserSchema>
 
 export interface AuthContextValue {
   user: AuthUser | null

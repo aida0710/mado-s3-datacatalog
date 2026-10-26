@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { errorFromResponse, fetchApi } from './api/http'
+import { fetchApiResponse } from './api/http'
 import { prepareTarEntry } from './prepareTarEntry'
 
 export interface MediaSrcState {
@@ -35,8 +35,7 @@ export function useMediaSrc({ directUrl, archiveEntryUrl, archiveKey }: {
         setArchive({ src: streamingUrl, loading: false, error: null })
         return
       }
-      const response = await fetchApi(archiveEntryUrl, { signal: ctl.signal })
-      if (!response.ok) throw await errorFromResponse(response)
+      const response = await fetchApiResponse(archiveEntryUrl, { signal: ctl.signal })
       const blob = await response.blob()
       ctl.signal.throwIfAborted()
       objectUrl = URL.createObjectURL(blob)

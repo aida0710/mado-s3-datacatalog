@@ -1,22 +1,23 @@
 import type { z } from 'zod'
 import { Note, NoteHistoryList, NoteHistoryVersion, PutNoteOk } from './types'
-import { API_BASE, buildUrl, getJson, mutateJson } from './http'
+import { jsonRequestInit } from '@mado/design-system/http'
+import { API_BASE, buildUrl, requestApi } from './http'
 
 const notePath = (slug: string) => `${API_BASE}/notes/${encodeURIComponent(slug)}`
 
 // Team note (postgres notes テーブル)。mado S3 Data Catalog 全体で 1 つの共有 Markdown。
 export const notesClient = {
-  note: (slug: string) => getJson(notePath(slug), Note),
+  note: (slug: string) => requestApi(notePath(slug), Note),
 
   putNote: (slug: string, body: string): Promise<z.infer<typeof PutNoteOk>> =>
-    mutateJson(notePath(slug), { method: 'PUT', body: { body } }, PutNoteOk),
+    requestApi(notePath(slug), PutNoteOk, jsonRequestInit('PUT', { body })),
 
   // 編集履歴 (新しい順)。
   noteHistory: (slug: string, limit?: number) =>
-    getJson(buildUrl(`${notePath(slug)}/history`, {
+    requestApi(buildUrl(`${notePath(slug)}/history`, {
       limit: limit != null ? String(limit) : undefined,
     }), NoteHistoryList),
 
   noteHistoryVersion: (slug: string, id: number) =>
-    getJson(`${notePath(slug)}/history/${id}`, NoteHistoryVersion),
+    requestApi(`${notePath(slug)}/history/${id}`, NoteHistoryVersion),
 }

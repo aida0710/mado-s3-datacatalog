@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import { ListBuckets, StorageList } from './types'
 import { LONG_CACHE_TTL_MS, TTLCache } from './cache'
-import { buildUrl, cacheKey, getJson, storagePath, type Revalidatable } from './http'
+import { buildUrl, cacheKey, requestApi, storagePath, type Revalidatable } from './http'
 
 // 応答の形が変わったら persistKey の版を上げ、古い形の保存分を読まないようにする。
 const listCache = new TTLCache<z.infer<typeof StorageList>>(LONG_CACHE_TTL_MS, {
@@ -27,7 +27,7 @@ export const storageListClient = {
   ) =>
     bucketsCache.get(
       cacheKey('buckets', connectionId),
-      () => getJson(
+      () => requestApi(
         buildUrl(storagePath(connectionId, '/buckets'), { refresh: opts.refresh ? '1' : undefined }),
         ListBuckets,
       ),
@@ -58,7 +58,7 @@ export const storageListClient = {
     if (force) listCache.invalidate(key)
     return listCache.get(
       key,
-      () => getJson(buildUrl(storagePath(connectionId, '/list'), {
+      () => requestApi(buildUrl(storagePath(connectionId, '/list'), {
         bucket,
         prefix,
         cursor,

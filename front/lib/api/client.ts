@@ -11,6 +11,8 @@ import { readmeClient } from './readme-client'
 import { settingsClient } from './settings-client'
 import { storageListClient } from './storage-list-client'
 import { tagsClient } from './tags-client'
+import { usersClient } from './users-client'
+import { auditClient } from './audit-client'
 
 export type { Revalidatable } from './http'
 export type { TarEntry, TarPreviewCallbacks } from './preview-client'
@@ -33,6 +35,8 @@ export const api = {
   ...jobsClient,
   ...capacityClient,
   ...pricingClient,
+  ...usersClient,
+  ...auditClient,
 
   // 該当キャッシュエントリが「いつ S3 から取得されたか」を Date で返す。
   // null = まだ取得していない / 取得失敗 / invalidate された直後。

@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { LoginHeader } from '@mado/design-system/react'
 import { LanguagePicker } from '../components/LanguagePicker'
 import { ProductLogo } from '../components/shell/ProductLogo'
-import { fetchApi } from '../lib/api/http'
+import type { z } from 'zod'
+import type { AuthConfig } from '../../api/shared/schemas/auth'
+import { authClient } from '../lib/api/auth-client'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
@@ -16,10 +18,7 @@ function AuthCardHeader() {
 }
 
 interface Props {
-  config: {
-    localEnabled: boolean
-    oidc: { enabled: boolean; label?: string }
-  }
+  config: z.infer<typeof AuthConfig>
   /** ログイン中に session が切れて、この画面へ戻されたか。 */
   sessionExpired?: boolean
   /** サインアウトしたが、SSO 側のサインアウトができなかったか。 */
@@ -45,12 +44,7 @@ export function LoginPage({
     setBusy(true)
     setError(null)
     try {
-      const response = await fetch('/api/auth/local/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: form.get('identifier'), password: form.get('password') }),
-      })
-      if (!response.ok) throw new Error(translate('loginPage.incorrectUsernameEmailAddressOrPassword'))
+      await authClient.login(String(form.get('identifier')), String(form.get('password')))
       await onLoggedIn()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : translate('loginPage.couldNotSignIn'))
@@ -63,6 +57,7 @@ export function LoginPage({
   // 2 つのエディタで書き換えかねないので、ログインのあとはホームを開く。
   const returnTo = overlay ? '/' : `${location.pathname}${location.search}${location.hash}`
   const oidcUrl = `/api/auth/oidc/start?returnTo=${encodeURIComponent(returnTo)}`
+  const oidcLabel = config.oidc.enabled ? config.oidc.label : 'SSO'
 
   return (
     <main className="login-page">
@@ -74,7 +69,7 @@ export function LoginPage({
             {sessionExpired && <p role="status">{translate('loginPage.yourSessionHasExpiredSignInAgain')}</p>}
             {idpLogoutIncomplete && (
               <p role="status">
-                {translate('loginPage.youHaveSignedOutOfMadoButCould', { value0: config.oidc.label ?? 'SSO' })}
+                {translate('loginPage.youHaveSignedOutOfMadoButCould', { value0: oidcLabel })}
               </p>
             )}
             {overlay && <p>{translate('loginPage.signInWithTheSameAccountToReturn')}</p>}
@@ -89,7 +84,7 @@ export function LoginPage({
               target={overlay ? '_blank' : undefined}
               rel={overlay ? 'noopener' : undefined}
             >
-              {translate('loginPage.continueWith', { value0: config.oidc.label ?? 'SSO' })}</a>
+              {translate('loginPage.continueWith', { value0: oidcLabel })}</a>
             {overlay && (
               <p className="login-note">{translate('loginPage.signInInANewTabThenReturn')}</p>
             )}
@@ -127,14 +122,9 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
     setBusy(true)
     setError(null)
     try {
-      // ログイン済み（session がある）なので、401 は session が切れたことを表す。fetchApi で
-      // AuthGate へ知らせ、ログイン画面へ戻す。現在のパスワードの誤りは 400 なので知らせない。
-      const response = await fetchApi('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      })
-      if (!response.ok) throw new Error(translate('common.couldNotChangePassword'))
+      // ログイン済み（session がある）なので、401 は session が切れたことを表し、AuthGate へ
+      // 知らせてログイン画面へ戻す。現在のパスワードの誤りは 400 なので知らせない。
+      await authClient.changePassword({ currentPassword, newPassword })
       await onChanged()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : translate('common.couldNotChangePassword'))

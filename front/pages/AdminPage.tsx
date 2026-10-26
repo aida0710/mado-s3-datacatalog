@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent, type MouseEvent } from 'react'
+import { z } from 'zod'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import { narrowerThan } from '@mado/design-system/layout'
 import { useMediaQuery } from '@mado/design-system/react'
@@ -7,43 +8,27 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 import { SecretNotice } from '../components/SecretNotice'
 import AccessTokensPage from './AccessTokensPage'
-import { errorFromResponse, fetchApi } from '../lib/api/http'
+import { api } from '../lib/api/client'
+import type { AuditEvent } from '../../api/shared/schemas/audit'
+import type { ManagedUser, UserList } from '../../api/shared/schemas/users'
 import { useAuth } from '../lib/auth-context'
 import { fmtDateTimeWithSeconds } from '../lib/format'
 import { localizeMessage } from '../i18n/localizeMessage'
 import { useLocale } from '../i18n/useLocale'
 import { translate } from '../i18n/translate'
 
-interface UserRow {
-  id: string
-  username: string | null
-  email: string | null
-  displayName: string
-  status: 'active' | 'disabled'
-  roles: string[]
-  authMethods: Array<'local' | 'sso'>
-}
+type UserRow = z.infer<typeof ManagedUser>
+type AuditEventRow = z.infer<typeof AuditEvent>
 
-interface AuditEventRow {
-  id: number
-  occurred_at: string
-  actor_type: string
-  actor_label: string
-  action: string
-  resource_type: string | null
-  resource_id: string | null
-  outcome: 'pending' | 'success' | 'denied' | 'failure'
-  details?: {
-    target?: { displayName?: string | null; username?: string | null }
-    changes?: Array<{ field: string; label?: string; before: unknown; after: unknown }>
-    [key: string]: unknown
-  }
-}
+// 監査ログの details のうち、画面が読む項目 (操作の対象と、変わった値)。ほかの項目はそのまま並べる。
+const AuditDetailsView = z.looseObject({
+  target: z.object({ displayName: z.string().nullish() }).optional(),
+  changes: z.array(z.object({ field: z.string(), label: z.string().optional(), before: z.unknown(), after: z.unknown() })).optional(),
+})
 
-interface AuditPage {
-  events: AuditEventRow[]
-  /** 続きを読むときに渡す値。中身は見ずにそのまま返す。 */
-  nextCursor: string | null
+function auditDetailsView(details: AuditEventRow['details']): z.infer<typeof AuditDetailsView> {
+  const parsed = AuditDetailsView.safeParse(details ?? {})
+  return parsed.success ? parsed.data : {}
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -118,15 +103,9 @@ const ROLE_OPTIONS = [
 
 type RoleId = (typeof ROLE_OPTIONS)[number]['id']
 
-interface UsersResponse {
-  users: UserRow[]
-  ssoRoleMapping?: Record<string, string>
-}
-
-function normalizeSsoRoleMapping(mapping: Record<string, string> | undefined) {
+function normalizeSsoRoleMapping(mapping: z.infer<typeof UserList>['ssoRoleMapping']) {
   const roleOrder = new Map(ROLE_OPTIONS.map((option, index) => [option.id, index]))
-  return Object.entries(mapping ?? {})
-    .filter((entry): entry is [string, RoleId] => roleOrder.has(entry[1] as RoleId))
+  return Object.entries(mapping)
     .map(([group, role]) => ({ group, role }))
     .sort((a, b) => (roleOrder.get(a.role) ?? 0) - (roleOrder.get(b.role) ?? 0)
       || a.group.localeCompare(b.group))
@@ -137,12 +116,6 @@ function formatAuditValue(value: unknown): string {
   if (Array.isArray(value)) return value.length ? value.map(formatAuditValue).join(', ') : '—'
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
-}
-
-async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetchApi(url, init)
-  if (!response.ok) throw await errorFromResponse(response)
-  return response.json() as Promise<T>
 }
 
 const OUTCOME_BADGES: Record<AuditEventRow['outcome'], string> = {
@@ -222,7 +195,7 @@ function UsersPage() {
   const reload = useCallback(async () => {
     setError(null)
     try {
-      const body = await jsonRequest<UsersResponse>('/api/internal/users')
+      const body = await api.users()
       setUsers(body.users)
       setSsoRoleMappings(normalizeSsoRoleMapping(body.ssoRoleMapping))
     } catch (cause) {
@@ -232,7 +205,7 @@ function UsersPage() {
 
   useEffect(() => {
     let current = true
-    jsonRequest<UsersResponse>('/api/internal/users')
+    api.users()
       .then(body => {
         if (!current) return
         setUsers(body.users)
@@ -250,12 +223,9 @@ function UsersPage() {
     const form = new FormData(formElement)
     setError(null)
     try {
-      await jsonRequest('/api/internal/users', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: form.get('username'), email: form.get('email') || null,
-          displayName: form.get('displayName'), password: form.get('password'), roles: [form.get('role')],
-        }),
+      await api.createUser({
+        username: String(form.get('username')), email: String(form.get('email') ?? '') || null,
+        displayName: String(form.get('displayName')), password: String(form.get('password')), roles: [String(form.get('role'))],
       })
       formElement.reset()
       setRole('viewer')
@@ -272,23 +242,17 @@ function UsersPage() {
     setError(null)
     setNotice(null)
     try {
-      await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          displayName: form.get('displayName'),
-          username: form.get('username'),
-          status: form.get('status'),
-        }),
+      await api.updateUser(user.id, {
+        displayName: String(form.get('displayName')),
+        username: String(form.get('username')),
+        status: form.get('status') === 'disabled' ? 'disabled' : 'active',
       })
       // 対応表があるときのSSO連携済みUserのRoleはAuthentikを正本としてlogin時に同期する。
       // disabledなform controlはFormDataに含まれないため、API呼び出し自体も明示的に省く。
       if (!(ssoManagesRoles && user.authMethods.includes('sso'))) {
         const nextRole = String(form.get('role'))
         if (user.roles.length !== 1 || user.roles[0] !== nextRole) {
-          await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}/roles`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roles: [nextRole] }),
-          })
+          await api.updateUserRoles(user.id, [nextRole])
         }
       }
       setNotice(translate('adminPage.updated', { value0: String(form.get('displayName')) }))
@@ -302,10 +266,8 @@ function UsersPage() {
     setError(null)
     setNotice(null)
     try {
-      const body = await jsonRequest<{ temporaryPassword: string }>(`/api/internal/users/${encodeURIComponent(user.id)}/reset-password`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
-      })
-      setSecret({ label: translate('adminPage.temporaryPasswordFor', { value0: user.displayName }), value: body.temporaryPassword })
+      const { temporaryPassword } = await api.resetUserPassword(user.id)
+      if (temporaryPassword) setSecret({ label: translate('adminPage.temporaryPasswordFor', { value0: user.displayName }), value: temporaryPassword })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : translate('adminPage.couldNotResetPassword'))
     }
@@ -315,7 +277,7 @@ function UsersPage() {
   const deleteUser = async (user: UserRow) => {
     setError(null)
     setNotice(null)
-    await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}`, { method: 'DELETE' })
+    await api.deleteUser(user.id)
     setDeleting(null)
     setNotice(translate('adminPage.deleted', { value0: user.displayName }))
     await reload()
@@ -520,7 +482,7 @@ function UsersPage() {
 
 function AuditTarget({ event }: { event: AuditEventRow }) {
   useLocale()
-  return <>{event.details?.target?.displayName ?? event.resource_id ?? event.resource_type ?? '—'}</>
+  return <>{auditDetailsView(event.details).target?.displayName ?? event.resource_id ?? event.resource_type ?? '—'}</>
 }
 
 function AuditPageView() {
@@ -529,14 +491,14 @@ function AuditPageView() {
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [openIds, toggleRow] = useOpenRows<number>()
+  const [openIds, toggleRow] = useOpenRows<string>()
   // 狭い画面では時刻・操作・結果だけを行に残し、操作者と対象は開いた詳細に出す。
   const isNarrow = useMediaQuery(narrowerThan('md'))
 
   const reload = useCallback(async () => {
     setError(null)
     try {
-      const body = await jsonRequest<AuditPage>('/api/internal/audit-events?limit=30')
+      const body = await api.auditEvents()
       setAuditEvents(body.events)
       setNextCursor(body.nextCursor)
     } catch (cause) {
@@ -546,7 +508,7 @@ function AuditPageView() {
 
   useEffect(() => {
     let current = true
-    jsonRequest<AuditPage>('/api/internal/audit-events?limit=30')
+    api.auditEvents()
       .then(body => {
         if (!current) return
         setAuditEvents(body.events)
@@ -562,7 +524,7 @@ function AuditPageView() {
     if (!nextCursor || loading) return
     setLoading(true)
     try {
-      const body = await jsonRequest<AuditPage>(`/api/internal/audit-events?limit=30&cursor=${encodeURIComponent(nextCursor)}`)
+      const body = await api.auditEvents(nextCursor)
       setAuditEvents(current => [...current, ...body.events])
       setNextCursor(body.nextCursor)
     } catch (cause) {
@@ -601,7 +563,7 @@ function AuditPageView() {
               {auditEvents.map(event => {
                 const isOpen = openIds.has(event.id)
                 const detailId = `audit-event-${event.id}`
-                const changes = event.details?.changes ?? []
+                const changes = auditDetailsView(event.details).changes ?? []
                 return [
                   <tr
                     key={event.id}

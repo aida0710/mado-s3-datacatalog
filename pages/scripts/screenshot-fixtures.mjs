@@ -37,7 +37,7 @@ const permissions = [
   'content:write', 'lineage:read', 'lineage:curate', 'jobs:operate', 'tags:manage',
 ]
 const user = {
-  id: 'sample-admin', username: 'demo-admin', email: 'admin@example.com',
+  id: '5a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d', username: 'demo-admin', email: 'admin@example.com',
   displayName: 'Sample admin', signatureName: 'Sample team', roles: ['admin'],
   permissions, mustChangePassword: false, authMethods: ['local'],
 }
@@ -227,7 +227,7 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (path === '/api/internal/notes/home') return sendJson({ exists: true, body: text.noteBody, last_editor: 'Sample team', last_edited_at: capturedAt })
   if (path.endsWith('/notes/home/history')) return sendJson({ versions: [{ id: 3, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 }] })
   if (path.endsWith('/notes/home/history/3')) return sendJson({ id: 3, slug: 'home', body: text.noteBody, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 })
-  if (path === '/api/internal/users') return sendJson({ users: [user, { ...user, id: 'sample-viewer', username: 'demo-viewer', displayName: 'Sample viewer', email: 'viewer@example.com', roles: ['viewer'], status: 'active' }].map(item => ({ ...item, status: 'active' })) })
+  if (path === '/api/internal/users') return sendJson({ users: [user, { ...user, id: '6b2e3d4c-5f6a-4b7c-9d8e-0f1a2b3c4d5e', username: 'demo-viewer', displayName: 'Sample viewer', email: 'viewer@example.com', roles: ['viewer'], status: 'active' }].map(item => ({ ...item, status: 'active' })), ssoRoleMapping: {} })
   if (path === '/api/internal/access-tokens/namespaces') return sendJson({ namespaces: ['podcast', 'sample-audio', 'sample-evaluation', 'speech'], sourceStatus: 'ready' })
   if (path === '/api/internal/access-tokens') return sendJson({ tokens: [{
     id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'audio-pipeline',
