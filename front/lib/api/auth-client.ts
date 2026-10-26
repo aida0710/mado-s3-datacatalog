@@ -1,7 +1,7 @@
-import { jsonRequestInit } from '@mado/design-system/http'
+import { isUnauthorizedError, jsonRequestInit } from '@mado/design-system/http'
 import { AuthConfig, AuthUserResponse, LogoutResult } from '../../../api/shared/schemas/auth'
 import { OkResult } from './types'
-import { isUnauthorizedError, requestApi, requestAuthApi } from './http'
+import { requestApi, requestAuthApi } from './http'
 
 export interface ProfileInput {
   displayName: string
