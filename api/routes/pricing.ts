@@ -13,7 +13,7 @@ import { markAuditNoChange } from '../lib/audit-activity.js'
 
 export const PRICING_REFRESH_KIND = 'pricing.refresh'
 
-/** カタログは Mado 全体で 1 つなので、対象を区別する必要がない。 */
+/** カタログはこのアプリ全体で 1 つなので、対象を区別する必要がない。 */
 export const PRICING_REFRESH_DEDUP_KEY = 'global'
 
 /** キャッシュがこれより古ければ、見積もりを開いたついでに裏で取り直す。 */

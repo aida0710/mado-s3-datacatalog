@@ -333,7 +333,7 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
   })
 
   /**
-   * SSO の session なら、IdP 側もサインアウトさせる URL を返す。Mado の session はもう失効しているので、
+   * SSO の session なら、IdP 側もサインアウトさせる URL を返す。このアプリの session はもう失効しているので、
    * IdP に届かず URL を作れなくても失敗にはしない。ただし IdP 側の session は残るので、
    * 画面で伝えられるよう unavailable を返す。
    */

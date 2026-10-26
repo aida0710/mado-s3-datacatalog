@@ -53,7 +53,7 @@ export interface LineageService {
   projectionStatus(): Promise<LineageProjectionStatus>
 }
 
-/** Mado DBのlineage_storage_bindingsを読むadapter。 */
+/** このアプリのDBのlineage_storage_bindingsを読むadapter。 */
 export interface StorageBindingResolver {
   resolve(storageSystemKeys: readonly string[]): Promise<ReadonlyMap<string, string>>
   keyForConnection(connectionId: string): Promise<string | null>
@@ -299,7 +299,7 @@ export function createLineageService(deps: {
     return { storageSystemKey, uri: resolved.uri, matches: resolved.matches }
   }
 
-  /** 保存場所に Mado の接続 ID を付ける。binding が無ければ Registry の値のまま。見えない接続の ID は除く。 */
+  /** 保存場所にこのアプリの接続 ID を付ける。binding が無ければ Registry の値のまま。見えない接続の ID は除く。 */
   const bindVersionLocations = async (
     version: DatasetVersionDetail,
     visibleConnectionIds: ReadonlySet<string> | null,

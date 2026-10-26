@@ -3,7 +3,7 @@ import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import { apiError } from '../lib/api-error.js'
 
-// アプリ全体の設定 (接続に紐づかない、Mado 全体で 1 つ)。
+// アプリ全体の設定 (接続に紐づかない、このアプリ全体で 1 つ)。
 // 認証と操作権限は internal-app.ts で検証する。
 //
 // 個別キーではなく GET /settings で全件返す。設定が増えるたびに画面表示時の
