@@ -75,6 +75,7 @@ APIを再起動してください。設定例や既定値を変えても、既�
 - `MDC_OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。
 - role mappingが設定されている場合、SSOログインのたびにmado S3 Data Catalog RoleをAuthentik groupへ同期します。
 - 複数groupから複数Roleを付与できます。該当groupが無い場合は`MDC_OIDC_DEFAULT_ROLE`になります。
+- `MDC_OIDC_ROLE_MAPPING_JSON`を空（`{}`）にすると、AuthentikはログインできるかどうかだけをAuthentik groupで決め、RoleはSettings > Access > Usersで管理します。ログインと再確認でRoleを変えず、初回SSOのUserは`MDC_OIDC_DEFAULT_ROLE`で作ります。社内全員が入るgroupを1つだけ`MDC_OIDC_ALLOWED_GROUPS`に入れる運用に向きます。
 - SSO由来の表示名と検証済みemailはログイン時に更新します。mado S3 Data Catalogの署名は上書きしません。
 - Local UserのユーザーIDは連携後も維持します。JIT Userは`preferred_username`が未使用なら採用します。
 
