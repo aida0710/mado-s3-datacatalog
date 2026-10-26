@@ -35,7 +35,7 @@
 .token-connections__option { padding: 8px; overflow-wrap: anywhere; }
 .token-connections__option small { display: block; font-size: var(--font-size-xs); }
 .token-connections__list {
-  /* Keep a long connection list from pushing the form actions out of reach. */
+  /* 接続の一覧が長くても、フォームのボタンを手の届かない所へ押し出さないようにする。 */
   --connection-list-height: 200px;
   max-height: var(--connection-list-height); overflow: auto; margin-top: 8px;
 }
@@ -53,7 +53,7 @@
 .namespace-selection__selected { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
 .namespace-selection__selected button { max-width: 100%; white-space: normal; text-align: start; overflow-wrap: anywhere; }
 .namespace-selection__list {
-  /* Keep the list scrollable while leaving the token form's other controls in reach. */
+  /* 一覧はスクロールできるようにして、トークンのフォームのほかの入力欄に手が届くようにしておく。 */
   --namespace-list-height: 180px;
   max-height: var(--namespace-list-height); overflow-y: auto; border-block: 1px solid var(--border); margin: 8px 0;
 }

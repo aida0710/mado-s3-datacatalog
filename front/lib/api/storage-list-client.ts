@@ -6,8 +6,8 @@ import { buildUrl, cacheKey, getJson, storagePath, type Revalidatable } from './
 // 応答の形が変わったら persistKey の版を上げ、古い形の保存分を読まないようにする。
 const listCache = new TTLCache<z.infer<typeof StorageList>>(LONG_CACHE_TTL_MS, {
   persistKey: 'mado.cache.list.v3',
-  // A browser cache received near the end of the server TTL must not extend the
-  // response another six hours. Revalidate no later than the server expiry.
+  // サーバーのTTLが切れる間際に受け取った応答を、ブラウザのキャッシュでさらに6時間
+  // 延ばしてはならない。遅くともサーバーの期限までに取り直す。
   expiresAt: value => Date.parse(value.cache.expiresAt),
 })
 const bucketsCache = new TTLCache<z.infer<typeof ListBuckets>>(LONG_CACHE_TTL_MS, {

@@ -1,7 +1,7 @@
 import { createServer } from 'vite'
 import { fileURLToPath } from 'node:url'
 
-// Match the isolated API fixture and avoid the application's development ports.
+// 分離したAPIのフィクスチャに合わせ、アプリの開発用のポートを避ける。
 const API_URL = 'http://127.0.0.1:4329'
 const WEB_PORT = 6329
 const frontRoot = fileURLToPath(new URL('../', import.meta.url))
