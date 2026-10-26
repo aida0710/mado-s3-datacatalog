@@ -24,8 +24,8 @@ import { CAPABILITY_KEYS, capabilitySettingKey } from '../storage.js'
 const VERIFICATION_DATABASE = 'dashboard_access_tokens_verify'
 // 開発と並べて確認できるよう、アプリの既定のポートとは別にする。
 const VERIFICATION_PORT = 4329
-const databaseUrl = process.env.MADO_ACCESS_TOKEN_DATABASE_URL
-if (!databaseUrl) throw new Error('Set MADO_ACCESS_TOKEN_DATABASE_URL for the isolated verification database')
+const databaseUrl = process.env.MDC_ACCESS_TOKEN_DATABASE_URL
+if (!databaseUrl) throw new Error('Set MDC_ACCESS_TOKEN_DATABASE_URL for the isolated verification database')
 const target = new URL(databaseUrl)
 if (!['postgres:', 'postgresql:'].includes(target.protocol)
   || !['127.0.0.1', 'localhost'].includes(target.hostname) || target.pathname !== `/${VERIFICATION_DATABASE}`) {

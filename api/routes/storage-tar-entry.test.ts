@@ -16,7 +16,7 @@ beforeEach(() => {
   app = new Hono()
   mountStoragePreviewRoutes(app, {
     getStorage: async () => storage,
-    env: { PREVIEW_TEXT_LIMIT: 64, PREVIEW_TAR_ENTRY_LIMIT: 10, PREVIEW_TARXZ_BYTE_LIMIT: 1024, PREVIEW_TAR_ENTRY_MAX_BYTES: 100 * 1024 * 1024 },
+    env: { MDC_PREVIEW_TEXT_LIMIT: 64, MDC_PREVIEW_TAR_ENTRY_LIMIT: 10, MDC_PREVIEW_TARXZ_BYTE_LIMIT: 1024, MDC_PREVIEW_TAR_ENTRY_MAX_BYTES: 100 * 1024 * 1024 },
   })
 })
 afterEach(() => vi.restoreAllMocks())

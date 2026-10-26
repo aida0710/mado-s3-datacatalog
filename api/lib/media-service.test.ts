@@ -39,17 +39,17 @@ vi.mock('./media-analyze.js', async importOriginal => {
 const { createMediaService } = await import('./media-service.js')
 const { getCachedMedia, mediaCacheKey } = await import('./media-cache.js')
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 
 const env = loadEnv({
-  AUTH_MODE: 'local',
-  DATABASE_URL_RW: RW,
-  DATABASE_URL_RO: RW,
-  DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
-  ENCRYPTION_KEY: '0'.repeat(64),
-  ALLOWED_ORIGINS: 'http://localhost:5173',
+  MDC_AUTH_MODE: 'local',
+  MDC_DATABASE_URL_RW: RW,
+  MDC_DATABASE_URL_RO: RW,
+  MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+  MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+  MDC_WEB_ORIGIN: 'http://localhost:5173',
 })
 
 // GetObjectCommand / HeadObjectCommand / ListObjectsV2Command に応答する S3 スタブ。

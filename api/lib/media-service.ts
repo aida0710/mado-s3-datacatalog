@@ -17,7 +17,7 @@ export interface MediaServiceDeps {
   pools: Pools
   getStorage: GetStorage
   getConnectionConfig: (connectionId: string) => Promise<ConnectionConfig>
-  env: Pick<Env, 'MEDIA_CONCURRENCY' | 'MEDIA_ANALYZE_TIMEOUT_SEC' | 'MEDIA_CACHE_MAX_AGE_DAYS' | 'MEDIA_SPECTROGRAM_MAX_WIDTH'>
+  env: Pick<Env, 'MDC_MEDIA_CONCURRENCY' | 'MDC_MEDIA_ANALYZE_TIMEOUT_SEC' | 'MDC_MEDIA_CACHE_MAX_AGE_DAYS' | 'MDC_MEDIA_SPECTROGRAM_MAX_WIDTH'>
 }
 
 export interface MediaService {
@@ -27,10 +27,10 @@ export interface MediaService {
 }
 
 export function createMediaService(deps: MediaServiceDeps): MediaService {
-  const slots = createSemaphore(deps.env.MEDIA_CONCURRENCY)
+  const slots = createSemaphore(deps.env.MDC_MEDIA_CONCURRENCY)
   const requests = new SharedRequests<AnalyzeResponse>()
   const tarIndexes = new TarIndexCache()
-  const timeoutMs = deps.env.MEDIA_ANALYZE_TIMEOUT_SEC * 1000
+  const timeoutMs = deps.env.MDC_MEDIA_ANALYZE_TIMEOUT_SEC * 1000
 
   async function analyzeAndCache(ref: MediaRef, signal: AbortSignal): Promise<AnalyzeResponse> {
     const cacheKey = mediaCacheKey(ref)
@@ -44,7 +44,7 @@ export function createMediaService(deps: MediaServiceDeps): MediaService {
       })
       try {
         const analyzed = await analyzeAudio({
-          ...input, timeoutMs, maxSpectrogramWidth: deps.env.MEDIA_SPECTROGRAM_MAX_WIDTH, signal,
+          ...input, timeoutMs, maxSpectrogramWidth: deps.env.MDC_MEDIA_SPECTROGRAM_MAX_WIDTH, signal,
         })
         signal.throwIfAborted()
         await upsertMediaCache(deps.pools.rw, ref, analyzed)
@@ -64,7 +64,7 @@ export function createMediaService(deps: MediaServiceDeps): MediaService {
     cleanup: async () => {
       await deps.pools.rw.query(
         'DELETE FROM media_cache WHERE created_at < now() - make_interval(days => $1)',
-        [deps.env.MEDIA_CACHE_MAX_AGE_DAYS],
+        [deps.env.MDC_MEDIA_CACHE_MAX_AGE_DAYS],
       )
     },
     close: () => tarIndexes.close(),

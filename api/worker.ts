@@ -28,7 +28,7 @@ import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { apiError } from './lib/api-error.js'
 
 const env = loadWorkerEnv()
-const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
+const pools = createPools({ rw: env.MDC_DATABASE_URL_RW, ro: env.MDC_DATABASE_URL_RO })
 // worker は移行を当てる権限を持たない。古い表のままジョブを処理しないよう、api-internal が当て終えるまで起動しない。
 await assertMigrationsApplied(pools.ro)
 
@@ -38,7 +38,7 @@ await assertMigrationsApplied(pools.ro)
 process.on('uncaughtException', err => console.error('UNCAUGHT EXCEPTION (kept alive)', err))
 process.on('unhandledRejection', err => console.error('UNHANDLED REJECTION (kept alive)', err))
 
-const crypto = createCrypto(env.ENCRYPTION_KEY)
+const crypto = createCrypto(env.MDC_STORAGE_SECRET_KEY)
 const storageFactory = createStorageFactory({ pools, crypto })
 const service = createMediaService({
   pools,
@@ -112,7 +112,7 @@ app.onError((err, c) => {
   return c.json(apiError('internal_error', 'internal error'), 500)
 })
 
-const server = serve({ fetch: app.fetch, port: env.MEDIA_WORKER_PORT }, info => {
+const server = serve({ fetch: app.fetch, port: env.MDC_MEDIA_WORKER_PORT }, info => {
   console.log(`media-worker listening on http://localhost:${info.port}`)
 })
 

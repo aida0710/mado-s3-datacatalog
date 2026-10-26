@@ -39,7 +39,7 @@ vi.mock('openid-client', () => ({
 import * as oidc from 'openid-client'
 import { createOidcProvider } from './auth-oidc.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 const crypto = createCrypto('a'.repeat(64))

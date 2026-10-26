@@ -42,7 +42,7 @@ const SECURITY_SCHEMES = {
     type: 'apiKey',
     in: 'cookie',
     name: 'mado_session',
-    description: 'ブラウザのログイン (HttpOnly)。AUTH_COOKIE_SECURE=true のときの名前は __Host-mado_session。GET 以外は Origin を確かめる (許可しない Origin は 403 invalid_origin)。',
+    description: 'ブラウザのログイン (HttpOnly)。MDC_AUTH_COOKIE_SECURE=true のときの名前は __Host-mado_session。GET 以外は Origin を確かめる (許可しない Origin は 403 invalid_origin)。',
   },
   bearerToken: {
     type: 'http',

@@ -4,6 +4,7 @@ import { createAuditWriter } from '../lib/audit.js'
 import { createUserStore } from '../lib/auth-user-store.js'
 import { createCredentialStore } from '../lib/auth-credential-store.js'
 import { hashBootstrapPassword } from '../lib/password.js'
+import { assertNoRenamedEnvironmentVariables } from '../renamed-environment-variables.js'
 
 function option(name: string): string | undefined {
   const i = process.argv.indexOf(name)
@@ -53,19 +54,20 @@ async function hiddenPassword(prompt: string): Promise<string> {
 const username = option('--username')?.trim().toLowerCase() || 'admin'
 const email = option('--email')?.trim().toLowerCase() || null
 const displayName = option('--name')?.trim() || 'Mado Administrator'
-const databaseUrl = process.env.DATABASE_URL_RW
+assertNoRenamedEnvironmentVariables(process.env)
+const databaseUrl = process.env.MDC_DATABASE_URL_RW
 if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/.test(username)) {
   throw new Error('username must use letters, numbers, dot, underscore, or hyphen')
 }
 if (email && !email.includes('@')) throw new Error('email must be valid')
-if (!databaseUrl) throw new Error('DATABASE_URL_RW is required')
+if (!databaseUrl) throw new Error('MDC_DATABASE_URL_RW is required')
 
 const first = await hiddenPassword('New admin password: ')
 const second = await hiddenPassword('Confirm password: ')
 if (first !== second) throw new Error('passwords do not match')
 const passwordHash = await hashBootstrapPassword(first)
 
-const pools = createPools({ rw: databaseUrl, ro: process.env.DATABASE_URL_RO ?? databaseUrl })
+const pools = createPools({ rw: databaseUrl, ro: process.env.MDC_DATABASE_URL_RO ?? databaseUrl })
 const users = createUserStore(pools.rw)
 const credentials = createCredentialStore(pools.rw)
 const audit = createAuditWriter(pools.rw)

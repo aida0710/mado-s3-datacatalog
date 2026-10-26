@@ -27,8 +27,8 @@ function createPreviewApp(maxBytes: number): Hono {
   mountStoragePreviewRoutes(previewApp, {
     getStorage,
     env: {
-      PREVIEW_TEXT_LIMIT: 8, PREVIEW_TAR_ENTRY_LIMIT: 200,
-      PREVIEW_TARXZ_BYTE_LIMIT: 1_000_000, PREVIEW_TAR_ENTRY_MAX_BYTES: maxBytes,
+      MDC_PREVIEW_TEXT_LIMIT: 8, MDC_PREVIEW_TAR_ENTRY_LIMIT: 200,
+      MDC_PREVIEW_TARXZ_BYTE_LIMIT: 1_000_000, MDC_PREVIEW_TAR_ENTRY_MAX_BYTES: maxBytes,
     },
   })
   return previewApp
@@ -41,7 +41,7 @@ beforeEach(() => {
 })
 
 describe('GET /storage/:connectionId/preview/text', () => {
-  it('先頭 PREVIEW_TEXT_LIMIT バイトを text/plain で返す', async () => {
+  it('先頭 MDC_PREVIEW_TEXT_LIMIT バイトを text/plain で返す', async () => {
     storageMock.on(GetObjectCommand).resolves({
       Body: Readable.from(Buffer.from('hello world!! more content')) as never,
       ContentLength: 26,
@@ -479,7 +479,7 @@ describe('GET /storage/:connectionId/preview/tar', () => {
 
 // ── /preview/tar-entry ─────────────────────────────────────────────
 // head モード (?maxBytes=N) を含む。テスト用の app は
-// PREVIEW_TAR_ENTRY_MAX_BYTES を小さくして 413 を到達可能にする。
+// MDC_PREVIEW_TAR_ENTRY_MAX_BYTES を小さくして 413 を到達可能にする。
 
 async function packOneEntryTar(name: string, bodySize: number): Promise<Buffer> {
   const p = tarPack()

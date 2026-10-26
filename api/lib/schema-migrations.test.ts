@@ -6,7 +6,7 @@ import {
   SCHEMA_MIGRATION_LOCK_KEY, type MigrationFile,
 } from './schema-migrations.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
+const RW = process.env.MDC_TEST_DATABASE_URL ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const schemaSetup = new Pool({ connectionString: RW, max: 1 })
 afterAll(() => schemaSetup.end())
 

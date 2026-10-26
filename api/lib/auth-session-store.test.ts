@@ -5,7 +5,7 @@ import { createAuditWriter } from './audit.js'
 import { createSessionStore } from './auth-session-store.js'
 import { createUserStore } from './auth-user-store.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)
@@ -22,16 +22,16 @@ afterAll(() => closePools(pools))
 describe('SessionStore', () => {
   it('6日間使わずに戻っても認証でき、操作を再開してもログインから7日で終了する', async () => {
     const settings = loadEnv({
-      AUTH_MODE: 'local',
-      DATABASE_URL_RW: 'postgres://rw@localhost/dashboard_test',
-      DATABASE_URL_RO: 'postgres://ro@localhost/dashboard_test',
-      DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
-      ENCRYPTION_KEY: '0'.repeat(64),
-      ALLOWED_ORIGINS: 'http://localhost:5173',
+      MDC_AUTH_MODE: 'local',
+      MDC_DATABASE_URL_RW: 'postgres://rw@localhost/dashboard_test',
+      MDC_DATABASE_URL_RO: 'postgres://ro@localhost/dashboard_test',
+      MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+      MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+      MDC_WEB_ORIGIN: 'http://localhost:5173',
     })
     const defaultLifetime = {
-      idleSeconds: settings.AUTH_SESSION_IDLE_SECONDS,
-      absoluteSeconds: settings.AUTH_SESSION_ABSOLUTE_SECONDS,
+      idleSeconds: settings.MDC_AUTH_SESSION_IDLE_SECONDS,
+      absoluteSeconds: settings.MDC_AUTH_SESSION_ABSOLUTE_SECONDS,
     }
     const user = await users.createUser({ username: 'alice', displayName: 'Alice', roles: ['viewer'] })
     const session = await sessions.createSession({ userId: user.id, lifetime: defaultLifetime })
