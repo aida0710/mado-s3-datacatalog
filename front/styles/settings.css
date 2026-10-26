@@ -303,7 +303,8 @@ td.row-actions .row-actions__buttons {
 .admin-user-form small {
   margin-top: 0;
 }
-.admin-user-meta {
+/* 開いた行の中の dl の共通の並び (.responsive-table-details dl) より強くするため、行の class から書く。 */
+.responsive-table-details .admin-user-meta {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 4px 14px;

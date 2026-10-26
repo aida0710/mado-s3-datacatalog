@@ -41,7 +41,7 @@ export function EditorPageHeader({ title, description }: { title: string; descri
     <header className="page-header">
       <div>
         <h1>{title}</h1>
-        {description && <p className="page-description">{description}</p>}
+        {description && <div className="page-description">{description}</div>}
       </div>
     </header>
   )

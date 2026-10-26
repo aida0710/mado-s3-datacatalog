@@ -1,21 +1,17 @@
 /* ====================================================================
    mado S3 Data Catalog の見た目の入口。mado ML Tracking と同じ部品 (@mado/design-system) を使う。
-   1. Tailwind (preflight は base、ユーティリティは utilities の layer)。
-   2. @mado/design-system の要素の既定・共通の部品・画面の枠・テキストの色付け・来歴のグラフ。
-      どれも components の layer に入れるので、preflight より強く、ユーティリティより弱い。共通の CSS
-      どうしの優先順位は layer を使わない mado ML Tracking と同じになる (要素より class が勝つ)。
-      React Flow の既定 (@xyflow/react) も同じ layer の先に入れ、来歴のグラフの色 (lineage.css) が
-      それを上書きできるようにする。layer の外に置くと、layer の中の指定より常に強くなるため。
-   3. 領域ごとのファイル (styles/、layer の外)。共通の部品をその画面に合わせて上書きする。
+   mado ML Tracking と同じく layer を使わず、読み込む順で優先順位を決める (同じ詳細度なら後が勝つ)。
+   1. @mado/design-system の要素の既定・共通の部品・画面の枠・テキストの色付け。
+   2. React Flow の既定 (@xyflow/react) と、それを上書きする来歴のグラフの色 (lineage.css)。
+   3. 領域ごとのファイル (styles/)。共通の部品をその画面に合わせて上書きする。
    色・書体の変数 (tokens.css) と書体 (fonts.css) は main.tsx で先に読み込む。
    ==================================================================== */
-@import "tailwindcss";
-@import "@mado/design-system/base.css" layer(components);
-@import "@mado/design-system/components.css" layer(components);
-@import "@mado/design-system/shell.css" layer(components);
-@import "@mado/design-system/code.css" layer(components);
-@import "@xyflow/react/dist/style.css" layer(components);
-@import "@mado/design-system/lineage.css" layer(components);
+@import "@mado/design-system/base.css";
+@import "@mado/design-system/components.css";
+@import "@mado/design-system/shell.css";
+@import "@mado/design-system/code.css";
+@import "@xyflow/react/dist/style.css";
+@import "@mado/design-system/lineage.css";
 @import "./styles/common.css";
 @import "./styles/auth.css";
 @import "./styles/storage.css";
@@ -23,15 +19,3 @@
 @import "./styles/notes.css";
 @import "./styles/settings.css";
 @import "./styles/lineage.css";
-
-/* Tailwind の設定。値は @mado/design-system の変数を指すだけにする。 */
-@theme {
-  /* 画面幅の切り替え点: デザインシステム (@mado/design-system/layout の BREAKPOINT_PX) と同じ 640 / 900 / 1200px。 */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 900px;
-  --breakpoint-lg: 1200px;
-
-  /* preflight が html と kbd・samp に使う書体。 */
-  --font-sans: var(--font);
-  --font-mono: var(--mono);
-}
