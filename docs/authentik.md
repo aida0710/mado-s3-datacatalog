@@ -19,7 +19,7 @@ AuthentikではApplicationとOAuth2/OIDC Providerを作り、issuerにはapplica
 `profile` scopeに`preferred_username`、`name`、`groups`を含め、emailを既存Userとの連携に
 使う場合は信頼できる`email_verified` claimも返します。
 
-Providerのscope mappingで`offline_access`を有効にし、mado S3 Data Catalogの`OIDC_SCOPES`にも含めます。
+Providerのscope mappingで`offline_access`を有効にし、mado S3 Data Catalogの`MDC_OIDC_SCOPES`にも含めます。
 mado S3 Data Catalogはaccess/refresh tokenを暗号化してsessionに保存し、UserInfoの現在のgroupを1分ごとに
 確認します。groupの除外やRoleの変更を検出したら同じidentityのsessionを失効させます。
 UserInfoには現在のgroupを返すmappingが必要です。IdP停止時は確認が必要な操作へ503を返し、
@@ -46,21 +46,21 @@ server-side sessionも失効します。mado S3 Data Catalogは署名、issuer�
 `oidc`へ変更します。本番ではHTTPSとSecure Cookieが必須です。
 
 ```dotenv
-AUTH_MODE=hybrid
-AUTH_COOKIE_SECURE=true
-AUTH_SESSION_IDLE_SECONDS=604800
-AUTH_SESSION_ABSOLUTE_SECONDS=604800
-OIDC_ISSUER_URL=https://auth.example/application/o/mado/
-OIDC_CLIENT_ID=...
-OIDC_CLIENT_SECRET=...
-OIDC_REDIRECT_URI=https://mado.example/api/auth/oidc/callback
-OIDC_POST_LOGOUT_REDIRECT_URI=https://mado.example/
-OIDC_LABEL=Authentik
-OIDC_SCOPES=openid email profile offline_access
-OIDC_AUTO_LINK_VERIFIED_EMAIL=false
-OIDC_ALLOWED_GROUPS=mado-users,mado-admins,mado-curators,mado-operators
-OIDC_ROLE_MAPPING_JSON={"mado-admins":"admin","mado-curators":"curator","mado-operators":"operator","mado-users":"viewer"}
-OIDC_DEFAULT_ROLE=viewer
+MDC_AUTH_MODE=hybrid
+MDC_AUTH_COOKIE_SECURE=true
+MDC_AUTH_SESSION_IDLE_SECONDS=604800
+MDC_AUTH_SESSION_ABSOLUTE_SECONDS=604800
+MDC_OIDC_ISSUER_URL=https://auth.example/application/o/mado/
+MDC_OIDC_CLIENT_ID=...
+MDC_OIDC_CLIENT_SECRET=...
+MDC_OIDC_REDIRECT_URI=https://mado.example/api/auth/oidc/callback
+MDC_OIDC_POST_LOGOUT_REDIRECT_URI=https://mado.example/
+MDC_OIDC_LABEL=Authentik
+MDC_OIDC_SCOPES=openid email profile offline_access
+MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL=false
+MDC_OIDC_ALLOWED_GROUPS=mado-users,mado-admins,mado-curators,mado-operators
+MDC_OIDC_ROLE_MAPPING_JSON={"mado-admins":"admin","mado-curators":"curator","mado-operators":"operator","mado-users":"viewer"}
+MDC_OIDC_DEFAULT_ROLE=viewer
 ```
 
 この設定では、操作しない期間を含め、ログインから7日保持します。既存の`.env`も更新し、
@@ -72,9 +72,9 @@ APIを再起動してください。設定例や既定値を変えても、既�
 - 初回SSOでUserをJIT作成します。self-signup用のmado S3 Data Catalog画面はありません。
 - 既存Local Userへのemail自動連携は既定で無効です。有効化した場合も`email_verified=true`かつemail一致が必要で、Admin等の特権Local Userは自動連携しません。
 - 未検証emailはUserのemailにも既存Userとの連携にも使いません。
-- `OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。
+- `MDC_OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。
 - role mappingが設定されている場合、SSOログインのたびにmado S3 Data Catalog RoleをAuthentik groupへ同期します。
-- 複数groupから複数Roleを付与できます。該当groupが無い場合は`OIDC_DEFAULT_ROLE`になります。
+- 複数groupから複数Roleを付与できます。該当groupが無い場合は`MDC_OIDC_DEFAULT_ROLE`になります。
 - SSO由来の表示名と検証済みemailはログイン時に更新します。mado S3 Data Catalogの署名は上書きしません。
 - Local UserのユーザーIDは連携後も維持します。JIT Userは`preferred_username`が未使用なら採用します。
 
@@ -102,10 +102,10 @@ callbackで断ったときは、利用者には理由を区別せず`401`を返�
 
 | `reason` | 意味 | 直し方 |
 | --- | --- | --- |
-| `group_not_allowed` | `OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる |
+| `group_not_allowed` | `MDC_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる |
 | `user_disabled` | mado S3 Data CatalogでそのUserが無効になっている、または削除されている | 無効ならSettings > Access > Usersで有効にする。削除したUserは有効に戻せず、そのSSOのUserは今は入れ直せない（SSOとの結び付きを外す機能は無い） |
 | `last_admin` | groupの同期で、最後のactiveなAdminを降格しようとした | 別のAdminを先に用意する |
-| `privileged_link_required` | 検証済みemailが、特権を持つLocal Userと一致した | 乗っ取りを防ぐため自動では連携しない。連携するなら、`OIDC_AUTO_LINK_VERIFIED_EMAIL`が有効な状態で、そのLocal UserのRoleを一時的にviewerだけにしてSSOで1度入ってもらい、Roleを戻す |
+| `privileged_link_required` | 検証済みemailが、特権を持つLocal Userと一致した | 乗っ取りを防ぐため自動では連携しない。連携するなら、`MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL`が有効な状態で、そのLocal UserのRoleを一時的にviewerだけにしてSSOで1度入ってもらい、Roleを戻す |
 | `deleted_user_email` | 検証済みemailが、削除したUserと一致した | 別のemailにするか、管理者が対応する |
 
 これ以外の`reason`（IdPに届かない、stateが古い、開始したbrowserと違う、など）は、

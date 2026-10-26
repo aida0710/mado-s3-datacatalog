@@ -7,7 +7,7 @@ The dashboard uses Postgres with four application roles:
 - `mado_lineage` — least-privilege login used only by the Internet-facing OpenLineage process. It can authenticate access tokens, update their `last_used_at`, append audit events, and read `schema_migrations`, but cannot read browser or storage secrets.
 - `mado_worker` — reads storage connection settings and `schema_migrations`, and writes media, job, pricing, and capacity tables. It cannot read or write browser sessions, credentials, roles, or access tokens.
 
-The PostgreSQL administrator (`postgres`) applies the schema migrations. Only `api-internal` receives its URL, as `DATABASE_URL_MIGRATE`; the Compose files build it from `POSTGRES_PASSWORD`.
+The PostgreSQL administrator (`postgres`) applies the schema migrations. Only `api-internal` receives its URL, as `MDC_DATABASE_URL_MIGRATE`; the Compose files build it from `POSTGRES_PASSWORD`.
 
 ## Schema migrations
 
@@ -45,7 +45,7 @@ This brings up Postgres 16 on `127.0.0.1:5432`. On first launch `db/init/00-init
 The tests use `dashboard_test`. Apply the migrations to it from `api/` before running them, and again after adding a migration:
 
 ```sh
-DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate
+MDC_DATABASE_URL_MIGRATE=postgres://postgres:postgres@localhost:5432/dashboard_test npm run db:migrate
 ```
 
 To re-bootstrap from scratch:
@@ -59,10 +59,10 @@ docker compose -f compose.dev.yaml up -d
 
 DB passwords come from env vars, consumed **only when the `db_data` volume is first created**:
 
-- `POSTGRES_PASSWORD` — the `postgres` superuser. `api-internal` also uses it in `DATABASE_URL_MIGRATE`, so use a URL-safe value (hex).
-- `DASHBOARD_PASSWORD` — the `dashboard_rw` / `dashboard_ro` roles. **Must match** the password embedded in `DATABASE_URL_RW` / `DATABASE_URL_RO`.
-- `LINEAGE_DB_PASSWORD` — the dedicated `mado_lineage` role. **Must match** both OpenLineage `DATABASE_URL_RW` and `DATABASE_URL_RO`.
-- `WORKER_DB_PASSWORD` — the dedicated `mado_worker` role. The worker Compose fragment uses it for both database URLs and does not inherit the API environment.
+- `POSTGRES_PASSWORD` — the `postgres` superuser. `api-internal` also uses it in `MDC_DATABASE_URL_MIGRATE`, so use a URL-safe value (hex).
+- `MDC_DASHBOARD_DB_PASSWORD` — the `dashboard_rw` / `dashboard_ro` roles. **Must match** the password embedded in `MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO`.
+- `MDC_LINEAGE_DB_PASSWORD` — the dedicated `mado_lineage` role. **Must match** both OpenLineage `MDC_DATABASE_URL_RW` and `MDC_DATABASE_URL_RO`.
+- `MDC_WORKER_DB_PASSWORD` — the dedicated `mado_worker` role. The worker Compose fragment uses it for both database URLs and does not inherit the API environment.
 
 `compose.prod.yaml` requires all four (startup fails if unset) — set strong values in `.env` before the first `up` (`openssl rand -hex 24`). `compose.dev.yaml` has development-only defaults for zero-config local use.
 
@@ -71,7 +71,7 @@ Because they apply only at first init, **changing them later does not affect an 
 ```sh
 docker compose -f compose.prod.yaml exec postgres \
   psql -U postgres -c "ALTER ROLE dashboard_rw PASSWORD 'NEW'; ALTER ROLE dashboard_ro PASSWORD 'NEW';"
-# Rotate mado_lineage separately, then update its two DATABASE_URL_* values.
+# Rotate mado_lineage separately, then update its two MDC_DATABASE_URL_* values.
 docker compose -f compose.prod.yaml exec postgres \
   psql -U postgres -c "ALTER ROLE mado_lineage PASSWORD 'NEW_LINEAGE_PASSWORD';"
 # finally update the matching values in .env and recreate the affected services.
@@ -112,6 +112,6 @@ SQL
 
 cd api
 for db in dashboard dashboard_test; do
-  DATABASE_URL_MIGRATE="postgres://postgres:<password>@localhost:5432/$db" npm run db:migrate
+  MDC_DATABASE_URL_MIGRATE="postgres://postgres:<password>@localhost:5432/$db" npm run db:migrate
 done
 ```

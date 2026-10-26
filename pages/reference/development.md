@@ -27,7 +27,7 @@ docker compose -f compose.dev.yaml up -d --build
 docker compose -f compose.dev.yaml logs -f api-internal front
 ```
 
-開発環境もログインが必要です。起動前に `.env.example` を `.env` へコピーし、暗号化キーとDBの接続先を設定します。`AUTH_MODE=local` で起動した後、次の対話コマンドで初期Adminを作成します。
+開発環境もログインが必要です。起動前に `.env.example` を `.env` へコピーし、暗号化キーとDBの接続先を設定します。`MDC_AUTH_MODE=local` で起動した後、次の対話コマンドで初期Adminを作成します。
 
 ```bash
 docker compose -f compose.dev.yaml exec api-internal npm run auth:bootstrap-admin:dev
@@ -52,7 +52,7 @@ npm run lint --prefix front
 npm run build --prefix front
 ```
 
-APIのDBテストは `DATABASE_URL_RW_TEST` の設定を使います。DBのパスワードが合わない場合は、volumeを作り直す前に接続設定と既存ロールの値を確認してください。
+APIのDBテストは `MDC_TEST_DATABASE_URL` の設定を使います。DBのパスワードが合わない場合は、volumeを作り直す前に接続設定と既存ロールの値を確認してください。
 
 ## GitHub Pagesの本文を更新する
 
