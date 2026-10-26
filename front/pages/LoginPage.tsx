@@ -122,8 +122,8 @@ export function ChangePasswordPage({ onChanged }: { onChanged(): Promise<void> }
     setBusy(true)
     setError(null)
     try {
-      // ログイン済み（session がある）なので、401 は session が切れたことを表し、AuthGate へ
-      // 知らせてログイン画面へ戻す。現在のパスワードの誤りは 400 なので知らせない。
+      // ログイン済み（sessionがある）なので、401はsessionが切れたことを表し、AuthGateへ
+      // 知らせてログイン画面へ戻す。現在のパスワードの誤りは400なので知らせない。
       await authClient.changePassword({ currentPassword, newPassword })
       await onChanged()
     } catch (cause) {

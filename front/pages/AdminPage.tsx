@@ -20,7 +20,7 @@ import { translate } from '../i18n/translate'
 type UserRow = z.infer<typeof ManagedUser>
 type AuditEventRow = z.infer<typeof AuditEvent>
 
-// 監査ログの details のうち、画面が読む項目 (操作の対象と、変わった値)。ほかの項目はそのまま並べる。
+// 監査ログのdetailsのうち、画面が読む項目（操作の対象と、変わった値）。ほかの項目はそのまま並べる。
 const AuditDetailsView = z.looseObject({
   target: z.object({ displayName: z.string().nullish() }).optional(),
   changes: z.array(z.object({ field: z.string(), label: z.string().optional(), before: z.unknown(), after: z.unknown() })).optional(),

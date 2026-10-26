@@ -5,7 +5,7 @@ import { AuthContext, type AuthContextValue } from '../lib/auth-context'
 import { AUTH_FIXTURE } from '../lib/auth-fixture'
 import { SignatureSettings } from './SignatureSettings'
 
-// /api/auth/profile の応答。保存したアカウントを返す。
+// /api/auth/profileの応答。保存したアカウントを返す。
 function profileResponse(user: AuthContextValue['user']) {
   return new Response(JSON.stringify({ user }), { status: 200, headers: { 'Content-Type': 'application/json' } })
 }

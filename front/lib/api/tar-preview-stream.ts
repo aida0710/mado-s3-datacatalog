@@ -48,7 +48,7 @@ async function readTarPreviewStream(res: Response, callbacks: TarPreviewCallback
     } else if (record.pending === true) {
       preparing = true
     } else if ('error' in record) {
-      // 一覧を流し始めた後の失敗は、HTTP の状態でなく行で届く。API の文をそのまま出す。
+      // 一覧を流し始めた後の失敗は、HTTPの状態でなく行で届く。APIの文をそのまま出す。
       throw apiErrorFromResponse(res.status, res.statusText, record)
     }
   }
