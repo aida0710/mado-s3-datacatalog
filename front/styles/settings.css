@@ -420,9 +420,6 @@ td.row-actions .row-actions__buttons {
   align-items: baseline;
   gap: 8px;
 }
-.sso-guidance li.sso-guidance__empty {
-  display: block;
-}
 .sso-guidance code {
   color: var(--text);
   overflow-wrap: anywhere;
