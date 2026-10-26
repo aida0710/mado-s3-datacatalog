@@ -3,8 +3,6 @@ import type { MessageKey } from './translate'
 export interface TranslationSource {
   key: MessageKey
   values: Record<string, string | number>
-  // 差し込んだ値そのものが辞書の項目 (操作の名前など) のとき、その項目。作り直すときは今の言語の文にする。
-  messageKeyValues?: Record<string, MessageKey>
 }
 
 // 状態に持ったまま言語が切り替わる通知・エラーは数件だが、値を差し込むラベルの描画でも記録する。
