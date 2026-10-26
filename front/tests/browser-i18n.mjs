@@ -1,20 +1,20 @@
 // 表示言語の切り替えをブラウザで確かめる手動の試験 (npm test には入れていない)。
 // 使い方: npm run build のあと npx vite preview --host 127.0.0.1 --port 5781 で画面を立ち上げ、
-//   MADO_PLAYWRIGHT_MODULE=<Playwright の index.mjs> node tests/browser-i18n.mjs
-// を実行する。MADO_CHROMIUM_PATH でブラウザ、MADO_WEB_URL で画面の URL、MADO_SCREENSHOT_DIR で撮影先を変えられる。
+//   MDC_PLAYWRIGHT_MODULE=<Playwright の index.mjs> node tests/browser-i18n.mjs
+// を実行する。MDC_CHROMIUM_PATH でブラウザ、MDC_WEB_URL で画面の URL、MDC_SCREENSHOT_DIR で撮影先を変えられる。
 // API は i18nApi.mjs の見本が答えるので、API サーバーや DB は要らない。
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { createI18nApi } from './i18nApi.mjs'
 
-const modulePath = process.env.MADO_PLAYWRIGHT_MODULE
-if (!modulePath) throw new Error('Set MADO_PLAYWRIGHT_MODULE to an installed Playwright index.mjs')
+const modulePath = process.env.MDC_PLAYWRIGHT_MODULE
+if (!modulePath) throw new Error('Set MDC_PLAYWRIGHT_MODULE to an installed Playwright index.mjs')
 const { chromium } = await import(pathToFileURL(modulePath).href)
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
-  ...(process.env.MADO_CHROMIUM_PATH ? { executablePath: process.env.MADO_CHROMIUM_PATH } : {}) })
-const base = process.env.MADO_WEB_URL ?? 'http://127.0.0.1:5781'
-const screenshots = process.env.MADO_SCREENSHOT_DIR
+  ...(process.env.MDC_CHROMIUM_PATH ? { executablePath: process.env.MDC_CHROMIUM_PATH } : {}) })
+const base = process.env.MDC_WEB_URL ?? 'http://127.0.0.1:5781'
+const screenshots = process.env.MDC_SCREENSHOT_DIR
 const context = await browser.newContext({ locale: 'en-US', viewport: { width: 1440, height: 960 } })
 const api = createI18nApi()
 await context.route(url => url.pathname.startsWith('/api/'), api.route)

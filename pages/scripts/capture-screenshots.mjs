@@ -7,7 +7,7 @@ import { fulfillSampleApi, SAMPLE_BUCKET, SAMPLE_PREFIX } from './screenshot-fix
 
 const projectRoot = fileURLToPath(new URL('../../', import.meta.url))
 // 撮る画面の言語。日本語は screenshots/、英語は screenshots/en/ に置き、ドキュメントの言語ごとに使い分ける。
-const language = process.env.MADO_SCREENSHOT_LANGUAGE === 'en' ? 'en' : 'ja'
+const language = process.env.MDC_SCREENSHOT_LANGUAGE === 'en' ? 'en' : 'ja'
 const outputDirectory = join(projectRoot, 'pages/public/screenshots', language === 'en' ? 'en' : '')
 const captureDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date())
 const artifactDirectory = join(projectRoot, 'artifacts/docs', captureDate)
@@ -28,8 +28,8 @@ const LABELS = {
     breakdown: 'Breakdown', transferEstimate: 'Transfer estimate',
   },
 }[language]
-const appUrl = process.env.MADO_SCREENSHOT_URL ?? 'http://127.0.0.1:15378'
-const selectedScreenshots = new Set((process.env.MADO_SCREENSHOT_FILTER ?? '').split(',').filter(Boolean))
+const appUrl = process.env.MDC_SCREENSHOT_URL ?? 'http://127.0.0.1:15378'
+const selectedScreenshots = new Set((process.env.MDC_SCREENSHOT_FILTER ?? '').split(',').filter(Boolean))
 // プレビュー・容量・Settingsの小さな文字まで読める幅で、すべての画像を揃える。
 const viewport = { width: 1440, height: 1000 }
 const SAMPLE_RATE = 48000 // よく使う48kHzで、音声情報の読み方を示す。
@@ -75,7 +75,7 @@ async function prepareSampleMedia() {
 const media = await prepareSampleMedia()
 await mkdir(outputDirectory, { recursive: true })
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
-  ...(process.env.MADO_CHROMIUM_PATH ? { executablePath: process.env.MADO_CHROMIUM_PATH } : {}) })
+  ...(process.env.MDC_CHROMIUM_PATH ? { executablePath: process.env.MDC_CHROMIUM_PATH } : {}) })
 const screenshots = []
 const unhandled = []
 const pageErrors = []
