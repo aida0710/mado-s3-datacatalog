@@ -454,7 +454,7 @@ describe('AuthGate — サインアウト', () => {
 
     expect(await screen.findByRole('heading', { name: 'ログイン' }, { timeout: SESSION_CHECK_TIMEOUT_MS })).toBeInTheDocument()
     expect(screen.getByText(
-      'Madoからはサインアウトしました。Authentik側のサインアウトはできていません。共用のパソコンでは、ブラウザを閉じてください。',
+      'mado S3 Data Catalogからはサインアウトしました。Authentik側のサインアウトはできていません。共用のパソコンでは、ブラウザを閉じてください。',
     )).toBeInTheDocument()
   })
 
