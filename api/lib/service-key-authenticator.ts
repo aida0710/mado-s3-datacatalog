@@ -27,7 +27,7 @@ const AUTHENTICATED_KEY_SELECT = `
     JOIN service_accounts a ON a.id = k.service_account_id
    WHERE k.token_prefix = $1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`
 
-/** Authenticates an access token value (`<prefix>.<secret>`) for the service APIs and the internal API. */
+/** 連携APIと内部APIのために、アクセストークンの値（`<prefix>.<secret>`）を認証する。 */
 export function createServiceKeyAuthenticator(pool: Pool): (token: string) => Promise<ServicePrincipal | null> {
   return async token => {
     const dot = token.indexOf('.')

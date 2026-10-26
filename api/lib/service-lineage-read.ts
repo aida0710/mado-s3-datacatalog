@@ -31,7 +31,7 @@ function summarizeDataset(dataset: RegistryDatasetSummary) {
 }
 
 function summarizeVersion(version: DatasetVersionDetail) {
-  // The integration receives version identity and storage URIs, never connection credentials or arbitrary metadata.
+  // 連携先には版の識別子と保存場所のURIだけを渡し、接続の認証情報や任意のメタデータは渡さない。
   return {
     id: version.id,
     datasetId: version.datasetId,
@@ -64,7 +64,7 @@ export function createServiceLineageRead(registry: ServiceLineageRegistry) {
       if (!query.namespace && !namespaces.includes('*')) throw new ServiceLineageAccessError()
       if (query.namespace && !namespaceAllowed(query.namespace, namespaces)) throw new ServiceLineageAccessError()
       const catalog = await registry.searchDatasets(query)
-      // Validate upstream filtering too: a Registry implementation must not broaden the key's allow list.
+      // 上流の絞り込みも検証する。Registryの実装がkeyの許可リストを広げてはならない。
       const containsDisallowedDataset = catalog.results.some(dataset =>
         !namespaceAllowed(dataset.namespace, namespaces) ||
         (query.namespace && dataset.namespace !== query.namespace),

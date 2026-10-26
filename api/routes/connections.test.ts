@@ -238,7 +238,7 @@ describe('POST /connections', () => {
     const res = await app.request('/connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'x' }), // missing endpoint, accessKeyId, secretAccessKey
+      body: JSON.stringify({ name: 'x' }), // endpoint・accessKeyId・secretAccessKeyが無い
     })
     expect(res.status).toBe(400)
   })

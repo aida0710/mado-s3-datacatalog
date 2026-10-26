@@ -18,7 +18,7 @@ export interface AccessToken {
   revision: number
 }
 
-/** Integration scopes are not part of the input: they derive from the permissions. */
+/** 連携scopeは入力に含めない。権限から決まる。 */
 export interface AccessTokenInput {
   name: string
   description: string

@@ -21,7 +21,7 @@ export function createInternalTokenAuthenticator(deps: {
       FROM service_account_keys k
       WHERE k.id=$1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`, [principal.keyId])
     const row = grants.rows[0]
-    // Read all grants from one snapshot and recheck the secret if regeneration raced with authentication.
+    // 許可は1つのスナップショットからまとめて読み、再発行が認証と競合した場合に備えて秘密の値も確かめ直す。
     if (!row || !equalDigest(row.secret_hash, sha256(token.slice(token.indexOf('.') + 1)))) return null
     return { ...principal, tokenName: row.name,
       scopes: row.scopes, namespaces: row.namespaces,

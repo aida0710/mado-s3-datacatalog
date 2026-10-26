@@ -11,7 +11,7 @@ const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro
 const users = createUserStore(pools.rw)
 const sessions = createSessionStore(pools.rw, createAuditWriter(pools.rw))
 const lifetime = { idleSeconds: 3600, absoluteSeconds: 7200 }
-// Move stored session timestamps instead of waiting for the default seven-day lifetime.
+// 既定の7日の有効期間を待つ代わりに、保存したsessionの時刻をずらす。
 const DAY_SECONDS = 24 * 60 * 60
 
 beforeEach(async () => {

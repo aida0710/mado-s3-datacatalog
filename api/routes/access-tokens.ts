@@ -15,7 +15,7 @@ import { canDelegateToken } from '../lib/access-token-authority.js'
 import type { RequestPrincipal } from '../lib/auth-types.js'
 import { apiError } from '../lib/api-error.js'
 
-// Preserve the metadata limits of the existing service-account contract.
+// 既存のservice accountの契約にある、メタデータの上限を保つ。
 const TOKEN_NAME_MAX_LENGTH = 128
 const TOKEN_DESCRIPTION_MAX_LENGTH = 2048
 const Metadata = z.object({
@@ -88,7 +88,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
     }
   }
 
-  // A token sees only tokens it could manage, so the list does not reveal stronger grants.
+  // トークンには自分が管理できるトークンだけを見せ、もっと強い許可があることを一覧から明かさない。
   routes.get('/', async c => {
     const principal = getRequestPrincipal(c)!
     const tokens = await deps.store.listTokens()

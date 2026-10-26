@@ -18,7 +18,7 @@ export interface LineageServicePrincipal {
   namespaces: readonly string[]
 }
 
-/** Adapter boundary for the auth implementation owned by the auth module. */
+/** 認証のモジュールが持つ実装とつなぐための境界。 */
 export interface LineageServiceAuthenticator {
   authenticate(token: string): Promise<LineageServicePrincipal | null>
   recordUse?(event: {
@@ -46,8 +46,8 @@ async function audit(
   try {
     await deps.auth.recordUse(event)
   } catch (error) {
-    // Audit availability must be monitored, but a transient audit failure after
-    // Registry commit must not make a producer retry an already accepted event.
+    // 監査が使えるかは監視する必要がある。ただ、Registryに確定した後の一時的な
+    // 監査の失敗で、受け付け済みのイベントをproducerに送り直させてはならない。
     ;(deps.log ?? console).warn('failed to record lineage service-key use', error)
   }
 }
