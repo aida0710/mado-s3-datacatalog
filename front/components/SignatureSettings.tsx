@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { LogOut } from 'lucide-react'
-import { errorFromResponse, fetchApi } from '../lib/api/http'
+import { authClient } from '../lib/api/auth-client'
 import { useAuth } from '../lib/auth-context'
 import { SettingsSectionHeader } from './SettingsSectionHeader'
 import { localizeMessage } from '../i18n/localizeMessage'
@@ -29,16 +29,11 @@ export function SignatureSettings() {
     setSaving(true)
     setError(null)
     try {
-      const response = await fetchApi('/api/auth/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          displayName: nextDisplayName,
-          username: nextUsername,
-          signatureName: nextSignatureName,
-        }),
+      await authClient.updateProfile({
+        displayName: nextDisplayName,
+        username: nextUsername,
+        signatureName: nextSignatureName,
       })
-      if (!response.ok) throw await errorFromResponse(response)
       await auth.reload()
       setDisplayName(nextDisplayName)
       setUsername(nextUsername)
@@ -66,12 +61,7 @@ export function SignatureSettings() {
     setPasswordNotice(null)
     setError(null)
     try {
-      const response = await fetchApi('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      })
-      if (!response.ok) throw new Error(translate('common.couldNotChangePassword'))
+      await authClient.changePassword({ currentPassword, newPassword })
       form.reset()
       await auth.reload()
       setPasswordNotice(translate('signatureSettings.passwordChanged'))
@@ -114,7 +104,7 @@ export function SignatureSettings() {
             <span>{translate('common.emailAddress')}</span>
             <strong className="mono">{auth.user.email}</strong>
             <small className="muted">
-              {auth.user.authMethods?.includes('sso') ? translate('common.managedByYourSsoProviderAndCannotBe') : translate('common.thisAuthenticationIdentifierCannotBeChangedInMado')}
+              {auth.user.authMethods.includes('sso') ? translate('common.managedByYourSsoProviderAndCannotBe') : translate('common.thisAuthenticationIdentifierCannotBeChangedInMado')}
             </small>
           </div>
         )}
@@ -130,7 +120,7 @@ export function SignatureSettings() {
       </form>
       {error && <p className="notice error" role="alert">{localizeMessage(error)}</p>}
 
-      {auth.user?.authMethods?.includes('local') !== false && (
+      {auth.user?.authMethods.includes('local') && (
         <details className="account-password">
           <summary>{translate('common.changePassword')}</summary>
           <form className="account-form" onSubmit={changePassword}>

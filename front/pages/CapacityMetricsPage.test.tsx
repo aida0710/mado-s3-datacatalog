@@ -64,7 +64,7 @@ function mount(permissions: string[] | null = null, scanJobs: CapacityScanJob[] 
     <AuthContext.Provider value={{
       user: {
         id: 'u1', username: 'user', email: null, displayName: 'User', signatureName: 'User',
-        roles: ['viewer'], permissions, mustChangePassword: false,
+        roles: ['viewer'], permissions, mustChangePassword: false, authMethods: ['local'],
       },
       logout: vi.fn(), reload: vi.fn(),
     }}>

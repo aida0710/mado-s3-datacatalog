@@ -216,14 +216,14 @@ describe('Access Tokens', () => {
   it('保存に失敗したら入力を残し、再発行の値を表示しない', async () => {
     const user = userEvent.setup()
     mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
-      ? response({ error: 'changed', code: 'token_conflict' }, 409) : response({ tokens: [token] }))
+      ? response({ error: 'access token has changed; reload and try again', code: 'token_conflict' }, 409) : response({ tokens: [token] }))
     render(<AccessTokensPage />)
     await user.click(within(await screen.findByRole('article', { name: token.name })).getByLabelText('ML Trackingの操作'))
     await user.click(screen.getByRole('button', { name: '編集' }))
     const dialog = screen.getByRole('dialog')
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), ' changed')
     await user.click(within(dialog).getByRole('button', { name: '保存' }))
-    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('別の操作でこのトークンが変更されました'))
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('access token has changed; reload and try again'))
     expect(within(dialog).getByRole('textbox', { name: '名前' })).toHaveValue('ML Tracking changed')
     expect(screen.queryByText(/この値は一度だけ表示されます/)).not.toBeInTheDocument()
   })

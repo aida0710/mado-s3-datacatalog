@@ -11,10 +11,29 @@ const auth: AuthContextValue = {
   user: {
     id: 'admin', username: 'admin', email: null, displayName: 'Admin', signatureName: 'Admin',
     roles: ['admin'], permissions: ['users:manage', 'service_accounts:manage', 'audit:read'],
-    mustChangePassword: false,
+    mustChangePassword: false, authMethods: ['local'],
   },
   logout: async () => {},
   reload: async () => {},
+}
+
+const AIDA_ID = '1b6e3f0a-5c2d-4e8f-9a7b-3c4d5e6f7a81'
+const SATO_ID = '2c7f4a1b-6d3e-4f9a-8b8c-4d5e6f7a8b92'
+const SSO_USER_ID = '3d8a5b2c-7e4f-4a0b-9c9d-5e6f7a8b9ca3'
+
+type ManagedUserFixture = { id: string; username: string; email: string | null; displayName: string; status: 'active' | 'disabled'; roles: string[]; authMethods: Array<'local' | 'sso'> }
+
+// GET /api/internal/users の応答。API の応答の形 (署名・権限・パスワード変更の要否、SSO の対応表) を補う。
+function usersResponse(users: ManagedUserFixture[], ssoRoleMapping: Record<string, string> = {}) {
+  const fullUsers = users.map(user => ({ signatureName: user.displayName, permissions: [], mustChangePassword: false, ...user }))
+  return new Response(JSON.stringify({ users: fullUsers, ssoRoleMapping }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+}
+
+// ユーザーを変える要求 (PATCH・PUT) の応答。変えたユーザーを返す。
+function userResponse(user: ManagedUserFixture) {
+  return new Response(JSON.stringify({ user: { signatureName: user.displayName, permissions: [], mustChangePassword: false, ...user } }), {
+    status: 200, headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 function CurrentLocation() {
@@ -34,9 +53,7 @@ function renderAccessPage(path = '/settings/access/tokens') {
 
 describe('AdminPage', () => {
   it('Users・Access Tokens・Auditを専用ページに分ける', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ users: [] }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    }))
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(usersResponse([]))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -78,12 +95,10 @@ describe('AdminPage', () => {
   })
 
   it('ユーザー行を展開して編集・再発行・削除を管理できる', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
-      users: [{
-        id: 'user-1', username: 'aida', email: 'aida@example.jp', displayName: '相田',
-        status: 'active', roles: ['curator'], authMethods: ['local'],
-      }],
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(usersResponse([{
+      id: AIDA_ID, username: 'aida', email: 'aida@example.jp', displayName: '相田',
+      status: 'active', roles: ['curator'], authMethods: ['local'],
+    }]))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -111,15 +126,12 @@ describe('AdminPage', () => {
   })
 
   it('ユーザーの削除は確認のダイアログで確定してから送る', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => new Response(
-      init?.method === 'DELETE' ? '{}' : JSON.stringify({
-        users: [{
-          id: 'user-1', username: 'aida', email: null, displayName: '相田',
-          status: 'active', roles: ['curator'], authMethods: ['local'],
-        }],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    ))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'DELETE'
+      ? new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      : usersResponse([{
+        id: AIDA_ID, username: 'aida', email: null, displayName: '相田',
+        status: 'active', roles: ['curator'], authMethods: ['local'],
+      }]))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -132,23 +144,21 @@ describe('AdminPage', () => {
     await userEvent.click(within(screen.getByRole('form', { name: '相田を編集' })).getByRole('button', { name: '削除' }))
     const dialog = screen.getByRole('dialog', { name: 'ユーザーを削除' })
     expect(dialog).toHaveTextContent('相田を削除しますか？この操作は取り消せません。')
-    expect(fetchMock).not.toHaveBeenCalledWith('/api/internal/users/user-1', expect.objectContaining({ method: 'DELETE' }))
+    expect(fetchMock).not.toHaveBeenCalledWith(`/api/internal/users/${AIDA_ID}`, expect.objectContaining({ method: 'DELETE' }))
 
     await userEvent.click(within(dialog).getByRole('button', { name: '削除' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
-      '/api/internal/users/user-1', expect.objectContaining({ method: 'DELETE' }),
+      `/api/internal/users/${AIDA_ID}`, expect.objectContaining({ method: 'DELETE' }),
     ))
     expect(await screen.findByText('相田を削除しました。')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('ユーザーを名前・ユーザーID・メールアドレスと状態で絞り込める', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
-      users: [
-        { id: 'user-1', username: 'aida', email: 'aida@example.jp', displayName: '相田', status: 'active', roles: ['curator'], authMethods: ['local'] },
-        { id: 'user-2', username: 'sato', email: 'sato@example.jp', displayName: '佐藤', status: 'disabled', roles: ['viewer'], authMethods: ['local'] },
-      ],
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(usersResponse([
+      { id: AIDA_ID, username: 'aida', email: 'aida@example.jp', displayName: '相田', status: 'active', roles: ['curator'], authMethods: ['local'] },
+      { id: SATO_ID, username: 'sato', email: 'sato@example.jp', displayName: '佐藤', status: 'disabled', roles: ['viewer'], authMethods: ['local'] },
+    ]))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -172,16 +182,16 @@ describe('AdminPage', () => {
   })
 
   it('SSOユーザーの権限を読み取り専用にしてAuthentikの対応表を表示する', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
-      users: [{
-        id: 'sso-user-1', username: 'sso-user', email: 'sso@example.jp', displayName: 'SSO User',
-        status: 'active', roles: ['admin'], authMethods: ['sso'],
-      }],
-      ssoRoleMapping: {
+    const ssoUser: ManagedUserFixture = {
+      id: SSO_USER_ID, username: 'sso-user', email: 'sso@example.jp', displayName: 'SSO User',
+      status: 'active', roles: ['admin'], authMethods: ['sso'],
+    }
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'PATCH'
+      ? userResponse(ssoUser)
+      : usersResponse([ssoUser], {
         'mado-users': 'viewer', 'mado-curators': 'curator',
         'mado-operators': 'operator', 'mado-admins': 'admin',
-      },
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      }))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -203,22 +213,22 @@ describe('AdminPage', () => {
 
     await userEvent.click(within(details).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
-      '/api/internal/users/sso-user-1', expect.objectContaining({ method: 'PATCH' }),
+      `/api/internal/users/${SSO_USER_ID}`, expect.objectContaining({ method: 'PATCH' }),
     ))
     expect(fetch).not.toHaveBeenCalledWith(
-      '/api/internal/users/sso-user-1/roles', expect.anything(),
+      `/api/internal/users/${SSO_USER_ID}/roles`, expect.anything(),
     )
   })
 
   it('対応表が空ならSSOユーザーの権限もMadoで変更できる', async () => {
-    // 保存でPATCHの応答を読んでからPUTへ進むので、呼び出しごとに読める応答を返す。
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({
-      users: [{
-        id: 'sso-user-1', username: 'sso-user', email: 'sso@example.jp', displayName: 'SSO User',
-        status: 'active', roles: ['viewer'], authMethods: ['sso'],
-      }],
-      ssoRoleMapping: {},
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    // 保存でPATCHの応答を読んでからPUTへ進むので、変更の要求には変えたユーザーを返す。
+    const ssoUser: ManagedUserFixture = {
+      id: SSO_USER_ID, username: 'sso-user', email: 'sso@example.jp', displayName: 'SSO User',
+      status: 'active', roles: ['viewer'], authMethods: ['sso'],
+    }
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'PATCH' || init?.method === 'PUT'
+      ? userResponse(ssoUser)
+      : usersResponse([ssoUser]))
     render(
       <AuthContext.Provider value={auth}>
         <MemoryRouter initialEntries={['/settings/access/users']}>
@@ -236,7 +246,7 @@ describe('AdminPage', () => {
     await userEvent.selectOptions(within(details).getByLabelText(/^権限/), 'admin')
     await userEvent.click(within(details).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
-      '/api/internal/users/sso-user-1/roles',
+      `/api/internal/users/${SSO_USER_ID}/roles`,
       expect.objectContaining({ method: 'PUT', body: JSON.stringify({ roles: ['admin'] }) }),
     ))
   })
@@ -244,8 +254,9 @@ describe('AdminPage', () => {
   it('Auditタブ直下で監査ログ見出しを重複させない', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
       events: [{
-        id: 1, occurred_at: '2026-08-26T00:00:00Z', actor_type: 'user', actor_label: 'Admin',
-        action: 'user.update', resource_type: 'user', resource_id: 'user-1', outcome: 'success',
+        id: '1', occurred_at: '2026-08-26T00:00:00Z', request_id: null, actor_type: 'user', actor_user_id: null,
+        actor_service_account_id: null, actor_label: 'Admin', action: 'user.update', resource_type: 'user',
+        resource_id: AIDA_ID, outcome: 'success', ip_address: null, user_agent: null,
         details: { target: { displayName: 'Masaki' }, changes: [{ field: 'username', label: 'ユーザーID', before: 'aida', after: 'masaki' }] },
       }],
       nextCursor: null,

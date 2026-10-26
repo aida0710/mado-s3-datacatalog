@@ -1,4 +1,4 @@
-import { fetchApi, errorFromResponse } from './api/http'
+import { fetchApiResponse } from './api/http'
 import { mediaMessages } from './mediaMessages'
 
 // 大きな索引も少しずつ準備する。取得済みの位置をサーバーが次の要求で再利用する。
@@ -21,11 +21,8 @@ export async function prepareTarEntry(url: string, signal: AbortSignal): Promise
   const deadline = Date.now() + MAX_TAR_PREPARATION_MS
   for (;;) {
     signal.throwIfAborted()
-    const response = await fetchApi(url, { method: 'HEAD', signal })
-    if (response.status !== 202 || response.headers.get('X-Tar-Index-Pending') !== '1') {
-      if (!response.ok) throw await errorFromResponse(response)
-      return
-    }
+    const response = await fetchApiResponse(url, { method: 'HEAD', signal })
+    if (response.status !== 202 || response.headers.get('X-Tar-Index-Pending') !== '1') return
     if (Date.now() >= deadline) throw new Error(mediaMessages.tarPreparationTimeout)
     const seconds = Number(response.headers.get('Retry-After'))
     await waitForTarPreparationRetry({ signal, seconds })

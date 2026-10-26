@@ -11,6 +11,7 @@ export * from '../../../api/shared/schemas/settings'
 export * from '../../../api/shared/schemas/jobs'
 export * from '../../../api/shared/schemas/estimate'
 export * from '../../../api/shared/schemas/lineage'
+export { OkResult } from '../../../api/shared/schemas/system'
 
 export const TarPreview = z.object({
   entries: z.array(z.object({

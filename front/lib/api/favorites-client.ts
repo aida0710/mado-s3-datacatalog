@@ -1,7 +1,8 @@
 import type { z } from 'zod'
-import { FavoriteBuckets } from './types'
+import { jsonRequestInit } from '@mado/design-system/http'
+import { FavoriteBuckets, OkResult } from './types'
 import { SHORT_CACHE_TTL_MS, TTLCache } from './cache'
-import { cacheKey, fetchOk, getJson, storagePath } from './http'
+import { cacheKey, requestApi, storagePath } from './http'
 
 const favoritesCache = new TTLCache<z.infer<typeof FavoriteBuckets>>(SHORT_CACHE_TTL_MS)
 
@@ -12,7 +13,7 @@ const favoritePath = (connectionId: string, bucket: string) =>
 export const favoritesClient = {
   favorites: (connectionId: string) =>
     favoritesCache.get(cacheKey('favorites', connectionId), () =>
-      getJson(storagePath(connectionId, '/favorites'), FavoriteBuckets),
+      requestApi(storagePath(connectionId, '/favorites'), FavoriteBuckets),
     ),
 
   invalidateFavorites: (connectionId: string): void => {
@@ -20,12 +21,12 @@ export const favoritesClient = {
   },
 
   addFavorite: async (connectionId: string, bucket: string): Promise<void> => {
-    await fetchOk(favoritePath(connectionId, bucket), { method: 'PUT' })
+    await requestApi(favoritePath(connectionId, bucket), OkResult, jsonRequestInit('PUT'))
     favoritesCache.invalidate(cacheKey('favorites', connectionId))
   },
 
   removeFavorite: async (connectionId: string, bucket: string): Promise<void> => {
-    await fetchOk(favoritePath(connectionId, bucket), { method: 'DELETE' })
+    await requestApi(favoritePath(connectionId, bucket), OkResult, jsonRequestInit('DELETE'))
     favoritesCache.invalidate(cacheKey('favorites', connectionId))
   },
 }
