@@ -6,7 +6,7 @@ import { createSessionStore } from './auth-session-store.js'
 import { createUserStore } from './auth-user-store.js'
 import { hashPassword } from './password.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: RW, ro: RW.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)

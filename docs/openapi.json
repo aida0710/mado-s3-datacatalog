@@ -2920,7 +2920,7 @@
         "tags": [
           "preview"
         ],
-        "summary": "テキストの先頭 (PREVIEW_TEXT_LIMIT バイトまで)",
+        "summary": "テキストの先頭 (MDC_PREVIEW_TEXT_LIMIT バイトまで)",
         "security": [
           {
             "sessionCookie": []
@@ -3922,7 +3922,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "1 ページのエントリ数 (既定 PREVIEW_TAR_ENTRY_LIMIT)",
+            "description": "1 ページのエントリ数 (既定 MDC_PREVIEW_TAR_ENTRY_LIMIT)",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -18399,7 +18399,7 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "mado_session",
-        "description": "ブラウザのログイン (HttpOnly)。AUTH_COOKIE_SECURE=true のときの名前は __Host-mado_session。GET 以外は Origin を確かめる (許可しない Origin は 403 invalid_origin)。"
+        "description": "ブラウザのログイン (HttpOnly)。MDC_AUTH_COOKIE_SECURE=true のときの名前は __Host-mado_session。GET 以外は Origin を確かめる (許可しない Origin は 403 invalid_origin)。"
       },
       "bearerToken": {
         "type": "http",

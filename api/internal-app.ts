@@ -69,33 +69,33 @@ import type { Env } from './env.js'
  * DB にはつながずに組めるので、ルートの一覧を読むテスト (OpenAPI の突き合わせ) からも使う。
  */
 export function createInternalApplication(env: Env) {
-  const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
-  const crypto = createCrypto(env.ENCRYPTION_KEY)
+  const pools = createPools({ rw: env.MDC_DATABASE_URL_RW, ro: env.MDC_DATABASE_URL_RO })
+  const crypto = createCrypto(env.MDC_STORAGE_SECRET_KEY)
   const storageFactory = createStorageFactory({ pools, crypto })
   const audit = createAuditWriter(pools.rw)
   const users = createUserStore(pools.rw)
   const credentials = createCredentialStore(pools.rw)
   const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
   const authenticateInternalToken = createInternalTokenAuthenticator({ pool: pools.rw, authenticate: authenticateServiceKey })
-  const sessionCookie = sessionCookieName(env.AUTH_COOKIE_SECURE)
-  const oidcEnabled = env.AUTH_MODE === 'oidc' || env.AUTH_MODE === 'hybrid'
-  if (oidcEnabled && (!env.OIDC_ISSUER_URL || !env.OIDC_CLIENT_ID
-      || !env.OIDC_CLIENT_SECRET || !env.OIDC_REDIRECT_URI)) {
-    throw new Error('AUTH_MODE enables OIDC but OIDC_ISSUER_URL/CLIENT_ID/CLIENT_SECRET/REDIRECT_URI is incomplete')
+  const sessionCookie = sessionCookieName(env.MDC_AUTH_COOKIE_SECURE)
+  const oidcEnabled = env.MDC_AUTH_MODE === 'oidc' || env.MDC_AUTH_MODE === 'hybrid'
+  if (oidcEnabled && (!env.MDC_OIDC_ISSUER_URL || !env.MDC_OIDC_CLIENT_ID
+      || !env.MDC_OIDC_CLIENT_SECRET || !env.MDC_OIDC_REDIRECT_URI)) {
+    throw new Error('MDC_AUTH_MODE enables OIDC but MDC_OIDC_ISSUER_URL/CLIENT_ID/CLIENT_SECRET/REDIRECT_URI is incomplete')
   }
   const oidc = oidcEnabled ? createOidcProvider(pools.rw, crypto, {
     id: 'primary',
-    label: env.OIDC_LABEL,
-    issuerUrl: env.OIDC_ISSUER_URL!,
-    clientId: env.OIDC_CLIENT_ID!,
-    clientSecret: env.OIDC_CLIENT_SECRET!,
-    redirectUri: env.OIDC_REDIRECT_URI!,
-    scopes: env.OIDC_SCOPES,
-    postLogoutRedirectUri: env.OIDC_POST_LOGOUT_REDIRECT_URI,
+    label: env.MDC_OIDC_LABEL,
+    issuerUrl: env.MDC_OIDC_ISSUER_URL!,
+    clientId: env.MDC_OIDC_CLIENT_ID!,
+    clientSecret: env.MDC_OIDC_CLIENT_SECRET!,
+    redirectUri: env.MDC_OIDC_REDIRECT_URI!,
+    scopes: env.MDC_OIDC_SCOPES,
+    postLogoutRedirectUri: env.MDC_OIDC_POST_LOGOUT_REDIRECT_URI,
   }) : undefined
   const sessions = createSessionStore(pools.rw, audit, oidc ? createOidcSessionVerifier({
     pool: pools.rw, crypto, provider: oidc, audit,
-    policy: { allowedGroups: env.OIDC_ALLOWED_GROUPS, roleMapping: env.OIDC_ROLE_MAPPING_JSON, defaultRole: env.OIDC_DEFAULT_ROLE },
+    policy: { allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS, roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON, defaultRole: env.MDC_OIDC_DEFAULT_ROLE },
   }) : undefined)
   /** 期限切れの session・ログアウトの記録・OIDC の attempt を消す。起動側が定期的に呼ぶ。 */
   const deleteExpiredAuthRecords = async (): Promise<void> => {
@@ -123,7 +123,7 @@ export function createInternalApplication(env: Env) {
   // Login/callbackはbrowser session確立前に到達するpublic route。write系には既存の
   // Origin検証を適用する。
   const authApi = new Hono()
-  const safeOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
+  const safeOrigin = requireSafeOrigin(env.MDC_WEB_ORIGIN)
   authApi.use('*', async (c, next) => {
     // AuthentikからのBack-channel logoutはbrowser Originを持たない代わりに、
     // ProviderのJWKSで署名されたlogout_tokenをhandler内で検証する。
@@ -138,31 +138,31 @@ export function createInternalApplication(env: Env) {
     oidcProvisioning: createOidcProvisioning(pools.rw, audit),
     audit,
     config: {
-      localEnabled: env.AUTH_MODE === 'local' || env.AUTH_MODE === 'hybrid',
+      localEnabled: env.MDC_AUTH_MODE === 'local' || env.MDC_AUTH_MODE === 'hybrid',
       session: {
-        idleSeconds: env.AUTH_SESSION_IDLE_SECONDS,
-        absoluteSeconds: env.AUTH_SESSION_ABSOLUTE_SECONDS,
-        secure: env.AUTH_COOKIE_SECURE,
+        idleSeconds: env.MDC_AUTH_SESSION_IDLE_SECONDS,
+        absoluteSeconds: env.MDC_AUTH_SESSION_ABSOLUTE_SECONDS,
+        secure: env.MDC_AUTH_COOKIE_SECURE,
       },
       oidc,
       oidcLoginPolicy: {
-        autoLinkVerifiedEmail: env.OIDC_AUTO_LINK_VERIFIED_EMAIL,
-        allowedGroups: env.OIDC_ALLOWED_GROUPS,
-        roleMapping: env.OIDC_ROLE_MAPPING_JSON,
-        defaultRole: env.OIDC_DEFAULT_ROLE,
+        autoLinkVerifiedEmail: env.MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL,
+        allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS,
+        roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON,
+        defaultRole: env.MDC_OIDC_DEFAULT_ROLE,
       },
     },
   })
   app.route('/api/auth', authApi)
 
   const api = new Hono()
-  const safeInternalOrigin = requireSafeOrigin(env.ALLOWED_ORIGINS)
+  const safeInternalOrigin = requireSafeOrigin(env.MDC_WEB_ORIGIN)
   // ブラウザからの要求は、セッションに触れる(有効期限を延ばす)前にOriginを確かめる。
   // Authorizationヘッダーは他サイトのフォームからは付けられないので、トークンの要求には要らない。
   api.use('*', (context, next) => context.req.header('Authorization') !== undefined
     ? next() : safeInternalOrigin(context, next))
   api.use('*', requireInternalApiAuthentication({ sessions, authenticateToken: authenticateInternalToken,
-    idleSeconds: env.AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
+    idleSeconds: env.MDC_AUTH_SESSION_IDLE_SECONDS, cookieName: sessionCookie }))
   api.use('*', auditActivity(audit))
   api.use('*', requirePasswordChangeComplete())
   api.use('*', requireInternalApiPermission())
@@ -224,12 +224,12 @@ export function createInternalApplication(env: Env) {
   mountNotesRoutes(api, { pools })
   mountStorageTagsRoutes(api, { pools })
 
-  if (env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN && env.MARQUEZ_URL) {
+  if (env.MDC_DATASET_REGISTRY_URL && env.MDC_DATASET_REGISTRY_TOKEN && env.MDC_MARQUEZ_URL) {
     const registry = createRegistryClient({
-      baseUrl: env.DATASET_REGISTRY_URL,
-      token: env.DATASET_REGISTRY_TOKEN,
+      baseUrl: env.MDC_DATASET_REGISTRY_URL,
+      token: env.MDC_DATASET_REGISTRY_TOKEN,
     })
-    const marquez = createMarquezClient({ baseUrl: env.MARQUEZ_URL })
+    const marquez = createMarquezClient({ baseUrl: env.MDC_MARQUEZ_URL })
     const bindings: StorageBindingResolver = {
       async resolve(keys) {
         if (keys.length === 0) return new Map()
@@ -279,13 +279,13 @@ export function createInternalApplication(env: Env) {
     users,
     credentials,
     audit,
-    ssoRoleMapping: env.OIDC_ROLE_MAPPING_JSON,
+    ssoRoleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON,
   })
   const accessTokens = createAccessTokenStore(pools.rw)
   mountAccessTokenRoutes(api, { store: accessTokens, audit,
     visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
     namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
-      marquez: env.MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MARQUEZ_URL }) : null }) })
+      marquez: env.MDC_MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MDC_MARQUEZ_URL }) : null }) })
   mountAuditRoutes(api, { pool: pools.ro })
 
   app.route('/api/internal', api)
@@ -299,8 +299,8 @@ export function createInternalApplication(env: Env) {
   })
   mountServiceLineageRoutes(madoApi, {
     authenticate: authenticateServiceKey,
-    registry: env.DATASET_REGISTRY_URL && env.DATASET_REGISTRY_TOKEN
-      ? createRegistryClient({ baseUrl: env.DATASET_REGISTRY_URL, token: env.DATASET_REGISTRY_TOKEN })
+    registry: env.MDC_DATASET_REGISTRY_URL && env.MDC_DATASET_REGISTRY_TOKEN
+      ? createRegistryClient({ baseUrl: env.MDC_DATASET_REGISTRY_URL, token: env.MDC_DATASET_REGISTRY_TOKEN })
       : null,
   })
   app.route('/api/mado', madoApi)

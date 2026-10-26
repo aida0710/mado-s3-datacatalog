@@ -12,10 +12,10 @@ import { mountAccessTokenRoutes } from './access-tokens.js'
 import type { AccessToken } from '../lib/access-token-types.js'
 import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
-const connection = process.env.DATABASE_URL_RW_TEST
+const connection = process.env.MDC_TEST_DATABASE_URL
 // このテストは認証の表を初期化するので、代わりにほかの開発者のDBを使うことは決してしない。
 if (!connection || !new URL(connection).pathname.endsWith('_test')) {
-  throw new Error('Set DATABASE_URL_RW_TEST explicitly to an isolated database ending in _test')
+  throw new Error('Set MDC_TEST_DATABASE_URL explicitly to an isolated database ending in _test')
 }
 const pools = createPools({ rw: connection, ro: connection.replace('dashboard_rw', 'dashboard_ro') })
 const users = createUserStore(pools.rw)

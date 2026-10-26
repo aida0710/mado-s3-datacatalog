@@ -56,7 +56,7 @@ export function mountStorageMediaRoutes(app: Hono, deps: StorageMediaDeps): void
     // worker へ同期 proxy。ブラウザが切断したら中断が伝播する。
     let workerRes: Response
     try {
-      workerRes = await workerFetch(`${deps.env.MEDIA_WORKER_URL}/analyze`, {
+      workerRes = await workerFetch(`${deps.env.MDC_MEDIA_WORKER_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ref),

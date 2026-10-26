@@ -10,7 +10,7 @@ const { app, pools } = createLineageApplication(env)
 // 公開側のプロセスは移行を当てる権限を持たない。api-internal が当て終えていなければ起動しない。
 await assertMigrationsApplied(pools.ro)
 
-const server = serve({ fetch: app.fetch, port: env.LINEAGE_API_PORT }, info => {
+const server = serve({ fetch: app.fetch, port: env.MDC_LINEAGE_PORT }, info => {
   console.log(`lineage API listening on http://localhost:${info.port}`)
 })
 

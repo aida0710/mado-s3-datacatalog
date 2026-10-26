@@ -8,5 +8,6 @@ export default defineConfig({
     // （db/README.mdを参照）ので、本当の意味で並列には走らせられない。
     // beforeEachのTRUNCATEが競合してしまう。
     fileParallelism: false,
+    globalSetup: ['./test-environment-check.ts'],
   },
 })

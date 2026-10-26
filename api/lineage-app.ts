@@ -14,12 +14,12 @@ import { apiError } from './lib/api-error.js'
  * 待ち受けと移行の確認は起動側 (lineage.ts) が持つ。DB にはつながずに組める。
  */
 export function createLineageApplication(env: LineageEnv) {
-  const pools = createPools({ rw: env.DATABASE_URL_RW, ro: env.DATABASE_URL_RO })
+  const pools = createPools({ rw: env.MDC_DATABASE_URL_RW, ro: env.MDC_DATABASE_URL_RO })
   const authenticateServiceKey = createServiceKeyAuthenticator(pools.rw)
   const audit = createAuditWriter(pools.rw)
   const registry = createRegistryClient({
-    baseUrl: env.DATASET_REGISTRY_URL,
-    token: env.DATASET_REGISTRY_TOKEN,
+    baseUrl: env.MDC_DATASET_REGISTRY_URL,
+    token: env.MDC_DATASET_REGISTRY_TOKEN,
   })
 
   const app = new Hono()
@@ -51,7 +51,7 @@ export function createLineageApplication(env: LineageEnv) {
       },
     },
     registry,
-    bodyLimitBytes: env.OPENLINEAGE_BODY_LIMIT_BYTES,
+    bodyLimitBytes: env.MDC_OPENLINEAGE_BODY_LIMIT_BYTES,
   })
   app.route('/api', api)
 

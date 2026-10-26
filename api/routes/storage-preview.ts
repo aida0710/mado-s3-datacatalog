@@ -16,14 +16,14 @@ import { resolveObjectOrFail, type GetStorage } from './_storageRequest.js'
 import { apiError } from '../lib/api-error.js'
 
 export interface PreviewEnv {
-  PREVIEW_TEXT_LIMIT: number
-  PREVIEW_TAR_ENTRY_LIMIT: number
-  PREVIEW_TARXZ_BYTE_LIMIT: number
+  MDC_PREVIEW_TEXT_LIMIT: number
+  MDC_PREVIEW_TAR_ENTRY_LIMIT: number
+  MDC_PREVIEW_TARXZ_BYTE_LIMIT: number
   /**
    * 圧縮tarの本文バッファと、テキストの先頭取得の上限。
    * 非圧縮tarの本文はストリーミングし、この上限を適用しない。
    */
-  PREVIEW_TAR_ENTRY_MAX_BYTES: number
+  MDC_PREVIEW_TAR_ENTRY_MAX_BYTES: number
 }
 
 export interface StoragePreviewDeps {
@@ -76,7 +76,7 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
     if (object instanceof Response) return object
     const opened = await openObject(c, object)
     if (opened instanceof Response) return opened
-    const buf = await readN(opened.body, deps.env.PREVIEW_TEXT_LIMIT)
+    const buf = await readN(opened.body, deps.env.MDC_PREVIEW_TEXT_LIMIT)
     // TS の strict 型 (ArrayBufferView<ArrayBuffer>) で BodyInit を満たすため
     // 新しい ArrayBuffer バックの Uint8Array にコピーする。
     const body = new Uint8Array(buf.byteLength)
@@ -131,17 +131,17 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
     // 1ページの上限。UI は 10 / 25 / 50 / 100 を提供している;
     // 100 を超えると tar.gz/.xz デコードのメモリも爆発する。
     const MAX_LIMIT = 100
-    const rawLimit = Number(c.req.query('limit') ?? deps.env.PREVIEW_TAR_ENTRY_LIMIT)
+    const rawLimit = Number(c.req.query('limit') ?? deps.env.MDC_PREVIEW_TAR_ENTRY_LIMIT)
     const limit = Number.isFinite(rawLimit) && rawLimit > 0
       ? Math.min(Math.floor(rawLimit), MAX_LIMIT)
-      : Math.min(deps.env.PREVIEW_TAR_ENTRY_LIMIT, MAX_LIMIT)
+      : Math.min(deps.env.MDC_PREVIEW_TAR_ENTRY_LIMIT, MAX_LIMIT)
     const rawOffset = Number(c.req.query('offset') ?? 0)
     const offset = Number.isFinite(rawOffset) && rawOffset > 0
       ? Math.floor(rawOffset)
       : 0
 
     const byteLimit = kind === 'xz'
-      ? deps.env.PREVIEW_TARXZ_BYTE_LIMIT
+      ? deps.env.MDC_PREVIEW_TARXZ_BYTE_LIMIT
       : TAR_LIST_BYTE_LIMIT
 
     // NDJSON をストリーミングする。各行は以下のいずれか:
@@ -291,5 +291,5 @@ export function mountStoragePreviewRoutes(app: Hono, deps: StoragePreviewDeps): 
     })
   })
 
-  mountStorageTarEntryRoute(app, { getStorage: deps.getStorage, maxBytes: deps.env.PREVIEW_TAR_ENTRY_MAX_BYTES, tarIndexes })
+  mountStorageTarEntryRoute(app, { getStorage: deps.getStorage, maxBytes: deps.env.MDC_PREVIEW_TAR_ENTRY_MAX_BYTES, tarIndexes })
 }

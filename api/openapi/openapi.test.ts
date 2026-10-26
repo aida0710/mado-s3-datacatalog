@@ -21,21 +21,21 @@ function routeKey(method: string, path: string): string {
 /** api-internal と api-lineage が実際に持つルート。Registry と Marquez を設定して DataLineage のルートも載せる。 */
 async function applicationRoutes(): Promise<Set<string>> {
   const internal = createInternalApplication(loadEnv({
-    AUTH_MODE: 'local',
-    DATABASE_URL_RW: UNREACHABLE_DATABASE_URL,
-    DATABASE_URL_RO: UNREACHABLE_DATABASE_URL,
-    DATABASE_URL_MIGRATE: UNREACHABLE_DATABASE_URL,
-    ENCRYPTION_KEY: '0'.repeat(64),
-    ALLOWED_ORIGINS: 'http://localhost',
-    DATASET_REGISTRY_URL: 'http://registry.invalid',
-    DATASET_REGISTRY_TOKEN: REGISTRY_TOKEN,
-    MARQUEZ_URL: 'http://marquez.invalid',
+    MDC_AUTH_MODE: 'local',
+    MDC_DATABASE_URL_RW: UNREACHABLE_DATABASE_URL,
+    MDC_DATABASE_URL_RO: UNREACHABLE_DATABASE_URL,
+    MDC_DATABASE_URL_MIGRATE: UNREACHABLE_DATABASE_URL,
+    MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+    MDC_WEB_ORIGIN: 'http://localhost',
+    MDC_DATASET_REGISTRY_URL: 'http://registry.invalid',
+    MDC_DATASET_REGISTRY_TOKEN: REGISTRY_TOKEN,
+    MDC_MARQUEZ_URL: 'http://marquez.invalid',
   }))
   const lineage = createLineageApplication(loadLineageEnv({
-    DATABASE_URL_RW: UNREACHABLE_DATABASE_URL,
-    DATABASE_URL_RO: UNREACHABLE_DATABASE_URL,
-    DATASET_REGISTRY_URL: 'http://registry.invalid',
-    DATASET_REGISTRY_TOKEN: REGISTRY_TOKEN,
+    MDC_DATABASE_URL_RW: UNREACHABLE_DATABASE_URL,
+    MDC_DATABASE_URL_RO: UNREACHABLE_DATABASE_URL,
+    MDC_DATASET_REGISTRY_URL: 'http://registry.invalid',
+    MDC_DATASET_REGISTRY_TOKEN: REGISTRY_TOKEN,
   }))
   try {
     return new Set([...internal.app.routes, ...lineage.app.routes]

@@ -203,7 +203,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
 
   // ── preview ──
   {
-    method: 'get', path: '/api/internal/storage/:connectionId/preview/text', tag: 'preview', summary: 'テキストの先頭 (PREVIEW_TEXT_LIMIT バイトまで)',
+    method: 'get', path: '/api/internal/storage/:connectionId/preview/text', tag: 'preview', summary: 'テキストの先頭 (MDC_PREVIEW_TEXT_LIMIT バイトまで)',
     access: { kind: 'internal' }, query: ObjectQuery,
     responses: { 200: binary('text/plain; charset=utf-8', 'テキストの先頭') }, errors: OBJECT_READ_ERRORS,
   },
@@ -230,7 +230,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     method: 'get', path: '/api/internal/storage/:connectionId/preview/tar', tag: 'preview', summary: 'tar・tar.gz・tar.xz の中身の一覧を NDJSON で流す',
     access: { kind: 'internal' },
     query: ObjectQuery.extend({
-      limit: z.coerce.number().int().min(1).optional().describe('1 ページのエントリ数 (既定 PREVIEW_TAR_ENTRY_LIMIT)'),
+      limit: z.coerce.number().int().min(1).optional().describe('1 ページのエントリ数 (既定 MDC_PREVIEW_TAR_ENTRY_LIMIT)'),
       offset: z.coerce.number().int().min(0).optional().describe('読み飛ばすエントリ数。アーカイブを先頭から読み直すときの位置'),
     }),
     responses: {

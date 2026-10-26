@@ -8,7 +8,7 @@ import { createTestAppWithPrincipal } from '../lib/test-fixtures/request-princip
 import { setSessionPrincipal } from '../lib/rbac.js'
 import type { SessionPrincipal } from '../lib/auth-types.js'
 
-const RW = process.env.DATABASE_URL_RW_TEST
+const RW = process.env.MDC_TEST_DATABASE_URL
   ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const RO = RW.replace('dashboard_rw', 'dashboard_ro')
 const pools = createPools({ rw: RW, ro: RO })

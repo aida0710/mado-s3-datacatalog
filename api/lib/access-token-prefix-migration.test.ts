@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { afterAll, describe, expect, it } from 'vitest'
 import { closePools, createPools } from '../db.js'
 
-const database = process.env.DATABASE_URL_RW_TEST ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
+const database = process.env.MDC_TEST_DATABASE_URL ?? 'postgres://dashboard_rw:CHANGEME@localhost:5432/dashboard_test'
 const pools = createPools({ rw: database, ro: database })
 afterAll(() => closePools(pools))
 
