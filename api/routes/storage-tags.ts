@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
-import { apiError } from '../lib/api-error.js'
+import { apiError, invalidRequest } from '../lib/api-error.js'
 
 // 認証と操作権限は internal-app.ts の共通ガードで検証する。
 
@@ -55,7 +55,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
 
   app.post('/tags', async c => {
     const parsed = TagCreateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const { name, color } = parsed.data
     const id = nanoid(10)
     try {
@@ -77,7 +77,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.put('/tags/:id', async c => {
     const id = c.req.param('id')
     const parsed = TagUpdateBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const u = parsed.data
 
     const sets: string[] = []
@@ -154,7 +154,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.put('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
     const parsed = TagAssignmentBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(
       `INSERT INTO storage_tag_assignments (tag_id, connection_id, bucket, target_kind, target_path)
@@ -169,7 +169,7 @@ export function mountStorageTagsRoutes(app: Hono, deps: StorageTagsDeps): void {
   app.delete('/storage/:connectionId/tags', async c => {
     const connectionId = c.req.param('connectionId')
     const parsed = TagAssignmentBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const { bucket, kind, path, tagId } = parsed.data
     const result = await deps.pools.rw.query(
       `DELETE FROM storage_tag_assignments

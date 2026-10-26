@@ -4,7 +4,7 @@ import type { Pools } from '../db.js'
 import { getRequestPrincipal } from '../lib/rbac.js'
 import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
-import { apiError } from '../lib/api-error.js'
+import { apiError, invalidRequest } from '../lib/api-error.js'
 
 export interface NotesDeps {
   pools: Pools
@@ -43,7 +43,7 @@ export function mountNotesRoutes(app: Hono, deps: NotesDeps): void {
       return c.json(apiError('invalid_request', 'invalid slug'), 400)
     }
     const parsed = NotePutBody.safeParse(await c.req.json().catch(() => null))
-    if (!parsed.success) return c.json(apiError('invalid_request', parsed.error.message), 400)
+    if (!parsed.success) return c.json(invalidRequest(parsed.error), 400)
     const principal = getRequestPrincipal(c)
     const body = parsed.data.body
     if (!principal) return c.json(apiError('authentication_required', 'unauthorized'), 401)
