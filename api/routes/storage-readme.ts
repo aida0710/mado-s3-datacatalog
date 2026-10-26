@@ -11,7 +11,7 @@ import { principalEditor, principalUserId } from '../lib/principal-actor.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import type { ResponseCache } from '../lib/storage-cache.js'
 import { resolveStorageOrFail, type GetStorage } from './_storageRequest.js'
-import { apiError } from '../lib/api-error.js'
+import { apiError, invalidRequest } from '../lib/api-error.js'
 
 export interface StorageReadmeDeps {
   getStorage: GetStorage
@@ -103,7 +103,7 @@ export function mountStorageReadmeRoutes(app: Hono, deps: StorageReadmeDeps): vo
     const connectionId = c.req.param('connectionId')
     const parsed = ReadmePutBody.safeParse(await c.req.json().catch(() => null))
     if (!parsed.success) {
-      return c.json(apiError('invalid_request', parsed.error.message), 400)
+      return c.json(invalidRequest(parsed.error), 400)
     }
     const { bucket, prefix, body } = parsed.data
     const principal = getRequestPrincipal(c)
