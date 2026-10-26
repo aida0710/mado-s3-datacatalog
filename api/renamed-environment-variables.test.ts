@@ -4,12 +4,12 @@ import { assertNoRenamedEnvironmentVariables, RENAMED_ENVIRONMENT_VARIABLES } fr
 describe('assertNoRenamedEnvironmentVariables', () => {
   it('旧名だけが設定されていれば、残っている旧名をすべて新名と並べて止める', () => {
     expect(() => assertNoRenamedEnvironmentVariables({ ENCRYPTION_KEY: 'x', ALLOWED_ORIGINS: 'http://a' }))
-      .toThrow(/旧名 ENCRYPTION_KEY は新名 MDC_STORAGE_SECRET_KEY に替わりました\n {2}旧名 ALLOWED_ORIGINS は新名 MDC_WEB_ORIGIN に替わりました/)
+      .toThrow(/ENCRYPTION_KEY was replaced by MDC_STORAGE_SECRET_KEY; ALLOWED_ORIGINS was replaced by MDC_WEB_ORIGIN/)
   })
 
   it('空の値でも旧名の名前があれば止める', () => {
     expect(() => assertNoRenamedEnvironmentVariables({ OIDC_CLIENT_SECRET: '' }))
-      .toThrow('旧名 OIDC_CLIENT_SECRET は新名 MDC_OIDC_CLIENT_SECRET に替わりました')
+      .toThrow('OIDC_CLIENT_SECRET was replaced by MDC_OIDC_CLIENT_SECRET')
   })
 
   it('エラーに旧名の値を出さない', () => {

@@ -56,6 +56,7 @@ export function assertNoRenamedEnvironmentVariables(source: Record<string, strin
   const leftovers = Object.entries(RENAMED_ENVIRONMENT_VARIABLES)
     .filter(([oldName, newName]) => Object.hasOwn(source, oldName) && !Object.hasOwn(source, newName))
   if (leftovers.length === 0) return
-  const lines = leftovers.map(([oldName, newName]) => `  旧名 ${oldName} は新名 ${newName} に替わりました`)
-  throw new Error(`環境変数の名前が替わりました。.envとComposeの設定を新しい名前にしてください:\n${lines.join('\n')}`)
+  // ほかの起動時のエラーとmado ML Trackingの同じ検査に合わせて、運用者が読む文は英語にする。
+  const replacements = leftovers.map(([oldName, newName]) => `${oldName} was replaced by ${newName}`)
+  throw new Error(`Old environment variable names are set: ${replacements.join('; ')}`)
 }
