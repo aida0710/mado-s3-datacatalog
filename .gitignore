@@ -1,4 +1,4 @@
-# Logs
+# ログ
 logs
 *.log
 npm-debug.log*
@@ -18,12 +18,12 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Env files
+# 環境変数のファイル
 .env
 .env.*
 !.env.example
 
-# Editor directories and files
+# エディタのディレクトリとファイル
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -35,5 +35,5 @@ __pycache__/
 *.sw?
 .claude/
 
-# Local screenshots and release validation output
+# 手元のスクリーンショットと、リリースの検証の出力
 artifacts/
