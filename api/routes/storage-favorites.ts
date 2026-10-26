@@ -3,7 +3,7 @@ import type { Pools } from '../db.js'
 import { markAuditNoChange } from '../lib/audit-activity.js'
 import { apiError } from '../lib/api-error.js'
 
-// お気に入りは接続ごとに共有する。認証と操作権限は internal.ts で検証する。
+// お気に入りは接続ごとに共有する。認証と操作権限は internal-app.ts で検証する。
 
 export interface StorageFavoritesDeps {
   pools: Pools
