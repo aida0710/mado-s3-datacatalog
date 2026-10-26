@@ -206,6 +206,8 @@ function UsersPage() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<UserRow[]>([])
   const [ssoRoleMappings, setSsoRoleMappings] = useState<Array<{ group: string; role: RoleId }>>([])
+  // 対応表が空なら、AuthentikはSSOのログインの可否だけを決め、権限はMadoで管理する（API側と同じ決まり）。
+  const ssoManagesRoles = ssoRoleMappings.length > 0
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [role, setRole] = useState<RoleId>('viewer')
@@ -278,9 +280,9 @@ function UsersPage() {
           status: form.get('status'),
         }),
       })
-      // SSO連携済みUserのRoleはAuthentikを正本としてlogin時に同期する。
+      // 対応表があるときのSSO連携済みUserのRoleはAuthentikを正本としてlogin時に同期する。
       // disabledなform controlはFormDataに含まれないため、API呼び出し自体も明示的に省く。
-      if (!user.authMethods.includes('sso')) {
+      if (!(ssoManagesRoles && user.authMethods.includes('sso'))) {
         const nextRole = String(form.get('role'))
         if (user.roles.length !== 1 || user.roles[0] !== nextRole) {
           await jsonRequest(`/api/internal/users/${encodeURIComponent(user.id)}/roles`, {
@@ -371,6 +373,7 @@ function UsersPage() {
                     const isOpen = openIds.has(user.id)
                     const detailId = `admin-user-${user.id}`
                     const sso = user.authMethods.includes('sso')
+                    const roleManagedBySso = sso && ssoManagesRoles
                     return [
                       <tr
                         key={user.id}
@@ -421,12 +424,12 @@ function UsersPage() {
                                 <select
                                   name="role"
                                   defaultValue={user.roles[0] ?? 'viewer'}
-                                  disabled={sso}
-                                  aria-describedby={sso ? `sso-role-help-${user.id}` : undefined}
+                                  disabled={roleManagedBySso}
+                                  aria-describedby={roleManagedBySso ? `sso-role-help-${user.id}` : undefined}
                                 >
                                   {ROLE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
                                 </select>
-                                {sso && (
+                                {roleManagedBySso && (
                                   <small id={`sso-role-help-${user.id}`} className="muted">
                                     {translate('common.managedByYourSsoProviderAndCannotBe')}</small>
                                 )}
@@ -483,17 +486,22 @@ function UsersPage() {
           <button type="submit" className="button primary">{translate('common.create')}</button>
         </form>
         <blockquote className="sso-guidance">
-          <p>{translate('adminPage.forSsoTheFollowingAuthentikGroupsMapTo')}</p>
-          <ul>
-            {ssoRoleMappings.map(({ group, role }) => (
-              <li key={group}>
-                <code>{group}</code>
-                <span aria-hidden="true">→</span>
-                <strong>{ROLE_OPTIONS.find(option => option.id === role)?.label}</strong>
-              </li>
-            ))}
-            {ssoRoleMappings.length === 0 && <li className="sso-guidance__empty">{translate('adminPage.noSsoPermissionMappingsAreConfigured')}</li>}
-          </ul>
+          {ssoManagesRoles ? (
+            <>
+              <p>{translate('adminPage.forSsoTheFollowingAuthentikGroupsMapTo')}</p>
+              <ul>
+                {ssoRoleMappings.map(({ group, role }) => (
+                  <li key={group}>
+                    <code>{group}</code>
+                    <span aria-hidden="true">→</span>
+                    <strong>{ROLE_OPTIONS.find(option => option.id === role)?.label}</strong>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p>{translate('adminPage.ssoUserPermissionsAreManagedInMado')}</p>
+          )}
         </blockquote>
       </section>
 
