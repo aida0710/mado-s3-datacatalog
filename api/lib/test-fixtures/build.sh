@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Regenerate sample.tar / sample.tar.gz / sample.tar.xz from a fixed
-# directory tree. Run from repo root: bash api/lib/test-fixtures/build.sh
+# 決まったディレクトリ構成から、sample.tar / sample.tar.gz / sample.tar.xzを
+# 作り直す。リポジトリのルートで実行する: bash api/lib/test-fixtures/build.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# Prevent macOS tar from embedding `._*` AppleDouble resource-fork entries
-# in the archive — they would pollute the test fixtures cross-platform.
+# macOSのtarが`._*`のAppleDouble（リソースフォーク）のエントリをアーカイブに
+# 入れないようにする。入ると、OSをまたいでテストのフィクスチャが汚れる。
 export COPYFILE_DISABLE=1
 
 mkdir -p tmp/d

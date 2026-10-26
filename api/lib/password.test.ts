@@ -21,9 +21,9 @@ describe('password', () => {
   })
 
   it('長さは文字数ではなく UTF-8 の byte で数える', () => {
-    expect(isAcceptablePasswordLength('あ'.repeat(4))).toBe(true)      // 12 byte
+    expect(isAcceptablePasswordLength('あ'.repeat(4))).toBe(true)      // 12バイト
     expect(isAcceptablePasswordLength('a'.repeat(11))).toBe(false)
-    expect(isAcceptablePasswordLength('あ'.repeat(341))).toBe(true)    // 1023 byte
-    expect(isAcceptablePasswordLength('あ'.repeat(342))).toBe(false)   // 1026 byte
+    expect(isAcceptablePasswordLength('あ'.repeat(341))).toBe(true)    // 1023バイト
+    expect(isAcceptablePasswordLength('あ'.repeat(342))).toBe(false)   // 1026バイト
   })
 })

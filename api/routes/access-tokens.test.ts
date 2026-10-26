@@ -13,7 +13,7 @@ import type { AccessToken } from '../lib/access-token-types.js'
 import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
 const connection = process.env.DATABASE_URL_RW_TEST
-// This suite resets auth tables; never fall back to another developer's database.
+// このテストは認証の表を初期化するので、代わりにほかの開発者のDBを使うことは決してしない。
 if (!connection || !new URL(connection).pathname.endsWith('_test')) {
   throw new Error('Set DATABASE_URL_RW_TEST explicitly to an isolated database ending in _test')
 }
@@ -149,7 +149,7 @@ describe('一階層のアクセストークン管理', () => {
       { name: 'capacity with namespace', permissions: ['capacity:read'], namespaces: ['speech'], connections: ['*'] },
       { name: 'capacity without connections', permissions: ['capacity:read'] },
       { name: 'past', permissions: ['capacity:read'], connections: ['*'], expiresAt: '2000-01-01T00:00:00Z' },
-      // Integration scopes are derived from permissions and no longer accepted as input.
+      // 連携scopeは権限から決まるので、入力では受け付けない。
       { name: 'scopes only', scopes: ['metrics:read'] },
       { name: 'scopes beside permissions', scopes: ['lineage:write'], permissions: ['lineage:read'], namespaces: ['speech'] },
     ]) expect((await request({ method: 'POST', body })).status, body.name).toBe(400)

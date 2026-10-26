@@ -1,5 +1,5 @@
-// Feature permissions are shared by the API contract and the token editor.
-// Integration scopes are derived from them; the service APIs (/api/mado, OpenLineage) check scopes.
+// 機能の権限は、APIの契約とトークンの編集画面で共有する。
+// 連携scopeは権限から決まり、連携API（/api/mado、OpenLineage）はscopeを確かめる。
 export const SERVICE_KEY_SCOPES = ['lineage:write', 'lineage:read', 'metrics:read'] as const
 export type ServiceKeyScope = typeof SERVICE_KEY_SCOPES[number]
 
@@ -24,7 +24,7 @@ export type InternalApiPermissionGroup = keyof typeof INTERNAL_API_PERMISSION_GR
 export type InternalApiPermission = typeof INTERNAL_API_PERMISSION_GROUPS[InternalApiPermissionGroup][number]
 export const INTERNAL_API_PERMISSIONS = Object.values(INTERNAL_API_PERMISSION_GROUPS).flat() as InternalApiPermission[]
 
-// The feature permission that grants each integration scope.
+// 連携scopeごとに、それを与える機能の権限。
 const SCOPE_PERMISSIONS = {
   'lineage:write': 'lineage:send',
   'lineage:read': 'lineage:read',

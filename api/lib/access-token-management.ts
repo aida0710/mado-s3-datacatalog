@@ -24,7 +24,7 @@ export function createAccessTokenManagement(deps: {
     }
   }
 
-  /** Authorization runs on the row the store has locked, so a concurrent change cannot slip past it. */
+  /** 認可はstoreがロックした行に対して行うので、同時に入った変更がすり抜けることは無い。 */
   function writeGuard(principal: RequestPrincipal, grantsAfterWrite?: (current: AccessToken) => AccessTokenInput): AccessTokenWriteGuard {
     return {
       actorKeyId: principal.kind === 'service_account' ? principal.keyId : undefined,

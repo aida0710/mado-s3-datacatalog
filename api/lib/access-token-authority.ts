@@ -9,33 +9,33 @@ function includesTargets(allowed: readonly string[], requested: readonly string[
   return allowed.includes('*') || requested.every(value => allowed.includes(value))
 }
 
-/** A lifetime is part of what was granted: a token must not create or manage one that outlives it. */
+/** 有効期限も許可の一部。トークンは、自分より長く有効なトークンを作ったり管理したりしてはならない。 */
 function endsWithin(allowed: Date | null, requested: Date | null | undefined): boolean {
   if (allowed === null) return true
   return requested != null && requested.getTime() <= allowed.getTime()
 }
 
 /**
- * Whether the principal may grant these permissions and targets. Integration scopes derive from the
- * permissions, so they need no check of their own.
+ * 呼び出し元がこの権限と対象を与えてよいか。連携scopeは権限から決まるので、
+ * 別に確かめる必要は無い。
  */
 export function canDelegateToken(principal: RequestPrincipal, grants: TokenGrants): boolean {
   if (!grants.permissions.every(permission => hasPermission(principal, permission))) return false
   if (principal.kind === 'user') return !grants.connections.includes('*') || hasPermission(principal, 'connections:manage')
-  // Even targets a permission does not need matter: DataLineage uses connections for location resolution.
+  // 権限が必要としない対象も確かめる。DataLineageは保存場所の逆引きに接続を使う。
   return includesTargets(principal.namespaces, grants.namespaces)
     && includesTargets(principal.connections, grants.connections)
     && endsWithin(principal.expiresAt, grants.expiresAt)
 }
 
-/** For work that is not tied to one connection: a token must hold every connection to reach it. */
+/** 1つの接続に結び付かない操作のため。トークンで使うには、全接続を持っている必要がある。 */
 export function coversAllConnections(principal: RequestPrincipal): boolean {
   return principal.kind === 'user' || principal.connections.includes('*')
 }
 
 /**
- * User/role/password administration can otherwise turn a limited token into an administrator login,
- * so only a token holding every permission, connection and namespace may use it.
+ * ユーザー・ロール・パスワードの管理を許すと、制限したトークンから管理者のログインを作れてしまう。
+ * そのため、すべての権限・接続・Namespaceを持つトークンにだけ許す。
  */
 export function canAdministerUsers(principal: RequestPrincipal): boolean {
   if (principal.kind === 'user') return hasPermission(principal, 'users:manage')

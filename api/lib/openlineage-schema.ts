@@ -51,11 +51,11 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Return the immutable dataset-version identity used by the Registry profile.
+ * Registry profileが使う、変わらないデータセットの版の識別子を返す。
  *
- * Standard OpenLineage integrations can use the standard `version` facet.
- * Registry-aware producers can alternatively provide a Registry UUID in the
- * `datasetRegistry` or `madoDataset` custom facet.
+ * 標準のOpenLineageの連携は、標準の`version` facetを使える。
+ * Registryに対応したproducerは、代わりに独自facetの`datasetRegistry`か
+ * `madoDataset`にRegistryのUUIDを入れてもよい。
  */
 export function datasetVersionIdentity(dataset: OpenLineageDataset): string | null {
   const versionFacet = asRecord(dataset.facets.version)
@@ -70,7 +70,7 @@ export function datasetVersionIdentity(dataset: OpenLineageDataset): string | nu
   return null
 }
 
-/** Parse OpenLineage and enforce the canonical Registry profile. */
+/** OpenLineageを解析し、正規のRegistry profileを満たすかを検査する。 */
 export function validateOpenLineageProfile(value: unknown): OpenLineageValidation {
   const parsed = OpenLineageEventSchema.safeParse(value)
   if (!parsed.success) {
@@ -85,8 +85,8 @@ export function validateOpenLineageProfile(value: unknown): OpenLineageValidatio
 
   const issues: OpenLineageProfileIssue[] = []
   const check = (dataset: OpenLineageDataset, path: string): void => {
-    // Purchased/crawled sources are represented as synthetic datasets and do
-    // not have an internal DatasetVersion.
+    // 購入・クロールした取得元は合成したデータセットとして表すので、内部の
+    // DatasetVersionを持たない。
     if (dataset.namespace === 'external-source') return
     if (!datasetVersionIdentity(dataset)) {
       issues.push({

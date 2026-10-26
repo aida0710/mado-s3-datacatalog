@@ -7,7 +7,7 @@ import { saveInternalTokenGrants } from './internal-token-grants.js'
 import { serviceKeyScopesForPermissions } from '../shared/access-token-permissions.js'
 import type { AccessToken, AccessTokenInput, AccessTokenPatch, AccessTokenRow, AccessTokenUpdate } from './access-token-types.js'
 
-// Internal owner names must fit the existing service_accounts name constraint.
+// 内部の持ち主の名前は、既存のservice_accountsの名前の制約に収める。
 const ACCOUNT_NAME_MAX_LENGTH = 128
 const TOKEN_SELECT = `SELECT k.id, k.service_account_id,
   k.name, k.description, k.token_prefix, k.created_at, k.expires_at,
@@ -31,15 +31,15 @@ export class AccessTokenActorInactiveError extends Error {
   constructor() { super('the calling access token is no longer active') }
 }
 
-/** Checks a token caller against the locked target, inside the same transaction as the write. */
+/** トークンの呼び出し元を、書き込みと同じトランザクションの中で、ロックした対象と照らし合わせる。 */
 export interface AccessTokenWriteGuard {
-  /** The key ID of a calling access token; it must still be active when the write commits. */
+  /** 呼び出したアクセストークンのkey ID。書き込みを確定する時点でも有効でなければならない。 */
   actorKeyId?: string
   authorize?(current: AccessToken): Promise<void>
 }
 
-// Same conditions as authentication; a caller disabled or revoked mid-request cannot finish a write.
-// No row lock: two tokens editing each other would otherwise lock in opposite orders and deadlock.
+// 認証と同じ条件。要求の途中で無効化・失効された呼び出し元は、書き込みを終えられない。
+// 行はロックしない。ロックすると、互いを編集する2つのトークンが逆の順にロックしてデッドロックする。
 const ACTIVE_KEY_SELECT = `SELECT 1 FROM service_account_keys k WHERE k.id = $1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`
 
 async function assertActorActive(database: Queryable, guard: AccessTokenWriteGuard | undefined): Promise<void> {
@@ -86,7 +86,7 @@ async function lockToken(database: PoolClient, input: { id: string; expectedRevi
   const selected = await database.query<AccessTokenRow>(`${TOKEN_SELECT} AND k.id = $1 FOR UPDATE OF k`, [input.id])
   const row = selected.rows[0]
   if (!row) return null
-  // Authorize against the locked row, before the revision, so a refusal does not reveal it.
+  // revisionを比べる前に、ロックした行で認可する。拒否したときにrevisionを明かさないため。
   await guard?.authorize?.(toAccessToken(row))
   if (row.revision !== input.expectedRevision) throw new AccessTokenConflictError()
   await assertActorActive(database, guard)
@@ -118,7 +118,7 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       await assertActorActive(database, guard)
       const grants = parsed.data
       const accountId = newId()
-      // One internal owner per new token preserves the Registry/audit identity contract.
+      // 新しいトークンごとに内部の持ち主を1つ作り、Registry・監査の主体IDの契約を保つ。
       const suffix = ` [${accountId}]`
       const accountName = `${input.name.slice(0, ACCOUNT_NAME_MAX_LENGTH - suffix.length)}${suffix}`
       await database.query(
@@ -143,7 +143,7 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       const grants = parsed.data
       if (!tokenNeedsUpdate(row, { ...input.patch, ...grants })) return { accessToken: toAccessToken(row), changed: false }
       if (input.patch.permissions !== undefined || input.patch.namespaces !== undefined) {
-        // The integration scopes follow the permissions.
+        // 連携scopeは権限に合わせる。
         await database.query('DELETE FROM service_account_key_scopes WHERE key_id = $1', [input.id])
         await database.query('DELETE FROM service_account_key_namespaces WHERE key_id = $1', [input.id])
         await insertServiceKeyPermissions(database, {
@@ -172,7 +172,7 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
     deleteToken: (input, guard) => withTransaction(pool, async database => {
       const row = await lockToken(database, input, guard)
       if (!row) return null
-      // Retain the key and owner IDs for historical audit and Registry attribution.
+      // 過去の監査とRegistryの記録が誰のものか分かるよう、keyと持ち主のIDは残す。
       await database.query('UPDATE service_account_keys SET revoked_at = now(), revision = revision + 1 WHERE id = $1', [input.id])
       return toAccessToken(row)
     }),

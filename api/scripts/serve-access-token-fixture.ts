@@ -1,4 +1,4 @@
-// Local browser verification only: never accepts a shared/deployed database or external bind.
+// 手元のブラウザでの確認専用。共有・配備済みのDBは受け付けず、外部のアドレスでは待ち受けない。
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { createPools, closePools } from '../db.js'
@@ -22,7 +22,7 @@ import { createCrypto } from '../crypto.js'
 import { CAPABILITY_KEYS, capabilitySettingKey } from '../storage.js'
 
 const VERIFICATION_DATABASE = 'dashboard_access_tokens_verify'
-// Separate from the application's default ports so verification can run beside development.
+// 開発と並べて確認できるよう、アプリの既定のポートとは別にする。
 const VERIFICATION_PORT = 4329
 const databaseUrl = process.env.MADO_ACCESS_TOKEN_DATABASE_URL
 if (!databaseUrl) throw new Error('Set MADO_ACCESS_TOKEN_DATABASE_URL for the isolated verification database')

@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-// Keep a login for one week, including time away from the browser.
+// ブラウザを離れている間も含めて、ログインを1週間保つ。
 const DEFAULT_SESSION_LIFETIME_SECONDS = 7 * 24 * 60 * 60
-// offline_access lets an SSO session refresh short-lived access tokens without another login.
+// offline_accessがあると、SSOのsessionは期限の短いアクセストークンをログインし直さずに更新できる。
 const DEFAULT_OIDC_SCOPES = 'openid email profile offline_access'
 
 // `ENCRYPTION_KEY` は 64 桁の16進数 (32 バイトのエントロピー) が必須。

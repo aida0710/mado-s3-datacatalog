@@ -2,9 +2,9 @@ import { z } from 'zod'
 import type { VersionGraphNode, VersionLineageGraph } from '../shared/lineage-types.js'
 import { LineageNamespaceError, type NamespaceLineagePolicy } from './namespace-lineage-policy.js'
 
-// Keep authorization fan-out bounded even when a Registry returns an oversized graph.
+// Registryが大きすぎるグラフを返しても、認可のために問い合わせる数を抑える。
 const MAX_AUTHORIZED_GRAPH_NODES = 500
-// Registry lookups use a small batch instead of hundreds of simultaneous HTTP requests.
+// Registryへの問い合わせは、数百のHTTP要求を同時に送らず、少しずつまとめて送る。
 const GRAPH_AUTHORIZATION_BATCH_SIZE = 8
 
 export async function filterVersionGraphByNamespace(graph: VersionLineageGraph, policy: NamespaceLineagePolicy): Promise<VersionLineageGraph> {
@@ -14,7 +14,7 @@ export async function filterVersionGraphByNamespace(graph: VersionLineageGraph, 
   for (let start = 0; start < candidates.length; start += GRAPH_AUTHORIZATION_BATCH_SIZE) {
     const batch = await Promise.all(candidates.slice(start, start + GRAPH_AUTHORIZATION_BATCH_SIZE).map(async node => {
       if (node.kind === 'source') return null
-      // Graph IDs are opaque. Only explicit canonical IDs may be used for authorization.
+      // グラフのIDは中身を解釈しない値。認可に使ってよいのは、明示された正規のIDだけ。
       const id = z.uuid().safeParse(node.data.id)
       if (!id.success) return null
       try {

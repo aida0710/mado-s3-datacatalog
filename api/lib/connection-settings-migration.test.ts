@@ -12,7 +12,7 @@ describe('migration 041', () => {
     const client = await pools.rw.connect()
     try {
       await client.query('BEGIN')
-      // Temporary tables isolate the migration from the test database's applied schema.
+      // 一時的な表を使い、移行をテスト用DBの適用済みのスキーマから切り離す。
       await client.query(`
         CREATE TEMP TABLE storage_connections (id text PRIMARY KEY) ON COMMIT DROP;
         CREATE TEMP TABLE connection_settings (

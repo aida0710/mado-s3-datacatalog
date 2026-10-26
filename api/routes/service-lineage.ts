@@ -14,7 +14,7 @@ export interface ServiceLineageRoutesDeps {
   registry: ServiceLineageRegistry | null
 }
 
-// Bound public search work independently of the operator-supplied Registry.
+// 公開の検索の処理量は、運用者が用意したRegistryに頼らず、ここで抑える。
 const MAX_CATALOG_QUERY_LENGTH = 512
 const MAX_CATALOG_PAGE_SIZE = 100
 const DEFAULT_CATALOG_PAGE_SIZE = 50

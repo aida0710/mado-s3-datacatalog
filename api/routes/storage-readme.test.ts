@@ -199,7 +199,7 @@ describe('PUT /storage/:connectionId/readme', () => {
     const res = await app.request(`/storage/${TEST_CONN_ID}/readme`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket: 'b' }), // missing prefix, body, editor
+      body: JSON.stringify({ bucket: 'b' }), // prefix・body・editorが無い
     })
     expect(res.status).toBe(400)
   })

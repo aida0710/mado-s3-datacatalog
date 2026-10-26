@@ -1,6 +1,6 @@
 import type { MetricFamily } from './metrics-collector.js'
 
-/** Prometheus text exposition format 0.0.4。 */
+/** Prometheusのテキスト形式（text exposition format 0.0.4）。 */
 export const PROMETHEUS_TEXT_CONTENT_TYPE = 'text/plain; version=0.0.4; charset=utf-8'
 
 function escapeLabelValue(value: string): string {

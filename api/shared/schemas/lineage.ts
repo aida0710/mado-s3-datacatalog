@@ -1,7 +1,7 @@
 // DataLineage の応答: Registry のデータセット、グラフ、詳細、保存場所の逆引き、手での登録の結果。
 import { z } from 'zod'
 
-// ── Dataset lineage (spec: 2026-08-26-auth-lineage-platform-design.md) ──
+// ── データセットのlineage（spec: 2026-08-26-auth-lineage-platform-design.md）──
 // API は React Flow に依存しない domain DTO を返す。キャンバス用の座標や
 // node type への変換は front/lib/lineage だけで行う。
 export const LineageProjection = z.enum(['logical', 'versions'])

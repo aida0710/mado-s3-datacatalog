@@ -1,6 +1,6 @@
 import type { InternalApiPermission } from '../shared/access-token-permissions.js'
 
-// Existing browser roles retain their behavior while tokens use individual grants.
+// トークンは個別の許可を使い、既存のブラウザのロールはこれまでの振る舞いを保つ。
 const USER_PERMISSION_ALIASES: Partial<Record<InternalApiPermission, string>> = {
   'connections:read': 'storage:read', 'connections:delete': 'connections:manage',
   'readmes:read': 'storage:read', 'readmes:write': 'content:write',

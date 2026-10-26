@@ -23,9 +23,9 @@ export interface CacheScope {
   startAfter?: string
 }
 
-/** DB cache entry together with the time it was actually fetched from S3.
- *  The payload alone is insufficient for the UI: receiving a 20-hour-old server
- *  cache entry now must not be presented as data fetched "just now". */
+/** DBのキャッシュのエントリと、それを実際にS3から取得した時刻の組。
+ *  中身だけでは画面に足りない。20時間前のサーバーのキャッシュを今受け取っても、
+ *  「たった今」取得したデータとして見せてはならない。 */
 export interface CachedResponse {
   payload: unknown
   fetchedAt: string

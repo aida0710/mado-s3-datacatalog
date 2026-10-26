@@ -4,9 +4,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.test.ts'],
-    // Test files share a single Postgres `dashboard_test` DB
-    // (see db/README.md), so they cannot truly run in parallel —
-    // beforeEach TRUNCATEs would race.
+    // テストのファイルはPostgresの`dashboard_test`というDBを1つ共有する
+    // （db/README.mdを参照）ので、本当の意味で並列には走らせられない。
+    // beforeEachのTRUNCATEが競合してしまう。
     fileParallelism: false,
   },
 })

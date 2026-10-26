@@ -4,13 +4,13 @@ import { newId, randomToken, sha256 } from './auth-crypto.js'
 // トークンの値の前置き。DB の制約 (migration 043) と同じ。mado ML Tracking は mado_mt_ を使う。
 export const SERVICE_KEY_TOKEN_PREFIX = 'mado_dc_'
 const PUBLIC_ID_LENGTH = 16
-// Keep 256 bits of entropy for both first issuance and regeneration.
+// 初回の発行でも再発行でも、256ビットのエントロピーを保つ。
 export const SERVICE_KEY_SECRET_BYTES = 32
-/** When a key may act, for queries aliasing service_account_keys as `k`. */
+/** keyが使える条件。service_account_keysに`k`という別名を付けたクエリで使う。 */
 export const ACTIVE_SERVICE_KEY_CONDITION = `k.revoked_at IS NULL AND k.disabled_at IS NULL
   AND (k.expires_at IS NULL OR k.expires_at > now())`
 
-/** A newly stored key; `token` is returned once and never stored. */
+/** 新しく保存したkey。`token`は一度だけ返し、保存しない。 */
 export interface IssuedServiceAccountKey {
   id: string
   token: string

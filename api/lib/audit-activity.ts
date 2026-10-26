@@ -109,7 +109,7 @@ export function classifyActivity(method: string, pathname: string): Activity | n
       dedicatedSuccessAudit: true,
     }
   }
-  // These routes already record successful mutations with richer details.
+  // これらのルートは、成功した変更をもっと詳しい内容で既に記録している。
   if (p[0] === 'access-tokens' && ['POST', 'PATCH', 'DELETE'].includes(verb)) {
     return { action: 'access_token.manage', resourceType: 'access_token', resourceId: decoded(p[1]), dedicatedSuccessAudit: true }
   }

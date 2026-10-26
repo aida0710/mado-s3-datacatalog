@@ -38,7 +38,7 @@ export function graphWithoutHiddenConnections(
   visibleConnectionIds: ReadonlySet<string> | null,
 ): VersionLineageGraph {
   if (visibleConnectionIds === null) return graph
-  // Graph payloads contain both version locations and nested Registry metadata.
+  // グラフの中身には、版の保存場所と、入れ子になったRegistryのメタデータの両方が入っている。
   function visibleReferences(value: unknown): unknown {
     if (Array.isArray(value)) return value.map(visibleReferences)
     if (!value || typeof value !== 'object') return value
