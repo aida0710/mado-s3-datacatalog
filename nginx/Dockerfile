@@ -5,11 +5,11 @@ FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18
 WORKDIR /front
 # About 表示用のコミット情報。.git はビルドコンテキストに無いので host から渡す
 # (compose.prod.yaml の build.args → deploy.sh が git から export)。未指定なら 'dev'。
-ARG VITE_GIT_COMMIT=""
-ARG VITE_GIT_DATE=""
-ARG MADO_VERSION=dev
-ENV VITE_GIT_COMMIT=$VITE_GIT_COMMIT
-ENV VITE_GIT_DATE=$VITE_GIT_DATE
+ARG MDC_GIT_COMMIT=""
+ARG MDC_GIT_DATE=""
+ARG MDC_VERSION=dev
+ENV MDC_GIT_COMMIT=$MDC_GIT_COMMIT
+ENV MDC_GIT_DATE=$MDC_GIT_DATE
 COPY front/package.json front/package-lock.json ./
 RUN npm ci
 COPY front .
@@ -21,14 +21,14 @@ RUN npm run build
 # 8080/8081 で listen する。port 80 は privileged なので非 root では bind できない。
 # 8080はintranet UI、8081はhost TLS proxy専用のOpenLineage入口。
 FROM nginxinc/nginx-unprivileged:alpine@sha256:d9083fe47768377ef55dedafd67d4da7c2f2bc2bece7554954f29359deb0dce9 AS release
-ARG MADO_VERSION=dev
+ARG MDC_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
 LABEL org.opencontainers.image.title="mado S3 Data Catalog Web" \
       org.opencontainers.image.description="mado S3 Data Catalog web UI and ingress" \
       org.opencontainers.image.source="https://github.com/aida0710/mado-s3-datacatalog" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.version="$MADO_VERSION" \
+      org.opencontainers.image.version="$MDC_VERSION" \
       org.opencontainers.image.revision="$VCS_REF" \
       org.opencontainers.image.created="$BUILD_DATE"
 COPY --from=frontbuild /front/dist /usr/share/nginx/html
