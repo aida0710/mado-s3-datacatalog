@@ -14,7 +14,7 @@ describe('SettingsPage', () => {
     user: {
       id: 'admin', username: 'admin', email: null, displayName: 'Admin', signatureName: 'Admin',
       roles: ['admin'], permissions: ['users:manage', 'service_accounts:manage', 'audit:read'],
-      mustChangePassword: false,
+      mustChangePassword: false, authMethods: ['local'],
     },
     logout: async () => {}, reload: async () => {},
   }

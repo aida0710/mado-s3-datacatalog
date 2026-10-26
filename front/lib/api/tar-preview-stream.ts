@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import { TarPreview } from './types'
-import { fetchOk } from './http'
+import { fetchApiResponse } from './http'
 import { apiErrorMessage } from '../../i18n/apiErrorMessage'
 import { translate } from '../../i18n/translate'
 import { MAX_TAR_PREPARATION_MS, waitForTarPreparationRetry } from '../prepareTarEntry'
@@ -84,7 +84,7 @@ export async function loadTarPreviewStream(url: string, callbacks: TarPreviewCal
   for (;;) {
     let ordinal = 0
     try {
-      const preview = await readTarPreviewStream(await fetchOk(url), {
+      const preview = await readTarPreviewStream(await fetchApiResponse(url), {
         ...callbacks,
         onEntry: entry => {
           const previous = emitted[ordinal++]
