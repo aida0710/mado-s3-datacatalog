@@ -4,6 +4,14 @@
 # project name prefix される)。dev → prod のうっかり乗り換えで残留コンテナと
 # 衝突する事故を防ぐため。
 name: mado-dev
+
+# api-internal・api-lineage・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
+x-app-healthcheck: &app-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 3
+  start_period: 60s
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -38,11 +46,8 @@ services:
     container_name: mado-dev-api-internal
     command: ["npx", "tsx", "watch", "internal.ts"]
     healthcheck:
+      <<: *app-healthcheck
       test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "3000"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 60s
     env_file:
       - .env
     environment:
@@ -66,11 +71,8 @@ services:
     container_name: mado-dev-api-lineage
     command: ["npx", "tsx", "watch", "lineage.ts"]
     healthcheck:
+      <<: *app-healthcheck
       test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "3001"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 60s
     environment:
       MDC_LINEAGE_PORT: 3001
       MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
@@ -102,11 +104,8 @@ services:
     command: ["npx", "tsx", "watch", "worker.ts"]
     # 開発用のイメージには dist が無いので、deploy/worker-service.yaml の確認をソースで置き換える。
     healthcheck:
+      <<: *app-healthcheck
       test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "${MDC_MEDIA_WORKER_PORT:-3100}"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 60s
     volumes:
       - ./api:/app
       - /app/node_modules
