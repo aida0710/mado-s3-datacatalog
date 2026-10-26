@@ -35,7 +35,7 @@ describe('looksBinary', () => {
 })
 
 describe('TEXT_HEAD_BYTES', () => {
-  it('サーバーの PREVIEW_TEXT_LIMIT と同値', () => {
+  it('サーバーの MDC_PREVIEW_TEXT_LIMIT と同値', () => {
     expect(TEXT_HEAD_BYTES).toBe(65536)
   })
 })
