@@ -34,4 +34,11 @@ describe('tar一覧の再開', () => {
     await rejected
     expect(fetch).toHaveBeenCalledTimes(2)
   })
+
+  it('一覧の途中で届いた失敗の行は、APIの文をそのまま出す', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(response([
+      { mode: 'stream' }, { entry: first }, { error: 'archive preview failed', code: 'archive_preview_failed' },
+    ]))
+    await expect(loadTarPreviewStream('/preview/tar', {})).rejects.toThrow('archive preview failed')
+  })
 })

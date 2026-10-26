@@ -1,8 +1,7 @@
 import type { z } from 'zod'
 import { TarPreview } from './types'
+import { apiErrorFromResponse } from '@mado/design-system/http'
 import { fetchApiResponse } from './http'
-import { apiErrorMessage } from '../../i18n/apiErrorMessage'
-import { translate } from '../../i18n/translate'
 import { MAX_TAR_PREPARATION_MS, waitForTarPreparationRetry } from '../prepareTarEntry'
 import { mediaMessages } from '../mediaMessages'
 
@@ -49,7 +48,8 @@ async function readTarPreviewStream(res: Response, callbacks: TarPreviewCallback
     } else if (record.pending === true) {
       preparing = true
     } else if ('error' in record) {
-      throw new Error(apiErrorMessage(record) ?? translate('apiErrors.archive_preview_failed'))
+      // 一覧を流し始めた後の失敗は、HTTP の状態でなく行で届く。API の文をそのまま出す。
+      throw apiErrorFromResponse(res.status, res.statusText, record)
     }
   }
 

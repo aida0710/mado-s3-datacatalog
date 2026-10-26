@@ -1,7 +1,7 @@
-// API のエラー応答の本文はすべて `{ error, code }`。`error` はログや curl で人が読む英語の文、
-// `code` はプログラムと画面が分岐に使う、変わらない理由の名前。文に入る値は横の項目に置く
-// (`capability`、`permission` など)。画面は `code` で訳す (front/i18n/apiErrorMessage.ts) ので、
-// 一度出した code の意味は変えない。文は直してよいが、新しい理由には新しい code を足す。
+// API のエラー応答の本文はすべて `{ error, code }`。`error` は人が読む英語の文で、ログや curl でも
+// 画面でも (どちらの表示言語でも) そのまま出す。`code` はプログラムと画面が分岐に使う、変わらない
+// 理由の名前。文に入る値は横の項目に置く (`capability`、`permission` など)。分岐に使うので、一度出した
+// code の意味は変えない。文は直してよいが、新しい理由には新しい code を足す。
 export const API_ERROR_CODES = [
   // 要求の形
   'invalid_request',
