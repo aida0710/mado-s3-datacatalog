@@ -1,7 +1,7 @@
 import type { DatasetDetail, StorageLocationDetail, VersionLineageGraph } from '../shared/lineage-types.js'
 
 // 接続のホワイトリストで隠した接続は、Lineage の応答でも存在を明かさない。
-// 保存場所には Mado の接続 ID が 2 か所に入りうる。Mado が binding から付ける madoConnectionId と、
+// 保存場所にはこのアプリの接続 ID が 2 か所に入りうる。このアプリが binding から付ける madoConnectionId と、
 // 手動登録のときに Registry へ保存した metadata.madoConnectionId。どちらも除く。
 
 /** visibleConnectionIds が null なら全接続が見える (接続の管理者または全接続を許可したトークン)。 */
