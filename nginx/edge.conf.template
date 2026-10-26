@@ -1,5 +1,5 @@
-# Public HTTP serves ACME HTTP-01 for every hostname. Unknown hosts do not get
-# redirected to either the intranet UI or the public API.
+# 公開のHTTPは、どのホスト名でもACME HTTP-01に応える。未知のHostは、社内向けの
+# 画面にも公開APIにもリダイレクトしない。
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -51,7 +51,7 @@ server {
     }
 }
 
-# Reject an unexpected Host before it reaches the application.
+# 想定外のHostは、アプリに届く前に拒否する。
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
@@ -68,8 +68,8 @@ server {
     return 421;
 }
 
-# Mado browser UI and internal API. This hostname is intranet-only even though
-# its certificate and ACME challenge are public.
+# mado S3 Data Catalogの画面と内部API。証明書とACMEのchallengeは公開されているが、
+# このホスト名は社内からだけ使う。
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -115,9 +115,9 @@ server {
     }
 }
 
-# Public pipeline endpoint. Browser UI, SSO, internal API, assets and health are
-# deliberately absent. The loopback listener applies its own method, request,
-# connection and body limits before forwarding to api-lineage.
+# Pipeline向けの公開の入口。画面・SSO・内部API・assets・healthは、わざと載せていない。
+# loopbackのlistenerが、api-lineageへ転送する前に、method・要求・接続・本文の制限を
+# 自分でかける。
 server {
     listen 443 ssl;
     listen [::]:443 ssl;

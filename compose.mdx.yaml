@@ -1,7 +1,8 @@
-# mdx deployment: Mado and its private lineage backends share one Compose
-# project and one bridge network. Mado nginx listeners are published on loopback;
-# The Compose-managed edge nginx terminates TLS for separate intranet UI and
-# public API hostnames. Only the API hostname proxies the OpenLineage listener.
+# mdxの配備: mado S3 Data Catalogと、外に出さないlineageのバックエンドは、
+# 1つのCompose projectと1つのbridgeネットワークを共有する。mado S3 Data Catalogの
+# nginxのlistenerはloopbackに公開する。Composeが管理するedgeのnginxが、社内向けの
+# 画面と公開APIの別々のホスト名でTLSを終端する。OpenLineageのlistenerへ転送するのは
+# APIのホスト名だけ。
 name: mado-mdx
 
 services:
