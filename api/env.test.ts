@@ -298,7 +298,7 @@ describe('旧名の環境変数', () => {
   it('3つの読み込みとも、旧名だけが残っていれば新名を示して止める', () => {
     const leftover = { DATABASE_URL_RW: 'postgres://old@localhost/dashboard' }
     for (const load of [loadEnv, loadWorkerEnv, loadLineageEnv]) {
-      expect(() => load(leftover)).toThrow('旧名 DATABASE_URL_RW は新名 MDC_DATABASE_URL_RW に替わりました')
+      expect(() => load(leftover)).toThrow('DATABASE_URL_RW was replaced by MDC_DATABASE_URL_RW')
     }
   })
 })
