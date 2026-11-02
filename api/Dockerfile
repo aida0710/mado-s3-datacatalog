@@ -1,7 +1,7 @@
 # api/Dockerfile
 # Release imageはTypeScriptとproduction dependencyをbuild時に確定し、起動時に
 # source buildやnpm installを行わない。digest更新はDependabotで追跡する。
-FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS build-deps
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS build-deps
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN npm run build \
  && npm prune --omit=dev
 
 # OCIとして配布するproduction target。compilerとsourceは持ち込まない。
-FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS release
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS release
 ARG MDC_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
