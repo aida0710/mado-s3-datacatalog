@@ -84,7 +84,7 @@ scrape_configs:
       - targets: ['mado.example.com']
 ```
 
-Replace `mado.example.com` with your actual UI hostname. For the list of metrics returned, see the [capacity metrics specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/production/README.md#prometheus-metrics).
+Replace `mado.example.com` with your actual UI hostname. For the list of metrics returned, see the [capacity metrics specification](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/capacity-metrics.md).
 
 ## Edit, regenerate, or disable a token
 

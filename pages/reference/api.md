@@ -84,7 +84,7 @@ scrape_configs:
       - targets: ['mado.example.com']
 ```
 
-`mado.example.com` を実際のUI用hostnameへ置き換えます。返すメトリクスの一覧は[容量メトリクスの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/production/README.md#prometheus-metrics)を参照してください。
+`mado.example.com` を実際のUI用hostnameへ置き換えます。返すメトリクスの一覧は[容量メトリクスの仕様](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/capacity-metrics.md)を参照してください。
 
 ## トークンを編集・再発行・無効化する
 
