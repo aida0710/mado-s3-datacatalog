@@ -303,7 +303,7 @@ passwordはTTYからのみ読み、引数・環境変数・ログには渡しま
 
 Pipelineは`MDC_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。mado S3 Data Catalogがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、本番の edgeではbrowser用`MDC_HOSTNAME`と公開API用`MDC_API_HOSTNAME`を別TLS vhostとして終端します。
 
-連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MDC_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`deploy/production/README.md`](deploy/production/README.md#prometheus-metrics)を参照してください。
+連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MDC_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`docs/capacity-metrics.md`](docs/capacity-metrics.md)を参照してください。
 
 ### DBの移行
 
@@ -346,7 +346,6 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 このダッシュボードは認証を備えていますが、公開入口のTLSとネットワーク制御は引き続き必要です:
 
 - **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へ用途別TLS proxyを接続します。Browser側TLS終端後に`MDC_AUTH_COOKIE_SECURE=true`と`MDC_AUTH_MODE=local|oidc|hybrid`を設定します。
-- 本番では`compose.production.yaml`の`edge` nginxがbrowser用TLSを終端します。証明書取得・UFW・自動更新は[`docs/production-tls.md`](docs/production-tls.md)を参照してください。
 - Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。外部公開するhost TLS proxyは`127.0.0.1:8081`だけへ接続し、OpenLineage ingest以外を公開しません。公開入口には送信元IP 10 req/s（burst 50）・全体50 req/s（burst 200）のrate limit、送信元20・全体200のconnection limit、2 MiB body上限、timeout、`Cache-Control: no-store`を設定済みです。
 - 開発・テスト環境も認証方式の指定が必須です。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
 - Browser sessionとアクセストークンを別の主体として扱い、API keyはhashだけを保存します。内部APIは機能別の権限と対象を毎回検証し、連携APIのscopeは互換性を維持します。

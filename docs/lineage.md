@@ -305,11 +305,11 @@ mado S3 Data Catalog Connection `mW5dNSSMcQ`
 現在はbinding用UIがないため、Compose管理者がDBへ登録します。まず対象を確認します。
 
 ```bash
-docker compose -f compose.production.yaml exec postgres \
+docker compose exec postgres \
   psql -U postgres -d dashboard -c \
   'SELECT id, name, endpoint FROM storage_connections ORDER BY name'
 
-docker compose -f compose.production.yaml exec registry-db \
+docker compose exec registry-db \
   psql -U registry -d registry -c \
   'SELECT system_key, kind, endpoint FROM storage_systems ORDER BY system_key'
 ```
@@ -419,13 +419,13 @@ catalog整備時に、最低限次を追加してください。
 ### Compose運用確認
 
 ```bash
-docker compose -f compose.production.yaml ps
+docker compose ps
 
-docker compose -f compose.production.yaml exec registry-db \
+docker compose exec registry-db \
   psql -U registry -d registry -c \
   'SELECT count(*) AS pending FROM outbox_events WHERE published_at IS NULL'
 
-docker compose -f compose.production.yaml logs --tail=200 \
+docker compose logs --tail=200 \
   registry-api lineage-worker marquez-api api-lineage
 ```
 

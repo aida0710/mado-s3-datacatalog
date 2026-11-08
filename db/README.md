@@ -90,7 +90,7 @@ docker compose -f compose.yaml run --rm --no-deps api-internal \
   node dist/scripts/record-applied-migrations.js --through 041
 ```
 
-The command records `001` to `041` with their SHA-256 without running them, inside the same advisory lock. It refuses when `schema_migrations` already exists or when the database has no tables. Use `compose.production.yaml` for a production deployment. Then start the services; `api-internal` applies the files after `041`.
+The command records `001` to `041` with their SHA-256 without running them, inside the same advisory lock. It refuses when `schema_migrations` already exists or when the database has no tables. For a production deployment, run the same command with your production Compose file. Then start the services; `api-internal` applies the files after `041`.
 
 ## Manual setup (non-Docker)
 
