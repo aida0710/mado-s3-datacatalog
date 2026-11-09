@@ -1,7 +1,7 @@
 # nginx/Dockerfile
 
 # ステージ 1: front を build
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS frontbuild
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS frontbuild
 WORKDIR /front
 # About 表示用のコミット情報。.git はビルドコンテキストに無いので host から渡す
 # (compose.prod.yaml の build.args → deploy.sh が git から export)。未指定なら 'dev'。
@@ -20,7 +20,7 @@ RUN npm run build
 # nginxinc/nginx-unprivileged は default で nginx user (uid 101) として
 # 8080/8081 で listen する。port 80 は privileged なので非 root では bind できない。
 # 8080はintranet UI、8081はhost TLS proxy専用のOpenLineage入口。
-FROM nginxinc/nginx-unprivileged:alpine@sha256:d9083fe47768377ef55dedafd67d4da7c2f2bc2bece7554954f29359deb0dce9 AS release
+FROM nginxinc/nginx-unprivileged:alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e AS release
 ARG MDC_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
