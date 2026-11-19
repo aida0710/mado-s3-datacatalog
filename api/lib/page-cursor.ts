@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 
 // 一覧の続きを指す `cursor` / `nextCursor`。mado ML Tracking と同じく、利用者には中身の見えない文字列にする。
-// 中身は一覧ごとの位置 (S3 の続きのトークン、監査ログの ID、Registry の件数の位置) の JSON を base64url にしたもの。
+// 中身は一覧ごとの位置 (S3 の続きのトークン、監査ログの ID) の JSON を base64url にしたもの。
 // 同じ位置からは同じ文字列ができるので、画面は文字列の一致で「続きが進んでいない」ことを判定できる。
 
 export function encodePageCursor(position: object): string {

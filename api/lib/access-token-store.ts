@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from 'pg'
 import { withTransaction, type Queryable } from '../db.js'
 import { newId, randomToken, sha256 } from './auth-crypto.js'
-import { ACTIVE_SERVICE_KEY_CONDITION, insertServiceAccountKey, insertServiceKeyPermissions, SERVICE_KEY_SECRET_BYTES } from './service-account-key-record.js'
+import { ACTIVE_SERVICE_KEY_CONDITION, insertServiceAccountKey, insertServiceKeyScopes, SERVICE_KEY_SECRET_BYTES } from './service-account-key-record.js'
 import { accessTokenGrants } from './access-token-grants.js'
 import { saveInternalTokenGrants } from './internal-token-grants.js'
 import { serviceKeyScopesForPermissions } from '../shared/access-token-permissions.js'
@@ -13,7 +13,6 @@ const TOKEN_SELECT = `SELECT k.id, k.service_account_id,
   k.name, k.description, k.token_prefix, k.created_at, k.expires_at,
   k.disabled_at, k.regenerated_at, k.last_used_at, k.revision,
   COALESCE((SELECT array_agg(scope ORDER BY scope) FROM service_account_key_scopes WHERE key_id = k.id), ARRAY[]::text[]) AS scopes,
-  COALESCE((SELECT array_agg(namespace ORDER BY namespace) FROM service_account_key_namespaces WHERE key_id = k.id), ARRAY[]::text[]) AS namespaces,
   ARRAY(SELECT permission FROM service_account_key_permissions WHERE key_id=k.id ORDER BY permission) AS permissions,
   ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id) AS connections
   FROM service_account_keys k
@@ -53,7 +52,7 @@ function toAccessToken(row: AccessTokenRow): AccessToken {
   const expired = row.expires_at !== null && row.expires_at.getTime() <= Date.now()
   return {
     id: row.id, name: row.name, description: row.description, tokenPrefix: row.token_prefix,
-    scopes: row.scopes, namespaces: row.namespaces, permissions: row.permissions, connections: row.connections,
+    scopes: row.scopes, permissions: row.permissions, connections: row.connections,
     status: disabled ? 'disabled' : expired ? 'expired' : 'active',
     createdAt: row.created_at, expiresAt: row.expires_at, regeneratedAt: row.regenerated_at,
     lastUsedAt: row.last_used_at, revision: row.revision,
@@ -73,7 +72,6 @@ function tokenNeedsUpdate(row: AccessTokenRow, patch: AccessTokenPatch): boolean
   if (patch.name !== undefined && patch.name !== row.name) return true
   if (patch.description !== undefined && patch.description !== row.description) return true
   if (patch.expiresAt !== undefined && patch.expiresAt?.getTime() !== row.expires_at?.getTime()) return true
-  if (patch.namespaces !== undefined && !haveSameMembers(patch.namespaces, row.namespaces)) return true
   if (patch.permissions !== undefined && !haveSameMembers(patch.permissions, row.permissions)) return true
   if (patch.connections !== undefined && !haveSameMembers(patch.connections, row.connections)) return true
   if (patch.status === 'disabled') return row.disabled_at === null
@@ -118,7 +116,7 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       await assertActorActive(database, guard)
       const grants = parsed.data
       const accountId = newId()
-      // 新しいトークンごとに内部の持ち主を1つ作り、Registry・監査の主体IDの契約を保つ。
+      // 新しいトークンごとに内部の持ち主を1つ作り、監査の主体IDの契約を保つ。
       const suffix = ` [${accountId}]`
       const accountName = `${input.name.slice(0, ACCOUNT_NAME_MAX_LENGTH - suffix.length)}${suffix}`
       await database.query(
@@ -135,20 +133,16 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
       const row = await lockToken(database, input, guard)
       if (!row) return null
       const parsed = accessTokenGrants.safeParse({
-        namespaces: input.patch.namespaces ?? row.namespaces,
         permissions: input.patch.permissions ?? row.permissions,
         connections: input.patch.connections ?? row.connections,
       })
       if (!parsed.success) throw new AccessTokenPermissionsError()
       const grants = parsed.data
       if (!tokenNeedsUpdate(row, { ...input.patch, ...grants })) return { accessToken: toAccessToken(row), changed: false }
-      if (input.patch.permissions !== undefined || input.patch.namespaces !== undefined) {
+      if (input.patch.permissions !== undefined) {
         // 連携scopeは権限に合わせる。
         await database.query('DELETE FROM service_account_key_scopes WHERE key_id = $1', [input.id])
-        await database.query('DELETE FROM service_account_key_namespaces WHERE key_id = $1', [input.id])
-        await insertServiceKeyPermissions(database, {
-          id: input.id, scopes: serviceKeyScopesForPermissions(grants.permissions), namespaces: grants.namespaces,
-        })
+        await insertServiceKeyScopes(database, { id: input.id, scopes: serviceKeyScopesForPermissions(grants.permissions) })
       }
       if (input.patch.permissions !== undefined || input.patch.connections !== undefined) {
         await saveInternalTokenGrants(database, { id: input.id, ...grants })
@@ -172,7 +166,7 @@ export function createAccessTokenStore(pool: Pool): AccessTokenStore {
     deleteToken: (input, guard) => withTransaction(pool, async database => {
       const row = await lockToken(database, input, guard)
       if (!row) return null
-      // 過去の監査とRegistryの記録が誰のものか分かるよう、keyと持ち主のIDは残す。
+      // 過去の監査の記録が誰のものか分かるよう、keyと持ち主のIDは残す。
       await database.query('UPDATE service_account_keys SET revoked_at = now(), revision = revision + 1 WHERE id = $1', [input.id])
       return toAccessToken(row)
     }),

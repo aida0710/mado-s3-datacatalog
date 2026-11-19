@@ -4,7 +4,7 @@ import type { MetricsCollector } from '../lib/metrics-collector.js'
 import { mountMetricsRoutes } from './metrics.js'
 
 const metricsKey = { scopes: ['metrics:read'], connections: ['*'] }
-const lineageKey = { scopes: ['lineage:write'], connections: [] }
+const scopelessKey = { scopes: [], connections: [] }
 const bearer = { Authorization: 'Bearer mado_dc_key.secret' }
 
 const capacity: MetricsCollector = {
@@ -40,9 +40,9 @@ describe('metrics route', () => {
       .toContain('mado_storage_bucket_bytes{connection_id="connection-a",bucket="example-bucket"} 10')
   })
 
-  it('keyなしは401、lineage:writeだけのkeyは403で拒否する', async () => {
+  it('keyなしは401、metrics:readを持たないkeyは403で拒否する', async () => {
     expect((await appWith([capacity]).app.request('/metrics/capacity')).status).toBe(401)
-    const denied = await appWith([capacity], lineageKey).app.request('/metrics/capacity', { headers: bearer })
+    const denied = await appWith([capacity], scopelessKey).app.request('/metrics/capacity', { headers: bearer })
     expect(denied.status).toBe(403)
   })
 

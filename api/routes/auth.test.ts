@@ -166,7 +166,7 @@ describe('認証 route', () => {
       finish: async () => ({
         issuer: 'https://auth.example/application/o/mado', subject: 'subject-1',
         email: 'user@example.com', emailVerified: true, username: 'sso-user', displayName: 'SSO User',
-        groups: ['mado-admins'], sid: 'sid-1', returnTo: '/lineage',
+        groups: ['mado-admins'], sid: 'sid-1', returnTo: '/storage',
       }),
       logoutUrl: async () => new URL('https://auth.example/end-session'),
       matchesIssuer: value => value.replace(/\/$/, '') === 'https://auth.example/application/o/mado',
@@ -186,13 +186,13 @@ describe('認証 route', () => {
         },
       },
     })
-    const started = await oidcApp.request('/oidc/start?returnTo=%2Flineage')
+    const started = await oidcApp.request('/oidc/start?returnTo=%2Fstorage')
     const bindingCookie = started.headers.get('set-cookie')!.split(';')[0]
     const response = await oidcApp.request('/oidc/callback?code=ok&state=ok', {
       headers: { Cookie: bindingCookie },
     })
     expect(response.status).toBe(303)
-    expect(response.headers.get('location')).toBe('/lineage')
+    expect(response.headers.get('location')).toBe('/storage')
     const linked = await credentials.findLocalCredentialByLogin('local-user')
     expect(linked).toMatchObject({ displayName: 'SSO User', roles: ['admin'] })
     expect(linked?.authMethods).toEqual(['local', 'sso'])

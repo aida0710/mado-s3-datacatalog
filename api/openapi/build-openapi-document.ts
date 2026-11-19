@@ -8,7 +8,7 @@ import { API_ROUTES } from './route-catalog.js'
 export const OPENAPI_VERSION = '3.1.0'
 
 const DESCRIPTION = [
-  'mado S3 Data Catalog の API。api-internal (画面と連携用) と api-lineage (Pipeline の OpenLineage の受け付け) のルートを載せる。',
+  'mado S3 Data Catalog の API。api-internal (画面と連携用) のルートを載せる。',
   'この文書は api/openapi/route-catalog.ts から作る (cd api && npm run openapi:generate)。ルートの一覧とのずれは api/openapi/openapi.test.ts が見つける。',
   'エラーは ApiErrorBody {error, code}。error は英語の文、code は理由の名前で、各 operation の x-mado-error-codes に挙げる。',
   '続きのある一覧は cursor / nextCursor で読む。cursor の中身は決まった形ではないので、応答の nextCursor をそのまま渡す。',
@@ -29,12 +29,10 @@ const TAGS: { name: string; description: string }[] = [
   { name: 'capacity', description: '容量メトリクス' },
   { name: 'estimate', description: '移送の見積もりと単価カタログ' },
   { name: 'settings', description: 'アプリ全体の設定' },
-  { name: 'lineage', description: 'DataLineage (Registry と Marquez)' },
   { name: 'users', description: 'ユーザー管理' },
   { name: 'access-tokens', description: 'アクセストークンの管理' },
   { name: 'audit', description: '監査ログ' },
   { name: 'integration', description: '連携用の読み取り API (/api/mado/)。intranet 用の入口だけに置く' },
-  { name: 'openlineage', description: 'Pipeline の OpenLineage イベントの受け付け (公開用の入口)' },
 ]
 
 const SECURITY_SCHEMES = {
@@ -85,7 +83,7 @@ const ERROR_DESCRIPTIONS: Record<number, string> = {
   422: '内容が受け付けられない',
   429: '試行回数の上限 (Retry-After 秒後にやり直す)',
   500: '想定外の失敗',
-  502: '連携先 (S3・Registry・Marquez) から使える応答を得られない',
+  502: '連携先 (S3) から使える応答を得られない',
   503: '一時的に処理できない',
 }
 

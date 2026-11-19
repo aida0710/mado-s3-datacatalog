@@ -16,8 +16,6 @@ import { mountStorageFavoritesRoutes } from './routes/storage-favorites.js'
 import { mountSettingsRoutes } from './routes/settings.js'
 import { mountNotesRoutes } from './routes/notes.js'
 import { mountStorageTagsRoutes } from './routes/storage-tags.js'
-import { mountLineageRoutes } from './routes/lineage.js'
-import { mountLineageCurationRoutes } from './routes/lineage-curation.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { mountAuditRoutes } from './routes/audit.js'
@@ -28,7 +26,7 @@ const INTERNAL_ROUTE_MOUNTS = {
   mountConnectionsRoutes, mountStorageListRoutes, mountStorageReadmeRoutes, mountStoragePreviewRoutes,
   mountStorageMediaRoutes, mountJobRoutes, mountStorageScanRoutes, mountStorageCapacityRoutes,
   mountStorageEstimateRoutes, mountPricingRoutes, mountStorageFavoritesRoutes, mountSettingsRoutes,
-  mountNotesRoutes, mountStorageTagsRoutes, mountLineageRoutes, mountLineageCurationRoutes,
+  mountNotesRoutes, mountStorageTagsRoutes,
   mountAdminUsersRoutes, mountAccessTokenRoutes, mountAuditRoutes,
 } as const
 

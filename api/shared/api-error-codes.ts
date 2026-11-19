@@ -71,21 +71,6 @@ export const API_ERROR_CODES = [
   // 音声の解析
   'media_worker_unavailable',
   'analysis_failed',
-  // Lineage
-  'lineage_not_configured',
-  'namespace_not_allowed',
-  'namespace_not_writable',
-  'invalid_openlineage_event',
-  'invalid_dataset_id',
-  'dataset_not_found',
-  'dataset_conflict',
-  'invalid_reference',
-  'registry_not_linked',
-  'registry_write_failed',
-  'registry_conflict',
-  'registry_rejected',
-  'registry_unavailable',
-  'marquez_unavailable',
   // Prometheus のメトリクス
   'metrics_unavailable',
   // 稼働確認 (GET /healthz)

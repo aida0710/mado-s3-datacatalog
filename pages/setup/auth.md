@@ -32,8 +32,8 @@ SSOでは`MDC_OIDC_SCOPES=openid email profile offline_access`にします。Aut
 
 | ロール | 主な権限 |
 | --- | --- |
-| Viewer | StorageとLineageの閲覧 |
-| Curator | 閲覧、README・ノートの編集、Lineageの登録・修正 |
+| Viewer | Storageの閲覧 |
+| Curator | 閲覧、README・ノートの編集 |
 | Operator | 閲覧、ジョブの操作 |
 | Admin | 接続・設定・ユーザー・アクセストークンの管理、監査ログの閲覧を含む全権限 |
 
@@ -45,8 +45,8 @@ SSOのgroupから外しても、既存のmadoセッションが直ちに失効�
 
 運用環境ではHTTPSを使い、`MDC_AUTH_COOKIE_SECURE=true` にします。開発・テスト環境も `MDC_AUTH_MODE` に `local`・`oidc`・`hybrid` のいずれかを指定します。未設定やその他の値では起動できません。
 
-## Pipelineにはアクセストークンを使う
+## 自動処理にはアクセストークンを使う
 
-人のブラウザセッションと、PipelineやPrometheusの認証を分けます。**Settings → Access → Access Tokens**で必要な権限を選んで発行します。一つのトークンに参照と送信の両方を許可できます。[APIの手順](../reference/api.md)に従って利用してください。
+人のブラウザセッションと、スクリプトやPrometheusの認証を分けます。**Settings → Access → Access Tokens**で必要な権限を選んで発行します。[APIの手順](../reference/api.md)に従って利用してください。
 
-新規トークンの権限はすべて未選択です。機能ごとの読み取り・編集・削除・実行・管理と、許可する接続・Namespaceを選びます。内部APIも同じ値で利用できます。
+新規トークンの権限はすべて未選択です。機能ごとの読み取り・編集・削除・実行・管理と、許可する接続を選びます。内部APIも同じ値で利用できます。

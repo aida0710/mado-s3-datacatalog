@@ -10,8 +10,8 @@ const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 const token: AccessToken = {
   id: '480ad940-80a2-4a50-8f6e-e0e119ac52a8', name: 'ML Tracking', description: 'Training integration',
-  tokenPrefix: 'mado_dc_fixture', scopes: ['lineage:read', 'lineage:write'], namespaces: ['speech'],
-  permissions: ['lineage:read', 'lineage:send'], connections: [],
+  tokenPrefix: 'mado_dc_fixture', scopes: ['metrics:read'],
+  permissions: ['connections:read', 'capacity:read'], connections: ['*'],
   status: 'active', createdAt: '2026-10-15T00:00:00.000Z', expiresAt: null,
   regeneratedAt: null, lastUsedAt: null, revision: 1,
 }
@@ -21,17 +21,14 @@ function response(body: unknown, status = 200) {
 
 function mockTokenRequests(handler: typeof globalThis.fetch) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) =>
-    String(url).endsWith('/namespaces')
-      ? response({ namespaces: ['speech', 'lecture'], sourceStatus: 'ready' })
-      : String(url).endsWith('/connections') ? response([])
-      : handler(url, init))
+    String(url).endsWith('/connections') ? response([]) : handler(url, init))
 }
 
 describe('Access Tokens', () => {
   it('新規作成は全権限が未選択で、機能の検索と編集・読み取りを別々に保存する', async () => {
     const user = userEvent.setup()
     const fetch = mockTokenRequests(async (_url, init) => init?.method === 'POST'
-      ? response({ accessToken: { ...token, scopes: [], namespaces: [], permissions: ['notes:write'] }, token: 'fixture-internal-value' }, 201)
+      ? response({ accessToken: { ...token, scopes: [], permissions: ['notes:write'], connections: [] }, token: 'fixture-internal-value' }, 201)
       : response({ tokens: [] }))
     render(<AccessTokensPage />)
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
@@ -50,13 +47,12 @@ describe('Access Tokens', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Issue token' }))
     await screen.findByText('fixture-internal-value')
     const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body))
-    expect(saved).toMatchObject({ permissions: ['notes:write'], namespaces: [], connections: [] })
+    expect(saved).toMatchObject({ permissions: ['notes:write'], connections: [] })
   })
 
   it('全接続の容量トークンは、名前だけ編集しても保存済みの権限と全接続をそのまま送る', async () => {
     const user = userEvent.setup()
-    const capacity = { ...token, scopes: ['metrics:read'] as AccessToken['scopes'], namespaces: [],
-      permissions: ['capacity:read'] as AccessToken['permissions'], connections: ['*'] }
+    const capacity = { ...token, permissions: ['capacity:read'] as AccessToken['permissions'] }
     const fetch = mockTokenRequests(async (_url, init) => init?.method === 'PATCH'
       ? response({ accessToken: { ...capacity, revision: 2 } }) : response({ tokens: [capacity] }))
     render(<AccessTokensPage />)
@@ -67,7 +63,7 @@ describe('Access Tokens', () => {
     await user.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     const saved = JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')![1]!.body))
-    expect(saved).toMatchObject({ permissions: ['capacity:read'], connections: ['*'], namespaces: [] })
+    expect(saved).toMatchObject({ permissions: ['capacity:read'], connections: ['*'] })
     expect(saved).not.toHaveProperty('scopes')
     // 期限を選び直していないので、今の期限 (無期限) のまま送らない。
     expect(saved).not.toHaveProperty('expiresAt')
@@ -104,7 +100,7 @@ describe('Access Tokens', () => {
     expect(Date.parse(body.expiresAt) - Date.now()).toBeLessThanOrEqual(2 * HOUR_MS)
   })
 
-  it('アカウントを別に作らず参照と送信を同じトークンで発行し、言語変更で入力を保つ', async () => {
+  it('プリセットで権限をまとめて選んで発行し、言語変更で入力を保つ', async () => {
     const user = userEvent.setup()
     const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
       ? response({ accessToken: token, token: 'fixture-not-a-real-credential' }, 201) : response({ tokens: [] }))
@@ -112,28 +108,24 @@ describe('Access Tokens', () => {
     await screen.findByText('アクセストークンはありません。')
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
-    const lineage = within(dialog).getByRole('group', { name: 'DataLineage' })
-    expect(within(lineage).getByRole('checkbox', { name: '読み取り' })).not.toBeChecked()
+    const capacity = within(dialog).getByRole('group', { name: 'Capacity' })
+    expect(within(capacity).getByRole('checkbox', { name: '読み取り' })).not.toBeChecked()
     expect(within(dialog).queryByText('連携APIの権限')).not.toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: 'ML Tracking連携' }))
+    await user.click(within(dialog).getByRole('button', { name: '容量監視' }))
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'ML Tracking')
-    await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'lecture' }))
-    expect(within(lineage).getByRole('checkbox', { name: '読み取り' })).toBeChecked()
-    expect(within(lineage).getByRole('checkbox', { name: '送信' })).toBeChecked()
+    await user.click(within(dialog).getByRole('checkbox', { name: 'すべての接続を許可' }))
+    expect(within(capacity).getByRole('checkbox', { name: '読み取り' })).toBeChecked()
     expect(within(dialog).queryByRole('combobox', { name: /アカウント/ })).not.toBeInTheDocument()
     act(() => setLocale('en'))
     expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('ML Tracking')
-    expect(within(dialog).getByRole('checkbox', { name: 'speech' })).toBeChecked()
-    expect(within(dialog).getByRole('checkbox', { name: 'lecture' })).toBeChecked()
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(within(capacity).getByRole('checkbox', { name: 'Read' })).toBeChecked()
     await user.click(within(dialog).getByRole('button', { name: 'Issue token' }))
     expect(await screen.findByText('fixture-not-a-real-credential')).toBeInTheDocument()
     const issued = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')!
     expect(issued[0]).toBe('/api/internal/access-tokens')
     const issuedBody = JSON.parse(String(issued[1]!.body))
     expect(issuedBody).toEqual({ name: 'ML Tracking', description: '',
-      permissions: ['lineage:read', 'lineage:send'], connections: [], namespaces: ['speech', 'lecture'], expiresAt: expect.any(String) })
+      permissions: ['connections:read', 'capacity:read'], connections: ['*'], expiresAt: expect.any(String) })
     // 期限は既定の90日後 (デザインシステムの token-expiry)。
     expect(Date.parse(issuedBody.expiresAt) - Date.now()).toBeGreaterThan(89 * DAY_MS)
     expect(Date.parse(issuedBody.expiresAt) - Date.now()).toBeLessThanOrEqual(90 * DAY_MS)
@@ -141,40 +133,22 @@ describe('Access Tokens', () => {
     expect(screen.queryByText('fixture-not-a-real-credential')).not.toBeInTheDocument()
   })
 
-  it('容量取得だけを選ぶ場合はNamespaceを送らず、接続を明示的に選んで発行する', async () => {
+  it('容量取得を選ぶ場合は、接続を明示的に選んで発行する', async () => {
     const user = userEvent.setup()
     const fetchMock = mockTokenRequests(async (_url, init) => init?.method === 'POST'
-      ? response({ accessToken: { ...token, scopes: ['metrics:read'], namespaces: [], permissions: ['capacity:read'], connections: ['*'] }, token: 'fixture-capacity-value' }, 201)
+      ? response({ accessToken: { ...token, permissions: ['capacity:read'] }, token: 'fixture-capacity-value' }, 201)
       : response({ tokens: [] }))
     render(<AccessTokensPage />)
     await screen.findByText('アクセストークンはありません。')
     await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
     const dialog = screen.getByRole('dialog')
     await user.click(within(within(dialog).getByRole('group', { name: 'Capacity' })).getByRole('checkbox', { name: '読み取り' }))
-    expect(within(dialog).queryByRole('searchbox', { name: 'Namespaceを検索' })).not.toBeInTheDocument()
     await user.click(within(dialog).getByRole('checkbox', { name: 'すべての接続を許可' }))
     await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'Capacity')
     await user.click(within(dialog).getByRole('button', { name: '発行する' }))
     await screen.findByText('fixture-capacity-value')
     expect(JSON.parse(String(fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body)))
-      .toMatchObject({ permissions: ['capacity:read'], namespaces: [], connections: ['*'] })
-  })
-
-  it('全Namespaceを明示的に選ぶと個別の名前を含めず全対象として発行する', async () => {
-    const user = userEvent.setup()
-    const fetch = mockTokenRequests(async (_url, init) => init?.method === 'POST'
-      ? response({ accessToken: { ...token, namespaces: ['*'] }, token: 'fixture-all-namespaces-value' }, 201)
-      : response({ tokens: [] }))
-    render(<AccessTokensPage />)
-    await user.click(screen.getByRole('button', { name: 'アクセストークンを作成' }))
-    const dialog = screen.getByRole('dialog')
-    await user.type(within(dialog).getByRole('textbox', { name: '名前' }), 'All groups')
-    await user.click(within(dialog).getByRole('button', { name: 'ML Tracking連携' }))
-    await user.click(await within(dialog).findByRole('checkbox', { name: 'speech' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'すべてのNamespaceを許可' }))
-    await user.click(within(dialog).getByRole('button', { name: '発行する' }))
-    await screen.findByText('fixture-all-namespaces-value')
-    expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')![1]!.body)).namespaces).toEqual(['*'])
+      .toMatchObject({ permissions: ['capacity:read'], connections: ['*'] })
   })
 
   it('一覧から無効化と有効化を行い、再発行と削除は確認してから実行する', async () => {

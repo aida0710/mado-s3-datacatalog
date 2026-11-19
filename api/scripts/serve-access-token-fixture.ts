@@ -10,7 +10,6 @@ import { getRequestPrincipal } from '../lib/rbac.js'
 import { SERVICE_KEY_SCOPES } from '../lib/auth-types.js'
 import { requireServiceKeyScope } from '../lib/service-key-auth.js'
 import { mountAccessTokenRoutes } from '../routes/access-tokens.js'
-import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 import { createInternalTokenAuthenticator } from '../lib/internal-token-authenticator.js'
 import { requireInternalApiAuthentication } from '../lib/internal-api-auth.js'
 import { requireInternalApiPermission } from '../lib/internal-api-permission-policy.js'
@@ -53,12 +52,12 @@ try {
     [id, name, fixtureCrypto.encrypt('fixture-access-key'), fixtureCrypto.encrypt('fixture-secret'),
       [...CAPABILITY_KEYS.map(capabilitySettingKey), 'scan_enabled', 'capacity_metrics_enabled']])
   }
-  await store.createToken({ name: 'ML Tracking', description: '音声モデルの学習とデータセット参照',
-    permissions: ['lineage:read', 'lineage:send'], namespaces: ['speech'], connections: [], expiresAt: null, createdBy: user.id })
+  await store.createToken({ name: 'ML Tracking', description: '学習の記録に容量を添える',
+    permissions: ['capacity:read'], connections: ['speech0001'], expiresAt: null, createdBy: user.id })
   await store.createToken({ name: '容量監視', description: 'Prometheusから容量を取得',
-    permissions: ['capacity:read'], namespaces: [], connections: ['*'], expiresAt: null, createdBy: user.id })
+    permissions: ['capacity:read'], connections: ['*'], expiresAt: null, createdBy: user.id })
   const disabled = await store.createToken({ name: '音声前処理', description: '一時停止中の処理',
-    permissions: ['lineage:send'], namespaces: ['speech'], connections: [], expiresAt: null, createdBy: user.id })
+    permissions: ['storage:read'], connections: ['speech0001'], expiresAt: null, createdBy: user.id })
   await store.updateToken({ id: disabled.accessToken.id, expectedRevision: 1, patch: { status: 'disabled' } })
 
   const app = new Hono()
@@ -82,9 +81,7 @@ try {
   management.get('/storage/:connectionId/buckets', context => context.json([{ name: 'fixture-dataset' }]))
   mountConnectionsRoutes(management, { pools, crypto: fixtureCrypto, invalidate: () => {} })
   mountNotesRoutes(management, { pools })
-  mountAccessTokenRoutes(management, { store, audit,
-    namespaceCatalog: createAccessTokenNamespaceCatalog({ store,
-      marquez: { listNamespaces: async () => ['speech', 'lecture', 'vision', 'evaluation', 'training'] } }) })
+  mountAccessTokenRoutes(management, { store, audit })
   app.route('/api/internal', management)
   for (const scope of SERVICE_KEY_SCOPES) {
     app.get(`/verification/probe/${scope}`, requireServiceKeyScope({ authenticate: authenticateServiceKey, scope }),

@@ -23,17 +23,13 @@ export function accessTokenFormInput(input: {
   description: string
   permissions: InternalApiPermission[]
   connections: string[]
-  namespaces: string[]
   /** 期限の日時 (ISO 8601)。null は無期限、undefined は今の期限のまま (送らない)。 */
   expiresAt: string | null | undefined
 }): AccessTokenInput {
-  const includesLineage = input.permissions.some(permission => permission.startsWith('lineage:'))
-  const namespaces = includesLineage ? [...new Set(input.namespaces)] : []
   return {
     name: input.name.trim(), description: input.description.trim(),
     permissions: input.permissions,
     connections: input.connections.includes('*') ? ['*'] : input.connections,
-    namespaces: namespaces.includes('*') ? ['*'] : namespaces,
     ...(input.expiresAt === undefined ? {} : { expiresAt: input.expiresAt }),
   }
 }

@@ -19,15 +19,15 @@ afterAll(() => closePools(pools))
 
 async function issue(grants: Partial<AccessTokenInput> = {}) {
   const admin = await users.createUser({ email: 'admin@example.com', displayName: 'Admin', roles: ['admin'] })
-  return tokens.createToken({ name: 'prod', description: '', permissions: ['lineage:read'], namespaces: ['speech'],
-    connections: [], expiresAt: null, ...grants, createdBy: admin.id })
+  return tokens.createToken({ name: 'prod', description: '', permissions: ['capacity:read'],
+    connections: ['*'], expiresAt: null, ...grants, createdBy: admin.id })
 }
 
 describe('アクセストークンの認証', () => {
   it.each([
-    [['lineage:read'], ['lineage:read']],
-    [['lineage:send'], ['lineage:write']],
-  ] as const)('%sの値を一度だけ返し、権限から決まるscopeとNamespaceで認証し、削除後は拒否する', async (permissions, scopes) => {
+    [['capacity:read'], ['metrics:read']],
+    [['notes:read'], []],
+  ] as const)('%sの値を一度だけ返し、権限から決まるscopeで認証し、削除後は拒否する', async (permissions, scopes) => {
     const issued = await issue({ permissions: [...permissions] })
     expect(issued.token).toMatch(/^mado_dc_[^.]+\.[A-Za-z0-9_-]+$/)
     const stored = await pools.rw.query<{ secret_hash: Buffer }>(
@@ -37,7 +37,7 @@ describe('アクセストークンの認証', () => {
     expect(stored.rows[0].secret_hash.toString()).not.toContain(issued.token)
 
     expect(await authenticate(issued.token)).toMatchObject({
-      keyId: issued.accessToken.id, keyName: 'prod', scopes: [...scopes], namespaces: ['speech'], expiresAt: null,
+      keyId: issued.accessToken.id, keyName: 'prod', scopes: [...scopes], expiresAt: null,
     })
     expect(await authenticate(`${issued.token}x`)).toBeNull()
     // 前置きが mado_lin_ だった旧形式は、同じ鍵 ID と秘密でも受け付けない。

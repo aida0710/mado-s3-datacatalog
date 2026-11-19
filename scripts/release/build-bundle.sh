@@ -63,7 +63,6 @@ sed \
 cp "$root/deploy/release/README.md" "$base/README.md"
 cp "$root/deploy/release/.env.example" "$base/.env.example"
 cp "$root/deploy/worker-service.yaml" "$base/deploy/worker-service.yaml"
-cp "$root/docs/registry-api-contract.md" "$base/REGISTRY_API_CONTRACT.md"
 cp "$root/LICENSE" "$root/NOTICE" "$base/"
 cp -R "$root/db/init" "$base/db/"
 cp "$root/db/README.md" "$base/db/README.md"

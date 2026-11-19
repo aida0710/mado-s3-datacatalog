@@ -69,7 +69,7 @@ describe('job routeの接続ホワイトリスト', () => {
 
 describe('接続を持たないjob', () => {
   const token: Omit<AccessTokenPrincipal, 'connections'> = { kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key',
-    keyName: 'Operator', tokenName: 'Operator', expiresAt: null, scopes: [], namespaces: [],
+    keyName: 'Operator', tokenName: 'Operator', expiresAt: null, scopes: [],
     permissions: ['jobs:read', 'jobs:operate'] }
 
   function connectionlessFixture(principal: RequestPrincipal | null) {

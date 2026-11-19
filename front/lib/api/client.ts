@@ -2,7 +2,6 @@ import { capacityClient } from './capacity-client'
 import { connectionsClient } from './connections-client'
 import { favoritesClient } from './favorites-client'
 import { jobsClient } from './jobs-client'
-import { lineageClient } from './lineage-client'
 import { mediaClient } from './media-client'
 import { notesClient } from './notes-client'
 import { previewClient } from './preview-client'
@@ -31,7 +30,6 @@ export const api = {
   ...favoritesClient,
   ...tagsClient,
   ...settingsClient,
-  ...lineageClient,
   ...jobsClient,
   ...capacityClient,
   ...pricingClient,

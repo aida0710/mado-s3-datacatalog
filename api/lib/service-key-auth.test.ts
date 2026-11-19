@@ -39,7 +39,7 @@ describe('requireServiceKeyScope', () => {
   })
 
   it('必要なscopeがないkeyは403を返す', async () => {
-    const response = await appWith(async () => ({ keyId: 'key-1', scopes: ['lineage:write'] }))
+    const response = await appWith(async () => ({ keyId: 'key-1', scopes: [] }))
       .request('/protected', { headers: bearer })
     expect(response.status).toBe(403)
     expect(await response.json()).toEqual({ error: 'metrics:read scope is required', code: 'scope_required', scope: 'metrics:read' })

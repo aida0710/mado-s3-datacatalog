@@ -18,8 +18,7 @@ RUN npm run build
 
 # ステージ 2: nginx に静的成果物と設定を焼く
 # nginxinc/nginx-unprivileged は default で nginx user (uid 101) として
-# 8080/8081 で listen する。port 80 は privileged なので非 root では bind できない。
-# 8080はintranet UI、8081はhost TLS proxy専用のOpenLineage入口。
+# 8080 で listen する。port 80 は privileged なので非 root では bind できない。
 FROM nginxinc/nginx-unprivileged:alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e AS release
 ARG MDC_VERSION=dev
 ARG VCS_REF=""
@@ -33,4 +32,4 @@ LABEL org.opencontainers.image.title="mado S3 Data Catalog Web" \
       org.opencontainers.image.created="$BUILD_DATE"
 COPY --from=frontbuild /front/dist /usr/share/nginx/html
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-EXPOSE 8080 8081
+EXPOSE 8080

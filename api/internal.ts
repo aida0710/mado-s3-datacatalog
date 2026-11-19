@@ -6,7 +6,7 @@ import { migrateDatabase } from './lib/schema-migrations.js'
 import { createInternalApplication } from './internal-app.js'
 
 const env = loadEnv()
-// 表を使う前に未適用の移行を当てる。api-lineage と media-worker は当て終わるのを待ってから起動する。
+// 表を使う前に未適用の移行を当てる。media-worker は当て終わるのを待ってから起動する。
 await migrateDatabase(env.MDC_DATABASE_URL_MIGRATE)
 
 // LAN ダッシュボード: 1 つのストリーム teardown 起因の未捕捉例外で全ユーザーの

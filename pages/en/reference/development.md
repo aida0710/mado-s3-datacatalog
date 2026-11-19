@@ -1,24 +1,21 @@
 ---
-description: The roles of Front, the API, the media worker, and the Registry, and how to start mado, verify changes, and update the docs during development.
+description: The roles of Front, the API, and the media worker, and how to start mado, verify changes, and update the docs during development.
 ---
 
 # Architecture and development
 
-mado consists of a React web UI, a Hono API, a media worker that uses ffmpeg, and PostgreSQL. Dataset Registry is the source of truth for Lineage metadata, and Marquez is a projection that can be rebuilt.
+mado consists of a React web UI, a Hono API, a media worker that uses ffmpeg, and PostgreSQL.
 
-## Separate entry points for browsers and pipelines
+## What each service does
 
 | Service | Role |
 | --- | --- |
 | front / nginx | Vite during development, or serving and proxying the web UI in production |
 | api-internal | Browser authentication, Storage, settings, and read APIs |
-| api-lineage | Ingesting OpenLineage events from pipelines |
 | media-worker | Analyzing audio info, waveforms, and spectrograms |
 | postgres | Connection settings, authentication, notes, jobs, and cache |
-| Dataset Registry | Metadata for Datasets, Versions, Runs, and storage locations |
-| Marquez | Graph projection based on OpenLineage |
 
-In production, nginx listens on 8080 for the UI and on 8081 for OpenLineage only, and exposes them only on the host's loopback interface. Give users the URL served through the TLS proxy.
+In production, nginx listens on 8080 and exposes it only on the host's loopback interface. Give users the URL served through the TLS proxy.
 
 ## Start the development environment
 

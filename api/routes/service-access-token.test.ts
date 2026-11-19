@@ -7,8 +7,7 @@ const principal: ServiceAccessTokenPrincipal & { serviceAccountId: string } = {
   serviceAccountId: 'internal-owner',
   keyId: '00000000-0000-4000-8000-000000000001',
   keyName: 'ML Tracking',
-  scopes: ['lineage:read', 'lineage:write'],
-  namespaces: ['mado-model-tracking', 'speech'],
+  scopes: ['metrics:read'],
   expiresAt: new Date('2027-01-01T00:00:00.000Z'),
 }
 
@@ -20,7 +19,7 @@ function appWith(authenticated: ServiceAccessTokenPrincipal | null) {
 }
 
 describe('アクセストークン自身の許可範囲', () => {
-  it('呼び出したトークンの名前・scope・Namespace・有効期限だけを返し、cacheさせない', async () => {
+  it('呼び出したトークンの名前・scope・有効期限だけを返し、cacheさせない', async () => {
     const { app, authenticate } = appWith(principal)
     const response = await app.request('/access-token', { headers: bearer })
     expect(response.status).toBe(200)
@@ -28,18 +27,17 @@ describe('アクセストークン自身の許可範囲', () => {
     expect(await response.json()).toEqual({
       id: principal.keyId,
       name: 'ML Tracking',
-      scopes: ['lineage:read', 'lineage:write'],
-      namespaces: ['mado-model-tracking', 'speech'],
+      scopes: ['metrics:read'],
       expiresAt: '2027-01-01T00:00:00.000Z',
     })
     expect(authenticate).toHaveBeenCalledWith('mado_dc_0123456789abcdef.unit-test-secret')
   })
 
-  it('scopeを問わず答え、無期限・全Namespaceのトークンはその値のまま返す', async () => {
-    const response = await appWith({ ...principal, scopes: ['metrics:read'], namespaces: ['*'], expiresAt: null })
+  it('scopeを持たないトークンにも答え、無期限のトークンはnullのまま返す', async () => {
+    const response = await appWith({ ...principal, scopes: [], expiresAt: null })
       .app.request('/access-token', { headers: bearer })
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({ scopes: ['metrics:read'], namespaces: ['*'], expiresAt: null })
+    expect(await response.json()).toMatchObject({ scopes: [], expiresAt: null })
   })
 
   it('内部の所有者IDとトークンの値を返さない', async () => {

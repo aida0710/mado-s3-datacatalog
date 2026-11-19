@@ -4,7 +4,7 @@ description: Sign in, move through connections, buckets, and directories, and pr
 
 # Using mado
 
-mado is a web tool for browsing several S3-compatible storages in one place. From your browser, you can open files and check each directory's README, capacity, and data lineage.
+mado is a web tool for browsing several S3-compatible storages in one place. From your browser, you can open files and check each directory's README and capacity.
 
 The screenshots in this guide were taken of the current version of mado using public sample data. Click an image to enlarge it.
 
@@ -18,7 +18,7 @@ Open the mado URL in your browser. If your environment uses SSO, click the SSO b
 
 The screens are available in English and Japanese. Switch the language with the **Language** button (the globe icon) at the right of the top bar. On the sign-in screen and the first password change screen, it is to the right of the logo.
 
-Your choice is saved in the browser and applies to other tabs in the same browser. Until you choose, mado follows your browser's language, and shows English when the browser does not report a language or reports one other than English or Japanese. Screen names such as Home, Storage, DataLineage, and Settings stay in English on the Japanese screens as well.
+Your choice is saved in the browser and applies to other tabs in the same browser. Until you choose, mado follows your browser's language, and shows English when the browser does not report a language or reports one other than English or Japanese. Screen names such as Home, Storage, and Settings stay in English on the Japanese screens as well.
 
 ## Open your first file from Storage
 
@@ -38,7 +38,6 @@ To switch connections, use the **Connection** selector to the right of the page 
 | --- | --- |
 | Home | Read and edit the Team note shared across the team |
 | Storage | Check files, READMEs, and capacity metrics |
-| DataLineage | Trace how data and processing connect in a graph |
 | Settings | Configure connections, features, accounts, and access permissions |
 
 Start with [finding buckets and files](./storage.md). To compare audio, see [the synchronized player](./audio.md). To look at data inside a tar file, see [browsing archives](./archives.md).

@@ -11,7 +11,6 @@ const USER_PERMISSION_ALIASES: Partial<Record<InternalApiPermission, string>> = 
   'pricing:read': 'storage:read', 'pricing:refresh': 'jobs:operate',
   'settings:read': 'storage:read', 'users:read': 'users:manage',
   'service_accounts:read': 'service_accounts:manage',
-  'lineage:send': 'lineage:curate',
 }
 
 export function userHasPermission(permissions: readonly string[], permission: string): boolean {

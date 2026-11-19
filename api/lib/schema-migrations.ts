@@ -83,7 +83,7 @@ export async function applyPendingMigrations(pool: Pool, files?: readonly Migrat
 }
 
 /**
- * 手元の移行がすべて当たっていることを確かめる。移行を当てる権限を持たない api-lineage と media-worker が起動時に呼ぶ。
+ * 手元の移行がすべて当たっていることを確かめる。移行を当てる権限を持たない media-worker が起動時に呼ぶ。
  * 適用中なら advisory lock で終わるまで待つ。未適用や中身の違いがあれば MigrationStateError を投げる。
  */
 export async function assertMigrationsApplied(pool: Pool, files?: readonly MigrationFile[]): Promise<void> {

@@ -40,7 +40,6 @@ export default defineConfig({
       '/api/internal': 'http://api-internal:3000',
       '/api/auth': 'http://api-internal:3000',
       '/api/mado': 'http://api-internal:3000',
-      '/api/openlineage': 'http://api-lineage:3001',
     },
   },
 })

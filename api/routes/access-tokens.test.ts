@@ -10,7 +10,6 @@ import { setSessionPrincipal } from '../lib/rbac.js'
 import { requireServiceKeyScope } from '../lib/service-key-auth.js'
 import { mountAccessTokenRoutes } from './access-tokens.js'
 import type { AccessToken } from '../lib/access-token-types.js'
-import { createAccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
 
 const connection = process.env.MDC_TEST_DATABASE_URL
 // このテストは認証の表を初期化するので、代わりにほかの開発者のDBを使うことは決してしない。
@@ -31,13 +30,9 @@ beforeEach(async () => {
     setSessionPrincipal(context, { kind: 'user', sessionId: 'fixture', user })
     await next()
   })
-  mountAccessTokenRoutes(application, { store: tokens, audit: createAuditWriter(pools.rw),
-    namespaceCatalog: createAccessTokenNamespaceCatalog({ store: tokens, marquez: null }) })
-  for (const scope of ['lineage:read', 'lineage:write', 'metrics:read'] as const) {
-    application.get(`/probe/${scope}`, requireServiceKeyScope({
-      authenticate, scope,
-    }), context => context.json({ ok: true }))
-  }
+  mountAccessTokenRoutes(application, { store: tokens, audit: createAuditWriter(pools.rw) })
+  application.get('/probe/metrics:read', requireServiceKeyScope({ authenticate, scope: 'metrics:read' }),
+    context => context.json({ ok: true }))
 })
 afterAll(() => closePools(pools))
 
@@ -51,27 +46,17 @@ function request(input: { path?: string; method?: string; body?: unknown }) {
 async function issue(overrides: Record<string, unknown> = {}) {
   const response = await request({ method: 'POST', body: {
     name: 'ML Tracking', description: 'Training integration',
-    permissions: ['lineage:read', 'lineage:send'], namespaces: ['speech'], ...overrides,
+    permissions: ['capacity:read'], connections: ['*'], ...overrides,
   } })
   expect(response.status).toBe(201)
   return response.json() as Promise<{ accessToken: AccessToken; token: string }>
 }
 
 describe('一階層のアクセストークン管理', () => {
-  it('Namespace一覧を管理権限で取得でき、秘密の値と監査は増えない', async () => {
-    await issue()
-    const response = await request({ path: '/namespaces' })
-    expect(response.status).toBe(200)
-    expect(response.headers.get('Cache-Control')).toBe('no-store')
-    expect(await response.json()).toEqual({ namespaces: ['speech'], sourceStatus: 'unconfigured' })
-    expect((await pools.rw.query('SELECT id FROM audit_events')).rowCount).toBe(1)
-  })
-  it('一度の発行で参照・送信・容量を許可し、一覧と監査には秘密を含めない', async () => {
-    const issued = await issue({ permissions: ['lineage:read', 'lineage:send', 'capacity:read'], connections: ['*'] })
-    expect(issued.accessToken.scopes).toEqual(['lineage:read', 'lineage:write', 'metrics:read'])
-    for (const scope of issued.accessToken.scopes) {
-      expect((await application.request(`/probe/${scope}`, { headers: { authorization: `Bearer ${issued.token}` } })).status).toBe(200)
-    }
+  it('発行した値は権限から決まるscopeで連携APIに通り、一覧と監査には秘密を含めない', async () => {
+    const issued = await issue({ permissions: ['capacity:read', 'notes:read'] })
+    expect(issued.accessToken.scopes).toEqual(['metrics:read'])
+    expect((await application.request('/probe/metrics:read', { headers: { authorization: `Bearer ${issued.token}` } })).status).toBe(200)
     const list = await request({})
     expect(list.headers.get('Cache-Control')).toBe('no-store')
     const body = await list.json()
@@ -108,7 +93,7 @@ describe('一階層のアクセストークン管理', () => {
     const regenerated = await response.json() as typeof issued
     expect(response.status).toBe(200)
     expect(regenerated.token).not.toBe(issued.token)
-    expect(regenerated.accessToken).toMatchObject({ id: issued.accessToken.id, status: 'disabled', scopes: issued.accessToken.scopes, namespaces: ['speech'], revision: 3 })
+    expect(regenerated.accessToken).toMatchObject({ id: issued.accessToken.id, status: 'disabled', scopes: issued.accessToken.scopes, revision: 3 })
     expect(regenerated.accessToken.regeneratedAt).not.toBeNull()
     await request({ path: `/${issued.accessToken.id}`, method: 'PATCH', body: { status: 'active', expectedRevision: 3 } })
     expect(await authenticate(issued.token)).toBeNull()
@@ -131,27 +116,25 @@ describe('一階層のアクセストークン管理', () => {
   it('権限を更新すると既存の値のまま許可とscopeが変わり、説明の省略では消えない', async () => {
     const issued = await issue()
     const response = await request({ path: `/${issued.accessToken.id}`, method: 'PATCH', body: {
-      permissions: ['capacity:read'], namespaces: [], connections: ['*'], expectedRevision: 1,
+      permissions: ['notes:read'], connections: [], expectedRevision: 1,
     } })
     expect(response.status).toBe(200)
-    expect(await authenticate(issued.token)).toMatchObject({ scopes: ['metrics:read'], namespaces: [] })
+    expect(await authenticate(issued.token)).toMatchObject({ scopes: [] })
     const saved = (await response.json() as { accessToken: AccessToken }).accessToken
     expect(saved.description).toBe('Training integration')
-    expect((await application.request('/probe/lineage:write', { headers: { authorization: `Bearer ${issued.token}` } })).status).toBe(403)
+    expect((await application.request('/probe/metrics:read', { headers: { authorization: `Bearer ${issued.token}` } })).status).toBe(403)
     expect((await request({ path: `/${issued.accessToken.id}`, method: 'PATCH', body: { status: 'disabled', expectedRevision: 1 } })).status).toBe(409)
     expect((await tokens.listTokens())[0].status).toBe('active')
   })
 
-  it('許可対象のない来歴・用途のないキー・過去の期限は発行しない', async () => {
+  it('用途のないキー・接続のない容量の読み取り・過去の期限は発行しない', async () => {
     for (const body of [
-      { name: 'missing namespace', permissions: ['lineage:read'] },
-      { name: 'no permissions', permissions: [], namespaces: [] },
-      { name: 'capacity with namespace', permissions: ['capacity:read'], namespaces: ['speech'], connections: ['*'] },
+      { name: 'no permissions', permissions: [] },
       { name: 'capacity without connections', permissions: ['capacity:read'] },
       { name: 'past', permissions: ['capacity:read'], connections: ['*'], expiresAt: '2000-01-01T00:00:00Z' },
       // 連携scopeは権限から決まるので、入力では受け付けない。
       { name: 'scopes only', scopes: ['metrics:read'] },
-      { name: 'scopes beside permissions', scopes: ['lineage:write'], permissions: ['lineage:read'], namespaces: ['speech'] },
+      { name: 'scopes beside permissions', scopes: ['metrics:read'], permissions: ['capacity:read'], connections: ['*'] },
     ]) expect((await request({ method: 'POST', body })).status, body.name).toBe(400)
     expect(await tokens.listTokens()).toEqual([])
     expect((await pools.rw.query('SELECT id FROM service_accounts')).rowCount).toBe(0)
@@ -165,9 +148,8 @@ describe('一階層のアクセストークン管理', () => {
       setSessionPrincipal(context, { kind: 'user', sessionId: 'fixture', user: viewer })
       await next()
     })
-    mountAccessTokenRoutes(limited, { store: tokens, audit: createAuditWriter(pools.rw),
-      namespaceCatalog: createAccessTokenNamespaceCatalog({ store: tokens, marquez: null }) })
-    for (const [method, path] of [['GET', ''], ['GET', '/namespaces'], ['POST', ''], ['PATCH', `/${issued.accessToken.id}`], ['POST', `/${issued.accessToken.id}/regenerate`], ['DELETE', `/${issued.accessToken.id}`]]) {
+    mountAccessTokenRoutes(limited, { store: tokens, audit: createAuditWriter(pools.rw) })
+    for (const [method, path] of [['GET', ''], ['POST', ''], ['PATCH', `/${issued.accessToken.id}`], ['POST', `/${issued.accessToken.id}/regenerate`], ['DELETE', `/${issued.accessToken.id}`]]) {
       expect((await limited.request(`/access-tokens${path}`, { method })).status).toBe(403)
     }
     expect(await authenticate(issued.token)).not.toBeNull()
@@ -184,20 +166,20 @@ describe('一階層のアクセストークン管理', () => {
     expect((await tokens.listTokens())[0].revision).toBe(1)
   })
 
-  it('同じ内容の再保存ではrevisionと監査を増やさず、Namespaceの重複も吸収する', async () => {
+  it('同じ内容の再保存ではrevisionと監査を増やさず、接続の重複も吸収する', async () => {
     const issued = await issue()
     const response = await request({ path: `/${issued.accessToken.id}`, method: 'PATCH', body: {
-      name: 'ML Tracking', description: 'Training integration', permissions: ['lineage:send', 'lineage:read'],
-      namespaces: ['speech', 'speech'], status: 'active', expiresAt: null, expectedRevision: 1,
+      name: 'ML Tracking', description: 'Training integration', permissions: ['capacity:read'],
+      connections: ['*', '*'], status: 'active', expiresAt: null, expectedRevision: 1,
     } })
     expect(response.status).toBe(200)
     expect((await tokens.listTokens())[0].revision).toBe(1)
     expect((await pools.rw.query('SELECT id FROM audit_events')).rowCount).toBe(1)
     const update = await request({ path: `/${issued.accessToken.id}`, method: 'PATCH', body: {
-      namespaces: ['lecture', 'lecture'], expectedRevision: 1,
+      description: 'Capacity integration', connections: ['*', '*'], expectedRevision: 1,
     } })
     expect(update.status).toBe(200)
-    expect(await authenticate(issued.token)).toMatchObject({ namespaces: ['lecture'] })
+    expect((await tokens.listTokens())[0]).toMatchObject({ description: 'Capacity integration', connections: ['*'] })
     expect((await tokens.listTokens())[0].revision).toBe(2)
   })
 
@@ -209,7 +191,7 @@ describe('一階層のアクセストークン管理', () => {
     })
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     try {
-      expect((await request({ method: 'POST', body: { name: 'failed', permissions: ['lineage:read'], namespaces: ['speech'] } })).status).toBe(500)
+      expect((await request({ method: 'POST', body: { name: 'failed', permissions: ['capacity:read'], connections: ['*'] } })).status).toBe(500)
       expect((await pools.rw.query('SELECT id FROM service_accounts')).rowCount).toBe(0)
       expect((await pools.rw.query('SELECT id FROM service_account_keys')).rowCount).toBe(0)
       expect((await pools.rw.query('SELECT id FROM audit_events')).rowCount).toBe(0)

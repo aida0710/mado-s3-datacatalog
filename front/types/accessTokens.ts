@@ -11,7 +11,6 @@ export interface AccessTokenInput {
   description: string
   permissions: InternalApiPermission[]
   connections: string[]
-  namespaces: string[]
   expiresAt?: string | null
 }
 

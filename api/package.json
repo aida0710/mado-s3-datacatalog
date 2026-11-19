@@ -11,8 +11,6 @@
     "dev": "tsx watch --env-file=../.env internal.ts",
     "build": "tsc -p tsconfig.json && cp -R migrations dist/",
     "start": "node dist/internal.js",
-    "start:lineage": "node dist/lineage.js",
-    "dev:lineage": "tsx watch --env-file=../.env lineage.ts",
     "lint": "eslint .",
     "test": "node --env-file-if-exists=../.env ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node --env-file-if-exists=../.env ./node_modules/vitest/vitest.mjs",

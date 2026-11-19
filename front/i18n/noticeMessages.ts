@@ -1,8 +1,8 @@
-import type { EstimateWarning, LineageProjectionStatus, LineageWarning, ManualFactNote } from '../lib/api/types'
+import type { EstimateWarning, ManualFactNote } from '../lib/api/types'
 import { fmtCount, fmtSize, fmtUnitPriceUsd } from '../lib/format'
 import { translate } from './translate'
 
-// API が返すお知らせ (見積もりの注意・DataLineage の警告・単価の注記) を、code から今の言語の文にする。
+// API が返すお知らせ (見積もりの注意・単価の注記) を、code から今の言語の文にする。
 // API は書式を付けない値を横の項目で渡すので、数や容量の書き方はここで画面の言語に合わせる。
 
 export function transferWarningMessage(warning: EstimateWarning): string {
@@ -35,28 +35,6 @@ export function transferWarningMessage(warning: EstimateWarning): string {
     case 'capacity':
       return translate('transferWarnings.capacity', { value0: fmtSize(warning.capacityBytes), value1: fmtSize(warning.requiredBytes) })
   }
-}
-
-export function lineageWarningMessage(warning: LineageWarning): string {
-  switch (warning.code) {
-    case 'marquezProjectionUnavailable':
-      return translate('lineageWarnings.marquezProjectionUnavailable')
-    case 'registryEnrichmentUnavailable':
-      return translate('lineageWarnings.registryEnrichmentUnavailable')
-    case 'malformedMarquezNode':
-      return translate('lineageWarnings.malformedMarquezNode', { value0: warning.nodeId })
-    case 'registrySearchUnavailable':
-      return translate('lineageWarnings.registrySearchUnavailable')
-    case 'marquezSearchUnavailable':
-      return translate('lineageWarnings.marquezSearchUnavailable')
-  }
-}
-
-/** グラフの反映状態を取れなかった理由。 */
-export function projectionUnavailableMessage(code: NonNullable<LineageProjectionStatus['code']>): string {
-  return code === 'registryProjectionUnavailable'
-    ? translate('lineageWarnings.registryProjectionUnavailable')
-    : translate('lineageWarnings.marquezProjectionUnavailable')
 }
 
 export function pricingNoteMessage(note: ManualFactNote): string {

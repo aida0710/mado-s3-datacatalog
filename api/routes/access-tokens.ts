@@ -6,8 +6,7 @@ import { getRequestPrincipal, requirePermission } from '../lib/rbac.js'
 import { requestMetadata } from '../lib/request-metadata.js'
 import { AccessTokenActorInactiveError, AccessTokenConflictError, AccessTokenPermissionsError, type AccessTokenStore } from '../lib/access-token-store.js'
 import type { AccessToken } from '../lib/access-token-types.js'
-import type { AccessTokenNamespaceCatalog } from '../lib/access-token-namespaces.js'
-import { accessTokenGrants, internalPermissions, tokenConnections, tokenNamespaces } from '../lib/access-token-grants.js'
+import { accessTokenGrants, internalPermissions, tokenConnections } from '../lib/access-token-grants.js'
 import { createAccessTokenManagement, AccessTokenAuthorityError } from '../lib/access-token-management.js'
 import { UnknownTokenConnectionError } from '../lib/internal-token-grants.js'
 import { principalActor } from '../lib/principal-actor.js'
@@ -26,7 +25,6 @@ const Metadata = z.object({
 export const AccessTokenCreateBody = accessTokenGrants.safeExtend({ ...Metadata.shape, description: Metadata.shape.description.default('') }).strict()
 export const ExpectedRevision = z.object({ expectedRevision: z.number().int().positive() })
 export const AccessTokenPatchBody = Metadata.partial().extend({
-  namespaces: tokenNamespaces.optional(),
   permissions: internalPermissions.optional(),
   connections: tokenConnections.optional(),
   status: z.enum(['active', 'disabled']).optional(),
@@ -45,7 +43,6 @@ const validateTokenId: MiddlewareHandler = async (context, next) => {
 export function mountAccessTokenRoutes(app: Hono, deps: {
   store: AccessTokenStore
   audit: AuditWriter
-  namespaceCatalog: AccessTokenNamespaceCatalog
   visibleConnections?(principal: RequestPrincipal): Promise<ReadonlySet<string> | null>
 }): void {
   const routes = new Hono()
@@ -73,7 +70,7 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
         actor: principalActor(getRequestPrincipal(c)!),
         action: input.action, outcome: 'success', resourceType: 'access_token', resourceId: mutation.accessToken.id,
         details: { target: { displayName: mutation.accessToken.name }, scopes: mutation.accessToken.scopes,
-          namespaces: mutation.accessToken.namespaces, permissions: mutation.accessToken.permissions,
+          permissions: mutation.accessToken.permissions,
           connections: mutation.accessToken.connections, revision: mutation.accessToken.revision },
         ...requestMetadata(c),
       })
@@ -93,12 +90,6 @@ export function mountAccessTokenRoutes(app: Hono, deps: {
     const principal = getRequestPrincipal(c)!
     const tokens = await deps.store.listTokens()
     return c.json({ tokens: principal.kind === 'user' ? tokens : tokens.filter(token => canDelegateToken(principal, token)) })
-  })
-  routes.get('/namespaces', async c => {
-    const principal = getRequestPrincipal(c)!
-    const catalog = await deps.namespaceCatalog.listNamespaces()
-    if (principal.kind === 'user' || principal.namespaces.includes('*')) return c.json(catalog)
-    return c.json({ ...catalog, namespaces: catalog.namespaces.filter(namespace => principal.namespaces.includes(namespace)) })
   })
   routes.post('/', async c => {
     const parsed = AccessTokenCreateBody.safeParse(await c.req.json().catch(() => null))

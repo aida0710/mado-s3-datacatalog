@@ -32,8 +32,8 @@ Manage users in **Settings → Access → Users**.
 
 | Role | Main permissions |
 | --- | --- |
-| Viewer | Viewing Storage and Lineage |
-| Curator | Viewing, editing READMEs and notes, and registering and correcting Lineage |
+| Viewer | Viewing Storage |
+| Curator | Viewing, and editing READMEs and notes |
 | Operator | Viewing and operating jobs |
 | Admin | All permissions, including managing connections, settings, users, and access tokens, and viewing the audit log |
 
@@ -45,8 +45,8 @@ Removing a user from an SSO group does not necessarily end their existing mado s
 
 In production, use HTTPS and set `MDC_AUTH_COOKIE_SECURE=true`. Every environment, including development and tests, must set `MDC_AUTH_MODE` to `local`, `oidc`, or `hybrid`. Missing or unsupported values prevent startup.
 
-## Use access tokens for pipelines
+## Use access tokens for automation
 
-Keep authentication for pipelines and Prometheus separate from people's browser sessions. Create tokens with the required permissions in **Settings → Access → Access Tokens**. One token can allow both reads and writes. See the [API guide](../reference/api.md).
+Keep authentication for scripts and Prometheus separate from people's browser sessions. Create tokens with the required permissions in **Settings → Access → Access Tokens**. See the [API guide](../reference/api.md).
 
-New tokens start with no permissions. Select read, edit, delete, run or manage actions by feature, then choose allowed connections and namespaces. The same token can use internal APIs.
+New tokens start with no permissions. Select read, edit, delete, run or manage actions by feature, then choose allowed connections. The same token can use internal APIs.

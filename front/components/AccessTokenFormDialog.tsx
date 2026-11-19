@@ -1,5 +1,4 @@
 import { Dialog } from '@mado/design-system/react'
-import { NamespaceSelector } from './NamespaceSelector'
 import { InternalPermissionSelector } from './InternalPermissionSelector'
 import { TokenConnectionSelector } from './TokenConnectionSelector'
 import { TokenExpiryFields } from './TokenExpiryFields'
@@ -37,8 +36,7 @@ export function AccessTokenFormDialog({ token, onSave, onCancel }: {
           <input value={form.description} onChange={event => form.setDescription(event.target.value)} maxLength={TOKEN_DESCRIPTION_MAX_LENGTH} disabled={form.busy} />
         </label>
         <InternalPermissionSelector selected={form.permissions} onToggle={form.togglePermission} onPreset={form.applyPreset} disabled={form.busy} />
-        {form.showsConnections && <TokenConnectionSelector selected={form.connections} onChange={form.setConnections} disabled={form.busy} />}
-        {form.includesLineage && <NamespaceSelector selected={form.namespaces} onChange={form.setNamespaces} disabled={form.busy} />}
+        {form.requiresConnections && <TokenConnectionSelector selected={form.connections} onChange={form.setConnections} disabled={form.busy} />}
         <TokenExpiryFields value={form.expiry} onChange={form.setExpiry} disabled={form.busy} />
         {form.error && <p className="notice error" role="alert">{localizeMessage(form.error)}</p>}
       </form>

@@ -5,14 +5,12 @@ set -euo pipefail
 # ここではロールとテスト用 DB だけを作る。表は api-internal が起動時に当てる移行 (api/migrations) が作る。
 
 PASSWORD="${MDC_DASHBOARD_DB_PASSWORD:?MDC_DASHBOARD_DB_PASSWORD must be set in compose.dev.yaml or compose.prod.yaml}"
-LINEAGE_PASSWORD="${MDC_LINEAGE_DB_PASSWORD:?MDC_LINEAGE_DB_PASSWORD must be set in compose}"
 WORKER_PASSWORD="${MDC_WORKER_DB_PASSWORD:?MDC_WORKER_DB_PASSWORD must be set in compose}"
 
 # ロールとテスト DB を作成する。デフォルトの `dashboard` DB は POSTGRES_DB から作成済み。
 psql -v ON_ERROR_STOP=1 --username "postgres" <<-EOSQL
   CREATE ROLE dashboard_rw LOGIN PASSWORD '${PASSWORD}';
   CREATE ROLE dashboard_ro LOGIN PASSWORD '${PASSWORD}';
-  CREATE ROLE mado_lineage LOGIN PASSWORD '${LINEAGE_PASSWORD}';
   CREATE ROLE mado_worker LOGIN PASSWORD '${WORKER_PASSWORD}';
 
   CREATE DATABASE dashboard_test OWNER postgres;

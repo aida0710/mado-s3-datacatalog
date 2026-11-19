@@ -11,11 +11,10 @@ export function createInternalTokenAuthenticator(deps: {
   return async (token: string): Promise<AccessTokenPrincipal | null> => {
     const principal = await deps.authenticate(token)
     if (!principal) return null
-    const grants = await deps.pool.query<{ name: string; secret_hash: Buffer; scopes: string[]; namespaces: string[];
+    const grants = await deps.pool.query<{ name: string; secret_hash: Buffer; scopes: string[];
       permissions: string[]; connections: string[] }>(`
       SELECT k.name, k.secret_hash,
         ARRAY(SELECT scope FROM service_account_key_scopes WHERE key_id=k.id ORDER BY scope) AS scopes,
-        ARRAY(SELECT namespace FROM service_account_key_namespaces WHERE key_id=k.id ORDER BY namespace) AS namespaces,
         ARRAY(SELECT permission FROM service_account_key_permissions WHERE key_id=k.id ORDER BY permission) AS permissions,
         ARRAY(SELECT connection_id FROM service_account_key_connections WHERE key_id=k.id ORDER BY connection_id) AS connections
       FROM service_account_keys k
@@ -24,7 +23,7 @@ export function createInternalTokenAuthenticator(deps: {
     // 許可は1つのスナップショットからまとめて読み、再発行が認証と競合した場合に備えて秘密の値も確かめ直す。
     if (!row || !equalDigest(row.secret_hash, sha256(token.slice(token.indexOf('.') + 1)))) return null
     return { ...principal, tokenName: row.name,
-      scopes: row.scopes, namespaces: row.namespaces,
+      scopes: row.scopes,
       permissions: row.permissions.filter(isInternalApiPermission), connections: row.connections }
   }
 }

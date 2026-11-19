@@ -19,19 +19,12 @@ describe('監査の記録判定', () => {
     expect(classifyActivity('GET', '/api/internal/storage/c1/preview/raw')).toBeNull()
     expect(classifyActivity('GET', '/api/internal/notes/home')).toBeNull()
     expect(classifyActivity('GET', '/api/internal/storage/c1/readme')).toBeNull()
-    expect(classifyActivity('GET', '/api/internal/lineage/datasets/d1')).toBeNull()
     expect(classifyActivity('GET', '/api/internal/storage/c1/list')).toBeNull()
     expect(classifyActivity('GET', '/api/internal/storage/c1/capacity')).toBeNull()
     expect(classifyActivity('POST', '/api/internal/storage/c1/capacity/scan')).toMatchObject({
       action: 'storage.capacity.scan.start', resourceId: 'c1',
     })
     expect(classifyActivity('GET', '/api/internal/audit-events')).toBeNull()
-    expect(classifyActivity('POST', '/api/internal/lineage/curation/datasets')).toMatchObject({
-      action: 'lineage.dataset.register', dedicatedSuccessAudit: true,
-    })
-    expect(classifyActivity('PATCH', '/api/internal/lineage/curation/datasets/d1')).toMatchObject({
-      action: 'lineage.dataset.update', resourceId: 'd1', dedicatedSuccessAudit: true,
-    })
     for (const [method, path] of [
       ['POST', '/api/internal/access-tokens'],
       ['PATCH', '/api/internal/access-tokens/t1'],

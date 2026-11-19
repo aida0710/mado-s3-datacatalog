@@ -31,7 +31,6 @@ export interface ServicePrincipal {
   keyId: string
   keyName: string
   scopes: string[]
-  namespaces: string[]
   expiresAt: Date | null
 }
 
