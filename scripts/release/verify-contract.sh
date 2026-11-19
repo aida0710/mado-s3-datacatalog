@@ -43,13 +43,4 @@ case $(find "$root/docs/releases" -maxdepth 1 -name 'v*.md' -type f | wc -l | tr
   0) echo "Error: no versioned release notes found" >&2; exit 1 ;;
 esac
 
-[ -s "$root/docs/registry-api-contract.md" ] || {
-  echo "Error: missing Dataset Registry API contract" >&2
-  exit 1
-}
-grep -F 'REGISTRY_API_CONTRACT.md' "$root/scripts/release/build-bundle.sh" >/dev/null || {
-  echo "Error: release bundle does not include the Registry contract" >&2
-  exit 1
-}
-
 echo "release workflow contract: ok"

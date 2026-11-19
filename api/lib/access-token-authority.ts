@@ -3,7 +3,7 @@ import type { RequestPrincipal } from './auth-types.js'
 import { hasPermission } from './auth-types.js'
 import { INTERNAL_API_PERMISSIONS } from '../shared/access-token-permissions.js'
 
-type TokenGrants = Pick<AccessTokenInput, 'permissions' | 'namespaces' | 'connections'> & { expiresAt?: Date | null }
+type TokenGrants = Pick<AccessTokenInput, 'permissions' | 'connections'> & { expiresAt?: Date | null }
 
 function includesTargets(allowed: readonly string[], requested: readonly string[]): boolean {
   return allowed.includes('*') || requested.every(value => allowed.includes(value))
@@ -22,9 +22,8 @@ function endsWithin(allowed: Date | null, requested: Date | null | undefined): b
 export function canDelegateToken(principal: RequestPrincipal, grants: TokenGrants): boolean {
   if (!grants.permissions.every(permission => hasPermission(principal, permission))) return false
   if (principal.kind === 'user') return !grants.connections.includes('*') || hasPermission(principal, 'connections:manage')
-  // 権限が必要としない対象も確かめる。DataLineageは保存場所の逆引きに接続を使う。
-  return includesTargets(principal.namespaces, grants.namespaces)
-    && includesTargets(principal.connections, grants.connections)
+  // 権限が必要としない接続も確かめる。
+  return includesTargets(principal.connections, grants.connections)
     && endsWithin(principal.expiresAt, grants.expiresAt)
 }
 
@@ -35,10 +34,10 @@ export function coversAllConnections(principal: RequestPrincipal): boolean {
 
 /**
  * ユーザー・ロール・パスワードの管理を許すと、制限したトークンから管理者のログインを作れてしまう。
- * そのため、すべての権限・接続・Namespaceを持つトークンにだけ許す。
+ * そのため、すべての権限・接続を持つトークンにだけ許す。
  */
 export function canAdministerUsers(principal: RequestPrincipal): boolean {
   if (principal.kind === 'user') return hasPermission(principal, 'users:manage')
   return INTERNAL_API_PERMISSIONS.every(permission => principal.permissions.includes(permission))
-    && coversAllConnections(principal) && principal.namespaces.includes('*')
+    && coversAllConnections(principal)
 }

@@ -10,7 +10,7 @@ import type { Pool } from 'pg'
 
 const tokenPrincipal: AccessTokenPrincipal = {
   kind: 'service_account', serviceAccountId: 'owner', serviceAccountName: 'Integration', keyId: 'key', keyName: 'Reader',
-  tokenName: 'Reader', expiresAt: null, scopes: [], namespaces: [], connections: ['selected'], permissions: ['notes:read'],
+  tokenName: 'Reader', expiresAt: null, scopes: [], connections: ['selected'], permissions: ['notes:read'],
 }
 const session: SessionPrincipal = { kind: 'user', sessionId: 'session', user: {
   id: 'user', username: null, email: null, displayName: 'User', signatureName: 'User', status: 'active',
@@ -28,7 +28,6 @@ function application(principal = tokenPrincipal) {
   app.use('*', requireInternalApiPermission())
   app.get('/api/internal/notes/home', c => c.json({ kind: getRequestPrincipal(c)?.kind }))
   app.put('/api/internal/notes/home', c => c.text('saved'))
-  app.post('/api/internal/lineage/curation/runs', c => c.text('registered'))
   app.post('/api/internal/future-feature', c => c.text('new endpoint'))
   app.post('/api/internal/tags', c => c.text('tag created'))
   app.put('/api/internal/storage/selected/tags', c => c.text('tagged'))
@@ -79,15 +78,6 @@ describe('内部APIの認証と権限', () => {
     expect((await app.request('/api/internal/future-feature', { method: 'POST', headers })).status).toBe(403)
     authenticateToken.mockRejectedValue(new Error('unavailable'))
     expect((await app.request('/api/internal/notes/home', { headers })).status).toBe(503)
-  })
-  it('ブラウザのDataLineage編集には従来どおり参照と編集の両方を要求する', async () => {
-    const { app, sessions } = application()
-    const user = { ...session.user, permissions: ['storage:read', 'lineage:curate'] }
-    sessions.authenticateSession.mockResolvedValue({ ...session, user })
-    const init = { method: 'POST', headers: { Cookie: 'session=valid', Origin: 'https://mado.example.test' } }
-    expect((await app.request('/api/internal/lineage/curation/runs', init)).status).toBe(403)
-    sessions.authenticateSession.mockResolvedValue({ ...session, user: { ...user, permissions: [...user.permissions, 'lineage:read'] } })
-    expect((await app.request('/api/internal/lineage/curation/runs', init)).status).toBe(200)
   })
 })
 

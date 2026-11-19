@@ -35,9 +35,6 @@ const permissionRoutes: readonly PermissionRoute[] = [
   { methods: ['GET'], path: /^\/storage\/[^/]+\/favorites$/, permission: 'favorites:read' },
   { methods: ['PUT'], path: /^\/storage\/[^/]+\/favorites\/[^/]+$/, permission: 'favorites:write' },
   { methods: ['DELETE'], path: /^\/storage\/[^/]+\/favorites\/[^/]+$/, permission: 'favorites:delete' },
-  { methods: ['GET'], path: /^\/lineage\/(?:graph|search|catalog|resolve-location|projection-status|job-runs|(?:datasets|versions|runs)\/[^/]+)$/, permission: 'lineage:read' },
-  { methods: ['POST'], path: /^\/lineage\/curation\/(?:datasets|locations|runs)$/, permission: 'lineage:curate' },
-  { methods: ['PATCH'], path: /^\/lineage\/curation\/datasets\/[^/]+$/, permission: 'lineage:curate' },
   { methods: ['GET'], path: /^\/jobs\/[^/]+$/, permission: 'jobs:read' },
   { methods: ['POST'], path: /^\/(?:jobs\/[^/]+\/cancel|storage\/[^/]+\/scan)$/, permission: 'jobs:operate' },
   { methods: ['GET'], path: /^\/storage\/[^/]+\/capacity(?:\/prefix)?$/, permission: 'capacity:read' },
@@ -51,11 +48,11 @@ const permissionRoutes: readonly PermissionRoute[] = [
   { methods: ['PATCH', 'DELETE'], path: /^\/users\/[^/]+$/, permission: 'users:manage' },
   { methods: ['PUT'], path: /^\/users\/[^/]+\/roles$/, permission: 'users:manage' },
   { methods: ['POST'], path: /^\/users\/[^/]+\/reset-password$/, permission: 'users:manage' },
-  { methods: ['GET'], path: /^\/access-tokens(?:\/namespaces)?$/, permission: 'service_accounts:read' },
+  { methods: ['GET'], path: /^\/access-tokens$/, permission: 'service_accounts:read' },
   { methods: ['POST'], path: /^\/access-tokens$/, permission: 'service_accounts:manage' },
   { methods: ['PATCH', 'DELETE'], path: /^\/access-tokens\/[^/]+$/, permission: 'service_accounts:manage' },
   { methods: ['POST'], path: /^\/access-tokens\/[^/]+\/regenerate$/, permission: 'service_accounts:manage' },
-  // ユーザーと同じく、audit:readはログ全体を読む。接続とNamespaceの制限では絞られない。
+  // ユーザーと同じく、audit:readはログ全体を読む。接続の制限では絞られない。
   { methods: ['GET'], path: /^\/audit-events$/, permission: 'audit:read' },
 ]
 
@@ -83,9 +80,6 @@ export function requireInternalApiPermission(): MiddlewareHandler {
     const route = findPermissionRoute(context.req.method, context.req.path)
     if (route && !hasPermission(principal, route.permission)) {
       return context.json({ ...apiError('forbidden', 'forbidden'), permission: route.permission }, 403)
-    }
-    if (principal.kind === 'user' && route?.permission === 'lineage:curate' && !hasPermission(principal, 'lineage:read')) {
-      return context.json({ ...apiError('forbidden', 'forbidden'), permission: 'lineage:read' }, 403)
     }
     if (principal.kind === 'service_account') {
       // 新しいエンドポイントは、方針を明示するまでトークンには閉じておく。

@@ -80,16 +80,6 @@ const baseSchema = z.object({
   ),
   MDC_OIDC_ROLE_MAPPING_JSON: oidcRoleMapping,
   MDC_OIDC_DEFAULT_ROLE: roleId.default('viewer'),
-
-  // Dataset Registryがmetadataの正本、Marquezはread-only projection。
-  // 3値が揃った場合だけinternal UIにlineage routeをmountする。
-  MDC_DATASET_REGISTRY_URL: optionalUrl,
-  MDC_DATASET_REGISTRY_TOKEN: z.union([
-    z.string().min(16), emptyStringAsUndefined,
-  ]).optional(),
-  MDC_MARQUEZ_URL: optionalUrl,
-  MDC_LINEAGE_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
-  MDC_OPENLINEAGE_BODY_LIMIT_BYTES: z.coerce.number().int().min(1024).default(2 * 1024 * 1024),
 })
 
 const schema = baseSchema.superRefine((env, ctx) => {
@@ -103,24 +93,13 @@ const schema = baseSchema.superRefine((env, ctx) => {
 
 export type Env = z.infer<typeof schema>
 
-// compose内の解析workerにはブラウザ認証やRegistryの設定を渡さない。
+// compose内の解析workerにはブラウザ認証の設定を渡さない。
 const workerSchema = baseSchema.pick({
   MDC_ENV: true, MDC_DATABASE_URL_RW: true, MDC_DATABASE_URL_RO: true, MDC_STORAGE_SECRET_KEY: true,
   MDC_MEDIA_CONCURRENCY: true, MDC_MEDIA_ANALYZE_TIMEOUT_SEC: true, MDC_MEDIA_CACHE_MAX_AGE_DAYS: true,
   MDC_MEDIA_SPECTROGRAM_MAX_WIDTH: true, MDC_MEDIA_WORKER_PORT: true,
 })
 export type WorkerEnv = z.infer<typeof workerSchema>
-
-const lineageSchema = z.object({
-  MDC_DATABASE_URL_RW: z.string().min(1),
-  MDC_DATABASE_URL_RO: z.string().min(1),
-  MDC_DATASET_REGISTRY_URL: z.string().url(),
-  MDC_DATASET_REGISTRY_TOKEN: z.string().min(16),
-  MDC_LINEAGE_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
-  MDC_OPENLINEAGE_BODY_LIMIT_BYTES: z.coerce.number().int().min(1024).default(2 * 1024 * 1024),
-})
-
-export type LineageEnv = z.infer<typeof lineageSchema>
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
   return parseEnvironment(schema, source, 'environment')
@@ -141,11 +120,4 @@ function parseEnvironment<T>(environmentSchema: z.ZodType<T>, source: Record<str
     throw new Error(`Invalid ${label}:\n${msg}`)
   }
   return parsed.data
-}
-
-/** Internet-facing lineage processへbrowser/storage用secretを渡さないための最小schema。 */
-export function loadLineageEnv(
-  source: Record<string, string | undefined> = process.env,
-): LineageEnv {
-  return parseEnvironment(lineageSchema, source, 'lineage environment')
 }

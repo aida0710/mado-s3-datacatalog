@@ -54,16 +54,16 @@ openssl rand -hex 32
 
 最後のコマンドで生成した値を、`.env` の `MDC_STORAGE_SECRET_KEY` に設定します。このキーは保存したS3の認証情報の暗号化に使うため、運用開始後も保管してください。
 
-`.env.example` の `MDC_AUTH_MODE=local` は、Local Userで試す設定です。DataLineageを使う場合は、互換Dataset RegistryとそのBearer token、必要に応じてMarquezを別途用意します。Registryの仕様は[API契約](https://github.com/aida0710/mado-s3-datacatalog/blob/main/docs/registry-api-contract.md)を参照してください。
+`.env.example` の `MDC_AUTH_MODE=local` は、Local Userで試す設定です。
 
 ## 開発環境を起動する
 
 ```bash
-docker compose -f compose.dev.yaml up -d --build postgres api-internal media-worker front
+docker compose -f compose.dev.yaml up -d --build
 docker compose -f compose.dev.yaml ps
 ```
 
-まずStorageを使うサービスを起動します。`api-internal`は起動時にDBの移行を当てて表を作ります。`api-internal`がhealthyになったら、初期Adminを作成します。OpenLineageの受け付けは、Registryへの接続設定を済ませてから `docker compose -f compose.dev.yaml up -d --build api-lineage` で起動できます。
+`api-internal`は起動時にDBの移行を当てて表を作ります。`api-internal`がhealthyになったら、初期Adminを作成します。
 
 ## 初期Adminを作成する {#initial-admin}
 ```bash
@@ -85,13 +85,11 @@ docker compose -f compose.dev.yaml exec api-internal \
 | --- | --- |
 | `POSTGRES_PASSWORD` | PostgreSQL管理用のパスワード |
 | `MDC_DASHBOARD_DB_PASSWORD` | `MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO` と一致するパスワード |
-| `MDC_LINEAGE_DB_PASSWORD` | OpenLineage用DBロールのパスワード |
 | `MDC_WORKER_DB_PASSWORD` | 音声解析worker専用DBロールのパスワード |
 | `MDC_STORAGE_SECRET_KEY` | 32バイトのhex形式の暗号化キー |
 | `MDC_AUTH_MODE` | `local`、`oidc`、`hybrid` のいずれか |
 | `MDC_AUTH_COOKIE_SECURE` | HTTPSで使う場合は `true` |
 | `MDC_WEB_ORIGIN` | ブラウザが使うURLのorigin |
-| `MDC_DATASET_REGISTRY_URL` / `MDC_DATASET_REGISTRY_TOKEN` | 互換Registryへの接続設定。本番では必須 |
 
 新規環境では、Webの入口を起動する前にAdminを作成します。`api-internal`だけを起動すると、PostgreSQLも起動し、DBの移行が当たります。
 
@@ -103,6 +101,6 @@ docker compose -f compose.prod.yaml exec api-internal \
 docker compose -f compose.prod.yaml up -d
 ```
 
-UIは `127.0.0.1:8080`、OpenLineage送信専用の入口は `127.0.0.1:8081` です。UIにはintranet内のTLS proxyを接続します。Pipelineの送信先を公開する場合は、別のTLS hostnameから8081へ接続します。
+UIは `127.0.0.1:8080` で待ち受けます。intranet内のTLS proxyを接続してください。
 
 既存DBの移行も`api-internal`が起動時に当てます。v0.4.0まで（移行を手で当ててきたDB）から更新するときだけ、最初の起動の前に一度、当ててある番号までを記録します。[DBの手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/db/README.md#databases-migrated-by-hand)を参照してください。リリースbundleを使う場合は[bundleの導入手順](https://github.com/aida0710/mado-s3-datacatalog/blob/main/deploy/release/README.md)を参照します。

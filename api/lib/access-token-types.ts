@@ -9,7 +9,6 @@ export interface AccessToken {
   scopes: ServiceKeyScope[]
   permissions: InternalApiPermission[]
   connections: string[]
-  namespaces: string[]
   status: 'active' | 'disabled' | 'expired'
   createdAt: Date
   expiresAt: Date | null
@@ -24,7 +23,6 @@ export interface AccessTokenInput {
   description: string
   permissions: InternalApiPermission[]
   connections: string[]
-  namespaces: string[]
   expiresAt: Date | null
 }
 
@@ -37,11 +35,6 @@ export interface AccessTokenUpdate {
   changed: boolean
 }
 
-export interface AccessTokenNamespaces {
-  namespaces: string[]
-  sourceStatus: 'ready' | 'unavailable' | 'unconfigured' | 'partial'
-}
-
 export interface AccessTokenRow {
   id: string
   service_account_id: string
@@ -51,7 +44,6 @@ export interface AccessTokenRow {
   scopes: ServiceKeyScope[]
   permissions: InternalApiPermission[]
   connections: string[]
-  namespaces: string[]
   created_at: Date
   expires_at: Date | null
   disabled_at: Date | null

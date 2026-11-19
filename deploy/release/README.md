@@ -11,14 +11,8 @@ not build application source on the deployment host.
    Generate a separate hex `MDC_WORKER_DB_PASSWORD` for the restricted media worker.
 3. Choose `MDC_AUTH_MODE=local`, `oidc`, or `hybrid`. Keep `MDC_ENV=production`;
    keep `MDC_AUTH_COOKIE_SECURE=true` whenever browser access uses TLS.
-4. Provide a compatible Dataset Registry API and token. It is an external
-   prerequisite and is not contained in this archive; Marquez is optional for
-   the browser graph. No official Registry distribution is included in this
-   release. Use `REGISTRY_API_CONTRACT.md` to validate an existing external
-   service and obtain its Bearer token from that service's operator. Leave
-   neither Registry value blank.
-5. Run `docker compose -f compose.yaml config` and review the resolved config.
-6. Start only `api-internal` (and PostgreSQL), which applies the database
+4. Run `docker compose -f compose.yaml config` and review the resolved config.
+5. Start only `api-internal` (and PostgreSQL), which applies the database
    migrations, then create the first administrator while no Web listener
    exists:
 
@@ -28,9 +22,8 @@ not build application source on the deployment host.
      node dist/scripts/bootstrap-admin.js --username admin
    ```
 
-7. Run `docker compose -f compose.yaml up -d`.
-8. Put an intranet TLS proxy in front of `127.0.0.1:8080`. If Pipeline ingest
-   is public, use a separate TLS hostname pointing only to `127.0.0.1:8081`.
+6. Run `docker compose -f compose.yaml up -d`.
+7. Put an intranet TLS proxy in front of `127.0.0.1:8080`.
 
 The generated `compose.yaml` pins mado S3 Data Catalog images by digest. `images.txt` records
 the same immutable references. Do not point a public proxy at port 8080.
@@ -39,8 +32,8 @@ the same immutable references. Do not point a public proxy at port 8080.
 
 `api-internal` applies the database migrations from its image when it starts,
 using the PostgreSQL administrator URL that `compose.yaml` builds from
-`POSTGRES_PASSWORD`. `api-lineage` and `media-worker` check that every
-migration is recorded and start after `api-internal` is healthy. Back up the
+`POSTGRES_PASSWORD`. `media-worker` checks that every migration is recorded
+and starts after `api-internal` is healthy. Back up the
 database before every update.
 
 A database migrated by hand up to v0.4.0 has tables but no

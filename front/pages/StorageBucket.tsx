@@ -5,7 +5,6 @@ import { Breadcrumb } from '../components/Breadcrumb'
 import { StorageBrowser } from '../components/StorageBrowser'
 import { ReadmeView } from '../components/ReadmeView'
 import { PreviewDrawer } from '../components/PreviewDrawer'
-import { StorageLineagePanel } from '../components/storage/StorageLineagePanel'
 import { fileLinkToDirRedirect } from '../lib/route'
 import { useDrawerResize } from '../lib/useDrawerResize'
 import { useLocale } from '../i18n/useLocale'
@@ -100,9 +99,6 @@ export default function StorageBucket({ connectionId }: Props) {
         bucket={bucket}
         prefix={prefix}
       />
-      {/* 保存場所から解決したDatasetはREADMEの補足情報として、その直後に置く。
-          選択中のファイルがあればそのファイル、なければ現在prefixを解決する。 */}
-      <StorageLineagePanel connectionId={connectionId} bucket={bucket} path={selected ?? prefix} />
       {/* リスト + preview drawer を横並び。drawer 幅は drawer 左端のハンドルで
           リサイズでき、広げるとリストを圧縮せず上に重なる (useDrawerResize)。
           ハンドルは drawer 内に置き、その高さに収める。README には影響しない。 */}

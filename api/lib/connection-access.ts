@@ -74,14 +74,3 @@ export function requireConnectionAccess(pool: Pool): MiddlewareHandler {
     await next()
   }
 }
-
-export function requireConnectionQueryAccess(pool: Pool): MiddlewareHandler {
-  return async (c, next) => {
-    const connectionId = c.req.query('connectionId')
-    if (!connectionId) return c.json(apiError('invalid_request', 'connectionId required'), 400)
-    if (!await canAccessConnection(pool, c, connectionId)) {
-      return c.json(apiError('not_found', 'connection not found'), 404)
-    }
-    await next()
-  }
-}

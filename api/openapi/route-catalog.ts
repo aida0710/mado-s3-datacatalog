@@ -1,33 +1,22 @@
 import { z } from 'zod'
 import { routeError, type ApiRoute, type NonJsonContent } from './api-route.js'
-import { OpenLineageEventSchema } from '../lib/openlineage-schema.js'
 import { AccessTokenCreateBody, AccessTokenPatchBody, ExpectedRevision } from '../routes/access-tokens.js'
 import { PasswordResetBody, UserCreateBody, UserPatchBody, UserRolesBody } from '../routes/admin-users.js'
 import { AuditEventQuery } from '../routes/audit.js'
 import { ChangePasswordBody, LocalLoginBody, ProfileBody } from '../routes/auth.js'
 import { ConnectionCreateBody, ConnectionUpdateBody } from '../routes/connections.js'
-import {
-  DatasetRegistrationBody, DatasetUpdateBody, LineageRegistrationBody, LocationRegistrationBody,
-} from '../routes/lineage-curation.js'
 import { NotePutBody } from '../routes/notes.js'
-import { IntegrationCatalogQuery } from '../routes/service-lineage.js'
 import { CapacityPrefixHistoryQuery } from '../routes/storage-capacity.js'
 import { ReadmePutBody } from '../routes/storage-readme.js'
 import { TagAssignmentBody, TagCreateBody, TagUpdateBody } from '../routes/storage-tags.js'
-import { AccessTokenList, AccessTokenNamespaces, ChangedAccessToken, IssuedAccessToken } from '../shared/schemas/access-tokens.js'
+import { AccessTokenList, ChangedAccessToken, IssuedAccessToken } from '../shared/schemas/access-tokens.js'
 import { AuditEventPage } from '../shared/schemas/audit.js'
 import { AuthConfig, AuthUserResponse, LogoutResult } from '../shared/schemas/auth.js'
 import { CapacityOverview, CapacityPrefixHistory, CapacityScanResponse } from '../shared/schemas/capacity.js'
 import { Connection, ConnectionAccessUsers, ConnectionList } from '../shared/schemas/connections.js'
 import { PricingStatus, TransferEstimate } from '../shared/schemas/estimate.js'
-import {
-  IntegrationAccessToken, IntegrationCatalog, IntegrationDataset, IntegrationVersionDetail, OpenLineageIngestResult,
-} from '../shared/schemas/integration.js'
+import { IntegrationAccessToken } from '../shared/schemas/integration.js'
 import { Job, StartJobOk } from '../shared/schemas/jobs.js'
-import {
-  DatasetCatalogResponse, DatasetDetail, DatasetVersionDetail, LineageGraph, LineageProjectionStatus, LineageRunDetail,
-  LineageSearchResponse, ManualLineageMutationResult, MarquezJobRuns, StorageLineageResolution,
-} from '../shared/schemas/lineage.js'
 import {
   Note, NoteHistoryList, NoteHistoryVersion, PutNoteOk, PutReadmeOk, Readme, ReadmeHistoryList, ReadmeHistoryVersion,
   ReadmeSearchResult,
@@ -38,7 +27,7 @@ import { ApiErrorBody, Health, OkResult } from '../shared/schemas/system.js'
 import { Tag, TagAssignmentMap, TagList, TagSearchResult } from '../shared/schemas/tags.js'
 import { PasswordResetResult, UserList, UserResponse } from '../shared/schemas/users.js'
 
-// API の全ルート (api-internal と api-lineage)。media-worker の /analyze は Compose の中だけの入口なので載せない。
+// api-internal の全ルート。media-worker の /analyze は Compose の中だけの入口なので載せない。
 // 入力のスキーマは、ルートが検証に使うものがあればそれを使う。ルートが手で読むクエリは、ここで文書のために書く。
 
 // ── 入力の部品 ──
@@ -53,7 +42,6 @@ const DirectoryQuery = z.object({
   prefix: z.string().optional().describe('ディレクトリ (/ で終わる)。省くとバケットの直下'),
 })
 const HistoryLimit = z.coerce.number().int().min(1).max(200).optional().describe('件数 (1〜200、既定 50)')
-const LineageLimit = z.coerce.number().int().min(1).max(100).optional()
 const Cursor = z.string().min(1).optional().describe('前のページの応答の nextCursor。最初のページは省く')
 
 // ── JSON でない本文 ──
@@ -75,12 +63,11 @@ const OBJECT_READ_ERRORS = [
   ...routeError(412, 'object_changed'),
   ...routeError(416, 'range_not_satisfiable'),
 ]
-const LINEAGE_BACKEND_ERRORS = [...routeError(502, 'registry_unavailable', 'marquez_unavailable'), ...routeError(503, 'lineage_not_configured')]
 
 export const API_ROUTES: readonly ApiRoute[] = [
   // ── system ──
   {
-    method: 'get', path: '/healthz', tag: 'system', summary: '稼働確認 (DB に届くかまで確かめる)。api-internal・api-lineage・media-worker が持つ',
+    method: 'get', path: '/healthz', tag: 'system', summary: '稼働確認 (DB に届くかまで確かめる)。api-internal・media-worker が持つ',
     access: { kind: 'public' }, responses: { 200: Health }, errors: routeError(503, 'database_unavailable'),
   },
 
@@ -421,91 +408,6 @@ export const API_ROUTES: readonly ApiRoute[] = [
     errors: routeError(400, 'unknown_setting'),
   },
 
-  // ── lineage ──
-  {
-    method: 'get', path: '/api/internal/lineage/graph', tag: 'lineage', summary: 'DataLineage のグラフ (論理: データセットと処理、versions: 版の入出力)',
-    access: { kind: 'internal' },
-    query: z.object({
-      mode: z.enum(['logical', 'versions']).optional().describe('既定 logical'),
-      rootKind: z.enum(['dataset', 'job']).optional().describe('logical の起点の種類'),
-      namespace: z.string().optional().describe('logical の起点の Namespace'),
-      name: z.string().optional().describe('logical の起点の名前'),
-      versionId: z.string().uuid().optional().describe('versions の起点の版'),
-      direction: z.enum(['upstream', 'downstream', 'both']).optional().describe('versions の向き (既定 both)'),
-      depth: z.coerce.number().int().min(1).max(10).optional().describe('たどる深さ (既定 3)'),
-    }),
-    responses: { 200: LineageGraph }, errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(403, 'namespace_not_allowed')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/search', tag: 'lineage', summary: 'Registry と Marquez を合わせて探す',
-    access: { kind: 'internal' },
-    query: z.object({ q: z.string().optional(), namespace: z.string().optional(), limit: LineageLimit }),
-    responses: { 200: LineageSearchResponse }, errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(403, 'namespace_not_allowed')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/catalog', tag: 'lineage', summary: 'Registry の登録一覧 (cursor で続きを読む)',
-    access: { kind: 'internal' },
-    query: z.object({ q: z.string().optional(), namespace: z.string().optional(), limit: LineageLimit, cursor: Cursor }),
-    responses: { 200: DatasetCatalogResponse },
-    errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(400, 'invalid_cursor'), ...routeError(403, 'namespace_not_allowed')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/resolve-location', tag: 'lineage', summary: 'S3 の場所から、そこに置いたデータセットの版を引く',
-    access: { kind: 'internal' },
-    query: z.object({
-      connectionId: z.string().min(1), bucket: z.string().min(1), key: z.string().optional(), limit: LineageLimit,
-    }),
-    responses: { 200: StorageLineageResolution }, errors: LINEAGE_BACKEND_ERRORS,
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/projection-status', tag: 'lineage', summary: 'Registry から Marquez へのグラフの反映の状態',
-    access: { kind: 'internal' }, responses: { 200: LineageProjectionStatus }, errors: LINEAGE_BACKEND_ERRORS,
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/datasets/:id', tag: 'lineage', summary: 'データセットの詳細と版',
-    access: { kind: 'internal' }, responses: { 200: DatasetDetail },
-    errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(404, 'not_found')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/versions/:id', tag: 'lineage', summary: '版の詳細と保存場所',
-    access: { kind: 'internal' }, responses: { 200: DatasetVersionDetail },
-    errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(404, 'not_found')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/runs/:id', tag: 'lineage', summary: '処理の実行 (run) の詳細',
-    access: { kind: 'internal' }, responses: { 200: LineageRunDetail },
-    errors: [...LINEAGE_BACKEND_ERRORS, ...routeError(404, 'not_found')],
-  },
-  {
-    method: 'get', path: '/api/internal/lineage/job-runs', tag: 'lineage', summary: 'Marquez の job の実行の一覧',
-    access: { kind: 'internal' },
-    query: z.object({ namespace: z.string().min(1), name: z.string().min(1), limit: LineageLimit }),
-    responses: { 200: MarquezJobRuns }, errors: LINEAGE_BACKEND_ERRORS,
-  },
-  {
-    method: 'patch', path: '/api/internal/lineage/curation/datasets/:datasetId', tag: 'lineage', summary: 'データセットの表示名・別名・説明などを変える',
-    access: { kind: 'internal' }, body: DatasetUpdateBody, responses: { 200: DatasetDetail },
-    errors: [...routeError(400, 'invalid_dataset_id'), ...routeError(404, 'dataset_not_found'), ...routeError(502, 'registry_write_failed')],
-  },
-  {
-    method: 'post', path: '/api/internal/lineage/curation/datasets', tag: 'lineage', summary: 'データセットと版を手で登録する',
-    access: { kind: 'internal' }, body: DatasetRegistrationBody, responses: { 201: ManualLineageMutationResult },
-    errors: [
-      ...routeError(409, 'dataset_conflict'), ...routeError(422, 'invalid_reference', 'registry_not_linked'),
-      ...routeError(502, 'registry_write_failed'),
-    ],
-  },
-  {
-    method: 'post', path: '/api/internal/lineage/curation/locations', tag: 'lineage', summary: '版の保存場所を手で登録する',
-    access: { kind: 'internal' }, body: LocationRegistrationBody, responses: { 201: ManualLineageMutationResult },
-    errors: [...routeError(409, 'dataset_conflict'), ...routeError(422, 'invalid_reference', 'registry_not_linked'), ...routeError(502, 'registry_write_failed')],
-  },
-  {
-    method: 'post', path: '/api/internal/lineage/curation/runs', tag: 'lineage', summary: '版の入出力 (処理) を手で登録する',
-    access: { kind: 'internal' }, body: LineageRegistrationBody, responses: { 201: ManualLineageMutationResult },
-    errors: [...routeError(422, 'invalid_reference'), ...routeError(502, 'registry_write_failed')],
-  },
-
   // ── users ──
   {
     method: 'get', path: '/api/internal/users', tag: 'users', summary: 'ユーザーの一覧',
@@ -552,10 +454,6 @@ export const API_ROUTES: readonly ApiRoute[] = [
     access: { kind: 'internal' }, responses: { 200: AccessTokenList },
   },
   {
-    method: 'get', path: '/api/internal/access-tokens/namespaces', tag: 'access-tokens', summary: 'トークンに許可できる Namespace の候補',
-    access: { kind: 'internal' }, responses: { 200: AccessTokenNamespaces },
-  },
-  {
     method: 'post', path: '/api/internal/access-tokens', tag: 'access-tokens', summary: 'アクセストークンを作る。値 (mado_dc_…) はこの応答にだけ含める',
     access: { kind: 'internal' }, body: AccessTokenCreateBody, responses: { 201: IssuedAccessToken },
     errors: [
@@ -564,7 +462,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     ],
   },
   {
-    method: 'patch', path: '/api/internal/access-tokens/:id', tag: 'access-tokens', summary: '名前・権限・Namespace・期限・状態を変える (値は変わらない)',
+    method: 'patch', path: '/api/internal/access-tokens/:id', tag: 'access-tokens', summary: '名前・権限・期限・状態を変える (値は変わらない)',
     access: { kind: 'internal' }, body: AccessTokenPatchBody, responses: { 200: ChangedAccessToken },
     errors: [
       ...routeError(400, 'invalid_token_permissions', 'unknown_connection'), ...routeError(401, 'token_actor_inactive'),
@@ -598,7 +496,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
 
   // ── integration (/api/mado/) ──
   {
-    method: 'get', path: '/api/mado/access-token', tag: 'integration', summary: '呼び出したトークン自身の名前・scope・Namespace・期限',
+    method: 'get', path: '/api/mado/access-token', tag: 'integration', summary: '呼び出したトークン自身の名前・scope・期限',
     access: { kind: 'integrationToken' }, responses: { 200: IntegrationAccessToken },
   },
   {
@@ -606,31 +504,5 @@ export const API_ROUTES: readonly ApiRoute[] = [
     access: { kind: 'integrationToken', scope: 'metrics:read' },
     responses: { 200: binary('text/plain; version=0.0.4; charset=utf-8', 'Prometheus のテキスト形式') },
     errors: routeError(503, 'metrics_unavailable'),
-  },
-  {
-    method: 'get', path: '/api/mado/lineage/catalog', tag: 'integration', summary: '許可した Namespace のデータセットを探す',
-    access: { kind: 'integrationToken', scope: 'lineage:read' }, query: IntegrationCatalogQuery, responses: { 200: IntegrationCatalog },
-    errors: [...routeError(403, 'namespace_not_allowed'), ...routeError(502, 'registry_unavailable'), ...routeError(503, 'registry_unavailable')],
-  },
-  {
-    method: 'get', path: '/api/mado/lineage/datasets/:id', tag: 'integration', summary: 'データセットと版 (保存場所の URI まで)',
-    access: { kind: 'integrationToken', scope: 'lineage:read' }, responses: { 200: IntegrationDataset },
-    errors: [...routeError(404, 'not_found'), ...routeError(502, 'registry_unavailable'), ...routeError(503, 'registry_unavailable')],
-  },
-  {
-    method: 'get', path: '/api/mado/lineage/versions/:id', tag: 'integration', summary: '版と、そのデータセットの Namespace・名前',
-    access: { kind: 'integrationToken', scope: 'lineage:read' }, responses: { 200: IntegrationVersionDetail },
-    errors: [...routeError(404, 'not_found'), ...routeError(502, 'registry_unavailable'), ...routeError(503, 'registry_unavailable')],
-  },
-
-  // ── openlineage (api-lineage) ──
-  {
-    method: 'post', path: '/api/openlineage/v1/lineage', tag: 'openlineage', summary: 'Pipeline から OpenLineage のイベントを受け取り、Registry へ渡す',
-    access: { kind: 'integrationToken', scope: 'lineage:write' }, body: OpenLineageEventSchema, responses: { 200: OpenLineageIngestResult },
-    errors: [
-      ...routeError(400, 'invalid_json'), ...routeError(403, 'namespace_not_writable'),
-      ...routeError(409, 'registry_conflict'), ...routeError(413, 'body_too_large'), ...routeError(422, 'invalid_openlineage_event', 'registry_rejected'),
-      ...routeError(503, 'registry_unavailable'),
-    ],
   },
 ]

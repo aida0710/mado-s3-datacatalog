@@ -39,7 +39,6 @@ export function AccessTokenRow({ token, busy, onEdit, onRegenerate, onDelete, on
         </div>
         {token.connections.length > 0 && <p className="muted">{translate('accessTokens.connections')}: {token.connections.includes('*')
           ? translate('accessTokens.allConnections') : token.connections.join(', ')}</p>}
-        {token.namespaces.length > 0 && <p className="muted">{translate('accessTokens.namespaces')}: {token.namespaces.join(', ')}</p>}
         <p className="muted">{translate('accessTokens.lastUsed')}: {token.lastUsedAt ? fmtDateTimeWithSeconds(token.lastUsedAt) : translate('accessTokens.neverUsed')}</p>
         <p className="muted">{translate('accessTokens.expiresAt')}: {token.expiresAt ? fmtDateTimeWithSeconds(token.expiresAt) : translate('accessTokens.noExpiry')}</p>
       </div>

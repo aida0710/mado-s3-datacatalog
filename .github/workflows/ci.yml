@@ -33,12 +33,9 @@ jobs:
         env:
           POSTGRES_PASSWORD: ci-postgres-password
           MDC_DASHBOARD_DB_PASSWORD: ci-dashboard-password
-          MDC_LINEAGE_DB_PASSWORD: ci-lineage-password
           MDC_WORKER_DB_PASSWORD: ci-worker-password
           MDC_STORAGE_SECRET_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
           MDC_WEB_ORIGIN: https://mado.invalid
-          MDC_DATASET_REGISTRY_URL: http://registry.invalid
-          MDC_DATASET_REGISTRY_TOKEN: ci-registry-token-not-a-secret
         run: |
           archive="dist/release/mado-v$(cat VERSION).tar.gz"
           mkdir -p /tmp/mado-release-contract
@@ -150,7 +147,7 @@ jobs:
           docker network create mado-ci-smoke
           docker run -d --name mado-ci-postgres --network mado-ci-smoke \
             -e POSTGRES_PASSWORD=ci-postgres -e POSTGRES_DB=dashboard \
-            -e MDC_DASHBOARD_DB_PASSWORD=ci-dashboard -e MDC_LINEAGE_DB_PASSWORD=ci-lineage -e MDC_WORKER_DB_PASSWORD=ci-worker \
+            -e MDC_DASHBOARD_DB_PASSWORD=ci-dashboard -e MDC_WORKER_DB_PASSWORD=ci-worker \
             -v "$PWD/db/init:/docker-entrypoint-initdb.d:ro" \
             postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
           for _ in $(seq 1 60); do
@@ -181,15 +178,19 @@ jobs:
               docker run --rm --network mado-ci-smoke -e MDC_DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js
               docker run --rm --network mado-ci-smoke -e MDC_DATABASE_URL_MIGRATE="$database" "$image" node dist/scripts/migrate.js \
                 | grep -Fx 'migrations are up to date'
-              # 公開側のプロセスは自分の最小権限のロールで、移行が済んでいることを確かめて起動する。
-              container=mado-ci-lineage-startup
-              lineage_database=postgres://mado_lineage:ci-lineage@mado-ci-postgres:5432/dashboard
+              # api-internal は移行の済んだDBへ自分のロールでつなぎ、/healthz に答える。
+              container=mado-ci-api-startup
+              api_database=postgres://dashboard_rw:ci-dashboard@mado-ci-postgres:5432/dashboard
               docker run -d --name "$container" --network mado-ci-smoke \
-                -e MDC_DATABASE_URL_RW="$lineage_database" -e MDC_DATABASE_URL_RO="$lineage_database" \
-                -e MDC_DATASET_REGISTRY_URL=http://registry.invalid -e MDC_DATASET_REGISTRY_TOKEN=ci-registry-token-not-a-secret \
-                "$image" node dist/lineage.js
+                -e MDC_ENV=production -e MDC_AUTH_MODE=local \
+                -e MDC_DATABASE_URL_RW="$api_database" \
+                -e MDC_DATABASE_URL_RO="${api_database/dashboard_rw/dashboard_ro}" \
+                -e MDC_DATABASE_URL_MIGRATE="$database" \
+                -e MDC_STORAGE_SECRET_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+                -e MDC_WEB_ORIGIN=https://mado.invalid \
+                "$image"
               trap 'docker rm -f "$container" >/dev/null' EXIT
-              wait_healthy "$container" 3001
+              wait_healthy "$container" 3000
               ;;
             worker)
               docker run --rm "$image" ffmpeg -version >/dev/null
@@ -215,7 +216,7 @@ jobs:
               ' || { docker logs "$container"; exit 1; }
               ;;
             web)
-              docker run --rm --add-host api-internal:127.0.0.1 --add-host api-lineage:127.0.0.1 \
+              docker run --rm --add-host api-internal:127.0.0.1 \
                 "$image" nginx -t
               ;;
           esac

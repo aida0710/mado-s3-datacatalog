@@ -46,7 +46,6 @@ export function createI18nApi() {
     ], nextContinuation: null, nextStartAfter: null, cache })
     if (path.endsWith('/readme')) return reply({ exists: false })
     if (path.endsWith('/tags')) return reply(path === '/api/internal/tags' ? [] : {})
-    if (path.endsWith('/registry-status')) return reply({ linked: false })
     return reply({ error: `Unexpected browser-test API: ${path}`, code: 'not_found' }, 404)
   }
   return { route, state, connection }

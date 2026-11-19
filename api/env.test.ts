@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loadEnv, loadLineageEnv, loadWorkerEnv } from './env.js'
+import { loadEnv, loadWorkerEnv } from './env.js'
 
 const VALID_KEY = '0'.repeat(64)
 
@@ -221,17 +221,12 @@ describe('loadEnv', () => {
       MDC_OIDC_CLIENT_SECRET: '',
       MDC_OIDC_REDIRECT_URI: '',
       MDC_OIDC_POST_LOGOUT_REDIRECT_URI: '',
-      MDC_DATASET_REGISTRY_URL: 'http://registry.example',
-      MDC_DATASET_REGISTRY_TOKEN: 'registry-token-at-least-16',
-      MDC_MARQUEZ_URL: '',
     })
     expect(env.MDC_OIDC_ISSUER_URL).toBeUndefined()
     expect(env.MDC_OIDC_CLIENT_ID).toBeUndefined()
     expect(env.MDC_OIDC_CLIENT_SECRET).toBeUndefined()
     expect(env.MDC_OIDC_REDIRECT_URI).toBeUndefined()
     expect(env.MDC_OIDC_POST_LOGOUT_REDIRECT_URI).toBeUndefined()
-    expect(env.MDC_MARQUEZ_URL).toBeUndefined()
-    expect(env.MDC_DATASET_REGISTRY_URL).toBe('http://registry.example')
   })
 
   it('OIDC利用時はgroup allowlistを必須にする', () => {
@@ -246,31 +241,6 @@ describe('loadEnv', () => {
   })
 })
 
-describe('loadLineageEnv', () => {
-  it('公開processに必要な最小設定だけを返す', () => {
-    const env = loadLineageEnv({
-      MDC_DATABASE_URL_RW: 'postgres://mado_lineage@postgres/dashboard',
-      MDC_DATABASE_URL_RO: 'postgres://mado_lineage@postgres/dashboard',
-      MDC_DATASET_REGISTRY_URL: 'http://registry-api:8080',
-      MDC_DATASET_REGISTRY_TOKEN: 'registry-token-at-least-16',
-      MDC_OIDC_CLIENT_SECRET: 'must-not-be-parsed',
-      MDC_STORAGE_SECRET_KEY: VALID_KEY,
-      MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@postgres/dashboard',
-    })
-    expect(env.MDC_LINEAGE_PORT).toBe(3001)
-    expect(env).not.toHaveProperty('MDC_OIDC_CLIENT_SECRET')
-    expect(env).not.toHaveProperty('MDC_STORAGE_SECRET_KEY')
-    expect(env).not.toHaveProperty('MDC_DATABASE_URL_MIGRATE')
-  })
-
-  it('Registry URLとtokenを必須にする', () => {
-    expect(() => loadLineageEnv({
-      MDC_DATABASE_URL_RW: 'postgres://mado_lineage@postgres/dashboard',
-      MDC_DATABASE_URL_RO: 'postgres://mado_lineage@postgres/dashboard',
-    })).toThrow(/DATASET_REGISTRY/)
-  })
-})
-
 describe('workerの環境設定', () => {
   const required = {
     MDC_ENV: 'production', MDC_DATABASE_URL_RW: 'postgres://mado_worker@postgres/dashboard',
@@ -278,12 +248,11 @@ describe('workerの環境設定', () => {
   }
 
   it('本番でもブラウザ認証の設定を要求せず、APIの秘密を設定に含めない', () => {
-    const env = loadWorkerEnv({ ...required, MDC_OIDC_CLIENT_SECRET: 'api-secret', MDC_DATASET_REGISTRY_TOKEN: 'api-token',
+    const env = loadWorkerEnv({ ...required, MDC_OIDC_CLIENT_SECRET: 'api-secret',
       MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@postgres/dashboard' })
     expect(env.MDC_ENV).toBe('production')
     expect(env.MDC_MEDIA_WORKER_PORT).toBe(3100)
     expect(env).not.toHaveProperty('MDC_OIDC_CLIENT_SECRET')
-    expect(env).not.toHaveProperty('MDC_DATASET_REGISTRY_TOKEN')
     expect(env).not.toHaveProperty('MDC_DATABASE_URL_MIGRATE')
     expect(env).not.toHaveProperty('MDC_AUTH_MODE')
   })
@@ -295,9 +264,9 @@ describe('workerの環境設定', () => {
 })
 
 describe('旧名の環境変数', () => {
-  it('3つの読み込みとも、旧名だけが残っていれば新名を示して止める', () => {
+  it('どちらの読み込みも、旧名だけが残っていれば新名を示して止める', () => {
     const leftover = { DATABASE_URL_RW: 'postgres://old@localhost/dashboard' }
-    for (const load of [loadEnv, loadWorkerEnv, loadLineageEnv]) {
+    for (const load of [loadEnv, loadWorkerEnv]) {
       expect(() => load(leftover)).toThrow('DATABASE_URL_RW was replaced by MDC_DATABASE_URL_RW')
     }
   })

@@ -72,7 +72,7 @@ describe('AdminPage', () => {
     expect(screen.queryByRole('heading', { name: 'Local Users' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Pipeline Service Accounts' })).not.toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Viewer — 閲覧のみ' })).toBeInTheDocument()
-    expect(screen.getByText('StorageとDataLineageを閲覧できます。')).toBeInTheDocument()
+    expect(screen.getByText('Storageを閲覧できます。')).toBeInTheDocument()
   })
 
   it('TokensのURLを開くとアクセストークン一覧を表示する', async () => {

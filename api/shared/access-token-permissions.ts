@@ -1,6 +1,6 @@
 // 機能の権限は、APIの契約とトークンの編集画面で共有する。
-// 連携scopeは権限から決まり、連携API（/api/mado、OpenLineage）はscopeを確かめる。
-export const SERVICE_KEY_SCOPES = ['lineage:write', 'lineage:read', 'metrics:read'] as const
+// 連携scopeは権限から決まり、連携API（/api/mado）はscopeを確かめる。
+export const SERVICE_KEY_SCOPES = ['metrics:read'] as const
 export type ServiceKeyScope = typeof SERVICE_KEY_SCOPES[number]
 
 export const INTERNAL_API_PERMISSION_GROUPS = {
@@ -10,7 +10,6 @@ export const INTERNAL_API_PERMISSION_GROUPS = {
   notes: ['notes:read', 'notes:write'],
   tags: ['tags:read', 'tags:write', 'tags:delete'],
   favorites: ['favorites:read', 'favorites:write', 'favorites:delete'],
-  lineage: ['lineage:read', 'lineage:send', 'lineage:curate'],
   jobs: ['jobs:read', 'jobs:operate'],
   capacity: ['capacity:read', 'capacity:operate'],
   pricing: ['pricing:read', 'pricing:refresh'],
@@ -26,8 +25,6 @@ export const INTERNAL_API_PERMISSIONS = Object.values(INTERNAL_API_PERMISSION_GR
 
 // 連携scopeごとに、それを与える機能の権限。
 const SCOPE_PERMISSIONS = {
-  'lineage:write': 'lineage:send',
-  'lineage:read': 'lineage:read',
   'metrics:read': 'capacity:read',
 } as const satisfies Record<ServiceKeyScope, InternalApiPermission>
 

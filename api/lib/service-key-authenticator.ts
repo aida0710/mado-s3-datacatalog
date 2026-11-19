@@ -14,15 +14,13 @@ interface AuthenticatedKeyRow {
   name: string
   secret_hash: Buffer
   scopes: string[]
-  namespaces: string[]
   expires_at: Date | null
   last_used_at: Date | null
 }
 
 const AUTHENTICATED_KEY_SELECT = `
   SELECT k.id, k.service_account_id, a.name AS account_name, k.name, k.secret_hash, k.expires_at, k.last_used_at,
-         ARRAY(SELECT s.scope FROM service_account_key_scopes s WHERE s.key_id = k.id ORDER BY s.scope) AS scopes,
-         ARRAY(SELECT n.namespace FROM service_account_key_namespaces n WHERE n.key_id = k.id ORDER BY n.namespace) AS namespaces
+         ARRAY(SELECT s.scope FROM service_account_key_scopes s WHERE s.key_id = k.id ORDER BY s.scope) AS scopes
     FROM service_account_keys k
     JOIN service_accounts a ON a.id = k.service_account_id
    WHERE k.token_prefix = $1 AND ${ACTIVE_SERVICE_KEY_CONDITION}`
@@ -51,7 +49,6 @@ export function createServiceKeyAuthenticator(pool: Pool): (token: string) => Pr
       keyId: row.id,
       keyName: row.name,
       scopes: row.scopes,
-      namespaces: row.namespaces,
       expiresAt: row.expires_at,
     }
   }

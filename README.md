@@ -8,7 +8,7 @@
 
 <img width="1340" height="771" alt="mosaic_20260524162904" src="https://github.com/user-attachments/assets/4f5349ad-38c2-46c7-8e29-3be76477615c" />
 
-Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のアクセストークンを使います。開発環境でも認証を必須にしています。
+Local UserまたはOIDC SSOでログインでき、自動処理は人とは別のアクセストークンを使います。開発環境でも認証を必須にしています。
 
 ## できること
 
@@ -23,9 +23,10 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 - **容量メトリクス** — コネクション内の全バケットの容量・オブジェクト数と合計を定期取得し、Rechartsで増減を確認
 - **移送の見積もり** — その集計をもとに「他の接続へ移したら費用と時間はどれくらいか」を並べて比較。AWS S3 はストレージクラスも選べる
 - **接続ごとの権限** — 「一覧は見せるがダウンロードと README 書き戻しは禁止」のように、接続単位で操作を絞れる
-- **Dataset Lineage** — OpenLineageの`Dataset → Job → Dataset`と、版ごとの`DatasetVersion → Run → DatasetVersion`をReact Flowで辿る
 - **認証とRBAC** — Local User / OIDC SSO、Viewer・Curator・Operator・Admin、監査ログ
-- **アクセストークン** — 機能ごとの読み取り・送信・編集・削除・実行・管理を選んで発行。再発行・無効化・削除まで一つの一覧で管理
+- **アクセストークン** — 機能ごとの読み取り・編集・削除・実行・管理を選んで発行。再発行・無効化・削除まで一つの一覧で管理
+
+データセットと処理の来歴（DataLineage）は、v0.6.0からmado ML Trackingが受け持ちます。
 
 ---
 
@@ -33,7 +34,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 
 ダッシュボードのURLをブラウザで開き、SSOまたは管理者が作成したLocal Userでログインします。
 
-左のナビゲーションから **Home / Storage / DataLineage / Settings** を開けます。画面・区分の名前は、日本語の画面でも英語のまま表示します。
+左のナビゲーションから **Home / Storage / Settings** を開けます。画面・区分の名前は、日本語の画面でも英語のまま表示します。
 
 画面は日本語と英語に対応しています。右上の地球アイコンから切り替えられます。ログイン画面と初回パスワード変更画面では、ロゴの右側にあります。選択はブラウザに保存し、同じアプリの別タブにも反映します。未選択ならブラウザの優先言語を使い、ブラウザから言語を取れないときや対応する言語がないときは英語を表示します。切り替えても入力内容や開いている画面を保ちます。
 
@@ -56,7 +57,7 @@ Local UserまたはOIDC SSOでログインでき、Pipelineは人とは別のア
 
 接続は既定でログイン済みの全ユーザーに表示されます。一部だけ隠したい場合は
 **ホワイトリスト**を選び、利用を許可するユーザーを選択します。許可されていないユーザーには
-接続一覧・転送候補・関連ジョブが表示されず、StorageやDataLineageのURLを直接開いても
+接続一覧・転送候補・関連ジョブが表示されず、StorageのURLを直接開いても
 存在を明かさないため404になります。`connections:manage`権限を持つ管理者は、空の
 ホワイトリストを修正できるよう常にアクセスできます。
 
@@ -189,19 +190,9 @@ AWS の料金 API から取得して DB にキャッシュしています。脚�
 
 これらは脚注の「一部の値は料金 API から取れないため手入力です」を開くと、何を手で持っているか・いつ一次ソースで確認したか・出典が読めます。候補の行を開けば、その移動先の単価が手入力かどうかも出ます。実際の契約単価があれば **接続の設定でストレージ単価を上書き**してください (そちらが優先されます)。
 
-### 9. Dataset Lineage
+### 9. アクセストークン
 
-**Lineage**でnamespaceとDataset/Job名を指定すると、MarquezのOpenLineage projectionをグラフ表示します。ノードを選ぶとRegistry正本の版、manifest/hash、保存場所、Git SHA、container、config、model、metricsを確認できます。
-
-Pipelineへの導入方法、DatasetとVersionの分け方、OpenLineage event例、既存データのbackfill、S3接続とのbindingは
-[`docs/lineage.md`](docs/lineage.md)にまとめています。Lineageを新しく生やす前にこのガイドを確認してください。
-
-- logical表示: `Dataset → Job → Dataset`
-- versions表示: 明示したDatasetVersion UUIDから`Version → Run → Version`
-- 「最新らしい版」は推測しません。版表示には明示version IDが必要です
-- Registryが正本で、Marquez停止中は警告を表示します。mado S3 Data CatalogからMarquezへ直接書き込みません
-
-Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・DataLineage・ジョブ・接続・設定などの機能ごとに操作と接続・Namespaceを指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。DataLineageの読み取り・送信、Capacityの読み取りを選ぶと、従来の参照・送信・メトリクスAPIも同じトークンで利用できます。参照・送信には許可Namespaceが必要です。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
+Adminは**Access → Access Tokens**で、アカウントを別に作らずアクセストークンを発行できます。新規作成では権限未選択から始め、Storage・README・Notes・ジョブ・接続・設定などの機能ごとに操作と接続を指定します。内部APIの権限は[権限一覧](docs/internal-api-permissions.md)を参照してください。Capacityの読み取りを選ぶと、メトリクスAPIも同じトークンで利用できます。値は発行・再発行時に一度だけ表示されます。一覧から権限・有効期限の編集、再発行、無効化・有効化、削除を行えます。既存のService Account keyの値と権限も引き継ぎます。管理APIと移行・検証手順は[アクセストークンの仕様](docs/access-tokens.md)を参照してください。
 
 ### バージョン確認
 
@@ -236,11 +227,11 @@ docker compose -f compose.dev.yaml exec api-internal \
 # 5. ブラウザで http://localhost:5173
 ```
 
-dev の DB パスワードは未設定なら開発用の既定値で動きます。初回起動時のみ `db/init/00-init.sh` が `dashboard_rw` / `dashboard_ro` / `mado_lineage` / `mado_worker` ロールと `dashboard_test` DB を作成します。表は `api-internal` が起動時に移行 (`api/migrations`) を当てて作ります。作り直したいときは `down -v` で volume を消してから上げ直してください。
+dev の DB パスワードは未設定なら開発用の既定値で動きます。初回起動時のみ `db/init/00-init.sh` が `dashboard_rw` / `dashboard_ro` / `mado_worker` ロールと `dashboard_test` DB を作成します。表は `api-internal` が起動時に移行 (`api/migrations`) を当てて作ります。作り直したいときは `down -v` で volume を消してから上げ直してください。
 
 ### 環境変数
 
-このアプリが読む設定の名前は`MDC_`で始まります（v0.5.0で付けました）。旧名だけが残っていると、`api-internal`・`api-lineage`・`media-worker`は起動時に止まり、替える名前を表示します。旧名と新名の対応は[v0.5.0のリリースノート](docs/releases/v0.5.0.md)にあります。
+このアプリが読む設定の名前は`MDC_`で始まります（v0.5.0で付けました）。旧名だけが残っていると、`api-internal`・`media-worker`は起動時に止まり、替える名前を表示します。旧名と新名の対応は[v0.5.0のリリースノート](docs/releases/v0.5.0.md)にあります。
 
 | 変数 | 必須 | 説明 |
 |---|---|---|
@@ -251,7 +242,6 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_TEST_DATABASE_URL` | no | テスト用。host から接続するので `localhost`。未設定なら default に fallback |
 | `POSTGRES_PASSWORD` | prod:yes / dev:no | `postgres` スーパーユーザのパスワード。**prod は未設定だと起動失敗**、dev は既定 `postgres` |
 | `MDC_DASHBOARD_DB_PASSWORD` | prod:yes / dev:no | `dashboard_rw` / `dashboard_ro` のパスワード。**`MDC_DATABASE_URL_RW` / `MDC_DATABASE_URL_RO` のパスワードと一致必須**。dev 既定 `CHANGEME` |
-| `MDC_LINEAGE_DB_PASSWORD` | prod:yes / dev:no | Internet向け`api-lineage`専用の最小権限DB role。英数字hexの生成値を推奨 |
 | `MDC_WORKER_DB_PASSWORD` | prod:yes / dev:no | `media-worker`専用の`mado_worker` DB role。解析・走査の表だけを読み書きし、認証表は読めない |
 | `MDC_STORAGE_SECRET_KEY` | yes | `storage_connections` の S3 認証情報を AES-256-GCM で暗号化するキー (32 byte hex) |
 | `MDC_WEB_ORIGIN` | yes | CSRF 防御。write 系で許容する Origin (カンマ区切り)。dev: `http://localhost:5173` / prod: ダッシュボードを開く URL |
@@ -264,9 +254,6 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認。空（`{}`）ならRoleはmado S3 Data Catalogの画面で管理する |
 | `MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
 | `MDC_OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
-| `MDC_DATASET_REGISTRY_URL` | lineage | Dataset Registry API URL |
-| `MDC_DATASET_REGISTRY_TOKEN` | lineage | mado S3 Data Catalog→Registry内部Bearer token。Pipeline keyとは別物 |
-| `MDC_MARQUEZ_URL` | lineage | read-onlyで参照するMarquez URL |
 | `MDC_PREVIEW_TEXT_LIMIT` | no | テキストプレビュー最大バイト (default 65536) |
 | `MDC_PREVIEW_TAR_ENTRY_LIMIT` | no | tar 内 1 ページのエントリ最大数 (default 200) |
 | `MDC_PREVIEW_TARXZ_BYTE_LIMIT` | no | tar.xz の解凍バイト上限 (default 256MiB) |
@@ -276,7 +263,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_MEDIA_CACHE_MAX_AGE_DAYS` | no | 解析結果キャッシュ (`media_cache`) の保持日数 (default 30) |
 | `MDC_MEDIA_SPECTROGRAM_MAX_WIDTH` | no | スペクトログラム画像の最大幅 (px) (default 4096) |
 
-> ⚠️ `POSTGRES_PASSWORD` / `MDC_DASHBOARD_DB_PASSWORD` / `MDC_LINEAGE_DB_PASSWORD` / `MDC_WORKER_DB_PASSWORD` は **DB ボリュームの初回作成時のみ** 反映されます。既存 DB のパスワード変更は env ではなく `psql` の `ALTER ROLE` が必要です (詳細は [`db/README.md`](db/README.md))。生成例: `openssl rand -hex 24`
+> ⚠️ `POSTGRES_PASSWORD` / `MDC_DASHBOARD_DB_PASSWORD` / `MDC_WORKER_DB_PASSWORD` は **DB ボリュームの初回作成時のみ** 反映されます。既存 DB のパスワード変更は env ではなく `psql` の `ALTER ROLE` が必要です (詳細は [`db/README.md`](db/README.md))。生成例: `openssl rand -hex 24`
 
 ### 料金カタログの運用
 
@@ -288,7 +275,7 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 - 同梱カタログを新しくするには、外に出られるマシンで `cd api && npm run pricing:fetch` を回して結果をコミットします
 - いま何を使っているかは `GET /api/internal/pricing` でも確認できます (出所・取得日・直近の失敗理由)
 
-### 認証とLineageの初期化
+### 認証の初期化
 
 新規導入では既定passwordを持つAdminを残さないため、Webを公開する前に次のoffline bootstrapを必ず実行します。
 
@@ -301,13 +288,11 @@ docker compose -f compose.prod.yaml exec api-internal \
 
 passwordはTTYからのみ読み、引数・環境変数・ログには渡しません。初回bootstrap時も入力した一時passwordは初回ログインで変更必須です。平常時はOIDC Adminを使う構成でも、IdP障害用に独立したLocal Adminを1つ維持してください。
 
-Pipelineは`MDC_API_HOSTNAME`の`POST /api/openlineage/v1/lineage`へアクセストークンをBearer送信します。mado S3 Data Catalogがprofile/scope/namespaceを検証し、keyを除いたprincipal envelopeをRegistryへ転送します。production nginxはintranet UI用`:8080`とOpenLineage専用`:8081`を分離し、`:8081`ではこのPOSTだけを受け付け、その他のpath/methodを404にします。Composeは両listenerをhostのloopbackへだけpublishし、本番の edgeではbrowser用`MDC_HOSTNAME`と公開API用`MDC_API_HOSTNAME`を別TLS vhostとして終端します。
-
-連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MDC_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。いずれもintranet用`:8080`にだけ置き、`:8081`では404です。scrape設定と出力するmetricsは[`docs/capacity-metrics.md`](docs/capacity-metrics.md)を参照してください。
+連携向けの読み取りAPIは`/api/mado/`にまとめています。画面と同じ機能を使う場合は`/api/internal/`へBearer送信し、機能別の権限を付けます。Prometheusは`MDC_HOSTNAME`の`GET /api/mado/metrics/<領域>`を、容量の読み取り（`capacity:read`）を許可したアクセストークンで読みます。現在の領域は容量メトリクスの`/api/mado/metrics/capacity`だけです。scrape設定と出力するmetricsは[`docs/capacity-metrics.md`](docs/capacity-metrics.md)を参照してください。
 
 ### DBの移行
 
-DBの移行（`api/migrations/*.sql`）は`api-internal`が起動時に当てます。DBの管理者の接続（`MDC_DATABASE_URL_MIGRATE`。Composeが`POSTGRES_PASSWORD`から組み立てる）を使い、適用したファイルを名前とSHA-256で`schema_migrations`に記録します。`api-lineage`と`media-worker`は移行を当てる権限を持たず、全部が当たっていることを確かめてから起動します。当てた後のファイルの書き換えを見つけると、どのサービスも起動しません。
+DBの移行（`api/migrations/*.sql`）は`api-internal`が起動時に当てます。DBの管理者の接続（`MDC_DATABASE_URL_MIGRATE`。Composeが`POSTGRES_PASSWORD`から組み立てる）を使い、適用したファイルを名前とSHA-256で`schema_migrations`に記録します。`media-worker`は移行を当てる権限を持たず、全部が当たっていることを確かめてから起動します。当てた後のファイルの書き換えを見つけると、どのサービスも起動しません。
 
 v0.4.0まで（移行を手で当ててきたDB）からの更新では、新しい`api-internal`を起動する前に一度だけ、当ててある番号までを記録します。手順は[`db/README.md`](db/README.md#databases-migrated-by-hand)にあります。
 
@@ -317,9 +302,9 @@ mado S3 Data CatalogはSemVerを採用し、最初のリリースを`v0.1.0`と�
 
 公開時は同一commitからLinux amd64/arm64対応のcompiled OCI imageを3つ作り、GHCRへ配置します。
 
-- `ghcr.io/aida0710/mado-api:<tag>`: internal APIとOpenLineage API
+- `ghcr.io/aida0710/mado-api:<tag>`: internal API
 - `ghcr.io/aida0710/mado-media-worker:<tag>`: ffmpeg worker
-- `ghcr.io/aida0710/mado-web:<tag>`: Web UIと用途別nginx入口
+- `ghcr.io/aida0710/mado-web:<tag>`: Web UIとnginxの入口
 
 GitHub Releaseには、image digestを固定したCompose、DBのロールを作る初期化スクリプト、設定例、licenseをまとめたbundleとSHA-256を添付します。DBの移行は`mado-api`のimageに入っていて、`api-internal`が起動時に当てます。OCI imageにはSBOMとbuild provenanceを付与します。release本文は[`docs/releases/`](docs/releases/README.md)、公開手順と安全条件は[`docs/releasing.md`](docs/releasing.md)を正本とします。
 
@@ -333,7 +318,7 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 
 `deploy.sh` は稼働中コミットを About に焼くため git 情報を build に渡します。dev との差分:
 
-- nginx のintranet UI入口を`127.0.0.1:8080`、OpenLineage専用入口を`127.0.0.1:8081`へpublishし、どちらも用途別のhost reverse proxyを必須にする (api コンテナはホスト非公開)
+- nginx のintranet UI入口を`127.0.0.1:8080`へpublishし、host reverse proxyを必須にする (api コンテナはホスト非公開)
 - api は image build 時の `tsc` 成果物 (`dist/`) を `node` で実行
 - nginx と api は **non-root user** で動作
 - 全コンテナが `restart: unless-stopped`
@@ -345,18 +330,18 @@ OSS releaseと社内環境へのdeployは独立しています。release workflo
 
 このダッシュボードは認証を備えていますが、公開入口のTLSとネットワーク制御は引き続き必要です:
 
-- **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へ用途別TLS proxyを接続します。Browser側TLS終端後に`MDC_AUTH_COOKIE_SECURE=true`と`MDC_AUTH_MODE=local|oidc|hybrid`を設定します。
-- Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。外部公開するhost TLS proxyは`127.0.0.1:8081`だけへ接続し、OpenLineage ingest以外を公開しません。公開入口には送信元IP 10 req/s（burst 50）・全体50 req/s（burst 200）のrate limit、送信元20・全体200のconnection limit、2 MiB body上限、timeout、`Cache-Control: no-store`を設定済みです。
+- **外部公開前にHTTPS必須**。標準配布bundleはloopback上のHTTP入口へTLS proxyを接続します。Browser側TLS終端後に`MDC_AUTH_COOKIE_SECURE=true`と`MDC_AUTH_MODE=local|oidc|hybrid`を設定します。
+- Web UI、`/api/auth/`、`/api/internal/`、`/api/mado/`はintranet内に閉じます。Internetへ公開する入口はありません。
 - 開発・テスト環境も認証方式の指定が必須です。初期・一時passwordの変更完了前は、直接APIを呼んでも通常機能を利用できません。
 - Browser sessionとアクセストークンを別の主体として扱い、API keyはhashだけを保存します。内部APIは機能別の権限と対象を毎回検証し、連携APIのscopeは互換性を維持します。
-- RBACと接続capabilityを重ね、監査ログには成功して実際に状態が変わった操作だけを残します。閲覧、認証拒否、失敗した操作、同じ値の再保存、既存ジョブへの合流は記録しません。変更操作は開始時にdurableなintentを置き、失敗・変更なしなら破棄します。password/token/OIDC code/OpenLineage event本体は保存しません。
+- RBACと接続capabilityを重ね、監査ログには成功して実際に状態が変わった操作だけを残します。閲覧、認証拒否、失敗した操作、同じ値の再保存、既存ジョブへの合流は記録しません。変更操作は開始時にdurableなintentを置き、失敗・変更なしなら破棄します。password/token/OIDC codeは保存しません。
 - sessionの利用時刻、login attempt、response cache、API keyの最終利用時刻など、認証・cache維持のための内部更新は操作監査の対象外です。
 - **`MDC_STORAGE_SECRET_KEY`** で `storage_connections` の S3 認証情報を保存時暗号化 (AES-256-GCM)。DB ダンプだけ漏れても解読不能。
 - **CSRF 防御**: write 系 (POST/PUT/DELETE) は `MDC_WEB_ORIGIN` と Origin/Referer を照合し、不一致なら 403。
 - **PG ロール分離**: ブラウザ由来の経路は `dashboard_rw` / `dashboard_ro` を使い分け、Postgres レベルで `DROP TABLE` 等を防ぐ。
 - **接続ごとのcapability**はRBACとは別層です。Adminであっても接続側で無効なdownload等は実行できません。
 - **接続先の制限（SSRF対策）**: 接続のエンドポイントに、loopback・link-local（cloud metadataを含む）・IPv4-mapped IPv6でそれらを表したアドレスは使えません。RFC1918とIPv6 ULAは使えます。DNS名は接続のたびに名前解決の結果を確かめ、拒否するアドレスだけを指していれば接続しません。検査が今より緩かった頃に保存した接続も、使う時点で`409`になります。アップデートの前に、既存の接続のエンドポイントがloopbackなどを指していないかを確かめてください。
-- **接続ホワイトリスト**は通常接続を全員公開のまま保ち、例外の接続だけUser単位で隠します。非許可時は一覧・Storage API・DataLineage解決・関連job・転送候補を404相当で隠します。DataLineageの手動登録では許可されていない接続を保存場所に使えず（Registryへ紐付けていない接続と同じ`422`）、Dataset・Versionの詳細でも見えない接続のIDは出しません。
+- **接続ホワイトリスト**は通常接続を全員公開のまま保ち、例外の接続だけUser単位で隠します。非許可時は一覧・Storage API・関連job・転送候補を404相当で隠します。
 
 Authentikとの接続、JIT User、group RBAC、Front/Back-channel logoutの登録値は
 [`docs/authentik.md`](docs/authentik.md)にまとめています。
@@ -367,8 +352,6 @@ Authentikとの接続、JIT User、group RBAC、Front/Back-channel logoutの登�
 
 ### アーキテクチャ
 
-dev / prodとも、ブラウザsession用`api-internal`とPipeline key用`api-lineage`を別processにします。Dataset metadataの正本はRegistry、Marquezはoutboxから再構築できるprojectionです。
-
 ```
                  ┌─ docker compose ──────────────────────────────┐
 Browser ─:5173 ─►│ front (vite dev / dev)                        │
@@ -377,26 +360,23 @@ Browser ─:5173 ─►│ front (vite dev / dev)                        │
                  │   └─► /api/internal/* → api-internal (Hono)   │
                  │   └─► /api/auth/*     → api-internal          │
                  │   └─► /api/mado/*     → api-internal          │
-Pipeline ─TLS proxy─► nginx :8081 (POST ingest only)              │
-                 │   └─► /api/openlineage/v1/lineage → api-lineage│
                  │                              ├─► media-worker │
                  │                              │    (ffmpeg)    │
                  │                          postgres             │
                  └───────────────────────────────────────────────┘
                  公開ポート: dev=5173
-                 host loopback: prod UI=:8080 / OpenLineage=:8081
+                 host loopback: prod UI=:8080
 ```
 
 | サービス | dev | prod |
 |---|---|---|
 | `front` | `vite dev` (HMR) | (なし、nginx に焼き込み) |
-| `nginx` | (なし、Vite proxy が代替) | `:8080` 静的配信・内部API・`/api/mado/` + `:8081` OpenLineage POST専用 |
+| `nginx` | (なし、Vite proxy が代替) | `:8080` 静的配信・内部API・`/api/mado/` |
 | `api-internal` | `tsx watch internal.ts` | `node dist/internal.js` |
-| `api-lineage` | `tsx watch lineage.ts` | `node dist/lineage.js` |
 | `media-worker` | `tsx watch worker.ts` | `node dist/worker.js` |
 | `postgres` | postgres:16-alpine (`127.0.0.1:5432`) | postgres:16-alpine (compose 内部のみ) |
 
-`api-internal`・`api-lineage`・`media-worker`は、どれも`GET /healthz`で稼働を返します。DBに届けば200と`{"status":"ok"}`、届かなければ503と`{"error":"database is unavailable","code":"database_unavailable"}`です。Composeのhealthcheckは配布イメージに入っている`node dist/scripts/healthcheck.js <ポート>`でこれを確かめ、Webの`nginx`は両APIがhealthyになってから起動します。
+`api-internal`・`media-worker`は、どちらも`GET /healthz`で稼働を返します。DBに届けば200と`{"status":"ok"}`、届かなければ503と`{"error":"database is unavailable","code":"database_unavailable"}`です。Composeのhealthcheckは配布イメージに入っている`node dist/scripts/healthcheck.js <ポート>`でこれを確かめ、Webの`nginx`は`api-internal`がhealthyになってから起動します。
 
 ### APIの仕様 (OpenAPI)
 
@@ -439,8 +419,8 @@ cd front && npm test && npm run lint
 | 読み込む物 | 中身 |
 |---|---|
 | `main.tsx` の `fonts.css` と `tokens.css` | 書体と、ライト・ダークの色・角丸・書体の変数 |
-| `App.css`の`base.css`・`components.css`・`shell.css`・`code.css`・`lineage.css`（React Flowの既定のCSSは`lineage.css`の前に読み込みます） | 要素の既定（本文13px、入力欄、リンク、見出し）、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ・メニュー・一覧の上の帯・パンくず、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け、DataLineageのグラフ |
-| `App.css`の`front/styles/*.css` | 画面ごとの指定（保存先の一覧、プレビュー、メモ・README、設定、DataLineage） |
+| `App.css`の`base.css`・`components.css`・`shell.css`・`code.css` | 要素の既定（本文13px、入力欄、リンク、見出し）、ボタン・表・入力欄・ダイアログ・タブ・状態バッジ・メニュー・一覧の上の帯・パンくず、上部バー・サイドバー・ドロワー・ログイン画面、テキストのプレビューの色付け |
+| `App.css`の`front/styles/*.css` | 画面ごとの指定（保存先の一覧、プレビュー、メモ・README、設定） |
 
 - mado ML Trackingと同じくCSSのlayerは使わず、読み込む順で優先順位が決まります。同じ詳細度なら後に読む`front/styles/`が勝ちます。共通の部品の指定を画面に合わせて変えるときは、共通の指定と同じかそれより高い詳細度で書きます（例: 開いた行の中の`dl`は`.responsive-table-details .admin-user-meta`）。
 - CSSのフレームワーク（Tailwindなど）は使いません。要素の既定はデザインシステムの`base.css`にあるものだけで、余白やリストの印は部品ごとのclassで決めます。

@@ -1,4 +1,4 @@
-import { HardDrive, House, Network, Settings, type LucideIcon } from 'lucide-react'
+import { HardDrive, House, Settings, type LucideIcon } from 'lucide-react'
 import { translate } from '../../i18n/translate'
 
 export interface NavigationLink {
@@ -11,7 +11,6 @@ export interface NavigationLink {
 export const NAVIGATION_LINKS: readonly NavigationLink[] = [
   { to: '/', get label() { return translate('section.home') }, icon: House },
   { to: '/storage', get label() { return translate('section.storage') }, icon: HardDrive },
-  { to: '/lineage', get label() { return translate('section.dataLineage') }, icon: Network },
   { to: '/settings', get label() { return translate('section.settings') }, icon: Settings },
 ]
 

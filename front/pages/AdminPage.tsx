@@ -68,12 +68,6 @@ const ACTION_LABELS: Record<string, string> = {
   get 'setting.update'() { return translate('adminPage.updateSettings') },
   get 'pricing.refresh'() { return translate('adminPage.updatePricing') },
   get 'job.cancel'() { return translate('adminPage.abortJob') },
-  get 'lineage.read'() { return translate('adminPage.viewDataLineage') },
-  get 'lineage.dataset.update'() { return translate('adminPage.updateDatasetInformation') },
-  get 'lineage.dataset.register'() { return translate('adminPage.registerDataset') },
-  get 'lineage.location.register'() { return translate('adminPage.registerStorageLocation') },
-  get 'lineage.run.register'() { return translate('common.registerProcessingHistory') },
-  get 'lineage.ingest'() { return translate('adminPage.applyOpenLineageEvent') },
   get 'service_account.create'() { return translate('adminPage.createServiceAccount') },
   get 'service_account.update'() { return translate('adminPage.updateServiceAccount') },
   get 'service_account.key.issue'() { return translate('adminPage.issueApiKey') },
@@ -95,7 +89,7 @@ const OUTCOME_LABELS: Record<AuditEventRow['outcome'], string> = {
 }
 
 const ROLE_OPTIONS = [
-  { id: 'viewer', get label() { return translate('adminPage.viewerReadOnly') }, get help() { return translate('adminPage.canBrowseStorageAndDataLineage') } },
+  { id: 'viewer', get label() { return translate('adminPage.viewerReadOnly') }, get help() { return translate('adminPage.canBrowseStorage') } },
   { id: 'curator', get label() { return translate('adminPage.curatorEditContent') }, get help() { return translate('adminPage.canBrowseAndEditReadmesNotesAndTags') } },
   { id: 'operator', get label() { return translate('adminPage.operatorRunJobs') }, get help() { return translate('adminPage.canBrowseRunScansUpdatePricingAndAbort') } },
   { id: 'admin', get label() { return translate('adminPage.adminFullAdministration') }, get help() { return translate('adminPage.canManageEverythingIncludingConnectionsSettingsUsersApi') } },

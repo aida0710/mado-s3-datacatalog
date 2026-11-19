@@ -1,6 +1,6 @@
 // コンテナのヘルスチェック (compose の healthcheck) から呼ぶ: `node dist/scripts/healthcheck.js 3000`。
 // 配布イメージには curl も wget も無いので、Node の fetch で同じコンテナの `GET /healthz` を確かめる。
-// API のイメージは api-internal と api-lineage が待ち受けるポートを変えて共有するので、ポートは引数で受ける。
+// 待ち受けるポートは環境変数で変えられるので、引数で受ける。
 
 // compose の healthcheck.timeout より短くし、応答の無いときはこのコマンド自身が失敗で終わる。
 const REQUEST_TIMEOUT_MS = 2_000

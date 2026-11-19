@@ -21,7 +21,6 @@ export async function insertServiceAccountKey(database: Queryable, input: {
   name: string
   description?: string
   scopes: string[]
-  namespaces: string[]
   expiresAt?: Date | null
   createdBy: string | null
 }): Promise<IssuedServiceAccountKey> {
@@ -34,19 +33,14 @@ export async function insertServiceAccountKey(database: Queryable, input: {
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [id, input.accountId, input.name.trim(), tokenPrefix, sha256(secret), input.createdBy, input.expiresAt ?? null, input.description ?? ''],
   )
-  const scopes = [...new Set(input.scopes)].sort()
-  const namespaces = [...new Set(input.namespaces)].sort()
-  await insertServiceKeyPermissions(database, { id, scopes, namespaces })
+  await insertServiceKeyScopes(database, { id, scopes: [...new Set(input.scopes)].sort() })
   return { id, token: `${tokenPrefix}.${secret}` }
 }
 
-export async function insertServiceKeyPermissions(database: Queryable, input: {
+export async function insertServiceKeyScopes(database: Queryable, input: {
   id: string
   scopes: string[]
-  namespaces: string[]
 }): Promise<void> {
   for (const scope of input.scopes)
     await database.query('INSERT INTO service_account_key_scopes (key_id, scope) VALUES ($1, $2)', [input.id, scope])
-  for (const namespace of input.namespaces)
-    await database.query('INSERT INTO service_account_key_namespaces (key_id, namespace) VALUES ($1, $2)', [input.id, namespace])
 }

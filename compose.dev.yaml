@@ -5,7 +5,7 @@
 # 衝突する事故を防ぐため。
 name: mado-dev
 
-# api-internal・api-lineage・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
+# api-internal・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
 x-app-healthcheck: &app-healthcheck
   interval: 5s
   timeout: 3s
@@ -24,7 +24,6 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_DB: dashboard
       MDC_DASHBOARD_DB_PASSWORD: "${MDC_DASHBOARD_DB_PASSWORD:-CHANGEME}"
-      MDC_LINEAGE_DB_PASSWORD: "${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}"
       MDC_WORKER_DB_PASSWORD: "${MDC_WORKER_DB_PASSWORD:-worker-dev-only}"
     ports:
       - "127.0.0.1:5432:5432"
@@ -51,7 +50,7 @@ services:
     env_file:
       - .env
     environment:
-      # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
+      # 起動時に未適用の移行を当てる DB の管理者の接続。media-worker には渡さない。
       MDC_DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/dashboard"
       MDC_PORT: 3000
       MDC_AUTH_MODE: "${MDC_AUTH_MODE:?Set MDC_AUTH_MODE to local, oidc, or hybrid}"
@@ -61,34 +60,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      postgres:
-        condition: service_healthy
-
-  api-lineage:
-    build:
-      context: ./api
-      target: development
-    container_name: mado-dev-api-lineage
-    command: ["npx", "tsx", "watch", "lineage.ts"]
-    healthcheck:
-      <<: *app-healthcheck
-      test: ["CMD", "npx", "tsx", "scripts/healthcheck.ts", "3001"]
-    environment:
-      MDC_LINEAGE_PORT: 3001
-      MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
-      MDC_DATABASE_URL_RO: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:-lineage-dev-only}@postgres:5432/dashboard"
-      MDC_DATASET_REGISTRY_URL: "${MDC_DATASET_REGISTRY_URL:-http://host.docker.internal:8088}"
-      MDC_DATASET_REGISTRY_TOKEN: "${MDC_DATASET_REGISTRY_TOKEN:-development-token-change-me}"
-      MDC_OPENLINEAGE_BODY_LIMIT_BYTES: "${MDC_OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
-    volumes:
-      - ./api:/app
-      - /app/node_modules
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      # api-internal が移行を当て終えて healthy になってから起動する。
-      api-internal:
-        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -134,7 +105,6 @@ services:
       - ./.git:/app/.git:ro
     depends_on:
       - api-internal
-      - api-lineage
 
 volumes:
   db_data:

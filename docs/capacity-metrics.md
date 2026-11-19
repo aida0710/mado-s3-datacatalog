@@ -6,8 +6,7 @@ the UI host at `https://mado.example.com/api/mado/metrics/<area>`.
 Each area has its own path so that it can be scraped at a rate that matches how
 fast it changes; bucket capacity (the "容量メトリクス" screen) is served at
 `/api/mado/metrics/capacity`. The route goes through the same TLS entry point
-as the web UI, so keep it inside the same network restrictions. The public
-OpenLineage listener (`:8081`) returns 404 for these paths.
+as the web UI, so keep it inside the same network restrictions.
 
 Scraping requires an access token that allows reading capacity
 (`capacity:read`, which carries the `metrics:read` scope). Issue it in

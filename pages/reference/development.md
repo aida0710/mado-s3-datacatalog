@@ -1,24 +1,21 @@
 ---
-description: Front、API、media worker、Registryの役割と、開発時の起動・検証・ドキュメント更新。
+description: Front、API、media workerの役割と、開発時の起動・検証・ドキュメント更新。
 ---
 
 # 構成と開発
 
-madoはReactのWeb UI、HonoのAPI、ffmpegを使うmedia worker、PostgreSQLで構成します。Dataset RegistryはLineageメタデータの正本で、Marquezは再構築できる投影です。
+madoはReactのWeb UI、HonoのAPI、ffmpegを使うmedia worker、PostgreSQLで構成します。
 
-## ブラウザとPipelineの入口を分ける
+## サービスの役割
 
 | サービス | 役割 |
 | --- | --- |
 | front / nginx | 開発時のVite、または本番のWeb UI配信とproxy |
 | api-internal | ブラウザの認証、Storage、設定、読み取りAPI |
-| api-lineage | PipelineからのOpenLineage受け付け |
 | media-worker | 音声情報、波形、スペクトログラムの解析 |
 | postgres | 接続設定、認証、ノート、ジョブ、キャッシュ |
-| Dataset Registry | Dataset・Version・Run・保存場所のメタデータ |
-| Marquez | OpenLineageに基づくグラフの投影 |
 
-本番のnginxはUI用の8080とOpenLineage専用の8081を持ち、hostのloopbackにだけ公開します。利用者にはTLS proxyを通したURLを案内します。
+本番のnginxは8080で待ち受け、hostのloopbackにだけ公開します。利用者にはTLS proxyを通したURLを案内します。
 
 ## 開発環境で起動する
 

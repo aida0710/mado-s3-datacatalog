@@ -10,7 +10,6 @@ export * from '../../../api/shared/schemas/tags'
 export * from '../../../api/shared/schemas/settings'
 export * from '../../../api/shared/schemas/jobs'
 export * from '../../../api/shared/schemas/estimate'
-export * from '../../../api/shared/schemas/lineage'
 export { OkResult } from '../../../api/shared/schemas/system'
 
 export const TarPreview = z.object({
@@ -87,87 +86,3 @@ export interface ConnectionPricingInput {
 
 export interface TagCreateInput { name: string; color: string }
 export interface TagUpdateInput { name?: string; color?: string }
-
-export interface ManualStorageLocationInput {
-  connectionId: string
-  bucket: string
-  key: string
-  status: 'available' | 'archived' | 'missing' | 'deleted' | 'unknown'
-  isPrimary: boolean
-}
-
-export interface ManualDatasetRegistrationInput {
-  datasetId?: string
-  dataset?: {
-    datasetKey: string
-    namespace: string
-    name: string
-    displayName?: string
-    aliases: string[]
-    description?: string
-    mediaType?: string
-    owner?: string
-  }
-  version: {
-    version: string
-    contentHash?: string
-    manifestUri?: string
-    manifestHash?: string
-    schemaUri?: string
-  }
-  location?: ManualStorageLocationInput
-  source?: {
-    sourceKey: string
-    kind: 'purchased' | 'crawled' | 'provided' | 'generated' | 'database' | 'other'
-    name: string
-    uri?: string
-    vendor?: string
-    product?: string
-    licenseRef?: string
-    contractRef?: string
-  }
-  processing?: {
-    transformation: ManualTransformationInput
-    inputVersionIds: string[]
-    jobNamespace: string
-    jobName: string
-    gitSha?: string
-    containerDigest?: string
-    configUri?: string
-    configHash?: string
-    executionTimeStatus: 'known' | 'unknown'
-    occurredAt?: string
-  }
-  evidenceRefs: string[]
-}
-
-export interface LineageDatasetUpdateInput {
-  displayName?: string | null
-  aliases?: string[]
-  description?: string | null
-  mediaType?: string | null
-  owner?: string | null
-}
-
-export interface ManualTransformationInput {
-  transformationKey: string
-  name: string
-  description?: string
-  codeRepository?: string
-  defaultCodeRef?: string
-}
-
-export interface ManualLineageRegistrationInput {
-  transformation: ManualTransformationInput
-  inputVersionIds: string[]
-  outputVersionIds: string[]
-  jobNamespace: string
-  jobName: string
-  gitSha?: string
-  containerDigest?: string
-  configUri?: string
-  configHash?: string
-  executionTimeStatus: 'known' | 'unknown'
-  occurredAt?: string
-  evidenceRefs: string[]
-}

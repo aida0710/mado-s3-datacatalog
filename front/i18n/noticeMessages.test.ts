@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { setLocale } from './locale'
-import { lineageWarningMessage, pricingNoteMessage, projectionUnavailableMessage, transferWarningMessage } from './noticeMessages'
+import { pricingNoteMessage, transferWarningMessage } from './noticeMessages'
 
 afterEach(() => setLocale('ja'))
 
@@ -16,14 +16,6 @@ describe('API のお知らせの文', () => {
     expect(transferWarningMessage({
       code: 'objectOverhead', overheadBytesPerObject: 40960, objectCount: 1_000_000, overheadBytes: 40960 * 1_000_000, percentOfBillable: 80,
     })).toBe('This class adds 40.0 KiB of metadata per object. An object count of 1,000,000 adds 38.1 GiB, about 80% of billable storage.')
-  })
-
-  it('DataLineage の警告と反映状態は code で訳し、項目の ID はそのまま入れる', () => {
-    setLocale('ja')
-    expect(lineageWarningMessage({ code: 'malformedMarquezNode', nodeId: '研究（A）、B〜C' })).toBe('形式が不正なMarquezの項目を除外しました: 研究（A）、B〜C')
-    expect(projectionUnavailableMessage('registryProjectionUnavailable')).toBe('台帳からグラフの反映状態を取得できません。')
-    setLocale('en')
-    expect(lineageWarningMessage({ code: 'marquezSearchUnavailable' })).toBe('Marquez search is unavailable')
   })
 
   it('単価の注記は code で訳す', () => {

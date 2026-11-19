@@ -7,7 +7,6 @@ import * as connections from '../shared/schemas/connections.js'
 import * as estimate from '../shared/schemas/estimate.js'
 import * as integration from '../shared/schemas/integration.js'
 import * as jobs from '../shared/schemas/jobs.js'
-import * as lineage from '../shared/schemas/lineage.js'
 import * as markdownDocuments from '../shared/schemas/markdown-documents.js'
 import * as settings from '../shared/schemas/settings.js'
 import * as storage from '../shared/schemas/storage.js'
@@ -27,7 +26,7 @@ const SELF_DESCRIBING_FORMATS = new Set(['uuid', 'date-time', 'email'])
 
 const SHARED_SCHEMA_MODULES = [
   system, auth, users, audit, accessTokens, connections, storage, capacity, markdownDocuments, tags, settings, jobs,
-  estimate, lineage, integration,
+  estimate, integration,
 ]
 
 // api/shared/schemas の応答のスキーマを、export の名前で文書の components にする。

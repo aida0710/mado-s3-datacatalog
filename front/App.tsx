@@ -18,8 +18,6 @@ import { translate } from './i18n/translate'
 // NoteEditPage は Monaco エディタを抱える重量級ページ (~1MB)。
 // ホーム閲覧だけのユーザに Monaco をロードさせないよう、別チャンクに切り出す。
 const NoteEditPage = lazy(() => import('./pages/NoteEditPage'))
-const LineagePage = lazy(() => import('./pages/LineagePage'))
-const LineageRegisterPage = lazy(() => import('./pages/LineageRegisterPage'))
 
 // connectionId が変わったときに StoragePage を再マウントしてインメモリ状態をすべてリセットする。
 function StoragePageWithKey() {
@@ -81,8 +79,6 @@ export default function App() {
                     <Route path="/settings/*"        element={<SettingsPage />} />
                     <Route path="/storage"           element={<StorageLanding />} />
                     <Route path="/storage/:connectionId/*" element={<StoragePageWithKey />} />
-                    <Route path="/lineage"            element={<LineagePage />} />
-                    <Route path="/lineage/register"   element={<LineageRegisterPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>

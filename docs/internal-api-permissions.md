@@ -1,6 +1,6 @@
 # 内部APIのアクセストークン権限
 
-`/api/internal/*`はブラウザセッションに加え、`Authorization: Bearer <token>`で利用できる。既存のURL・入力・応答を使い、トークンに明示した操作と対象を毎回検証する。内部APIの公開範囲は変えない。公開OpenLineage専用入口の`:8081`には追加しない。
+`/api/internal/*`はブラウザセッションに加え、`Authorization: Bearer <token>`で利用できる。既存のURL・入力・応答を使い、トークンに明示した操作と対象を毎回検証する。内部APIの公開範囲は変えない。
 
 ## 機能と操作
 
@@ -12,7 +12,6 @@
 | Notes | `notes:read`, `notes:write` | ノート・履歴・編集 |
 | Tags | `tags:read`, `tags:write`, `tags:delete` | タグ定義・割り当て・検索 |
 | Favorites | `favorites:read`, `favorites:write`, `favorites:delete` | 接続内のお気に入り |
-| DataLineage | `lineage:read`, `lineage:send`, `lineage:curate` | 検索・詳細・グラフ・OpenLineage送信・手動登録/修正 |
 | Jobs | `jobs:read`, `jobs:operate` | 実行状態・走査開始・キャンセル |
 | Capacity | `capacity:read`, `capacity:operate` | 容量・計測開始 |
 | Pricing | `pricing:read`, `pricing:refresh` | 単価・転送見積もり・単価更新 |
@@ -27,27 +26,23 @@
 
 ## 対象を選ぶ
 
-`connections`は接続IDの配列、`namespaces`はNamespace名の配列。全対象はそれぞれ`["*"]`を明示する。新規画面ではすべて未選択。接続とNamespaceは検索した一覧をチェックして選ぶ。読み取りのみ・管理者・ML Tracking連携・容量監視のプリセットも用意する。管理者プリセットは全権限・全接続・全Namespaceを選ぶ。DataLineageの送信も同じ機能別一覧で選ぶ。
+`connections`は接続IDの配列。全接続は`["*"]`を明示する。新規画面ではすべて未選択。接続は検索した一覧をチェックして選ぶ。用途別のプリセットも用意する。管理者プリセットは全権限・全接続を選ぶ。
 
-Storage・Connections・README・Tags・Favorites・Jobs・Capacity・Pricingの権限には接続の指定が必要。接続管理権限を持っていても、許可していない接続を操作できない。URL・クエリ・ジョブのpayload・手動登録の保存場所にも同じ制限を適用する。接続の新規作成・既定接続の変更・共有タグ定義の作成/変更/削除には全接続の許可が必要。接続を持たないジョブ(単価更新など)の参照・キャンセルも、全接続のトークンだけが行える。接続の公開設定は、このトークンの選択範囲を広げない。許可していない接続は404にする。
-
-DataLineageにはNamespaceの指定が必要。限定トークンの検索・カタログは`namespace`クエリも必須。Dataset・Version・RunはRegistryの正本のIDとNamespaceを検証する。Runの入出力も範囲内でなければ返さない。グラフは範囲外のノードと辺を除き、Versionグラフが省略された場合は`truncated: true`にする。Namespaceをまたぐジョブの実行は一覧から除く。手動登録でもDataset・処理・入力Version・出力Versionを検証し、同値更新でも検証を省略しない。投影状態の件数・状態は全体の運用情報として返す。
-
-DataLineageの保存先URIはNamespaceの権限で読める。接続の選択はStorage操作と保存先のmado S3 Data Catalog接続IDを制限し、URI自体を隠すものではない。これは従来のデータセット参照APIと同じ扱い。
+Storage・Connections・README・Tags・Favorites・Jobs・Capacity・Pricingの権限には接続の指定が必要。接続管理権限を持っていても、許可していない接続を操作できない。URL・クエリ・ジョブのpayloadにも同じ制限を適用する。接続の新規作成・既定接続の変更・共有タグ定義の作成/変更/削除には全接続の許可が必要。接続を持たないジョブ(単価更新など)の参照・キャンセルも、全接続のトークンだけが行える。接続の公開設定は、このトークンの選択範囲を広げない。許可していない接続は404にする。
 
 ## 管理権限の委譲
 
-`service_accounts:manage`があっても、自分より強い操作権限・連携scope・接続・Namespaceを持つトークンや、自分の有効期限より後まで残るトークン(期限なしを含む)を作成・変更できない。既存トークンの再発行・有効化・無効化・削除にも、現在の権限範囲の検証を行う。強いトークンの再発行で秘密の値を取得する迂回を防ぐ。
+`service_accounts:manage`があっても、自分より強い操作権限・連携scope・接続を持つトークンや、自分の有効期限より後まで残るトークン(期限なしを含む)を作成・変更できない。既存トークンの再発行・有効化・無効化・削除にも、現在の権限範囲の検証を行う。強いトークンの再発行で秘密の値を取得する迂回を防ぐ。
 
 この検証は対象の行を確保した後、同じトランザクションの中で行う。権限の外にあるトークンへの操作は、revisionが古くても409ではなく403を返す。呼び出し元のトークンがその時点で無効・失効・削除済みなら、書き込みを確定せず401を返す。
 
-トークンの一覧には、呼び出し元のトークンが管理できるものだけを返す。Namespace候補の一覧も、呼び出し元が許可されたNamespaceに絞る(全Namespaceのトークンには全件)。
+トークンの一覧には、呼び出し元のトークンが管理できるものだけを返す。
 
 トークンの連携scopeは`permissions`から決まる。入力に`scopes`は含められない（400）。
 
-ユーザー管理はロール・パスワードを変更できるため、トークンでは全機能の権限・全連携scope・全接続・全Namespaceを持つ場合だけ変更できる。`users:read`だけの閲覧は可能。ブラウザAdminの操作は従来どおり。
+ユーザー管理はロール・パスワードを変更できるため、トークンでは全機能の権限・全連携scope・全接続を持つ場合だけ変更できる。`users:read`だけの閲覧は可能。ブラウザAdminの操作は従来どおり。
 
-`audit:read`はブラウザのユーザーと同じく操作履歴の全体を読む権限で、トークンの接続・Namespaceの限定では絞られない。範囲を限定したいトークンには付けない。`audit:read`を持たない管理トークンは、それを他のトークンへ付けられない。
+`audit:read`はブラウザのユーザーと同じく操作履歴の全体を読む権限で、トークンの接続の限定では絞られない。範囲を限定したいトークンには付けない。`audit:read`を持たない管理トークンは、それを他のトークンへ付けられない。
 
 ログイン・ログアウト・SSO・自分のプロフィール/パスワード変更は`/api/auth/*`のブラウザセッション専用。トークンの管理は`/access-tokens/*`だけで行う。
 
@@ -57,11 +52,11 @@ Authorizationヘッダーがある場合はBearer認証だけを使い、失敗�
 
 トークンによる変更の操作履歴は`actor_type: service_account`と持ち主IDを記録し、`details.keyId`で個々のトークンを識別する。README・Notesの編集者はトークン名、ユーザーIDはnull。発行者のユーザーになりすますことはない。
 
-`039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加し、`040_explicit_token_grants.sql`は既存トークンを機能別の権限と明示した接続へ変換する（[アクセストークン](access-tokens.md)の「既存環境への適用」）。新しいAPIはこの形だけを読む。移行は`api-internal`が起動時に番号順に当てる。040は持ち主アカウントの状態の列と、接続の指定の有無の列を削除するため、旧版へは戻せない。接続の指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。公開OpenLineage用のDBロールには新しいテーブルの権限を付けない。
+`039_internal_api_tokens.sql`は内部権限と接続のテーブルを追加し、`040_explicit_token_grants.sql`は既存トークンを機能別の権限と明示した接続へ変換する（[アクセストークン](access-tokens.md)の「既存環境への適用」）。新しいAPIはこの形だけを読む。移行は`api-internal`が起動時に番号順に当てる。040は持ち主アカウントの状態の列と、接続の指定の有無の列を削除するため、旧版へは戻せない。接続の指定は容量メトリクスの接続名・バケット・prefix・計測設定のすべてに適用する。
 
-DataLineageの読み取り・送信とCapacityの読み取りは、従来の参照API・OpenLineage送信・Prometheusも同じ選択で許可する。発行・変更では`lineage:read`→`lineage:read`、`lineage:send`→`lineage:write`、`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。
+Capacityの読み取りは、Prometheusのメトリクスも同じ選択で許可する。発行・変更では`capacity:read`→`metrics:read`のscopeをサーバーで保存する。画面に別の連携API権限欄は設けない。
 
-内部APIは全環境で認証主体を必須にします。README・NotesのPUT本文は `editor` を受け付けず、含まれていれば400を返します。編集者名はユーザーの `signatureName` またはトークン名から決めます。DataLineageの論理グラフは `rootKind=dataset|job` を指定し、`kind` を含む要求は400になります。
+内部APIは全環境で認証主体を必須にします。README・NotesのPUT本文は `editor` を受け付けず、含まれていれば400を返します。編集者名はユーザーの `signatureName` またはトークン名から決めます。
 
 ## エラー応答
 

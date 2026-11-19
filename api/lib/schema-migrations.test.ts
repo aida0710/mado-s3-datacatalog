@@ -92,7 +92,7 @@ describe('移行の自動適用', () => {
   })
 })
 
-describe('移行が済んでいるかの確認 (api-lineage と media-worker)', () => {
+describe('移行が済んでいるかの確認 (media-worker)', () => {
   const files = [migration('001_first.sql', 'CREATE TABLE first_table (id int PRIMARY KEY);')]
 
   it('記録が無い・未適用が残る・中身が違うときは起動させない', async () => {

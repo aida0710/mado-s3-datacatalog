@@ -32,7 +32,7 @@ ARG MDC_VERSION=dev
 ARG VCS_REF=""
 ARG BUILD_DATE=""
 LABEL org.opencontainers.image.title="mado S3 Data Catalog API" \
-      org.opencontainers.image.description="mado S3 Data Catalog internal and OpenLineage APIs" \
+      org.opencontainers.image.description="mado S3 Data Catalog internal API" \
       org.opencontainers.image.source="https://github.com/aida0710/mado-s3-datacatalog" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="$MDC_VERSION" \
@@ -43,5 +43,5 @@ COPY --from=build --chown=node:node /app/package.json /app/package-lock.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 USER node
-EXPOSE 3000 3001
+EXPOSE 3000
 CMD ["node", "dist/internal.js"]

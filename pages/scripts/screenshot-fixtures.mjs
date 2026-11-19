@@ -34,7 +34,7 @@ export const connections = [
 const permissions = [
   'connections:manage', 'users:manage', 'service_accounts:manage', 'audit:read',
   'settings:manage', 'storage:read', 'storage:download', 'storage:write',
-  'content:write', 'lineage:read', 'lineage:curate', 'jobs:operate', 'tags:manage',
+  'content:write', 'jobs:operate', 'tags:manage',
 ]
 const user = {
   id: '5a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d', username: 'demo-admin', email: 'admin@example.com',
@@ -76,16 +76,9 @@ const SAMPLE_TEXT = {
 
 ## データを追加したら
 
-ディレクトリのREADMEに、内容・形式・処理条件を記録してください。
-処理のつながりは **DataLineage** から確認できます。`,
+ディレクトリのREADMEに、内容・形式・処理条件を記録してください。`,
     tagNames: { audio: '音声', ready: '確認済み', working: '処理中' },
-    datasets: {
-      raw: { displayName: '元の音声', description: '収録時の音声データ' },
-      clean: { displayName: 'ノイズ除去後', description: 'ノイズを取り除いた音声' },
-      segments: { displayName: '分割した音声', description: '発話ごとに分割した音声' },
-    },
-    denoiseJob: { label: 'ノイズ除去', description: '音声から背景ノイズを除去' },
-    accessTokenDescription: '音声処理のOpenLineage送信',
+    accessTokenDescription: 'Prometheusから容量を取得',
     missingResponse: 'この画面用のサンプル応答はありません',
   },
   en: {
@@ -120,16 +113,9 @@ This note keeps how we use the shared storage and our working notes.
 
 ## After adding data
 
-Record the contents, format, and processing settings in the directory README.
-You can follow how the data was processed from **DataLineage**.`,
+Record the contents, format, and processing settings in the directory README.`,
     tagNames: { audio: 'Audio', ready: 'Checked', working: 'In progress' },
-    datasets: {
-      raw: { displayName: 'Original audio', description: 'Audio as recorded' },
-      clean: { displayName: 'Denoised audio', description: 'Audio with background noise removed' },
-      segments: { displayName: 'Audio segments', description: 'Audio split by utterance' },
-    },
-    denoiseJob: { label: 'Noise reduction', description: 'Removes background noise from audio' },
-    accessTokenDescription: 'Sends OpenLineage events from audio processing',
+    accessTokenDescription: 'Reads capacity from Prometheus',
     missingResponse: 'There is no sample response for this screen',
   },
 }
@@ -159,30 +145,6 @@ function sampleTags(text) {
     { id: 'ready', name: text.tagNames.ready, color: '#6e7f98' },
     { id: 'working', name: text.tagNames.working, color: '#a67a45' },
   ]
-}
-
-function registryDatasets(text) {
-  return [
-    { datasetId: 'raw', name: 'raw-audio', ...text.datasets.raw, versionCount: 1 },
-    { datasetId: 'clean', name: 'clean-audio', ...text.datasets.clean, versionCount: 3 },
-    { datasetId: 'segments', name: 'audio-segments', ...text.datasets.segments, versionCount: 2 },
-  ].map(dataset => ({ ...dataset, kind: 'dataset', datasetKey: dataset.name, namespace: 'sample-audio', aliases: [], mediaType: 'audio/wav', owner: 'Sample team', currentVersionId: `${dataset.datasetId}-v1` }))
-}
-
-function lineageGraph(text) {
-  const datasets = registryDatasets(text)
-  return {
-    nodes: [
-      { id: 'raw', kind: 'dataset', label: text.datasets.raw.displayName, registry: datasets[0], namespace: 'sample-audio', name: 'raw-audio' },
-      { id: 'denoise', kind: 'job', label: text.denoiseJob.label, namespace: 'sample-pipeline', name: 'denoise', summary: { description: text.denoiseJob.description } },
-      { id: 'clean', kind: 'dataset', label: text.datasets.clean.displayName, registry: datasets[1], namespace: 'sample-audio', name: 'clean-audio' },
-    ].map(node => ({ ...node, data: {}, summary: node.summary ?? {}, completeness: 'complete', updatedAt: capturedAt })),
-    edges: [
-      { id: 'a', source: 'raw', target: 'denoise', kind: 'input' },
-      { id: 'b', source: 'denoise', target: 'clean', kind: 'output' },
-    ],
-    projection: { state: 'synced', pendingEvents: 0 }, generatedAt: capturedAt, truncated: false, warnings: [],
-  }
 }
 
 function capacityOverview(days) {
@@ -228,21 +190,13 @@ export async function fulfillSampleApi({ route, media, login = false, unhandled,
   if (path.endsWith('/notes/home/history')) return sendJson({ versions: [{ id: 3, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 }] })
   if (path.endsWith('/notes/home/history/3')) return sendJson({ id: 3, slug: 'home', body: text.noteBody, editor: 'Sample team', edited_at: capturedAt, size_bytes: 620 })
   if (path === '/api/internal/users') return sendJson({ users: [user, { ...user, id: '6b2e3d4c-5f6a-4b7c-9d8e-0f1a2b3c4d5e', username: 'demo-viewer', displayName: 'Sample viewer', email: 'viewer@example.com', roles: ['viewer'], status: 'active' }].map(item => ({ ...item, status: 'active' })), ssoRoleMapping: {} })
-  if (path === '/api/internal/access-tokens/namespaces') return sendJson({ namespaces: ['lecture', 'sample-audio', 'sample-evaluation', 'speech'], sourceStatus: 'ready' })
   if (path === '/api/internal/access-tokens') return sendJson({ tokens: [{
-    id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'audio-pipeline',
-    description: text.accessTokenDescription, tokenPrefix: 'mado_dc_samplepipeline',
-    scopes: ['lineage:read', 'lineage:write'], permissions: ['lineage:read', 'lineage:send'], connections: [],
-    namespaces: ['sample-audio'], status: 'active',
+    id: '23bf5583-e8e3-4c74-8e92-bf21282f0c80', name: 'capacity-monitor',
+    description: text.accessTokenDescription, tokenPrefix: 'mado_dc_samplemonitor0',
+    scopes: ['metrics:read'], permissions: ['capacity:read'], connections: ['*'], status: 'active',
     createdAt: capturedAt, expiresAt: null, regeneratedAt: null, lastUsedAt: capturedAt, revision: 1,
   }] })
   if (path === '/api/internal/audit-events') return sendJson({ events: [], nextCursor: null })
-  if (path === '/api/internal/lineage/catalog') {
-    const datasets = registryDatasets(text)
-    return sendJson({ results: datasets, totalCount: datasets.length, nextCursor: null })
-  }
-  if (path === '/api/internal/lineage/graph') return sendJson(lineageGraph(text))
-  if (path.endsWith('/lineage/resolve-location')) return sendJson({ storageSystemKey: 'demo', uri: `s3://${SAMPLE_BUCKET}/${SAMPLE_PREFIX}`, matches: [] })
   if (path === '/api/internal/jobs/latest' || path === '/api/internal/jobs/1') return sendJson(scanJob)
   if (suffix === '/buckets') return sendJson({ buckets: ['audio-datasets', 'training-data', 'results', 'archive-2026', 'team-shared'].map(name => ({ name, creationDate: '2026-09-20T00:00:00Z' })), cache: { fetchedAt: capturedAt, expiresAt: new Date(Date.now() + 86400000).toISOString(), hit: true } })
   if (suffix === '/favorites') return sendJson(['audio-datasets', 'team-shared'])

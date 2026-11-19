@@ -82,7 +82,7 @@ describe('OidcProvider', () => {
       id: 'authentik', label: 'Authentik', issuerUrl: 'https://auth.example/application/o/mado/',
       clientId: 'client', clientSecret: 'secret', redirectUri: 'https://mado.example/api/auth/oidc/callback',
     })
-    const start = await provider.start('/lineage', 'browser-binding-value-1234567890')
+    const start = await provider.start('/storage', 'browser-binding-value-1234567890')
     expect(start.searchParams.get('state')).toBe('state-value')
     expect(start.searchParams.get('nonce')).toBe('nonce-value')
     expect(start.searchParams.get('code_challenge_method')).toBe('S256')
@@ -97,7 +97,7 @@ describe('OidcProvider', () => {
     const callback = new URL('https://attacker.invalid/callback?code=abc&state=state-value')
     const profile = await provider.finish(callback, 'browser-binding-value-1234567890')
     expect(profile).toMatchObject({
-      subject: 'subject-1', returnTo: '/lineage', emailVerified: true, username: 'user',
+      subject: 'subject-1', returnTo: '/storage', emailVerified: true, username: 'user',
       groups: ['mado-users', 'mado-admins'], sid: 'session-1',
     })
     // Host header由来URLでなく、設定済みredirect URIをtoken exchangeへ渡す。

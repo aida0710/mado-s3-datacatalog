@@ -13,7 +13,3 @@ export function principalUserId(principal: RequestPrincipal | null): string | nu
 export function principalEditor(principal: RequestPrincipal): string {
   return principal.kind === 'user' ? principal.user.signatureName : principal.tokenName
 }
-
-export function principalRegistryId(principal: RequestPrincipal): string {
-  return principal.kind === 'user' ? principal.user.id : principal.serviceAccountId
-}

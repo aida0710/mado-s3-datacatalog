@@ -44,10 +44,6 @@ Check that **Audio information and waveforms** and **Spectrograms** are enabled 
 
 Check the Curator or Admin permission, the connection's **Edit READMEs** setting, and S3 write permission on the endpoint. On connections where **Read READMEs** is disabled, editing is not available either.
 
-## No data appears in Lineage
-
-Check the connection to Dataset Registry, the dataset registration, and the results of sending OpenLineage events. Also check that the namespace, name, and version in the graph match what you are looking for.
-
 ## You are asked to log in again on a page where you were logged in
 
 If your session has expired, log in again. If you complete the SSO login again in a new tab, return to the original tab afterward.

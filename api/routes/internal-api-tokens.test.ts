@@ -45,14 +45,13 @@ beforeEach(async () => {
   app.get('/storage/:connectionId/buckets', c => c.json([{ name: 'fixture-bucket' }]))
   mountNotesRoutes(app, { pools })
   mountAuditRoutes(app, { pool: pools.ro })
-  mountAccessTokenRoutes(app, { store: tokens, audit,
-    namespaceCatalog: { listNamespaces: async () => ({ namespaces: ['music', 'speech'], sourceStatus: 'ready' }) } })
+  mountAccessTokenRoutes(app, { store: tokens, audit })
   mountAdminUsersRoutes(app, { users, credentials: { resetLocalPassword: vi.fn() }, audit, ssoRoleMapping: {} })
 })
 afterAll(() => closePools(pools))
 
 function issue(grants: Partial<AccessTokenInput> = {}) {
-  return tokens.createToken({ name: 'Automation', description: '', namespaces: [], permissions: ['notes:read'],
+  return tokens.createToken({ name: 'Automation', description: '', permissions: ['notes:read'],
     connections: [], expiresAt: null, ...grants, createdBy: adminId })
 }
 function request(token: string, path: string, method = 'GET', body?: unknown) {
@@ -61,31 +60,28 @@ function request(token: string, path: string, method = 'GET', body?: unknown) {
 }
 
 describe('内部APIのアクセストークン', () => {
-  it('内部APIの権限と接続の表は、公開OpenLineageとworkerのDBロールから読めない', async () => {
+  it('内部APIの権限と接続の表は、workerのDBロールから読めず、読み取り用のロールから書けない', async () => {
     const privileges = await pools.rw.query(`SELECT
-      has_table_privilege('mado_lineage','service_account_key_permissions','SELECT') AS public_read,
       has_table_privilege('mado_worker','service_account_key_connections','SELECT') AS worker_read,
       has_table_privilege('dashboard_ro','service_account_key_permissions','INSERT') AS reader_write`)
-    expect(privileges.rows[0]).toEqual({ public_read: false, worker_read: false, reader_write: false })
+    expect(privileges.rows[0]).toEqual({ worker_read: false, reader_write: false })
   })
 
-  it('機能の選択だけで従来APIも許可し、送信を外せば同じトークンの送信権限を失効する', async () => {
-    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
+  it('容量の読み取りを選ぶだけで連携APIのscopeも付き、外せば同じトークンのscopeを失効する', async () => {
+    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'] })
     const created = await request(manager.token, '/access-tokens', 'POST', {
-      name: 'ML Tracking', permissions: ['lineage:read', 'lineage:send', 'capacity:read'],
-      namespaces: ['speech'], connections: [SELECTED],
+      name: 'ML Tracking', permissions: ['capacity:read', 'notes:read'], connections: [SELECTED],
     })
     expect(created.status).toBe(201)
     const issued = await created.json() as { accessToken: { id: string }; token: string }
     expect(await authenticate(issued.token)).toMatchObject({
-      permissions: ['capacity:read', 'lineage:read', 'lineage:send'],
-      scopes: ['lineage:read', 'lineage:write', 'metrics:read'], connections: [SELECTED],
+      permissions: ['capacity:read', 'notes:read'], scopes: ['metrics:read'], connections: [SELECTED],
     })
     const changed = await request(manager.token, `/access-tokens/${issued.accessToken.id}`, 'PATCH', {
-      expectedRevision: 1, permissions: ['lineage:read'],
+      expectedRevision: 1, permissions: ['notes:read'],
     })
     expect(changed.status).toBe(200)
-    expect(await authenticateServiceKey(issued.token)).toMatchObject({ scopes: ['lineage:read'] })
+    expect(await authenticateServiceKey(issued.token)).toMatchObject({ scopes: [] })
   })
 
   it('閲覧と編集を別々に許可し、編集者と監査にトークンの主体を残す', async () => {
@@ -141,20 +137,18 @@ describe('内部APIのアクセストークン', () => {
     await expect(issue({ permissions: ['storage:read'], connections: [OUTSIDE + '-missing'] })).rejects.toThrow()
     await expect(issue({ permissions: [] })).rejects.toThrow()
     await expect(issue({ permissions: ['storage:read'], connections: [] })).rejects.toThrow()
-    await expect(issue({ permissions: ['lineage:read'], namespaces: [] })).rejects.toThrow()
     expect(await tokens.listTokens()).toEqual([])
   })
 
-  it('管理トークンが自分より強い権限・Namespace・接続を委譲できない', async () => {
-    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read', 'storage:read', 'lineage:read'],
-      connections: [SELECTED], namespaces: ['speech'] })
-    const body = { name: 'Child', permissions: ['notes:read'], connections: [], namespaces: [] }
+  it('管理トークンが自分より強い権限・接続を委譲できない', async () => {
+    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read', 'storage:read'],
+      connections: [SELECTED] })
+    const body = { name: 'Child', permissions: ['notes:read'], connections: [] }
     expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(201)
     for (const grants of [
       { permissions: ['notes:write'] },
-      { permissions: ['lineage:read'], namespaces: ['other'] },
       { permissions: ['storage:read'], connections: [OUTSIDE] },
-      { permissions: ['lineage:read'], namespaces: ['speech'], connections: ['*'] },
+      { permissions: ['storage:read'], connections: ['*'] },
       { permissions: ['capacity:read'], connections: ['*'] },
     ]) expect((await request(manager.token, '/access-tokens', 'POST', { ...body, ...grants })).status).toBe(403)
     expect((await request(manager.token, `/access-tokens/${manager.accessToken.id}`, 'PATCH', {
@@ -162,10 +156,9 @@ describe('内部APIのアクセストークン', () => {
     })).status).toBe(403)
   })
 
-  it('接続を持たない管理トークンは、DataLineageの接続制限も子へ広げられない', async () => {
-    const manager = await issue({ permissions: ['service_accounts:manage', 'lineage:read'],
-      namespaces: ['speech'], connections: [] })
-    const body = { name: 'Child', permissions: ['lineage:read'], namespaces: ['speech'] }
+  it('接続を持たない管理トークンは、接続を必要としない権限でも子へ接続を広げられない', async () => {
+    const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'], connections: [] })
+    const body = { name: 'Child', permissions: ['notes:read'] }
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: ['*'] })).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: [SELECTED] })).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, connections: [] })).status).toBe(201)
@@ -194,7 +187,7 @@ describe('内部APIのアクセストークン', () => {
   it('管理トークンは自分の有効期限より長く残るトークンを作れず、期限より短ければ作れる', async () => {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
     const manager = await issue({ permissions: ['service_accounts:manage', 'notes:read'], expiresAt })
-    const body = { name: 'Child', permissions: ['notes:read'], connections: [], namespaces: [] }
+    const body = { name: 'Child', permissions: ['notes:read'], connections: [] }
     const at = (offset: number) => new Date(expiresAt.getTime() + offset).toISOString()
     expect((await request(manager.token, '/access-tokens', 'POST', body)).status).toBe(403)
     expect((await request(manager.token, '/access-tokens', 'POST', { ...body, expiresAt: at(1000) })).status).toBe(403)
@@ -212,12 +205,12 @@ describe('内部APIのアクセストークン', () => {
   })
 
   it('連携scopeは権限から決まり、scopesを送る変更は受け付けない', async () => {
-    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
-    const issued = await issue({ permissions: ['lineage:read'], namespaces: ['speech'] })
+    const manager = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'] })
+    const issued = await issue({ permissions: ['notes:read'] })
     const response = await request(manager.token, `/access-tokens/${issued.accessToken.id}`, 'PATCH',
-      { expectedRevision: 1, scopes: ['lineage:write'] })
+      { expectedRevision: 1, scopes: ['metrics:read'] })
     expect(response.status).toBe(400)
-    expect(await authenticate(issued.token)).toMatchObject({ scopes: ['lineage:read'], permissions: ['lineage:read'] })
+    expect(await authenticate(issued.token)).toMatchObject({ scopes: [], permissions: ['notes:read'] })
     await expect(tokens.updateToken({ id: issued.accessToken.id, expectedRevision: 1, patch: { permissions: [] } }))
       .rejects.toBeInstanceOf(AccessTokenPermissionsError)
   })
@@ -230,37 +223,32 @@ describe('内部APIのアクセストークン', () => {
     await expect(tokens.deleteToken({ id: target.accessToken.id, expectedRevision: 1 }, guard))
       .rejects.toBeInstanceOf(AccessTokenActorInactiveError)
     await expect(tokens.createToken({ name: 'Child', description: '', permissions: ['notes:read'],
-      connections: [], namespaces: [], expiresAt: null, createdBy: null }, guard)).rejects.toBeInstanceOf(AccessTokenActorInactiveError)
+      connections: [], expiresAt: null, createdBy: null }, guard)).rejects.toBeInstanceOf(AccessTokenActorInactiveError)
     expect(await authenticate(target.token)).not.toBeNull()
     expect((await tokens.listTokens()).map(token => token.name)).not.toContain('Child')
   })
 
-  it('管理トークンの一覧には、自分が管理できるトークンと許可されたNamespaceだけを出す', async () => {
-    const manager = await issue({ permissions: ['service_accounts:read', 'lineage:read'], namespaces: ['speech'], connections: [] })
-    const weaker = await issue({ name: 'Weaker', permissions: ['lineage:read'], namespaces: ['speech'] })
-    const stronger = await issue({ name: 'Stronger', permissions: ['lineage:read'], namespaces: ['music'] })
+  it('管理トークンの一覧には、自分が管理できるトークンだけを出す', async () => {
+    const manager = await issue({ permissions: ['service_accounts:read', 'storage:read'], connections: [SELECTED] })
+    const weaker = await issue({ name: 'Weaker', permissions: ['storage:read'], connections: [SELECTED] })
+    const stronger = await issue({ name: 'Stronger', permissions: ['storage:read'], connections: [OUTSIDE] })
     const listed = await (await request(manager.token, '/access-tokens')).json() as { tokens: Array<{ id: string }> }
     const ids = listed.tokens.map(token => token.id)
     expect(ids).toEqual(expect.arrayContaining([manager.accessToken.id, weaker.accessToken.id]))
     expect(ids).not.toContain(stronger.accessToken.id)
-    expect(await (await request(manager.token, '/access-tokens/namespaces')).json())
-      .toEqual({ namespaces: ['speech'], sourceStatus: 'ready' })
   })
 
-  it('ユーザー管理には、全権限に加えて全接続・全Namespaceを持つトークンを要求する', async () => {
+  it('ユーザー管理には、全権限に加えて全接続を持つトークンを要求する', async () => {
     const body = { username: 'scoped-admin-user', displayName: 'Created by token', roles: ['viewer'] }
-    const everything = { permissions: [...INTERNAL_API_PERMISSIONS] }
-    const limitedConnections = await issue({ ...everything, connections: [SELECTED], namespaces: ['*'] })
+    const limitedConnections = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: [SELECTED] })
     expect((await request(limitedConnections.token, '/users', 'POST', body)).status).toBe(403)
-    const limitedNamespaces = await issue({ ...everything, connections: ['*'], namespaces: ['speech'] })
-    expect((await request(limitedNamespaces.token, '/users', 'POST', body)).status).toBe(403)
   })
 
   it('限定トークンではユーザー管理から権限を昇格できず、全権限の管理者なら作成できる', async () => {
     const limited = await issue({ permissions: ['users:manage'] })
     const body = { username: 'automated-user', displayName: 'Created by token', roles: ['viewer'] }
     expect((await request(limited.token, '/users', 'POST', body)).status).toBe(403)
-    const administrator = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'], namespaces: ['*'] })
+    const administrator = await issue({ permissions: [...INTERNAL_API_PERMISSIONS], connections: ['*'] })
     expect((await request(administrator.token, '/users', 'POST', body)).status).toBe(201)
     expect((await request(administrator.token, '/users')).status).toBe(200)
   })

@@ -8,7 +8,7 @@
 # (= mado-prod_db_data)。dev も mado-dev_db_data なので並ぶ。
 name: mado-prod
 
-# api-internal・api-lineage・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
+# api-internal・media-workerのhealthcheckの間隔。testだけをサービスごとに書く。
 x-app-healthcheck: &app-healthcheck
   interval: 5s
   timeout: 3s
@@ -27,7 +27,6 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}"
       POSTGRES_DB: dashboard
       MDC_DASHBOARD_DB_PASSWORD: "${MDC_DASHBOARD_DB_PASSWORD:?.env に MDC_DASHBOARD_DB_PASSWORD を設定してください (DATABASE_URL のパスワードと一致させること)}"
-      MDC_LINEAGE_DB_PASSWORD: "${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}"
       MDC_WORKER_DB_PASSWORD: "${MDC_WORKER_DB_PASSWORD:?.env に MDC_WORKER_DB_PASSWORD を設定してください}"
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -56,43 +55,13 @@ services:
     env_file:
       - .env
     environment:
-      # 起動時に未適用の移行を当てる DB の管理者の接続。api-lineage と media-worker には渡さない。
+      # 起動時に未適用の移行を当てる DB の管理者の接続。media-worker には渡さない。
       MDC_DATABASE_URL_MIGRATE: "postgres://postgres:${POSTGRES_PASSWORD:?.env に POSTGRES_PASSWORD を設定してください}@postgres:5432/dashboard"
       MDC_ENV: production
       MDC_PORT: 3000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
-  api-lineage:
-    build:
-      context: ./api
-      target: release
-      args:
-        MDC_VERSION: "${MDC_VERSION:-dev}"
-        VCS_REF: "${MDC_GIT_COMMIT:-}"
-        BUILD_DATE: "${MDC_GIT_DATE:-}"
-    container_name: mado-prod-api-lineage
-    command: ["node", "dist/lineage.js"]
-    healthcheck:
-      <<: *app-healthcheck
-      test: ["CMD", "node", "dist/scripts/healthcheck.js", "3001"]
-    environment:
-      MDC_LINEAGE_PORT: 3001
-      MDC_DATABASE_URL_RW: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      MDC_DATABASE_URL_RO: "postgres://mado_lineage:${MDC_LINEAGE_DB_PASSWORD:?.env に MDC_LINEAGE_DB_PASSWORD を設定してください}@postgres:5432/dashboard"
-      MDC_DATASET_REGISTRY_URL: "${MDC_DATASET_REGISTRY_URL:?.env に MDC_DATASET_REGISTRY_URL を設定してください}"
-      MDC_DATASET_REGISTRY_TOKEN: "${MDC_DATASET_REGISTRY_TOKEN:?.env に MDC_DATASET_REGISTRY_TOKEN を設定してください}"
-      MDC_OPENLINEAGE_BODY_LIMIT_BYTES: "${MDC_OPENLINEAGE_BODY_LIMIT_BYTES:-2097152}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      # api-internal が移行を当て終えて healthy になってから起動する。
-      api-internal:
-        condition: service_healthy
       postgres:
         condition: service_healthy
     restart: unless-stopped
@@ -135,12 +104,8 @@ services:
     # UIもloopbackだけにbindし、host側intranet proxyからのみ公開する。
     ports:
       - "127.0.0.1:8080:8080"
-      # 外部OpenLineage入口はhost TLS proxyからだけ到達可能にする。
-      - "127.0.0.1:8081:8081"
     depends_on:
       api-internal:
-        condition: service_healthy
-      api-lineage:
         condition: service_healthy
     restart: unless-stopped
 

@@ -11,21 +11,18 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
   const [description, setDescription] = useState(input.token?.description ?? '')
   const [permissions, setPermissions] = useState<InternalApiPermission[]>(input.token?.permissions ?? [])
   const [connections, setConnections] = useState<string[]>(input.token?.connections ?? [])
-  const [namespaces, setNamespaces] = useState<string[]>(input.token?.namespaces ?? [])
   const [initialExpiry] = useState(() => initialTokenExpirySelection(input.token))
   const [expiry, setExpiry] = useState(initialExpiry)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const includesLineage = permissions.some(permission => permission.startsWith('lineage:'))
   const requiresConnections = permissions.some(permission => CONNECTION_PERMISSIONS.includes(permission))
-  const showsConnections = requiresConnections || permissions.some(permission => permission.startsWith('lineage:'))
   function togglePermission(permission: InternalApiPermission) {
     setPermissions(current => current.includes(permission) ? current.filter(selected => selected !== permission) : [...current, permission])
   }
   function applyPreset(preset: AccessTokenPreset) {
     setPermissions(accessTokenPreset(preset))
-    if (preset === 'all') { setNamespaces(['*']); setConnections(['*']) }
-    if (preset === 'none') { setNamespaces([]); setConnections([]) }
+    if (preset === 'all') setConnections(['*'])
+    if (preset === 'none') setConnections([])
   }
   async function save() {
     setError(null)
@@ -33,11 +30,8 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     if (!permissions.length) { setError(translate('accessTokens.choosePermission')); return }
     if (requiresConnections && connections.length === 0) { setError(translate('accessTokens.connectionsRequired')); return }
     if (permissions.includes('users:manage') && !(INTERNAL_API_PERMISSIONS.every(permission => permissions.includes(permission))
-      && connections.includes('*') && namespaces.includes('*'))) {
+      && connections.includes('*'))) {
       setError(translate('accessTokens.usersManageHelp')); return
-    }
-    if (includesLineage && namespaces.length === 0) {
-      setError(translate('accessTokens.namespacesRequired')); return
     }
     const keepsExpiry = input.token !== null && isSameTokenExpirySelection(expiry, initialExpiry)
     const expiresAt = keepsExpiry ? undefined : resolveTokenExpiryTimestamp(expiry)
@@ -46,11 +40,11 @@ export function useAccessTokenForm(input: { token: AccessToken | null; onSave: (
     }
     setBusy(true)
     try {
-      await input.onSave(accessTokenFormInput({ name, description, permissions, connections, namespaces, expiresAt }))
+      await input.onSave(accessTokenFormInput({ name, description, permissions, connections, expiresAt }))
     } catch (failure) { setError((failure as Error).message) }
     finally { setBusy(false) }
   }
   return { name, setName, description, setDescription, permissions, togglePermission, applyPreset,
-    connections, setConnections, showsConnections, namespaces, setNamespaces,
-    expiry, setExpiry, includesLineage, busy, error, save }
+    connections, setConnections, requiresConnections,
+    expiry, setExpiry, busy, error, save }
 }

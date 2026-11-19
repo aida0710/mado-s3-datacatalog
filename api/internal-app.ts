@@ -1,11 +1,11 @@
-import { Hono, type Context } from 'hono'
+import { Hono } from 'hono'
 import { createPools } from './db.js'
 import { createCrypto } from './crypto.js'
 import { createStorageFactory } from './storage.js'
 import { requireSafeOrigin } from './lib/originCheck.js'
 import { mountStorageCapabilityGuards } from './lib/storage-capability-routes.js'
 import {
-  canAccessConnection, connectionIdsForPrincipal, requireConnectionAccess, requireConnectionQueryAccess, visibleConnectionIds,
+  canAccessConnection, connectionIdsForPrincipal, requireConnectionAccess,
 } from './lib/connection-access.js'
 import { explainStorageError } from './lib/storageError.js'
 import { mountStorageListRoutes } from './routes/storage-list.js'
@@ -44,14 +44,7 @@ import { mountAuthRoutes } from './routes/auth.js'
 import { mountAdminUsersRoutes } from './routes/admin-users.js'
 import { mountAccessTokenRoutes } from './routes/access-tokens.js'
 import { createAccessTokenStore } from './lib/access-token-store.js'
-import { createAccessTokenNamespaceCatalog } from './lib/access-token-namespaces.js'
 import { mountAuditRoutes } from './routes/audit.js'
-import { createRegistryClient } from './lib/registry-client.js'
-import { createMarquezClient } from './lib/marquez-client.js'
-import { createLineageService, type StorageBindingResolver } from './lib/lineage-service.js'
-import { mountLineageRoutes } from './routes/lineage.js'
-import { createNamespaceLineagePolicy } from './lib/namespace-lineage-policy.js'
-import { mountLineageCurationRoutes } from './routes/lineage-curation.js'
 import { requestLogger } from './lib/request-logger.js'
 import { mountHealthRoute } from './lib/health-route.js'
 import { createCapacityStore } from './lib/capacity-store.js'
@@ -60,7 +53,6 @@ import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { createCapacityMetricsCollector } from './lib/capacity-metrics.js'
 import { mountMetricsRoutes } from './routes/metrics.js'
 import { mountServiceAccessTokenRoutes } from './routes/service-access-token.js'
-import { mountServiceLineageRoutes } from './routes/service-lineage.js'
 import { apiError } from './lib/api-error.js'
 import type { Env } from './env.js'
 
@@ -174,7 +166,6 @@ export function createInternalApplication(env: Env) {
     if (getRequestPrincipal(context)?.kind !== 'service_account') return next()
     return requireConnectionAccess(pools.ro)(context, next)
   })
-  api.use('/lineage/resolve-location', requireConnectionQueryAccess(pools.ro))
 
   // 接続ごとの権限ガード。対応表は lib/storage-capability-routes.ts の 1 箇所にある。
   // Hono は登録順に実行するので、必ずルートの mount より前に登録すること。
@@ -224,57 +215,6 @@ export function createInternalApplication(env: Env) {
   mountNotesRoutes(api, { pools })
   mountStorageTagsRoutes(api, { pools })
 
-  if (env.MDC_DATASET_REGISTRY_URL && env.MDC_DATASET_REGISTRY_TOKEN && env.MDC_MARQUEZ_URL) {
-    const registry = createRegistryClient({
-      baseUrl: env.MDC_DATASET_REGISTRY_URL,
-      token: env.MDC_DATASET_REGISTRY_TOKEN,
-    })
-    const marquez = createMarquezClient({ baseUrl: env.MDC_MARQUEZ_URL })
-    const bindings: StorageBindingResolver = {
-      async resolve(keys) {
-        if (keys.length === 0) return new Map()
-        const result = await pools.ro.query<{
-          registry_storage_system_key: string
-          connection_id: string
-        }>(
-          `SELECT registry_storage_system_key, connection_id
-             FROM lineage_storage_bindings
-            WHERE registry_storage_system_key = ANY($1::text[])`,
-          [[...keys]],
-        )
-        return new Map(result.rows.map(row => [row.registry_storage_system_key, row.connection_id]))
-      },
-      async keyForConnection(connectionId) {
-        const result = await pools.ro.query<{ registry_storage_system_key: string }>(
-          `SELECT registry_storage_system_key
-             FROM lineage_storage_bindings
-            WHERE connection_id = $1`,
-          [connectionId],
-        )
-        return result.rows[0]?.registry_storage_system_key ?? null
-      },
-    }
-    const namespacePolicy = (context: Context) => {
-      const principal = getRequestPrincipal(context)
-      return principal?.kind === 'service_account' ? createNamespaceLineagePolicy(registry, principal.namespaces) : null
-    }
-    mountLineageRoutes(api, {
-      namespacePolicy,
-      service: createLineageService({ registry, marquez, bindings }),
-      visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
-    })
-    mountLineageCurationRoutes(api, {
-      namespacePolicy,
-      registry,
-      pool: pools.ro,
-      audit,
-      canAccessConnection: (c, connectionId) => canAccessConnection(pools.ro, c, connectionId),
-      visibleConnectionIds: c => visibleConnectionIds(pools.ro, c),
-    })
-  } else {
-    api.all('/lineage/*', c => c.json(apiError('lineage_not_configured', 'lineage integration is not configured'), 503))
-  }
-
   mountAdminUsersRoutes(api, {
     users,
     credentials,
@@ -283,9 +223,7 @@ export function createInternalApplication(env: Env) {
   })
   const accessTokens = createAccessTokenStore(pools.rw)
   mountAccessTokenRoutes(api, { store: accessTokens, audit,
-    visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal),
-    namespaceCatalog: createAccessTokenNamespaceCatalog({ store: accessTokens,
-      marquez: env.MDC_MARQUEZ_URL ? createMarquezClient({ baseUrl: env.MDC_MARQUEZ_URL }) : null }) })
+    visibleConnections: principal => connectionIdsForPrincipal(pools.ro, principal) })
   mountAuditRoutes(api, { pool: pools.ro })
 
   app.route('/api/internal', api)
@@ -296,12 +234,6 @@ export function createInternalApplication(env: Env) {
   mountMetricsRoutes(madoApi, {
     authenticate: authenticateInternalToken,
     collectors: [createCapacityMetricsCollector(capacityStore)],
-  })
-  mountServiceLineageRoutes(madoApi, {
-    authenticate: authenticateServiceKey,
-    registry: env.MDC_DATASET_REGISTRY_URL && env.MDC_DATASET_REGISTRY_TOKEN
-      ? createRegistryClient({ baseUrl: env.MDC_DATASET_REGISTRY_URL, token: env.MDC_DATASET_REGISTRY_TOKEN })
-      : null,
   })
   app.route('/api/mado', madoApi)
 

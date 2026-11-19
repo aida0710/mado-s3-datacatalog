@@ -6,9 +6,9 @@ mado S3 Data CatalogのOSS releaseと社内・private環境へのdeployは別工
 
 tagが指す同一commitから、Linux amd64/arm64対応のOCI imageを3つ作る。
 
-- `mado-api`: compiled internal APIとOpenLineage API
+- `mado-api`: compiled internal API
 - `mado-media-worker`: compiled workerとffmpeg
-- `mado-web`: static Web UIと用途別nginx listener
+- `mado-web`: static Web UIとnginx listener
 
 workflowは各imageへSBOMとprovenanceを付け、digest固定の`compose.yaml`、DBのロールを作る初期化スクリプト、設定例、licenseをrelease bundleへ収録する。DBの移行は`mado-api`のimageに入っており、`api-internal`が起動時に当てる。GitHub Release本文は`docs/releases/<tag>.md`が正本。
 
