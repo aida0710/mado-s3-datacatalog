@@ -34,6 +34,9 @@ export const ROUTINE_AUDIT_ACTIONS = [
   'storage.download.tar-entry',
   'storage.preview.text',
   'storage.preview.image',
+  // DataLineage をやめる前の記録。過去の行が既定の表示に出てこないよう、日常の操作として扱い続ける。
+  'lineage.read',
+  'lineage.authenticate',
 ] as const
 
 export function mountAuditRoutes(app: Hono, deps: AuditRoutesDeps): void {
