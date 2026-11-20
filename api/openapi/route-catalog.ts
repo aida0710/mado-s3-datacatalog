@@ -15,7 +15,7 @@ import { AuthConfig, AuthUserResponse, LogoutResult } from '../shared/schemas/au
 import { CapacityOverview, CapacityPrefixHistory, CapacityScanResponse } from '../shared/schemas/capacity.js'
 import { Connection, ConnectionAccessUsers, ConnectionList } from '../shared/schemas/connections.js'
 import { PricingStatus, TransferEstimate } from '../shared/schemas/estimate.js'
-import { IntegrationAccessToken } from '../shared/schemas/integration.js'
+import { IntegrationAccessToken, IntegrationConnections } from '../shared/schemas/integration.js'
 import { Job, StartJobOk } from '../shared/schemas/jobs.js'
 import {
   Note, NoteHistoryList, NoteHistoryVersion, PutNoteOk, PutReadmeOk, Readme, ReadmeHistoryList, ReadmeHistoryVersion,
@@ -498,6 +498,10 @@ export const API_ROUTES: readonly ApiRoute[] = [
   {
     method: 'get', path: '/api/mado/access-token', tag: 'integration', summary: '呼び出したトークン自身の名前・scope・期限',
     access: { kind: 'integrationToken' }, responses: { 200: IntegrationAccessToken },
+  },
+  {
+    method: 'get', path: '/api/mado/connections', tag: 'integration', summary: 'トークンに許可した接続の ID・名前・種類',
+    access: { kind: 'integrationToken' }, responses: { 200: IntegrationConnections },
   },
   {
     method: 'get', path: '/api/mado/metrics/capacity', tag: 'integration', summary: '容量メトリクス (Prometheus のテキスト形式)',

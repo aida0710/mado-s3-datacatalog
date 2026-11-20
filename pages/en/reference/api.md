@@ -26,6 +26,8 @@ The integration API `/api/mado/` accepts GET only. The integration scopes are de
 
 `GET /api/mado/access-token` returns the calling token's own name, scopes, and expiration, whatever its scopes. It never returns other tokens or token values. Integrations use it to check what the token they were given can do.
 
+`GET /api/mado/connections` returns the ID, name, and provider of the connections allowed for the calling token, whatever its scopes. It never returns endpoints or keys. Integrations use it to choose which connection holds an S3 location.
+
 Data lineage (datasets and the processing between them) is handled by mado ML Tracking. mado has no DataLineage API (removed in v0.6.0). To read capacity metrics from ML Tracking, enter a token that allows Capacity **Read** in the **Access token** field of its **Integrations**.
 
 ## Use internal APIs

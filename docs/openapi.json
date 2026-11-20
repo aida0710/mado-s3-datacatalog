@@ -10691,6 +10691,74 @@
         }
       }
     },
+    "/api/mado/connections": {
+      "get": {
+        "operationId": "getMadoConnections",
+        "tags": [
+          "integration"
+        ],
+        "summary": "トークンに許可した接続の ID・名前・種類",
+        "security": [
+          {
+            "bearerToken": []
+          }
+        ],
+        "x-mado-access": "integrationToken",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnections"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mado-error-codes": [
+              "authentication_required",
+              "invalid_token"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "想定外の失敗",
+            "x-mado-error-codes": [
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mado-error-codes": [
+              "authentication_unavailable"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/mado/metrics/capacity": {
       "get": {
         "operationId": "getMadoMetricsCapacity",
@@ -12277,6 +12345,38 @@
           "name",
           "scopes",
           "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "IntegrationConnections": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "provider": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "provider"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
         ],
         "additionalProperties": false
       },
