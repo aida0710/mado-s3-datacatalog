@@ -12,7 +12,7 @@
   "devDependencies": {
     "@fontsource/noto-sans-jp": "5.3.1",
     "@mado/design-system": "https://github.com/aida0710/mado-design-systems/releases/download/v0.7.2/mado-design-system-0.7.2.tgz",
-    "playwright": "1.65.0",
+    "playwright": "1.65.1",
     "shiki": "2.5.0",
     "vitepress": "1.6.4"
   },
