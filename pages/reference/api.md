@@ -26,6 +26,8 @@ Adminが**Settings → Access → Access Tokens**の**アクセストークン�
 
 `GET /api/mado/access-token`は、scopeを問わず、呼び出したトークン自身の名前・scope・有効期限を返します。ほかのトークンの情報や、トークンの値は返しません。連携先が、渡されたトークンで何ができるかを確かめるための入口です。
 
+`GET /api/mado/connections`は、scopeを問わず、呼び出したトークンに許可した接続のID・名前・種類を返します。エンドポイントや鍵は返しません。連携先が、S3の場所がどの接続のものかを選ぶための入口です。
+
 データセットと処理の来歴（DataLineage）はmado ML Trackingが受け持ちます。madoにDataLineageのAPIはありません（v0.6.0で外しました）。ML Trackingから容量メトリクスを読む場合は、Capacityの**読み取り**を許可したトークンを、ML Trackingの［連携］の「アクセストークン」に設定します。
 
 ## 内部APIを使う

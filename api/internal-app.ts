@@ -52,6 +52,8 @@ import { mountStorageCapacityRoutes } from './routes/storage-capacity.js'
 import { listStorageBucketNames } from './lib/storage-buckets.js'
 import { createCapacityMetricsCollector } from './lib/capacity-metrics.js'
 import { mountMetricsRoutes } from './routes/metrics.js'
+import { mountServiceConnectionsRoutes } from './routes/service-connections.js'
+import { createIntegrationConnectionReader } from './lib/integration-connections.js'
 import { mountServiceAccessTokenRoutes } from './routes/service-access-token.js'
 import { apiError } from './lib/api-error.js'
 import type { Env } from './env.js'
@@ -231,6 +233,10 @@ export function createInternalApplication(env: Env) {
   // 連携用の読み取りAPI。既存のscopeとURLを維持し、公開用の:8081には載せない。
   const madoApi = new Hono()
   mountServiceAccessTokenRoutes(madoApi, { authenticate: authenticateServiceKey })
+  mountServiceConnectionsRoutes(madoApi, {
+    authenticate: authenticateInternalToken,
+    connections: createIntegrationConnectionReader(pools.ro),
+  })
   mountMetricsRoutes(madoApi, {
     authenticate: authenticateInternalToken,
     collectors: [createCapacityMetricsCollector(capacityStore)],
