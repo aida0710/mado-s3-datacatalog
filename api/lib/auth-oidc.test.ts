@@ -105,6 +105,36 @@ describe('OidcProvider', () => {
     await expect(provider.finish(callback, 'browser-binding-value-1234567890')).rejects.toThrow(/invalid or expired/)
   })
 
+  describe('email_verifiedを送らないIdP', () => {
+    // Cloudflare AccessのUserInfoのように、sub・email・nameだけを返すIdPを模す。
+    async function finishWith(claims: Record<string, unknown>, assumeEmailVerified: boolean) {
+      oidcMocks.grant.mockResolvedValueOnce({ claims: () => claims })
+      const provider = createOidcProvider(pools.rw, crypto, {
+        id: 'cloudflare', label: 'SSO', issuerUrl: 'https://team.example/cdn-cgi/access/sso/oidc/client',
+        clientId: 'client', clientSecret: 'secret', redirectUri: 'https://mado.example/api/auth/oidc/callback',
+        assumeEmailVerified,
+      })
+      await provider.start('/', 'browser-binding-value-1234567890')
+      return provider.finish(new URL('https://mado.example/api/auth/oidc/callback?code=abc&state=state-value'),
+        'browser-binding-value-1234567890')
+    }
+
+    it('確認済みとみなす設定なら、email_verifiedが無いemailを確認済みにする', async () => {
+      const profile = await finishWith({ sub: 'cf-subject', email: 'user@example.com', name: 'User' }, true)
+      expect(profile).toMatchObject({ email: 'user@example.com', emailVerified: true, groups: [] })
+    })
+
+    it('設定が無ければ、email_verifiedが無いemailを確認済みにしない', async () => {
+      const profile = await finishWith({ sub: 'cf-subject', email: 'user@example.com', name: 'User' }, false)
+      expect(profile.emailVerified).toBe(false)
+    })
+
+    it('IdPがemail_verified=falseと送ったときは、設定があっても確認済みにしない', async () => {
+      const profile = await finishWith({ sub: 'cf-subject', email: 'user@example.com', email_verified: false }, true)
+      expect(profile.emailVerified).toBe(false)
+    })
+  })
+
   it('RP-Initiated Logout URLにMadoへの戻り先を設定する', async () => {
     const provider = createOidcProvider(pools.rw, crypto, {
       id: 'authentik', label: 'Authentik', issuerUrl: 'https://auth.example/application/o/mado/',

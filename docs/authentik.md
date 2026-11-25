@@ -102,6 +102,7 @@ MDC_OIDC_ROLE_MAPPING_JSON={}
 - RoleはSettings > Access > Usersで管理します（`MDC_OIDC_ROLE_MAPPING_JSON`は空）。groupsが届かないので、対応表を書くと全員が`MDC_OIDC_DEFAULT_ROLE`になります。
 - 使用中のSSO sessionの再確認（1分ごと）は、UserInfoとrefresh tokenでの更新が通るかで判断します。IdPのpolicyから外れた人は、IdPがrefresh tokenでの更新を断った時点でsessionが失効します。いつ断るかはIdPのaccess tokenの有効期間で決まります。
 - IdPのpolicyはこのアプリの外にあります。IdPでどの人を通しているかを、mado S3 Data Catalogの画面からは確かめられません。
+- IdPが`email_verified`を送らない場合、emailは未確認として扱われ、Userのemailにも既存Userとの連携にも使いません。IdPがemailを確かめている（利用者が自分で変えられない）なら、`MDC_OIDC_ASSUME_EMAIL_VERIFIED=true`で確認済みとして扱えます。IdPが`false`と送ったときは上書きしません。
 - IdPが`end_session_endpoint`を出していない場合、ログアウトはmado S3 Data Catalogのsessionだけを終えます。IdP側のsessionは残るので、次のログインはIdPの画面を通らずに終わることがあります。
 
 ## Login transactionの防御

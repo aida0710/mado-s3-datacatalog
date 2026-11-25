@@ -86,6 +86,7 @@ export function createInternalApplication(env: Env) {
     redirectUri: env.MDC_OIDC_REDIRECT_URI!,
     scopes: env.MDC_OIDC_SCOPES,
     postLogoutRedirectUri: env.MDC_OIDC_POST_LOGOUT_REDIRECT_URI,
+    assumeEmailVerified: env.MDC_OIDC_ASSUME_EMAIL_VERIFIED,
   }) : undefined
   const sessions = createSessionStore(pools.rw, audit, oidc ? createOidcSessionVerifier({
     pool: pools.rw, crypto, provider: oidc, audit,

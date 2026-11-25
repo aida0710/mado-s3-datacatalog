@@ -24,6 +24,8 @@ export interface OidcProviderConfig {
   redirectUri: string
   scopes?: string
   postLogoutRedirectUri?: string
+  /** email_verified を送らない IdP で、届いた email を確認済みとして扱う。IdP が false と送ったときは上書きしない。 */
+  assumeEmailVerified?: boolean
 }
 
 export interface OidcProfile {
@@ -219,7 +221,8 @@ export function createOidcProvider(
         issuer: issuerId,
         subject: claims.sub,
         email,
-        emailVerified: claims.email_verified === true,
+        emailVerified: email !== null && (claims.email_verified === true
+          || (provider.assumeEmailVerified === true && claims.email_verified === undefined)),
         username,
         displayName,
         groups: stringArrayClaim(claims.groups),

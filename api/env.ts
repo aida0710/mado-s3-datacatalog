@@ -75,6 +75,11 @@ const baseSchema = z.object({
   MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
+  // email_verified を送らない IdP（Cloudflare Access など）で、届いた email を確認済みとして扱う。
+  // 利用者が email を自分で変えられる IdP では有効にしない。
+  MDC_OIDC_ASSUME_EMAIL_VERIFIED: booleanString.default('false').transform(value =>
+    value === 'true' || value === '1'
+  ),
   MDC_OIDC_ALLOWED_GROUPS: z.string().default('').transform(value =>
     [...new Set(value.split(',').map(group => group.trim()).filter(Boolean))]
   ),
