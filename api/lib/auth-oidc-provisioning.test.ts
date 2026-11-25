@@ -78,6 +78,26 @@ describe('OidcProvisioning', () => {
     expect((await credentials.findLocalCredentialByLogin('local'))?.roles).toEqual(['admin'])
   })
 
+  it('preferred_username が無ければ、確認済み email の @ より前をユーザー ID にする', async () => {
+    const withoutUsername = {
+      issuer, email: 'Taro.Yamada@example.com', emailVerified: true, username: null, displayName: 'Taro',
+      groups: [], autoLinkVerifiedEmail: false, defaultRole: 'viewer',
+    }
+    const first = await provisioning.provisionOidcUser({ ...withoutUsername, subject: 'cf-subject-1' })
+    expect(first.user).toMatchObject({ username: 'taro.yamada', email: 'taro.yamada@example.com' })
+
+    // 同じ @ より前の人が別のドメインにいれば、後の人のユーザー ID は空のままにする。
+    const second = await provisioning.provisionOidcUser({
+      ...withoutUsername, subject: 'cf-subject-2', email: 'taro.yamada@example.org',
+    })
+    expect(second.user.username).toBeNull()
+
+    const unverified = await provisioning.provisionOidcUser({
+      ...withoutUsername, subject: 'cf-subject-3', email: 'hanako@example.com', emailVerified: false,
+    })
+    expect(unverified.user.username).toBeNull()
+  })
+
   it('特権を持つ Local User への email の自動連携は断る', async () => {
     await users.createUser({ username: 'admin', email: 'admin@example.com', displayName: 'Admin', roles: ['admin'] })
     const denied = provisioning.provisionOidcUser({

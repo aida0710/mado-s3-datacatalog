@@ -104,8 +104,18 @@ async function findVerifiedEmailUserId(client: PoolClient, email: string): Promi
   return row.id
 }
 
+/**
+ * JIT 作成する User のユーザー ID の候補。preferred_username を送らない IdP（Cloudflare Access など）では、
+ * 確認済み email の @ より前を使う。
+ */
+function jitUsernameCandidate(input: OidcProvisionInput): string | null {
+  if (input.username) return input.username
+  if (input.emailVerified && input.email) return input.email.split('@')[0] ?? null
+  return null
+}
+
 async function createJitUser(client: PoolClient, input: OidcProvisionInput): Promise<string> {
-  const candidate = normalizeLoginName(input.username)
+  const candidate = normalizeLoginName(jitUsernameCandidate(input))
   const username = candidate && USERNAME_PATTERN.test(candidate) ? candidate : null
   const usernameTaken = username
     ? (await client.query(`SELECT 1 FROM auth_users WHERE lower(username) = lower($1)`, [username])).rowCount !== 0
