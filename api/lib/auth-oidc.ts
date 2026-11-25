@@ -24,6 +24,8 @@ export interface OidcProviderConfig {
   redirectUri: string
   scopes?: string
   postLogoutRedirectUri?: string
+  /** email_verified を送らない IdP で、届いた email を確認済みとして扱う。IdP が false と送ったときは上書きしない。 */
+  assumeEmailVerified?: boolean
 }
 
 export interface OidcProfile {
@@ -77,7 +79,8 @@ export interface OidcProvider {
   issuer: string
   start(returnTo: string | undefined, browserBinding: string): Promise<URL>
   finish(callbackUrl: URL, browserBinding: string): Promise<OidcProfile>
-  logoutUrl(): Promise<URL>
+  /** IdP 側もサインアウトさせる URL。IdP が end_session_endpoint を出していなければ null。 */
+  logoutUrl(): Promise<URL | null>
   matchesIssuer(value: string): boolean
   verifyBackchannelLogoutToken(token: string): Promise<OidcLogoutClaims>
   deleteExpiredAttempts(): Promise<number>
@@ -218,7 +221,8 @@ export function createOidcProvider(
         issuer: issuerId,
         subject: claims.sub,
         email,
-        emailVerified: claims.email_verified === true,
+        emailVerified: email !== null && (claims.email_verified === true
+          || (provider.assumeEmailVerified === true && claims.email_verified === undefined)),
         username,
         displayName,
         groups: stringArrayClaim(claims.groups),
@@ -252,7 +256,9 @@ export function createOidcProvider(
     },
 
     async logoutUrl() {
-      return oidc.buildEndSessionUrl(await getConfiguration(), {
+      const config = await getConfiguration()
+      if (!config.serverMetadata().end_session_endpoint) return null
+      return oidc.buildEndSessionUrl(config, {
         post_logout_redirect_uri: postLogoutRedirectUri.href,
       })
     },

@@ -75,18 +75,36 @@ const baseSchema = z.object({
   MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
+  // email_verified を送らない IdP（Cloudflare Access など）で、届いた email を確認済みとして扱う。
+  // 利用者が email を自分で変えられる IdP では有効にしない。
+  MDC_OIDC_ASSUME_EMAIL_VERIFIED: booleanString.default('false').transform(value =>
+    value === 'true' || value === '1'
+  ),
   MDC_OIDC_ALLOWED_GROUPS: z.string().default('').transform(value =>
     [...new Set(value.split(',').map(group => group.trim()).filter(Boolean))]
+  ),
+  // false にすると groups を見ず、ログインできる人を IdP 側のポリシーだけで決める。
+  // groups を渡さない IdP（Cloudflare Access の Google 連携など）のための設定。
+  MDC_OIDC_REQUIRE_ALLOWED_GROUP: booleanString.default('true').transform(value =>
+    value === 'true' || value === '1'
   ),
   MDC_OIDC_ROLE_MAPPING_JSON: oidcRoleMapping,
   MDC_OIDC_DEFAULT_ROLE: roleId.default('viewer'),
 })
 
 const schema = baseSchema.superRefine((env, ctx) => {
-  if ((env.MDC_AUTH_MODE === 'oidc' || env.MDC_AUTH_MODE === 'hybrid') && env.MDC_OIDC_ALLOWED_GROUPS.length === 0) {
+  if (env.MDC_AUTH_MODE !== 'oidc' && env.MDC_AUTH_MODE !== 'hybrid') return
+  if (env.MDC_OIDC_REQUIRE_ALLOWED_GROUP && env.MDC_OIDC_ALLOWED_GROUPS.length === 0) {
     ctx.addIssue({
       code: 'custom', path: ['MDC_OIDC_ALLOWED_GROUPS'],
-      message: 'MDC_OIDC_ALLOWED_GROUPS is required when OIDC is enabled',
+      message: 'MDC_OIDC_ALLOWED_GROUPS is required when OIDC is enabled and MDC_OIDC_REQUIRE_ALLOWED_GROUP is true',
+    })
+  }
+  // 見ない group を書いておくと、そこで絞れていると読み違えるので起動させない。
+  if (!env.MDC_OIDC_REQUIRE_ALLOWED_GROUP && env.MDC_OIDC_ALLOWED_GROUPS.length > 0) {
+    ctx.addIssue({
+      code: 'custom', path: ['MDC_OIDC_ALLOWED_GROUPS'],
+      message: 'MDC_OIDC_ALLOWED_GROUPS must be empty when MDC_OIDC_REQUIRE_ALLOWED_GROUP is false',
     })
   }
 })

@@ -239,6 +239,41 @@ describe('loadEnv', () => {
       MDC_WEB_ORIGIN: 'https://mado.example',
     })).toThrow(/MDC_OIDC_ALLOWED_GROUPS/)
   })
+
+  describe('groupを必須にしない設定（MDC_OIDC_REQUIRE_ALLOWED_GROUP=false）', () => {
+    const oidcEnv = {
+      MDC_AUTH_MODE: 'oidc',
+      MDC_DATABASE_URL_RW: 'postgres://x',
+      MDC_DATABASE_URL_RO: 'postgres://x',
+      MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+      MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+      MDC_WEB_ORIGIN: 'https://mado.example',
+      MDC_OIDC_REQUIRE_ALLOWED_GROUP: 'false',
+    }
+
+    it('group allowlistが空でも起動できる', () => {
+      const env = loadEnv(oidcEnv)
+      expect(env.MDC_OIDC_REQUIRE_ALLOWED_GROUP).toBe(false)
+      expect(env.MDC_OIDC_ALLOWED_GROUPS).toEqual([])
+    })
+
+    it('見ないgroup allowlistを書いた設定は起動させない', () => {
+      expect(() => loadEnv({ ...oidcEnv, MDC_OIDC_ALLOWED_GROUPS: 'mado-users' }))
+        .toThrow(/MDC_OIDC_ALLOWED_GROUPS must be empty/)
+    })
+  })
+
+  it('既定ではgroup allowlistを必須にする', () => {
+    expect(loadEnv({
+      MDC_AUTH_MODE: 'oidc',
+      MDC_DATABASE_URL_RW: 'postgres://x',
+      MDC_DATABASE_URL_RO: 'postgres://x',
+      MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+      MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+      MDC_WEB_ORIGIN: 'https://mado.example',
+      MDC_OIDC_ALLOWED_GROUPS: 'mado-users',
+    }).MDC_OIDC_REQUIRE_ALLOWED_GROUP).toBe(true)
+  })
 })
 
 describe('workerの環境設定', () => {

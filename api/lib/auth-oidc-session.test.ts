@@ -25,7 +25,7 @@ const provider: OidcProvider = {
 }
 const sessions = createSessionStore(pools.rw, audit, createOidcSessionVerifier({
   pool: pools.rw, crypto, provider, audit,
-  policy: { allowedGroups: ['mado-users', 'mado-admins'], roleMapping: { 'mado-admins': 'admin', 'mado-users': 'viewer' }, defaultRole: 'viewer' },
+  policy: { requireAllowedGroup: true, allowedGroups: ['mado-users', 'mado-admins'], roleMapping: { 'mado-admins': 'admin', 'mado-users': 'viewer' }, defaultRole: 'viewer' },
 }))
 const lifetime = { idleSeconds: 3600, absoluteSeconds: 7200 }
 

@@ -250,10 +250,12 @@ dev の DB パスワードは未設定なら開発用の既定値で動きます
 | `MDC_AUTH_COOKIE_SECURE` | no | HTTPS本番は`true`必須。`__Host-` session cookieを使う |
 | `MDC_OIDC_ISSUER_URL` / `MDC_OIDC_CLIENT_ID` / `MDC_OIDC_CLIENT_SECRET` / `MDC_OIDC_REDIRECT_URI` | oidc/hybrid | OIDC discovery issuer、client、callback URL |
 | `MDC_OIDC_SCOPES` | no | `openid email profile offline_access`を推奨。`offline_access`はIdP側のscope mappingも必要。設定手順は[Authentik連携](docs/authentik.md) |
-| `MDC_OIDC_ALLOWED_GROUPS` | oidc/hybrid | ログインを許可するAuthentik group（カンマ区切り）。空は起動時に拒否 |
+| `MDC_OIDC_ALLOWED_GROUPS` | oidc/hybrid | ログインを許可するAuthentik group（カンマ区切り）。空は起動時に拒否。`MDC_OIDC_REQUIRE_ALLOWED_GROUP=false`のときは空にする |
+| `MDC_OIDC_REQUIRE_ALLOWED_GROUP` | no | `false`にするとgroupを見ず、ログインできる人をIdP側のpolicyだけで決める（default true）。groupsを渡さないIdP向け。手順は[IdP側で入れる人を決める](docs/authentik.md#idp側で入れる人を決める) |
 | `MDC_OIDC_ROLE_MAPPING_JSON` | no | Authentik groupから`viewer` / `curator` / `operator` / `admin`への対応。ログイン時に同期し、既存sessionも1分ごとに現在のgroupを確認。空（`{}`）ならRoleはmado S3 Data Catalogの画面で管理する |
 | `MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL` | no | `email_verified=true`の既存Local Userを自動連携（default false）。特権Local Userは自動連携しない |
-| `MDC_OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/` |
+| `MDC_OIDC_ASSUME_EMAIL_VERIFIED` | no | `email_verified`を送らないIdP（Cloudflare Accessなど）で、届いたemailを確認済みとして扱う（default false）。IdPが`false`と送ったときは上書きしない。利用者がemailを自分で変えられるIdPでは有効にしない |
+| `MDC_OIDC_POST_LOGOUT_REDIRECT_URI` | no | Authentik logout後の戻り先。未指定時はcallbackと同じoriginの`/`。IdPがend_session_endpointを出さない場合は使わない |
 | `MDC_PREVIEW_TEXT_LIMIT` | no | テキストプレビュー最大バイト (default 65536) |
 | `MDC_PREVIEW_TAR_ENTRY_LIMIT` | no | tar 内 1 ページのエントリ最大数 (default 200) |
 | `MDC_PREVIEW_TARXZ_BYTE_LIMIT` | no | tar.xz の解凍バイト上限 (default 256MiB) |

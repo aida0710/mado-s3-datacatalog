@@ -86,10 +86,16 @@ export function createInternalApplication(env: Env) {
     redirectUri: env.MDC_OIDC_REDIRECT_URI!,
     scopes: env.MDC_OIDC_SCOPES,
     postLogoutRedirectUri: env.MDC_OIDC_POST_LOGOUT_REDIRECT_URI,
+    assumeEmailVerified: env.MDC_OIDC_ASSUME_EMAIL_VERIFIED,
   }) : undefined
   const sessions = createSessionStore(pools.rw, audit, oidc ? createOidcSessionVerifier({
     pool: pools.rw, crypto, provider: oidc, audit,
-    policy: { allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS, roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON, defaultRole: env.MDC_OIDC_DEFAULT_ROLE },
+    policy: {
+      requireAllowedGroup: env.MDC_OIDC_REQUIRE_ALLOWED_GROUP,
+      allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS,
+      roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON,
+      defaultRole: env.MDC_OIDC_DEFAULT_ROLE,
+    },
   }) : undefined)
   /** 期限切れの session・ログアウトの記録・OIDC の attempt を消す。起動側が定期的に呼ぶ。 */
   const deleteExpiredAuthRecords = async (): Promise<void> => {
@@ -141,6 +147,7 @@ export function createInternalApplication(env: Env) {
       oidc,
       oidcLoginPolicy: {
         autoLinkVerifiedEmail: env.MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL,
+        requireAllowedGroup: env.MDC_OIDC_REQUIRE_ALLOWED_GROUP,
         allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS,
         roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON,
         defaultRole: env.MDC_OIDC_DEFAULT_ROLE,
