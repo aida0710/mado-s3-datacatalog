@@ -97,13 +97,23 @@ groupsを渡さないIdP（Cloudflare AccessのGoogle連携など）では、`MD
 MDC_OIDC_REQUIRE_ALLOWED_GROUP=false
 MDC_OIDC_ALLOWED_GROUPS=
 MDC_OIDC_ROLE_MAPPING_JSON={}
+# emailで人を見分け、許可したドメインのemailだけを通す
+MDC_OIDC_IDENTIFY_BY_EMAIL=true
+MDC_OIDC_ALLOWED_EMAIL_DOMAINS=example.com,example.org
+# Cloudflare Accessの場合。チームのドメインのlogout URLで、Accessのsessionもすべてのアプリで終える
+MDC_OIDC_LOGOUT_URL=https://<team>.cloudflareaccess.com/cdn-cgi/access/logout
 ```
 
 - RoleはSettings > Access > Usersで管理します（`MDC_OIDC_ROLE_MAPPING_JSON`は空）。groupsが届かないので、対応表を書くと全員が`MDC_OIDC_DEFAULT_ROLE`になります。
 - 使用中のSSO sessionの再確認（1分ごと）は、UserInfoとrefresh tokenでの更新が通るかで判断します。IdPのpolicyから外れた人は、IdPがrefresh tokenでの更新を断った時点でsessionが失効します。いつ断るかはIdPのaccess tokenの有効期間で決まります。
 - IdPのpolicyはこのアプリの外にあります。IdPでどの人を通しているかを、mado S3 Data Catalogの画面からは確かめられません。
-- IdPが`email_verified`を送らない場合、emailは未確認として扱われ、Userのemailにも既存Userとの連携にも使いません。IdPがemailを確かめている（利用者が自分で変えられない）なら、`MDC_OIDC_ASSUME_EMAIL_VERIFIED=true`で確認済みとして扱えます。IdPが`false`と送ったときは上書きしません。
-- IdPが`end_session_endpoint`を出していない場合、ログアウトはmado S3 Data Catalogのsessionだけを終えます。IdP側のsessionは残るので、次のログインはIdPの画面を通らずに終わることがあります。
+- `MDC_OIDC_IDENTIFY_BY_EMAIL=true`にすると、Userをemailで見分けます。
+  - IdPが`email_verified`を送らないときは、emailを確認済みとして扱います。IdPが`false`と送ったときは上書きしません。
+  - まだ結び付いていないSSOのidentity（初めてのログイン、IdPやそのclientを作り直したあと）は、emailが一致するUserへ連携します。Adminなど特権を持つUserや、別のIdPで入っていたUserも連携します。削除したUserのemailには連携しません。
+  - `MDC_OIDC_ALLOWED_EMAIL_DOMAINS`が必須です。IdP側のpolicyが誤って広げられても、許可したドメインのemailでなければ入れません（理由は`email_domain_not_allowed`）。
+  - IdPのemailを信用できるとき（利用者が自分でemailを変えられないとき）だけ有効にします。`MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL`とは同時に使えません。
+  - 別のIdPから移るときは、切り替える前に既存Userのemailを新しいIdPのemailにそろえておくと、初めてのログインで同じUserへ連携します。
+- IdPが`end_session_endpoint`を出していない場合、`MDC_OIDC_LOGOUT_URL`が無ければ、ログアウトはmado S3 Data Catalogのsessionだけを終えます。IdP側のsessionは残るので、次のログインはIdPの画面を通らずに終わります。共有のPCで使うなら`MDC_OIDC_LOGOUT_URL`を指定します。
 
 ## Login transactionの防御
 
@@ -126,6 +136,7 @@ callbackで断ったときは、利用者には理由を区別せず`401`を返�
 | `last_admin` | groupの同期で、最後のactiveなAdminを降格しようとした | 別のAdminを先に用意する |
 | `privileged_link_required` | 検証済みemailが、特権を持つLocal Userと一致した | 乗っ取りを防ぐため自動では連携しない。連携するなら、`MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL`が有効な状態で、そのLocal UserのRoleを一時的にviewerだけにしてSSOで1度入ってもらい、Roleを戻す |
 | `deleted_user_email` | 検証済みemailが、削除したUserと一致した | 別のemailにするか、管理者が対応する |
+| `email_domain_not_allowed` | `MDC_OIDC_ALLOWED_EMAIL_DOMAINS`のドメインの検証済みemailではない | IdPのpolicyと、許可するドメインを確かめる |
 
 これ以外の`reason`（IdPに届かない、stateが古い、開始したbrowserと違う、など）は、
 IdPとの通信やbrowser側の問題です。

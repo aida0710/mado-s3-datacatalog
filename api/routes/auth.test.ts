@@ -181,7 +181,8 @@ describe('認証 route', () => {
         session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
         oidc,
         oidcLoginPolicy: {
-          autoLinkVerifiedEmail: true, requireAllowedGroup: true, allowedGroups: ['mado-admins'],
+          autoLinkVerifiedEmail: true, identifyByEmail: false, allowedEmailDomains: [],
+          requireAllowedGroup: true, allowedGroups: ['mado-admins'],
           roleMapping: { 'mado-admins': 'admin' }, defaultRole: 'viewer',
         },
       },
@@ -198,6 +199,69 @@ describe('認証 route', () => {
     expect(linked?.authMethods).toEqual(['local', 'sso'])
     const synced = await pools.rw.query(`SELECT outcome FROM audit_events WHERE action = 'auth.oidc.sync'`)
     expect(synced.rows).toEqual([{ outcome: 'success' }])
+  })
+
+  describe('email で人を見分ける IdP（Cloudflare Access など）', () => {
+    // groups・email_verified・preferred_username を送らない IdP を模す。
+    function cloudflareLikeApp(email: string) {
+      const issuer = 'https://team.example/cdn-cgi/access/sso/oidc/client'
+      const oidc: OidcProvider = {
+        id: 'primary', label: 'SSO', issuer,
+        start: async () => new URL('https://team.example/authorize'),
+        finish: async () => ({
+          issuer, subject: 'cf-subject-1', email, emailVerified: true, username: null, displayName: 'SSO User',
+          groups: [], sid: null, returnTo: '/',
+        }),
+        logoutUrl: async () => new URL('https://team.example/cdn-cgi/access/logout'),
+        matchesIssuer: value => value === issuer,
+        verifyBackchannelLogoutToken: async () => { throw new Error('not used') },
+        deleteExpiredAttempts: async () => 0,
+      }
+      const app = new Hono()
+      mountAuthRoutes(app, {
+        ...stores, audit,
+        config: {
+          localEnabled: false,
+          session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
+          oidc,
+          oidcLoginPolicy: {
+            autoLinkVerifiedEmail: false, identifyByEmail: true, allowedEmailDomains: ['example.com'],
+            requireAllowedGroup: false, allowedGroups: [], roleMapping: {}, defaultRole: 'viewer',
+          },
+        },
+      })
+      return app
+    }
+
+    async function login(app: Hono) {
+      const started = await app.request('/oidc/start')
+      return app.request('/oidc/callback?code=ok&state=ok', {
+        headers: { Cookie: started.headers.get('set-cookie')!.split(';')[0] },
+      })
+    }
+
+    it('email が一致する既存 User へ、管理者でも連携する', async () => {
+      await users.createUser({
+        username: 'local-admin', email: 'admin@example.com', displayName: 'Admin', roles: ['admin'],
+        localPassword: { hash: await hashPassword('correct-password-123'), mustChange: false },
+      })
+      expect((await login(cloudflareLikeApp('ADMIN@example.com'))).status).toBe(303)
+      const linked = await credentials.findLocalCredentialByLogin('local-admin')
+      expect(linked).toMatchObject({ roles: ['admin'], authMethods: ['local', 'sso'] })
+    })
+
+    it('許可したドメインでない email は、User を作らずに断る', async () => {
+      const before = await pools.rw.query('SELECT count(*)::int AS n FROM auth_users')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      try {
+        expect((await login(cloudflareLikeApp('someone@other.example'))).status).toBe(401)
+        expect(warn).toHaveBeenCalledWith('oidc login failed', expect.objectContaining({ reason: 'email_domain_not_allowed' }))
+      } finally {
+        warn.mockRestore()
+      }
+      const after = await pools.rw.query('SELECT count(*)::int AS n FROM auth_users')
+      expect(after.rows[0].n).toBe(before.rows[0].n)
+    })
   })
 
   it('OIDC callbackは開始browser cookieなしでは拒否する', async () => {
@@ -222,7 +286,8 @@ describe('認証 route', () => {
         session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
         oidc,
         oidcLoginPolicy: {
-          autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
+          autoLinkVerifiedEmail: false, identifyByEmail: false, allowedEmailDomains: [],
+          requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
         },
       },
     })
@@ -340,7 +405,8 @@ describe('認証 route', () => {
           session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
           oidc,
           oidcLoginPolicy: {
-            autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
+            autoLinkVerifiedEmail: false, identifyByEmail: false, allowedEmailDomains: [],
+          requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
           },
         },
       })
