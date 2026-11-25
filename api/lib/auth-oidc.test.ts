@@ -145,6 +145,15 @@ describe('OidcProvider', () => {
     expect(url?.href).toBe('https://auth.example/end-session?post_logout_redirect_uri=https%3A%2F%2Fmado.example%2F')
   })
 
+  it('IdPのlogout URLを設定すれば、discoveryのend_session_endpointより優先する', async () => {
+    const provider = createOidcProvider(pools.rw, crypto, {
+      id: 'cloudflare', label: 'SSO', issuerUrl: 'https://team.example/cdn-cgi/access/sso/oidc/client',
+      clientId: 'client', clientSecret: 'secret', redirectUri: 'https://mado.example/api/auth/oidc/callback',
+      idpLogoutUrl: 'https://team.example/cdn-cgi/access/logout',
+    })
+    expect((await provider.logoutUrl())?.href).toBe('https://team.example/cdn-cgi/access/logout')
+  })
+
   it('IdPがend_session_endpointを出していなければ、logout URLを作らずnullを返す', async () => {
     vi.mocked(oidc.discovery).mockResolvedValueOnce({ serverMetadata: () => ({}) } as unknown as oidc.Configuration)
     const provider = createOidcProvider(pools.rw, crypto, {

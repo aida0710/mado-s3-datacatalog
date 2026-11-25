@@ -3,7 +3,7 @@ import { closePools, createPools } from '../db.js'
 import { createAuditWriter, type AuditWriter } from './audit.js'
 import { createCredentialStore } from './auth-credential-store.js'
 import {
-  OidcLoginDeniedError, createOidcProvisioning, resolveOidcRoles, type OidcProvisionInput,
+  OidcLoginDeniedError, createOidcProvisioning, isAllowedEmailDomain, resolveOidcRoles, type OidcProvisionInput,
 } from './auth-oidc-provisioning.js'
 import { createUserStore } from './auth-user-store.js'
 import { hashPassword } from './password.js'
@@ -47,6 +47,21 @@ describe('resolveOidcRoles', () => {
     const idpDecides = { ...policy, requireAllowedGroup: false, allowedGroups: [], roleMapping: {} }
     expect(resolveOidcRoles(idpDecides, [])).toEqual({ allowed: true })
     expect(resolveOidcRoles(idpDecides, ['others'])).toEqual({ allowed: true })
+  })
+})
+
+describe('isAllowedEmailDomain', () => {
+  const policy = { allowedEmailDomains: ['example.com', 'example.org'] }
+
+  it('許可したドメインの検証済み email だけを通す（大文字小文字を区別しない）', () => {
+    expect(isAllowedEmailDomain(policy, { email: 'User@Example.COM', emailVerified: true })).toBe(true)
+    expect(isAllowedEmailDomain(policy, { email: 'user@other.example', emailVerified: true })).toBe(false)
+    expect(isAllowedEmailDomain(policy, { email: 'user@example.com', emailVerified: false })).toBe(false)
+    expect(isAllowedEmailDomain(policy, { email: null, emailVerified: false })).toBe(false)
+  })
+
+  it('ドメインを指定しなければ誰でも通す', () => {
+    expect(isAllowedEmailDomain({ allowedEmailDomains: [] }, { email: null, emailVerified: false })).toBe(true)
   })
 })
 
@@ -96,6 +111,30 @@ describe('OidcProvisioning', () => {
       ...withoutUsername, subject: 'cf-subject-3', email: 'hanako@example.com', emailVerified: false,
     })
     expect(unverified.user.username).toBeNull()
+  })
+
+  it('email で人を見分けるなら、別の IdP で入っていた管理者にも新しい identity を連携する', async () => {
+    const previous = await provisioning.provisionOidcUser({
+      issuer: 'https://old-idp.example/', subject: 'old-subject', email: 'boss@example.com', emailVerified: true,
+      username: 'boss', displayName: 'Boss', groups: ['mado-admins'], autoLinkVerifiedEmail: false,
+      defaultRole: 'viewer', managedRoles: ['admin'],
+    })
+    const switched = await provisioning.provisionOidcUser({
+      issuer: 'https://new-idp.example/', subject: 'new-subject', email: 'BOSS@example.com', emailVerified: true,
+      username: null, displayName: 'Boss', groups: [], autoLinkVerifiedEmail: false, identifyByEmail: true,
+      defaultRole: 'viewer',
+    })
+    expect(switched).toMatchObject({ created: false, linkedExisting: true })
+    expect(switched.user).toMatchObject({ id: previous.user.id, username: 'boss', roles: ['admin'] })
+  })
+
+  it('email で人を見分けても、削除した User の email には連携しない', async () => {
+    const deleted = await users.createUser({ email: 'gone@example.com', displayName: 'Gone', roles: ['viewer'] })
+    await pools.rw.query('UPDATE auth_users SET deleted_at = now() WHERE id = $1', [deleted.id])
+    await expect(provisioning.provisionOidcUser({
+      issuer, subject: 'new-subject', email: 'gone@example.com', emailVerified: true, username: null,
+      displayName: 'Gone', groups: [], autoLinkVerifiedEmail: false, identifyByEmail: true, defaultRole: 'viewer',
+    })).rejects.toMatchObject({ reason: 'deleted_user_email' })
   })
 
   it('特権を持つ Local User への email の自動連携は断る', async () => {

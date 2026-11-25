@@ -9,7 +9,7 @@ import type { UserStore } from '../lib/auth-user-store.js'
 import type { OidcProvider } from '../lib/auth-oidc.js'
 import { OIDC_TRANSACTION_TTL_SECONDS, OidcAttemptLimitError } from '../lib/auth-oidc.js'
 import {
-  OidcLoginDeniedError, resolveOidcRoles, type OidcProvisioning, type OidcRolePolicy,
+  OidcLoginDeniedError, isAllowedEmailDomain, resolveOidcRoles, type OidcLoginPolicy, type OidcProvisioning,
 } from '../lib/auth-oidc-provisioning.js'
 import { isPlausibleOpaqueToken, randomToken } from '../lib/auth-crypto.js'
 import { AuthRateLimiter } from '../lib/auth-rate-limit.js'
@@ -34,7 +34,7 @@ export interface AuthRouteConfig {
   session: SessionLifetime & { secure: boolean }
   rateLimiter?: AuthRateLimiter
   oidc?: OidcProvider
-  oidcLoginPolicy?: OidcRolePolicy & { autoLinkVerifiedEmail: boolean }
+  oidcLoginPolicy?: OidcLoginPolicy
 }
 
 export interface AuthRouteDeps {
@@ -210,11 +210,13 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       if (!browserBinding) throw new Error('oidc browser binding missing')
       const profile = await deps.config.oidc.finish(new URL(c.req.url), browserBinding)
       if (profile.tokens && !deps.crypto) throw new Error('OIDC token encryption is not configured')
-      const policy = deps.config.oidcLoginPolicy ?? {
-        autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: [], roleMapping: {}, defaultRole: 'viewer' as const,
+      const policy: OidcLoginPolicy = deps.config.oidcLoginPolicy ?? {
+        autoLinkVerifiedEmail: false, identifyByEmail: false, allowedEmailDomains: [],
+        requireAllowedGroup: true, allowedGroups: [], roleMapping: {}, defaultRole: 'viewer',
       }
       const roles = resolveOidcRoles(policy, profile.groups)
       if (!roles.allowed) throw new OidcLoginDeniedError('group_not_allowed')
+      if (!isAllowedEmailDomain(policy, profile)) throw new OidcLoginDeniedError('email_domain_not_allowed')
       const provisioned = await deps.oidcProvisioning.provisionOidcUser({
         issuer: profile.issuer,
         subject: profile.subject,
@@ -224,6 +226,7 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
         displayName: profile.displayName,
         groups: profile.groups,
         autoLinkVerifiedEmail: policy.autoLinkVerifiedEmail,
+        identifyByEmail: policy.identifyByEmail,
         defaultRole: policy.defaultRole,
         managedRoles: roles.managedRoles,
         metadata,

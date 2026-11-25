@@ -75,11 +75,18 @@ const baseSchema = z.object({
   MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
-  // email_verified を送らない IdP（Cloudflare Access など）で、届いた email を確認済みとして扱う。
-  // 利用者が email を自分で変えられる IdP では有効にしない。
-  MDC_OIDC_ASSUME_EMAIL_VERIFIED: booleanString.default('false').transform(value =>
+  // email で人を見分ける。email_verified を送らない IdP（Cloudflare Access など）では email を確認済みとして扱い、
+  // まだ結び付いていない SSO の identity を、email が一致する User（特権を持つ User も）へ連携する。
+  // IdP の email を信用できるときだけ有効にする。MDC_OIDC_ALLOWED_EMAIL_DOMAINS が要る。
+  MDC_OIDC_IDENTIFY_BY_EMAIL: booleanString.default('false').transform(value =>
     value === 'true' || value === '1'
   ),
+  // 空でなければ、検証済み email のドメインがこの中にある人だけを通す（カンマ区切り）。
+  MDC_OIDC_ALLOWED_EMAIL_DOMAINS: z.string().default('').transform(value =>
+    [...new Set(value.split(',').map(domain => domain.trim().toLowerCase()).filter(Boolean))]
+  ),
+  // IdP 側もサインアウトさせる URL。discovery に end_session_endpoint が無い IdP（Cloudflare Access など）で指定する。
+  MDC_OIDC_LOGOUT_URL: optionalUrl,
   MDC_OIDC_ALLOWED_GROUPS: z.string().default('').transform(value =>
     [...new Set(value.split(',').map(group => group.trim()).filter(Boolean))]
   ),
@@ -105,6 +112,20 @@ const schema = baseSchema.superRefine((env, ctx) => {
     ctx.addIssue({
       code: 'custom', path: ['MDC_OIDC_ALLOWED_GROUPS'],
       message: 'MDC_OIDC_ALLOWED_GROUPS must be empty when MDC_OIDC_REQUIRE_ALLOWED_GROUP is false',
+    })
+  }
+  // email で人を見分けるなら、信用する email のドメインを必ず絞る。IdP 側の設定が広げられても、ここで止める。
+  if (env.MDC_OIDC_IDENTIFY_BY_EMAIL && env.MDC_OIDC_ALLOWED_EMAIL_DOMAINS.length === 0) {
+    ctx.addIssue({
+      code: 'custom', path: ['MDC_OIDC_ALLOWED_EMAIL_DOMAINS'],
+      message: 'MDC_OIDC_ALLOWED_EMAIL_DOMAINS is required when MDC_OIDC_IDENTIFY_BY_EMAIL is true',
+    })
+  }
+  // 連携のしかたが 2 通り書いてあると、どちらで連携したか読み違えるので起動させない。
+  if (env.MDC_OIDC_IDENTIFY_BY_EMAIL && env.MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL) {
+    ctx.addIssue({
+      code: 'custom', path: ['MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL'],
+      message: 'MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL must be false when MDC_OIDC_IDENTIFY_BY_EMAIL is true',
     })
   }
 })

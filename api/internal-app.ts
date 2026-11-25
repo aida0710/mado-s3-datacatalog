@@ -86,7 +86,9 @@ export function createInternalApplication(env: Env) {
     redirectUri: env.MDC_OIDC_REDIRECT_URI!,
     scopes: env.MDC_OIDC_SCOPES,
     postLogoutRedirectUri: env.MDC_OIDC_POST_LOGOUT_REDIRECT_URI,
-    assumeEmailVerified: env.MDC_OIDC_ASSUME_EMAIL_VERIFIED,
+    // email で人を見分けるなら、email_verified を送らない IdP の email も確認済みとして扱う。
+    assumeEmailVerified: env.MDC_OIDC_IDENTIFY_BY_EMAIL,
+    idpLogoutUrl: env.MDC_OIDC_LOGOUT_URL,
   }) : undefined
   const sessions = createSessionStore(pools.rw, audit, oidc ? createOidcSessionVerifier({
     pool: pools.rw, crypto, provider: oidc, audit,
@@ -147,6 +149,8 @@ export function createInternalApplication(env: Env) {
       oidc,
       oidcLoginPolicy: {
         autoLinkVerifiedEmail: env.MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL,
+        identifyByEmail: env.MDC_OIDC_IDENTIFY_BY_EMAIL,
+        allowedEmailDomains: env.MDC_OIDC_ALLOWED_EMAIL_DOMAINS,
         requireAllowedGroup: env.MDC_OIDC_REQUIRE_ALLOWED_GROUP,
         allowedGroups: env.MDC_OIDC_ALLOWED_GROUPS,
         roleMapping: env.MDC_OIDC_ROLE_MAPPING_JSON,

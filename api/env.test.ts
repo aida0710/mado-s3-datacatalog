@@ -263,6 +263,31 @@ describe('loadEnv', () => {
     })
   })
 
+  describe('emailで人を見分ける設定（MDC_OIDC_IDENTIFY_BY_EMAIL）', () => {
+    const identifyEnv = {
+      MDC_AUTH_MODE: 'oidc',
+      MDC_DATABASE_URL_RW: 'postgres://x',
+      MDC_DATABASE_URL_RO: 'postgres://x',
+      MDC_DATABASE_URL_MIGRATE: 'postgres://postgres@localhost/dashboard',
+      MDC_STORAGE_SECRET_KEY: '0'.repeat(64),
+      MDC_WEB_ORIGIN: 'https://mado.example',
+      MDC_OIDC_REQUIRE_ALLOWED_GROUP: 'false',
+      MDC_OIDC_IDENTIFY_BY_EMAIL: 'true',
+    }
+
+    it('emailのドメインの絞り込みを必須にし、小文字にそろえる', () => {
+      expect(() => loadEnv(identifyEnv)).toThrow(/MDC_OIDC_ALLOWED_EMAIL_DOMAINS is required/)
+      const env = loadEnv({ ...identifyEnv, MDC_OIDC_ALLOWED_EMAIL_DOMAINS: 'Example.com, example.org ,example.com' })
+      expect(env.MDC_OIDC_ALLOWED_EMAIL_DOMAINS).toEqual(['example.com', 'example.org'])
+    })
+
+    it('Local Userへの自動連携と同時には使えない', () => {
+      expect(() => loadEnv({
+        ...identifyEnv, MDC_OIDC_ALLOWED_EMAIL_DOMAINS: 'example.com', MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true',
+      })).toThrow(/MDC_OIDC_AUTO_LINK_VERIFIED_EMAIL must be false/)
+    })
+  })
+
   it('既定ではgroup allowlistを必須にする', () => {
     expect(loadEnv({
       MDC_AUTH_MODE: 'oidc',

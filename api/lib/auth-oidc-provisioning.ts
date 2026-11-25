@@ -28,6 +28,7 @@ export type OidcLoginDenialReason =
   | 'group_not_allowed'
   | 'deleted_user_email'
   | 'privileged_link_required'
+  | 'email_domain_not_allowed'
   | 'user_disabled'
   | 'last_admin'
 
@@ -36,6 +37,30 @@ export class OidcLoginDeniedError extends Error {
     super(`oidc login denied: ${reason}`)
     this.name = 'OidcLoginDeniedError'
   }
+}
+
+/** SSO の login の決まり。group による判定に、email による判定と既存 User への連携のしかたを足したもの。 */
+export interface OidcLoginPolicy extends OidcRolePolicy {
+  /** 検証済み email が一致する Local User へ連携する。特権を持つ User へは連携しない。 */
+  autoLinkVerifiedEmail: boolean
+  /**
+   * email で人を見分ける。まだ結び付いていない SSO の identity は、検証済み email が一致する User
+   * （特権を持つ User や、別の IdP で入っていた User も含む）へ連携する。IdP の email を信用できるときだけ使う。
+   */
+  identifyByEmail: boolean
+  /** 空でなければ、検証済み email のドメインがこの中にある人だけを通す（小文字）。 */
+  allowedEmailDomains: string[]
+}
+
+/** allowedEmailDomains が空なら誰でも通す。空でなければ、検証済み email のドメインが一致する人だけを通す。 */
+export function isAllowedEmailDomain(
+  policy: Pick<OidcLoginPolicy, 'allowedEmailDomains'>,
+  profile: { email: string | null; emailVerified: boolean },
+): boolean {
+  if (policy.allowedEmailDomains.length === 0) return true
+  if (!profile.emailVerified || !profile.email) return false
+  const domain = profile.email.slice(profile.email.lastIndexOf('@') + 1).toLowerCase()
+  return policy.allowedEmailDomains.includes(domain)
 }
 
 /**
@@ -61,6 +86,8 @@ export interface OidcProvisionInput {
   displayName: string
   groups: string[]
   autoLinkVerifiedEmail: boolean
+  /** OidcLoginPolicy.identifyByEmail と同じ。省略は false。 */
+  identifyByEmail?: boolean
   defaultRole: string
   /** 渡すと User の Role をこれに合わせる。undefined なら Role は触らない。 */
   managedRoles?: string[]
@@ -88,8 +115,13 @@ async function findLinkedUserId(client: PoolClient, input: OidcProvisionInput): 
   return identity.rows[0]?.user_id ?? null
 }
 
-/** 検証済み email が一致する既存 User を探す。特権を持つ User への自動連携は乗っ取りになるので断る。 */
-async function findVerifiedEmailUserId(client: PoolClient, email: string): Promise<string | null> {
+/**
+ * 検証済み email が一致する既存 User を探す。IdP の email を信用しない設定（allowPrivileged が false）では、
+ * 特権を持つ User への連携は乗っ取りになるので断る。
+ */
+async function findVerifiedEmailUserId(
+  client: PoolClient, email: string, { allowPrivileged }: { allowPrivileged: boolean },
+): Promise<string | null> {
   const match = await client.query<{ id: string; deleted_at: Date | null }>(
     `SELECT id, deleted_at FROM auth_users WHERE lower(email) = lower($1) FOR UPDATE`,
     [email],
@@ -97,6 +129,7 @@ async function findVerifiedEmailUserId(client: PoolClient, email: string): Promi
   const row = match.rows[0]
   if (!row) return null
   if (row.deleted_at) throw new OidcLoginDeniedError('deleted_user_email')
+  if (allowPrivileged) return row.id
   const candidate = await loadUserIncludingDeleted(client, row.id)
   if (!candidate || candidate.roles.some(role => role !== UNPRIVILEGED_ROLE)) {
     throw new OidcLoginDeniedError('privileged_link_required')
@@ -158,8 +191,9 @@ export function createOidcProvisioning(pool: Pool, audit: AuditWriter): OidcProv
     provisionOidcUser: input => withTransaction(pool, async client => {
       let userId = await findLinkedUserId(client, input)
       let linkedExisting = false
-      if (!userId && input.autoLinkVerifiedEmail && input.emailVerified && input.email) {
-        userId = await findVerifiedEmailUserId(client, input.email)
+      const identifyByEmail = input.identifyByEmail === true
+      if (!userId && (identifyByEmail || input.autoLinkVerifiedEmail) && input.emailVerified && input.email) {
+        userId = await findVerifiedEmailUserId(client, input.email, { allowPrivileged: identifyByEmail })
         linkedExisting = userId !== null
       }
       const created = !userId
