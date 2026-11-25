@@ -23,6 +23,7 @@ afterAll(() => closePools(pools))
 
 describe('resolveOidcRoles', () => {
   const policy = {
+    requireAllowedGroup: true,
     allowedGroups: ['mado-users', 'mado-admins'],
     roleMapping: { 'mado-admins': 'admin' as const },
     defaultRole: 'viewer' as const,
@@ -40,6 +41,12 @@ describe('resolveOidcRoles', () => {
 
   it('対応表が空なら Role は Mado 側の管理に任せる', () => {
     expect(resolveOidcRoles({ ...policy, roleMapping: {} }, ['mado-users'])).toEqual({ allowed: true })
+  })
+
+  it('group を必須にしない設定なら、group が届かなくても login させる', () => {
+    const idpDecides = { ...policy, requireAllowedGroup: false, allowedGroups: [], roleMapping: {} }
+    expect(resolveOidcRoles(idpDecides, [])).toEqual({ allowed: true })
+    expect(resolveOidcRoles(idpDecides, ['others'])).toEqual({ allowed: true })
   })
 })
 

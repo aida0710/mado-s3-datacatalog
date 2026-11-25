@@ -16,6 +16,8 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$/
 export type OidcRole = 'viewer' | 'curator' | 'operator' | 'admin'
 
 export interface OidcRolePolicy {
+  /** false なら groups を見ず、ログインできる人は IdP 側のポリシーで決まっているものとして扱う。 */
+  requireAllowedGroup: boolean
   allowedGroups: string[]
   roleMapping: Record<string, OidcRole>
   defaultRole: OidcRole
@@ -44,7 +46,7 @@ export function resolveOidcRoles(
   policy: OidcRolePolicy,
   groups: readonly string[],
 ): { allowed: false } | { allowed: true; managedRoles?: OidcRole[] } {
-  if (!groups.some(group => policy.allowedGroups.includes(group))) return { allowed: false }
+  if (policy.requireAllowedGroup && !groups.some(group => policy.allowedGroups.includes(group))) return { allowed: false }
   if (Object.keys(policy.roleMapping).length === 0) return { allowed: true }
   const mapped = [...new Set(groups.map(group => policy.roleMapping[group]).filter(Boolean))]
   return { allowed: true, managedRoles: mapped.length > 0 ? mapped : [policy.defaultRole] }

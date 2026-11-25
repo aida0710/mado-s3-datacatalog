@@ -77,7 +77,8 @@ export interface OidcProvider {
   issuer: string
   start(returnTo: string | undefined, browserBinding: string): Promise<URL>
   finish(callbackUrl: URL, browserBinding: string): Promise<OidcProfile>
-  logoutUrl(): Promise<URL>
+  /** IdP 側もサインアウトさせる URL。IdP が end_session_endpoint を出していなければ null。 */
+  logoutUrl(): Promise<URL | null>
   matchesIssuer(value: string): boolean
   verifyBackchannelLogoutToken(token: string): Promise<OidcLogoutClaims>
   deleteExpiredAttempts(): Promise<number>
@@ -252,7 +253,9 @@ export function createOidcProvider(
     },
 
     async logoutUrl() {
-      return oidc.buildEndSessionUrl(await getConfiguration(), {
+      const config = await getConfiguration()
+      if (!config.serverMetadata().end_session_endpoint) return null
+      return oidc.buildEndSessionUrl(config, {
         post_logout_redirect_uri: postLogoutRedirectUri.href,
       })
     },

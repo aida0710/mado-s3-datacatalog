@@ -211,7 +211,7 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       const profile = await deps.config.oidc.finish(new URL(c.req.url), browserBinding)
       if (profile.tokens && !deps.crypto) throw new Error('OIDC token encryption is not configured')
       const policy = deps.config.oidcLoginPolicy ?? {
-        autoLinkVerifiedEmail: false, allowedGroups: [], roleMapping: {}, defaultRole: 'viewer' as const,
+        autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: [], roleMapping: {}, defaultRole: 'viewer' as const,
       }
       const roles = resolveOidcRoles(policy, profile.groups)
       if (!roles.allowed) throw new OidcLoginDeniedError('group_not_allowed')
@@ -335,12 +335,14 @@ export function mountAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
   /**
    * SSO の session なら、IdP 側もサインアウトさせる URL を返す。このアプリの session はもう失効しているので、
    * IdP に届かず URL を作れなくても失敗にはしない。ただし IdP 側の session は残るので、
-   * 画面で伝えられるよう unavailable を返す。
+   * 画面で伝えられるよう unavailable を返す。IdP がサインアウトの URL を持たない（end_session_endpoint を
+   * 出さない）ときは、届かなかったわけではないので unavailable にしない。
    */
   async function idpLogout(oidcContext: { issuer: string } | null): Promise<{ url: string | null; unavailable: boolean }> {
     if (!oidcContext || !deps.config.oidc?.matchesIssuer(oidcContext.issuer)) return { url: null, unavailable: false }
     try {
-      return { url: (await deps.config.oidc.logoutUrl()).href, unavailable: false }
+      const url = await deps.config.oidc.logoutUrl()
+      return { url: url?.href ?? null, unavailable: false }
     } catch (error) {
       console.warn('oidc logout url unavailable', { reason: oidcFailureReason(error) })
       return { url: null, unavailable: true }

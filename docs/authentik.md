@@ -72,7 +72,7 @@ APIを再起動してください。設定例や既定値を変えても、既�
 - 初回SSOでUserをJIT作成します。self-signup用のmado S3 Data Catalog画面はありません。
 - 既存Local Userへのemail自動連携は既定で無効です。有効化した場合も`email_verified=true`かつemail一致が必要で、Admin等の特権Local Userは自動連携しません。
 - 未検証emailはUserのemailにも既存Userとの連携にも使いません。
-- `MDC_OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。
+- `MDC_OIDC_ALLOWED_GROUPS`は必須です。いずれかのgroupに所属しないUserを拒否し、空の設定ではmado S3 Data Catalogが起動しません。groupsを渡さないIdPでは、下の[IdP側で入れる人を決める](#idp側で入れる人を決める)設定にします。
 - role mappingが設定されている場合、SSOログインのたびにmado S3 Data Catalog RoleをAuthentik groupへ同期します。
 - 複数groupから複数Roleを付与できます。該当groupが無い場合は`MDC_OIDC_DEFAULT_ROLE`になります。
 - `MDC_OIDC_ROLE_MAPPING_JSON`を空（`{}`）にすると、AuthentikはログインできるかどうかだけをAuthentik groupで決め、RoleはSettings > Access > Usersで管理します。ログインと再確認でRoleを変えず、初回SSOのUserは`MDC_OIDC_DEFAULT_ROLE`で作ります。社内全員が入るgroupを1つだけ`MDC_OIDC_ALLOWED_GROUPS`に入れる運用に向きます。
@@ -86,6 +86,23 @@ groupの判定とRoleの同期はログイン時と、使用中のSSO sessionの
 Authentik側で許可groupから外したりRoleを変えたりすると、次の再確認でsessionが失効します。
 すぐに止めたいときは、mado S3 Data CatalogのSettings > Access > UsersでそのUserを無効にしてください。
 無効にするとsessionはその場で失効します。
+
+## IdP側で入れる人を決める
+
+groupsを渡さないIdP（Cloudflare AccessのGoogle連携など）では、`MDC_OIDC_REQUIRE_ALLOWED_GROUP=false`にして、
+ログインできる人をIdP側のpolicyだけで決めます。このとき`MDC_OIDC_ALLOWED_GROUPS`は空にします。
+見ないgroupが書いてあると、そこで絞れていると読み違えるので、mado S3 Data Catalogは起動しません。
+
+```dotenv
+MDC_OIDC_REQUIRE_ALLOWED_GROUP=false
+MDC_OIDC_ALLOWED_GROUPS=
+MDC_OIDC_ROLE_MAPPING_JSON={}
+```
+
+- RoleはSettings > Access > Usersで管理します（`MDC_OIDC_ROLE_MAPPING_JSON`は空）。groupsが届かないので、対応表を書くと全員が`MDC_OIDC_DEFAULT_ROLE`になります。
+- 使用中のSSO sessionの再確認（1分ごと）は、UserInfoとrefresh tokenでの更新が通るかで判断します。IdPのpolicyから外れた人は、IdPがrefresh tokenでの更新を断った時点でsessionが失効します。いつ断るかはIdPのaccess tokenの有効期間で決まります。
+- IdPのpolicyはこのアプリの外にあります。IdPでどの人を通しているかを、mado S3 Data Catalogの画面からは確かめられません。
+- IdPが`end_session_endpoint`を出していない場合、ログアウトはmado S3 Data Catalogのsessionだけを終えます。IdP側のsessionは残るので、次のログインはIdPの画面を通らずに終わることがあります。
 
 ## Login transactionの防御
 

@@ -181,7 +181,7 @@ describe('認証 route', () => {
         session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
         oidc,
         oidcLoginPolicy: {
-          autoLinkVerifiedEmail: true, allowedGroups: ['mado-admins'],
+          autoLinkVerifiedEmail: true, requireAllowedGroup: true, allowedGroups: ['mado-admins'],
           roleMapping: { 'mado-admins': 'admin' }, defaultRole: 'viewer',
         },
       },
@@ -222,7 +222,7 @@ describe('認証 route', () => {
         session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
         oidc,
         oidcLoginPolicy: {
-          autoLinkVerifiedEmail: false, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
+          autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
         },
       },
     })
@@ -340,7 +340,7 @@ describe('認証 route', () => {
           session: { idleSeconds: 3600, absoluteSeconds: 7200, secure: false },
           oidc,
           oidcLoginPolicy: {
-            autoLinkVerifiedEmail: false, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
+            autoLinkVerifiedEmail: false, requireAllowedGroup: true, allowedGroups: ['mado-users'], roleMapping: {}, defaultRole: 'viewer',
           },
         },
       })
@@ -381,6 +381,21 @@ describe('認証 route', () => {
       } finally {
         warn.mockRestore()
       }
+    })
+
+    it('IdP がサインアウトの URL を持たなければ、IdP に届かなかった扱いにせず成功を返す', async () => {
+      const user = (await credentials.findLocalCredentialByLogin('local-user'))!
+      const session = await sessions.createSession({
+        userId: user.id, lifetime: { idleSeconds: 3600, absoluteSeconds: 7200 },
+        oidc: { issuer, subject: 'subject-1', sid: 'sid-1' },
+      })
+      const target = oidcApp(oidcProvider({ logoutUrl: async () => null }))
+      const response = await target.request('/logout', {
+        method: 'POST', headers: { Cookie: `mado_session=${session.token}` },
+      })
+      expect(response.status).toBe(200)
+      expect(await response.json()).toEqual({ ok: true, logoutUrl: null, idpLogoutUnavailable: false })
+      expect(await sessions.authenticateSession(session.token, 3600)).toBeNull()
     })
   })
 })

@@ -11,7 +11,7 @@ const oidcMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('openid-client', () => ({
-  discovery: vi.fn().mockResolvedValue({ serverMetadata: () => ({}) }),
+  discovery: vi.fn().mockResolvedValue({ serverMetadata: () => ({ end_session_endpoint: 'https://auth.example/end-session' }) }),
   randomState: vi.fn(() => 'state-value'),
   randomNonce: vi.fn(() => 'nonce-value'),
   randomPKCECodeVerifier: vi.fn(() => 'verifier-value'),
@@ -112,7 +112,16 @@ describe('OidcProvider', () => {
       postLogoutRedirectUri: 'https://mado.example/',
     })
     const url = await provider.logoutUrl()
-    expect(url.href).toBe('https://auth.example/end-session?post_logout_redirect_uri=https%3A%2F%2Fmado.example%2F')
+    expect(url?.href).toBe('https://auth.example/end-session?post_logout_redirect_uri=https%3A%2F%2Fmado.example%2F')
+  })
+
+  it('IdPがend_session_endpointを出していなければ、logout URLを作らずnullを返す', async () => {
+    vi.mocked(oidc.discovery).mockResolvedValueOnce({ serverMetadata: () => ({}) } as unknown as oidc.Configuration)
+    const provider = createOidcProvider(pools.rw, crypto, {
+      id: 'cloudflare', label: 'SSO', issuerUrl: 'https://team.example/cdn-cgi/access/sso/oidc/client',
+      clientId: 'client', clientSecret: 'secret', redirectUri: 'https://mado.example/api/auth/oidc/callback',
+    })
+    await expect(provider.logoutUrl()).resolves.toBeNull()
   })
 
   it('IdPへのdiscoveryが一度失敗しても、IdPが戻れば次の呼び出しで取り直す', async () => {
